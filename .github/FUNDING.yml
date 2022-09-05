@@ -10,5 +10,5 @@ liberapay: # Replace with a single Liberapay username
 issuehunt: # Replace with a single IssueHunt username
 otechie: # Replace with a single Otechie username
 lfx_crowdfunding: # Replace with a single LFX Crowdfunding project-name e.g., cloud-foundry
-custom: ['<a href="https://www.buymeacoffee.com/Cuman"><img src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee &emoji=&slug=Cuman&button_colour=BD5FFF&font_colour=ffffff&font_family=Poppins&outline_colour=000000&coffee_colour=FFDD00" /></a>','https://user-images.githubusercontent.com/42957010/172568261-8a732d3d-303a-4367-993e-23c3efbf62a8.png']# Replace with up to 4 custom sponsorship URLs e.g., ['link1', 'link2']
+custom: ['','https://user-images.githubusercontent.com/42957010/172568261-8a732d3d-303a-4367-993e-23c3efbf62a8.png']# Replace with up to 4 custom sponsorship URLs e.g., ['link1', 'link2']
 
