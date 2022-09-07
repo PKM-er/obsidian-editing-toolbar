@@ -41,7 +41,7 @@ export const DEFAULT_SETTINGS: cMenuToolbarSettings = {
     },
     {
       id: "obsidian-editing-toolbar:header2-text",
-      name: "Cmenu toolbar: Header 2",
+      name: "Header 2",
       hotkeys: [
         {
           "modifiers": [
@@ -54,7 +54,7 @@ export const DEFAULT_SETTINGS: cMenuToolbarSettings = {
     },
     {
       id: "obsidian-editing-toolbar:header3-text",
-      name: "Cmenu toolbar: Header 3",
+      name: "Header 3",
       hotkeys: [
         {
           "modifiers": [
@@ -72,7 +72,7 @@ export const DEFAULT_SETTINGS: cMenuToolbarSettings = {
       SubmenuCommands: [
         {
           id: "obsidian-editing-toolbar:header1-text",
-          name: "Cmenu toolbar: Header 1",
+          name: "Header 1",
           hotkeys: [
             {
               "modifiers": [
@@ -85,7 +85,7 @@ export const DEFAULT_SETTINGS: cMenuToolbarSettings = {
         },
         {
           id: "obsidian-editing-toolbar:header4-text",
-          name: "Cmenu toolbar: Header 4",
+          name: "Header 4",
           hotkeys: [
             {
               "modifiers": [
@@ -98,7 +98,7 @@ export const DEFAULT_SETTINGS: cMenuToolbarSettings = {
         },
         {
           id: "obsidian-editing-toolbar:header5-text",
-          name: "Cmenu toolbar: Header 5",
+          name: "Header 5",
           hotkeys: [
             {
               "modifiers": [
@@ -111,7 +111,7 @@ export const DEFAULT_SETTINGS: cMenuToolbarSettings = {
         },
         {
           id: "obsidian-editing-toolbar:header6-text",
-          name: "Cmenu toolbar: Header 6",
+          name: "Header 6",
           hotkeys: [
             {
               "modifiers": [
@@ -126,47 +126,47 @@ export const DEFAULT_SETTINGS: cMenuToolbarSettings = {
     },
     {
       id: "obsidian-editing-toolbar:editor:toggle-bold",
-      name: "cMenuToolbar: Toggle bold",
+      name: "Toggle bold",
       icon: "bold-glyph",
     },
     {
       id: "obsidian-editing-toolbar:editor:toggle-italics",
-      name: "cMenuToolbar: Toggle italics",
+      name: "Toggle italics",
       icon: "italic-glyph",
     },
     {
       id: "obsidian-editing-toolbar:editor:toggle-strikethrough",
-      name: "cMenuToolbar: Toggle strikethrough",
+      name: "Toggle strikethrough",
       icon: "strikethrough-glyph",
     },
     {
       id: "obsidian-editing-toolbar:underline",
-      name: "cMenuToolbar: Toggle underline",
+      name: "Toggle underline",
       icon: "underline-glyph",
     },
     {
       id: "obsidian-editing-toolbar:superscript",
-      name: "cMenuToolbar: Toggle superscript",
+      name: "Toggle superscript",
       icon: "superscript-glyph",
     },
     {
       id: "obsidian-editing-toolbar:subscript",
-      name: "cMenuToolbar: Toggle subscript",
+      name: "Toggle subscript",
       icon: "subscript-glyph",
     },
     {
       id: "obsidian-editing-toolbar:editor:toggle-code",
-      name: "cMenuToolbar: Toggle code",
+      name: "Toggle code",
       icon: "code-glyph",
     },
     {
       id: "obsidian-editing-toolbar:codeblock",
-      name: "cMenuToolbar: Toggle codeblock",
+      name: "Toggle codeblock",
       icon: "codeblock-glyph",
     },
     {
       id: "obsidian-editing-toolbar:editor:toggle-blockquote",
-      name: "cMenuToolbar: Toggle blockquote",
+      name: "Toggle blockquote",
       icon: "quote-glyph",
     },
     {
