@@ -1,6 +1,6 @@
 {
   "id": "cmenu-toolbar",
-  "name": "Cmenu toolbar",
+  "name": "cMenu Toolbar",
   "version": "2.0.2",
   "minAppVersion": "0.9.12",
   "description": "The cmenu toolbar is modified from cmenu, which provides more powerful customization settings and has many built-in editing commands to be a MS Word-like toolbar editing experience.",
