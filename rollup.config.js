@@ -27,7 +27,7 @@ export default {
     resolve({
       browser: true,
     }),
-    commonjs({ include: "node_modules/**" })
-    //terser()
+    commonjs({ include: "node_modules/**" }),
+    terser()
   ],
 };

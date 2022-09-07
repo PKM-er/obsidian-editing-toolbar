@@ -475,7 +475,7 @@ export function cMenuToolbarPopover(
             );
           }
         } else {
-          if (item.id == "cmenu-toolbar:change-font-color") {
+          if (item.id == "obsidian-editing-toolbar:change-font-color") {
             let button2 = new ButtonComponent(cMenuToolbar);
             button2
               .setClass("cMenuToolbarCommandsubItem-font-color")
@@ -526,7 +526,7 @@ export function cMenuToolbarPopover(
                   );
                 });
             }
-          } else if (item.id == "cmenu-toolbar:change-background-color") {
+          } else if (item.id == "obsidian-editing-toolbar:change-background-color") {
             let button2 = new ButtonComponent(cMenuToolbar);
             button2
               .setClass("cMenuToolbarCommandsubItem-font-color")
