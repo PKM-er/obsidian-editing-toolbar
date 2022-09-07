@@ -49,7 +49,7 @@ Thanks to the [cmenu](https://github.com/chetachiezikeuzor/cMenu-Plugin) plugin,
   ! [](https://ghproxy.com/https://raw.githubusercontent.com/cumany/cumany/main/pic/202209072157728.gif)
 
 ### Full Vault showcase
-This is the Obsidian example vault that can open your eyes, there are a lot of dazzling features and showcase, I believe you will be amazed to see, is this Obsidian?
+This is the Obsidian example vault is amazing, there are a lot of dazzling features and showcase, I believe you will wonder a bit, is this Obsidian?
 [Blue-topaz-examples](https://github.com/cumany/Blue-topaz-examples)
 
 

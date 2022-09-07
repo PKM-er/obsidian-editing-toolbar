@@ -273,11 +273,7 @@ cMenuToolbar SUPPORT
   text-align: center;
   color: var(--text-normal);
 }
-/*
-cMenuToolbar样式修改 by  cuman  2021-12-31
-cMenuToolbar 插件建议使用自动光标跟随版。插件在Blue topaz examples[https://github.com/cumany/Blue-topaz-examples] 库中已内置。
-需要配合蚕子大神的zh增强编辑插件https://github.com/obsidian-canzi/Enhanced-editing/
-**/
+ 
 
 #cMenuToolbarModalBar{
   align-items: center;
