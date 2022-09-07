@@ -1,10 +1,10 @@
 {
-	"id": "obsidian-sample-plugin",
-	"name": "Sample Plugin",
-	"version": "1.0.0",
-	"minAppVersion": "0.15.0",
-	"description": "This is a sample plugin for Obsidian. This plugin demonstrates some of the capabilities of the Obsidian API.",
-	"author": "Obsidian",
-	"authorUrl": "https://obsidian.md",
-	"isDesktopOnly": false
+  "id": "cmenu-toolbar",
+  "name": "Cmenu toolbar",
+  "version": "2.0.2",
+  "minAppVersion": "0.9.12",
+  "description": "The cmenu toolbar is modified from cmenu, which provides more powerful customization settings and has many built-in editing commands to be a MS Word-like toolbar editing experience.",
+  "author": "Cuman",
+  "authorUrl": "https://github.com/cumany/Cmenu-Toolbar",
+  "isDesktopOnly": true
 }

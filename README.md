@@ -1,76 +1,47 @@
-# Obsidian Sample Plugin
+# cMenuToolbar 插件
 
-This is a sample plugin for Obsidian (https://obsidian.md).
+感谢 [cmenu](https://github.com/chetachiezikeuzor/cMenu-Plugin)插件的开发，给我了很多灵感，但这个插件已经一年多没有维护了，于是我重新魔改了它，并增加了很多有趣的功能，包括置顶工具栏,光标跟随等，于是Cmenu toolbar 就诞生了。
 
-This project uses Typescript to provide type checking and documentation.
-The repo depends on the latest plugin API (obsidian.d.ts) in Typescript Definition format, which contains TSDoc comments describing what it does.
+## 目录导航
 
-**Note:** The Obsidian API is still in early alpha and is subject to change at any time!
+## 如何安装
+1.  brat安装。插件目前还没有上架官方商店可以通过 [BRAT Plugin](https://obsidian.md/plugins?id=obsidian42-brat)去安装。
+`cumany/Cmenu-Toolbar`
+2. 手动安装 参考教程
+   [Plugins mini FAQ ](https://forum.obsidian.md/t/plugins-mini-faq/7737) 
+   [如何安装obsdiain插件](https://publish.obsidian.md/chinesehelp/01+2021%E6%96%B0%E6%95%99%E7%A8%8B/%E5%A6%82%E4%BD%95%E5%AE%89%E8%A3%85obsdiain%E6%8F%92%E4%BB%B6)
 
-This sample plugin demonstrates some of the basic functionality the plugin API can do.
-- Changes the default font color to red using `styles.css`.
-- Adds a ribbon icon, which shows a Notice when clicked.
-- Adds a command "Open Sample Modal" which opens a Modal.
-- Adds a plugin setting tab to the settings page.
-- Registers a global click event and output 'click' to the console.
-- Registers a global interval which logs 'setInterval' to the console.
+## 视频介绍
+[谁说Obsidian不如语雀，这个插件让你使用ob不用再记那么多指令了，ob工具栏你值得拥有](https://www.bilibili.com/video/BV1mY4y1T7g2/)
 
-## First time developing plugins?
+## 功能特性
+功能在延续之前cmenu功能的基础上增加了下面额外的功能。
+1. 增加新的工具栏样式 tiny
+	![|400](https://ghproxy.com/https://raw.githubusercontent.com/cumany/cumany/main//pic/202209071131715.png)
+2. 增加工具栏位置选项，top，following
+   ![|400](https://ghproxy.com/https://raw.githubusercontent.com/cumany/cumany/main//pic/202209071133753.png)
+   ![](https://ghproxy.com/https://raw.githubusercontent.com/cumany/cumany/main//pic/202209071751006.gif)
 
-Quick starting guide for new plugin devs:
-
-- Check if [someone already developed a plugin for what you want](https://obsidian.md/plugins)! There might be an existing plugin similar enough that you can partner up with.
-- Make a copy of this repo as a template with the "Use this template" button (login to GitHub if you don't see it).
-- Clone your repo to a local development folder. For convenience, you can place this folder in your `.obsidian/plugins/your-plugin-name` folder.
-- Install NodeJS, then run `npm i` in the command line under your repo folder.
-- Run `npm run dev` to compile your plugin from `main.ts` to `main.js`.
-- Make changes to `main.ts` (or create new `.ts` files). Those changes should be automatically compiled into `main.js`.
-- Reload Obsidian to load the new version of your plugin.
-- Enable plugin in settings window.
-- For updates to the Obsidian API run `npm update` in the command line under your repo folder.
-
-## Releasing new releases
-
-- Update your `manifest.json` with your new version number, such as `1.0.1`, and the minimum Obsidian version required for your latest release.
-- Update your `versions.json` file with `"new-plugin-version": "minimum-obsidian-version"` so older versions of Obsidian can download an older version of your plugin that's compatible.
-- Create new GitHub release using your new version number as the "Tag version". Use the exact version number, don't include a prefix `v`. See here for an example: https://github.com/obsidianmd/obsidian-sample-plugin/releases
-- Upload the files `manifest.json`, `main.js`, `styles.css` as binary attachments. Note: The manifest.json file must be in two places, first the root path of your repository and also in the release.
-- Publish the release.
-
-> You can simplify the version bump process by running `npm version patch`, `npm version minor` or `npm version major` after updating `minAppVersion` manually in `manifest.json`.
-> The command will bump version in `manifest.json` and `package.json`, and add the entry for the new version to `versions.json`
-
-## Adding your plugin to the community plugin list
-
-- Check https://github.com/obsidianmd/obsidian-releases/blob/master/plugin-review.md
-- Publish an initial version.
-- Make sure you have a `README.md` file in the root of your repo.
-- Make a pull request at https://github.com/obsidianmd/obsidian-releases to add your plugin.
-
-## How to use
-
-- Clone this repo.
-- `npm i` or `yarn` to install dependencies
-- `npm run dev` to start compilation in watch mode.
-
-## Manually installing the plugin
-
-- Copy over `main.js`, `styles.css`, `manifest.json` to your vault `VaultFolder/.obsidian/plugins/your-plugin-id/`.
-
-## Improve code quality with eslint (optional)
-- [ESLint](https://eslint.org/) is a tool that analyzes your code to quickly find problems. You can run ESLint against your plugin to find common bugs and ways to improve your code. 
-- To use eslint with this project, make sure to install eslint from terminal:
-  - `npm install -g eslint`
-- To use eslint to analyze this project use this command:
-  - `eslint main.ts`
-  - eslint will then create a report with suggestions for code improvement by file and line number.
-- If your source code is in a folder, such as `src`, you can use eslint with this command to analyze all files in that folder:
-  - `eslint .\src\`
-
-
-## API Documentation
-
-See https://github.com/obsidianmd/obsidian-api
-
-<a href="https://www.buymeacoffee.com/Cuman"><img src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee &emoji=&slug=Cuman&button_colour=BD5FFF&font_colour=ffffff&font_family=Poppins&outline_colour=000000&coffee_colour=FFDD00" /></a>
+3. 增加一些内置命令
+	1. change-font-color
+	2. change-background-color
+	3. indent-list
+	4. undent-list
+	5. editor-undo
+	6. editor-redo
+	7. fullscreen-focus
+	8. workplace-fullscreen-focus
+	9. head 1-6 级标题设置
+  ![](https://ghproxy.com/https://raw.githubusercontent.com/cumany/cumany/main//pic/202209071707695.png)
+4. 支持自定义命令图标
+    ![](https://ghproxy.com/https://raw.githubusercontent.com/cumany/cumany/main//pic/202209071717111.gif)
+5. 支持修改命令名称
+    ![](https://ghproxy.com/https://raw.githubusercontent.com/cumany/cumany/main//pic/202209071720159.gif)
+6. 支持添加子菜单
+    ![](https://ghproxy.com/https://raw.githubusercontent.com/cumany/cumany/main//pic/202209071722207.gif)
+7. 支持菜单拖动排序
+8. 增加格式刷功能 内置字体颜色和背景颜色两种格式刷（鼠标中键或者右键可取消格式刷状态）
+   ![](https://ghproxy.com/https://raw.githubusercontent.com/cumany/cumany/main//pic/202209071731151.gif)
+9. 工具栏图标宽度自适应收缩
+  ![](https://ghproxy.com/https://raw.githubusercontent.com/cumany/cumany/main//pic/202209071751006.gif)
 
