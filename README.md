@@ -1,10 +1,10 @@
-# cMenuToolbar Plugin
+# obsidian-editing-toolbar Plugin
 
-Thanks to the [cmenu](https://github.com/chetachiezikeuzor/cMenu-Plugin) plugin, which gave me a lot of inspiration, but this plugin has not been maintained for more than a year, so I re-modified it and added a lot of interesting features, including the top toolbar, cursor following, etc., so Cmenu toolbar was created.
+Thanks to the [cmenu](https://github.com/chetachiezikeuzor/cMenu-Plugin) plugin, which gave me a lot of inspiration, but this plugin has not been maintained for more than a year, so I re-modified it and added a lot of interesting features, including the top toolbar, cursor following, etc., so editing toolbar was created.
 
 *[点击这里](./README-zh_cn.md)查看中文文档。*
 ## TOC
-- [cMenuToolbar Plugin](#cmenutoolbar-plugin)
+- [obsidian-editing-toolbar Plugin](#obsidian-editing-toolbar-plugin)
   - [TOC](#toc)
   - [how-to-install](#how-to-install)
   - [Video Introduction](#video-introduction)

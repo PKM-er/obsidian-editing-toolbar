@@ -1,4 +1,4 @@
-# cMenuToolbar 插件
+# obsidian-editing-toolbar 插件
 
 感谢 [cmenu](https://github.com/chetachiezikeuzor/cMenu-Plugin)插件的开发，给我了很多灵感，但这个插件已经一年多没有维护了，于是我重新魔改了它，并增加了很多有趣的功能，包括置顶工具栏,光标跟随等，于是Cmenu toolbar 就诞生了。
 
@@ -10,7 +10,7 @@
 
 ## 如何安装
 1.  brat安装。插件目前还没有上架官方商店可以通过 [BRAT Plugin](https://obsidian.md/plugins?id=obsidian42-brat)去安装。
-`cumany/Cmenu-Toolbar`
+`cumany/obsidian-editing-toolbar`
 2. 手动安装 参考教程
    [Plugins mini FAQ ](https://forum.obsidian.md/t/plugins-mini-faq/7737) 
    [如何安装obsdiain插件](https://publish.obsidian.md/chinesehelp/01+2021%E6%96%B0%E6%95%99%E7%A8%8B/%E5%A6%82%E4%BD%95%E5%AE%89%E8%A3%85obsdiain%E6%8F%92%E4%BB%B6)
