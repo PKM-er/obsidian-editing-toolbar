@@ -31,10 +31,13 @@ Please Refer: [How to install Obsidian Plugins](https://forum.obsidian.md/t/plug
 ## Key Features
 
 1. add a new toolbar style tiny
-   ! [|400](https://ghproxy.com/https://raw.githubusercontent.com/cumany/cumany/main//pic/202209071131715.png)
+
+   ![](https://ghproxy.com/https://raw.githubusercontent.com/cumany/cumany/main//pic/202209071131715.png)
+
 2. add toolbar position options, top, following
-   ! [|400](https://ghproxy.com/https://raw.githubusercontent.com/cumany/cumany/main//pic/202209071133753.png)
-   ! [](https://ghproxy.com/https://raw.githubusercontent.com/cumany/cumany/main//pic/202209071751006.gif)
+
+   ![](https://ghproxy.com/https://raw.githubusercontent.com/cumany/cumany/main//pic/202209071133753.png)
+   ![](https://ghproxy.com/https://raw.githubusercontent.com/cumany/cumany/main//pic/202209071751006.gif)
 
 3. add some built-in commands
    1. change-font-color
@@ -61,18 +64,18 @@ Please Refer: [How to install Obsidian Plugins](https://forum.obsidian.md/t/plug
        Unlike fullscreen-focus mode, this one just hides the left and right sidebar panels, it's only workspace full screen
    14. head 1-6 level heading settings
        Default binding shortcut key `Ctrl+1,ctrl+2,...Ctrl+6`
-       ! [](https://ghproxy.com/https://raw.githubusercontent.com/cumany/cumany/main//pic/202209071707695.png)
+       ![](https://ghproxy.com/https://raw.githubusercontent.com/cumany/cumany/main//pic/202209071707695.png)
    15. support custom command icons
-       ! [](https://ghproxy.com/https://raw.githubusercontent.com/cumany/cumany/main//pic/202209071717111.gif)
+       ![](https://ghproxy.com/https://raw.githubusercontent.com/cumany/cumany/main//pic/202209071717111.gif)
    16. Support modify command name
-       ! [](https://ghproxy.com/https://raw.githubusercontent.com/cumany/cumany/main//pic/202209071720159.gif)
+       ![](https://ghproxy.com/https://raw.githubusercontent.com/cumany/cumany/main//pic/202209071720159.gif)
    17. Support for adding submenus
-       ! [](https://ghproxy.com/https://raw.githubusercontent.com/cumany/cumany/main//pic/202209071722207.gif)
+       ![](https://ghproxy.com/https://raw.githubusercontent.com/cumany/cumany/main//pic/202209071722207.gif)
    18. Support menu dragging and sorting
    19. Add formatting brush function Built-in two kinds of formatting brush for font color and background color (middle mouse button or right click can cancel the formatting brush status)
-       ! [](https://ghproxy.com/https://raw.githubusercontent.com/cumany/cumany/main//pic/202209071731151.gif)
+       ![](https://ghproxy.com/https://raw.githubusercontent.com/cumany/cumany/main//pic/202209071731151.gif)
    20. Adaptive shrinkage of toolbar icon width
-       ! [](https://ghproxy.com/https://raw.githubusercontent.com/cumany/cumany/main/pic/202209072157728.gif)
+       ![](https://ghproxy.com/https://raw.githubusercontent.com/cumany/cumany/main/pic/202209072157728.gif)
 
 ### Full Vault showcase
 
