@@ -32,8 +32,10 @@
 功能在延续之前 cmenu 功能的基础上增加了下面额外的功能。
 
 1. 增加新的工具栏样式 tiny
+
    ![|400](https://ghproxy.com/https://raw.githubusercontent.com/cumany/cumany/main//pic/202209071131715.png)
 2. 增加工具栏位置选项，top，following
+
    ![|400](https://ghproxy.com/https://raw.githubusercontent.com/cumany/cumany/main//pic/202209071133753.png)
    ![](https://ghproxy.com/https://raw.githubusercontent.com/cumany/cumany/main//pic/202209071751006.gif)
 
@@ -66,17 +68,23 @@
        与全屏聚焦模式不同，这个模式只是隐藏了左右侧边栏的面板，它只是工作区全屏。
    14. head 1-6 级标题设置
        默认绑定快捷键`Ctrl+1,ctrl+2,...Ctrl+6`。
+
        ![](https://ghproxy.com/https://raw.githubusercontent.com/cumany/cumany/main//pic/202209071707695.png)
    15. 支持自定义命令图标
+
        ![](https://ghproxy.com/https://raw.githubusercontent.com/cumany/cumany/main//pic/202209071717111.gif)
    16. 支持修改命令名称
+
        ![](https://ghproxy.com/https://raw.githubusercontent.com/cumany/cumany/main//pic/202209071720159.gif)
    17. 支持添加子菜单
+
        ![](https://ghproxy.com/https://raw.githubusercontent.com/cumany/cumany/main//pic/202209071722207.gif)
    18. 支持菜单拖动排序
    19. 增加格式刷功能 内置字体颜色和背景颜色两种格式刷（鼠标中键或者右键可取消格式刷状态）
+
        ![](https://ghproxy.com/https://raw.githubusercontent.com/cumany/cumany/main//pic/202209071731151.gif)
    20. 工具栏图标宽度自适应收缩
+   
        ![](https://ghproxy.com/https://raw.githubusercontent.com/cumany/cumany/main/pic/202209072157728.gif)
 
 ### 完整示例库分享
