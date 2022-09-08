@@ -1,6 +1,13 @@
 # obsidian-editing-toolbar Plugin
 
+![](cmenu-demo.gif)
+
 Thanks to the [cmenu](https://github.com/chetachiezikeuzor/cMenu-Plugin) plugin, which gave me a lot of inspiration, but this plugin has not been maintained for more than a year, so I re-modified it and added a lot of interesting features, including the top toolbar, cursor following, etc., so editing toolbar was created.
+
+**Obsidian Editing Toolbar**  is a plugin that provides a toolbar similar to MS-Word，and adds a minimal and user friendly text editor modal for a smoother writing/editing experience . This plugin makes text editing and firing commands easier for those that don't wish to configure a multitude of hotkeys.No need to remember complex markdown commands, similar to a rich text editor as WYSIWYG.
+This plugin was specifically designed for note-takers that want to have a simple text editor to aid in marking up their notes. It solves the issue of having to memorize numerous hotkeys and/or use multiple key presses to get the desired markup. A simple toolbar to improve your writing experience in Obsidian！
+
+> It is recommended to work with [Enhanced Editing Plugin](https://github.com/obsidian-canzi/Enhanced-editing), which can add more useful editing commands.
 
 *[点击这里](./README-zh_cn.md)查看中文文档。*
 ## TOC

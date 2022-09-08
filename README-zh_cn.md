@@ -1,6 +1,12 @@
 # obsidian-editing-toolbar 插件
 
 感谢 [cmenu](https://github.com/chetachiezikeuzor/cMenu-Plugin)插件的开发，给我了很多灵感，但这个插件已经一年多没有维护了，于是我重新魔改了它，并增加了很多有趣的功能，包括置顶工具栏,光标跟随等，于是Cmenu toolbar 就诞生了。
+**Obsidian Editing Toolbar**是一个提供类似于MS-Word的工具栏的插件，并增加了一个最小的和用户友好的文本编辑器模式，以获得更顺畅的写作/编辑体验。不需要记住复杂的markdown命令，类似于富文本编辑器的所见即所得。
+这个插件是专门为那些希望有一个简单的文本编辑器来帮助标记他们的笔记设计的。它解决了必须记住许多热键或命令来实现所需要的功能的问题。一个简单的工具条可以改善你在Obsidian中的写作体验。
+
+> 建议配合[增强编辑插件](https://github.com/obsidian-canzi/Enhanced-editing)，可以添加更多的实用的编辑指令。
+
+![](cmenu-demo.gif)
 
 ## 目录导航
     - [如何安装](#如何安装)
@@ -53,3 +59,4 @@
 ### 完整示例库分享
 这是可以让你大开眼界的Obsidian 示例库，里面有很多眼花缭乱的功能和示例，相信你看过一定会惊叹，这是Obsidian吗？
 [Blue-topaz-examples](https://github.com/cumany/Blue-topaz-examples)
+
