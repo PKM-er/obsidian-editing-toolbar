@@ -3,6 +3,7 @@ import { appIcons } from "src/icons/appIcons";
 import { Notice, Command, setIcon, FuzzyMatch, FuzzySuggestModal, Modal, SliderComponent, TextAreaComponent, TextComponent, debounce, App } from "obsidian";
 import { findmenuID } from "src/util/util";
 import { setBottomValue } from "src/util/statusBarConstants";
+import { t } from "src/translations/helper";
 
 export class ChooseFromIconList extends FuzzySuggestModal<string> {
   plugin: cMenuToolbarPlugin;
@@ -101,7 +102,7 @@ export class CommandPicker extends FuzzySuggestModal<Command> {
     if (index > -1) //存在
     {
       new Notice("The command" + item.name + "already exists", 3000);
-      console.log(`%cCommand '${item.name}' already exists `, "color: Violet");
+    //  console.log(`%cCommand '${item.name}' already exists `, "color: Violet");
       return;
     } else {
       if (item.icon) {
@@ -138,7 +139,7 @@ export class CustomIcon extends Modal {
   onOpen() {
 
     const { contentEl } = this;
-    contentEl.createEl("b", { text: "Enter the icon code, it looks like <svg>.... </svg> format" });
+    contentEl.createEl("b", { text: t("Enter the icon code, it looks like <svg>.... </svg> format") });
     const textComponent = new TextAreaComponent(contentEl);
     textComponent.inputEl.classList.add('wideInputPromptInputEl');
     textComponent.setPlaceholder("")
@@ -189,7 +190,7 @@ export class ChangeCmdname extends Modal {
   onOpen() {
 
     const { contentEl } = this;
-    contentEl.createEl("b", { text: "Please enter a new name：" });
+    contentEl.createEl("b", { text: t("Please enter a new name：") });
 
     const textComponent = new TextComponent(contentEl);
     textComponent.inputEl.classList.add('InputPromptInputEl');
@@ -234,7 +235,7 @@ export class openSlider extends Modal {
   onOpen() {
 
     const { contentEl } = this;
-    contentEl.createEl("p", { text:"Drag the slider to move the position" });
+    contentEl.createEl("p", { text:t("Drag the slider to move the position") });
     
     new SliderComponent(contentEl)
     .setLimits(2, 18, 0.25)

@@ -6,7 +6,7 @@ import { selfDestruct, cMenuToolbarPopover, checksvg } from "src/modals/cMenuToo
 import Sortable from "sortablejs";
 import { debounce } from "obsidian";
 import { GenNonDuplicateID } from "src/util/util";
-
+import { t } from 'src/translations/helper';
 
 export function getComandindex(item: any,arr: any[]):number
 {
@@ -36,7 +36,7 @@ export class cMenuToolbarSettingTab extends PluginSettingTab {
   display(): void {
     const { containerEl } = this;
     containerEl.empty();
-    containerEl.createEl("h1", { text: "cMenuToolbar" });
+    containerEl.createEl("h1", { text: "Obsidian Editing Toolbar" });
     containerEl.createEl("span", { text: " 原创： " }).createEl("a", {
       text: "Chetachi 👩🏽‍💻",
       href: "https://github.com/chetachiezikeuzor",
@@ -45,12 +45,12 @@ export class cMenuToolbarSettingTab extends PluginSettingTab {
       text: "Cuman ✨",
       href: "https://github.com/cumany",
     });
-    containerEl.createEl("h2", { text: "Plugin Settings" });
+    containerEl.createEl("h2", { text: t("Plugin Settings") });
     new Setting(containerEl)
-      .setName("cMenuToolbar append method")
+      .setName(t('Editing Toolbar append method'))
       .setDesc(
-        "Choose where cMenuToolbar will append upon regeneration. To see the change, hit the refresh button below, or in the status bar menu."
-      )
+        t('Choose where Editing Toolbar will append upon regeneration. To see the change, hit the refresh button below, or in the status bar menu.')
+        )
       .addDropdown((dropdown) => {
         let methods: Record<string, string> = {};
         APPEND_METHODS.map((method) => (methods[method] = method));
@@ -63,10 +63,11 @@ export class cMenuToolbarSettingTab extends PluginSettingTab {
           });
       });
     new Setting(containerEl)
-      .setName("cMenuToolbar aesthetic")
-      .setDesc(
-        "Choose between a glass morphism ,tiny and default style for cMenuToolbar. To see the change, hit the refresh button below, or in the status bar menu."
+      .setName(t('Editing Toolbar aesthetic')
       )
+      .setDesc(
+        t('Choose between a glass morphism ,tiny and default style for Editing Toolbar. To see the change, hit the refresh button below, or in the status bar menu.')
+        )
       .addDropdown((dropdown) => {
         let aesthetics: Record<string, string> = {};
         AESTHETIC_STYLES.map(
@@ -81,8 +82,10 @@ export class cMenuToolbarSettingTab extends PluginSettingTab {
           });
       });
     new Setting(containerEl)
-      .setName("cMenuToolbar posotion")
-      .setDesc("Choose between fixed position or cursor following mode.")
+      .setName(t('Editing Toolbar posotion')
+      )
+      .setDesc(t('Choose between fixed position or cursor following mode.')
+      )
       .addDropdown((dropdown) => {
         let posotions: Record<string, string> = {};
         POSITION_STYLES.map((posotion: string) => (posotions[posotion] = posotion));
@@ -96,10 +99,11 @@ export class cMenuToolbarSettingTab extends PluginSettingTab {
           });
       });
     new Setting(containerEl)
-      .setName("cMenuToolbar columns")
-      .setDesc(
-        "Choose the number of columns per row to display on cMenuToolbar. To see the change, hit the refresh button below, or in the status bar menu."
+      .setName(t('Editing Toolbar columns')
       )
+      .setDesc(
+        t('Choose the number of columns per row to display on Editing Toolbar. To see the change, hit the refresh button below, or in the status bar menu.')
+        )
       .addSlider((slider) => {
         slider
           .setLimits(1, 18, 1)
@@ -117,16 +121,17 @@ export class cMenuToolbarSettingTab extends PluginSettingTab {
           .setDynamicTooltip();
       });
     new Setting(containerEl)
-      .setName("cMenuToolbar refresh")
+      .setName(t('Editing Toolbar refresh')
+      )
       .setDesc(
-        "cMenuToolbar will only refresh automatically after you have either added or deleted a command from it. To see UI changes to cMenuToolbar (above settings changes) use the refresh button. If you forget to refresh in settings, no worries. There is also a refresh button in the cMenuToolbar status bar menu."
+        t("Editing Toolbar will only refresh automatically after you have either added or deleted a command from it. To see UI changes to cMenuToolbar (above settings changes) use the refresh button. If you forget to refresh in settings, no worries. There is also a refresh button in the cMenuToolbar status bar menu.")
       )
       .addButton((reloadButton) => {
         reloadButton
           .setIcon("cMenuToolbarReload")
           .setClass("cMenuToolbarSettingsButton")
           .setClass("cMenuToolbarSettingsButtonRefresh")
-          .setTooltip("Refresh")
+          .setTooltip(t("Refresh"))
           .onClick(() => {
             setTimeout(() => {
               dispatchEvent(new Event("cMenuToolbar-NewCommand"));
@@ -135,14 +140,15 @@ export class cMenuToolbarSettingTab extends PluginSettingTab {
           });
       });
     new Setting(containerEl)
-      .setName("cMenuToolbar commands")
-      .setDesc(
-        "Add a command onto cMenuToolbar from Obsidian's commands library. To reorder the commands, drag and drop the command items. To delete them, use the delete buttom to the right of the command item. cMenuToolbar will not automaticaly refresh after reordering commands. Use the refresh button above."
+      .setName(t('Editing Toolbar commands')
       )
+      .setDesc(
+        t("Add a command onto Editing Toolbar from Obsidian's commands library. To reorder the commands, drag and drop the command items. To delete them, use the delete buttom to the right of the command item. Editing Toolbar will not automaticaly refresh after reordering commands. Use the refresh button above.")
+        )
       .addButton((addButton) => {
         addButton
           .setIcon("cMenuToolbarAdd")
-          .setTooltip("Add")
+          .setTooltip(t("Add"))
           .setClass("cMenuToolbarSettingsButton")
           .setClass("cMenuToolbarSettingsButtonAdd")
           .onClick(() => {
@@ -208,7 +214,7 @@ export class cMenuToolbarSettingTab extends PluginSettingTab {
           .addButton((deleteButton) => {
             deleteButton
               .setIcon("cMenuToolbarDelete")
-              .setTooltip("Delete")
+              .setTooltip(t("Delete"))
               .setClass("cMenuToolbarSettingsButton")
               .setClass("cMenuToolbarSettingsButtonDelete")
               .onClick(async() => {
@@ -322,7 +328,7 @@ export class cMenuToolbarSettingTab extends PluginSettingTab {
             .addButton((changename) => {
               changename
                 .setIcon("pencil")
-                .setTooltip("Change Command name")
+                .setTooltip(t("Change Command name"))
                 .setClass("cMenuToolbarSettingsButton")
                 .onClick(async()=> {
                   new ChangeCmdname(this.app, this.plugin, subCommand, true).open();
@@ -331,7 +337,7 @@ export class cMenuToolbarSettingTab extends PluginSettingTab {
             .addButton((deleteButton) => {
               deleteButton
                 .setIcon("cMenuToolbarDelete")
-                .setTooltip("Delete")
+                .setTooltip(t("Delete"))
                 .setClass("cMenuToolbarSettingsButton")
                 .setClass("cMenuToolbarSettingsButtonDelete")
                 .onClick(async()=>  {
@@ -365,7 +371,7 @@ export class cMenuToolbarSettingTab extends PluginSettingTab {
           .addButton((changename) => {
             changename
               .setIcon("pencil")
-              .setTooltip("Change command name")
+              .setTooltip(t("Change Command name"))
               .setClass("cMenuToolbarSettingsButton")
               .onClick(async()=>  {
                 new ChangeCmdname(this.app, this.plugin, newCommand, false).open();
@@ -374,7 +380,7 @@ export class cMenuToolbarSettingTab extends PluginSettingTab {
           .addButton((addsubButton) => {
             addsubButton
               .setIcon("cMenuToolbarSub")
-              .setTooltip("Add submenu")
+              .setTooltip(t("Add submenu"))
               .setClass("cMenuToolbarSettingsButton")
               .setClass("cMenuToolbarSettingsButtonaddsub")
               .onClick(async()=>  {
@@ -392,7 +398,7 @@ export class cMenuToolbarSettingTab extends PluginSettingTab {
           .addButton((addsubButton) => {
             addsubButton
               .setIcon("vertical-split")
-              .setTooltip("add hr")
+              .setTooltip(t("add hr"))
               .setClass("cMenuToolbarSettingsButton")
               .setClass("cMenuToolbarSettingsButtonaddsub")
               .onClick(async()=> {
@@ -410,7 +416,7 @@ export class cMenuToolbarSettingTab extends PluginSettingTab {
           .addButton((deleteButton) => {
             deleteButton
               .setIcon("cMenuToolbarDelete")
-              .setTooltip("Delete")
+              .setTooltip(t("Delete"))
               .setClass("cMenuToolbarSettingsButton")
               .setClass("cMenuToolbarSettingsButtonDelete")
               .onClick(async()=> { 

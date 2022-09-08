@@ -16,7 +16,7 @@ import { wait } from "src/util/util";
 import { appIcons } from "src/icons/appIcons";
 import { CommandPicker, openSlider } from "src/modals/suggesterModals";
 import { cMenuToolbarSettingTab } from "src/settings/settingsTab";
-import { selfDestruct, cMenuToolbarPopover, getModestate, QuiteFormatBrushes, Setfontcolor, Setbackgroundcolor, SetHeader } from "src/modals/cMenuToolbarModal";
+import { selfDestruct, cMenuToolbarPopover, getModestate, QuiteFormatBrushes, Setfontcolor, Setbackgroundcolor, SetHeader, followingbar, FormatEraser } from "src/modals/cMenuToolbarModal";
 import { cMenuToolbarSettings, DEFAULT_SETTINGS } from "src/settings/settingsData";
 import addIcons, {
   addFeatherIcons,
@@ -26,6 +26,7 @@ import addIcons, {
 
 import { setMenuVisibility, setBottomValue } from "src/util/statusBarConstants";
 import { fullscreenMode, workplacefullscreenMode } from "src/util/fullscreen";
+import { t } from "src/translations/helper";
 
 export default class cMenuToolbarPlugin extends Plugin {
   app: App;
@@ -123,9 +124,9 @@ export default class cMenuToolbarPlugin extends Plugin {
     document.addEventListener('mouseup', (e) => {
 
       if (e.button) {
-        if (window.isCTxt || window.isBgC) {
+        if (window.isCTxt || window.isBgC|| window.isText) {
           QuiteFormatBrushes();
-          window.newNotice = new Notice("Format Brush Off！");
+          window.newNotice = new Notice(t("Format Brush Off!"));
         }
       }
       let view = this.app.workspace.getActiveViewOfType(MarkdownView);
@@ -133,20 +134,27 @@ export default class cMenuToolbarPlugin extends Plugin {
       //let cmEditor = view.sourceMode.cmEditor;
       let cmEditor = view.editor;
       if (cmEditor.hasFocus()) {
-        if (cmEditor.getSelection() == null) {
+        if (cmEditor.getSelection() == null ||cmEditor.getSelection() == "") {
           return
         } else {
+          if(this.settings.positionStyle == "following")
+          {
+            followingbar(this.settings)
+          }
+
           if (window.isCTxt) {
             Setfontcolor(app, this.settings.cMenuFontColor);
           } else if (window.isBgC) {
             Setbackgroundcolor(app, this.settings.cMenuBackgroundColor);
+          }else if (window.isText) {
+            FormatEraser();
           }
 
         }
 
       } else if (window.isCTxt || window.isBgC) {
         QuiteFormatBrushes();
-        window.newNotice = new Notice("Format Brush Off！");
+        window.newNotice = new Notice(t("Format Brush Off!"));
 
       }
     });
@@ -178,6 +186,13 @@ export default class cMenuToolbarPlugin extends Plugin {
         selfDestruct();
         await this.saveSettings();
       },
+    });
+    this.addCommand({
+      id: 'format-eraser',
+      name: 'Format Eraser',
+      callback: () => FormatEraser(),
+      icon: `<svg width=\"18\" height=\"18\" focusable=\"false\" fill=\"currentColor\"  viewBox=\"0 0 1024 1024\"><g transform=\"scale(1, -1) translate(0, -896) scale(0.9, 0.9) \"><path class=\"path\" d=\"M889 512 l-211 211 q-26 27 -61 36 q-35 9 -70 0 q-35 -9 -61 -36 l-351 -350 q-26 -27 -35.5 -62 q-9.5 -35 0 -70 q9.5 -35 35.5 -61 l170 -170 q12 -12 29 -12 l215 0 q17 0 29 12 l311 310 q26 26 35.5 61 q9.5 35 0 70 q-9.5 35 -35.5 61 ZM831 453 q15 -15 15.5 -36.5 q0.5 -21.5 -14.5 -37.5 l-300 -298 l-181 0 l-158 158 q-15 15 -15 37 q0 22 15 38 l351 351 q16 16 38 16 q22 0 37 -16 l212 -212 ZM686 217 l-59 -59 l-317 315 l58 59 l318 -315 ZM883 81 q18 0 30.5 -12 q12.5 -12 12.5 -29 q0 -17 -12.5 -29 q-12.5 -12 -29.5 -13 l-456 0 q-17 0 -29.5 12 q-12.5 12 -12.5 29 q0 17 12 29 q12 12 29 13 l456 0 Z\"></path></g></svg>`
+
     });
     this.addCommand({
       id: 'change-font-color',
@@ -511,7 +526,7 @@ export default class cMenuToolbarPlugin extends Plugin {
       const statusBarIconRect = this.statusBarIcon.getBoundingClientRect();
 
       const menu = new Menu().addItem((item) => {
-        item.setTitle("Hide & Show");
+        item.setTitle(t("Hide & Show"));
         item.setSection("settings");
         const itemDom = (item as any).dom as HTMLElement;
         const toggleComponent = new ToggleComponent(itemDom)

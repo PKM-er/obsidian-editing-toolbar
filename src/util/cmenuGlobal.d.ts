@@ -5,6 +5,7 @@ declare global {
      ISMORE: boolean ;
      isBgC: boolean ;
      isCTxt: boolean ;
+     isText: boolean ;
      newNotice: any;
 }
 }
