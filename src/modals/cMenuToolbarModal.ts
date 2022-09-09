@@ -338,7 +338,7 @@ export function FormatEraser() {
 }
 export const followingbar = (settings: cMenuToolbarSettings) => {
   let isource = getModestate(app);
-  let cMenuToolbarModalBar = document.getElementById(
+  let cMenuToolbarModalBar = activeDocument.getElementById(
     "cMenuToolbarModalBar"
   );
   //console.log(activeLeaf.getViewState().state.mode)
@@ -376,21 +376,21 @@ export const followingbar = (settings: cMenuToolbarSettings) => {
         cMenuToolbarModalBar.style.height = 25 * cmheight + "px";
       }
       let rleftwidth =
-        document.getElementsByClassName("side-dock-ribbon mod-left")[0]
+        activeDocument.getElementsByClassName("side-dock-ribbon mod-left")[0]
           ?.clientWidth ?? 0;
 
       let leftwidth =
-        document.getElementsByClassName("mod-left-split")[0]
+        activeDocument.getElementsByClassName("mod-left-split")[0]
           ?.clientWidth ?? 0;
 
-      let barwidth = document.getElementById(
+      let barwidth = activeDocument.getElementById(
         "cMenuToolbarModalBar"
       ).offsetWidth;
-      let barHeight = document.getElementById(
+      let barHeight = activeDocument.getElementById(
         "cMenuToolbarModalBar"
       ).offsetHeight;
 
-      let bodywidth = document.body.offsetWidth;
+      let bodywidth = activeDocument.body.offsetWidth;
       /*添加判断边界 */
       cMenuToolbarModalBar.style.top = coords.top - barHeight - 30 + "px";
       cMenuToolbarModalBar.style.left =
@@ -699,7 +699,7 @@ export function cMenuToolbarPopover(
         if (currentnode) return;
       }
       generateMenu();
-      let cMenuToolbarModalBar = document.getElementById(
+      let cMenuToolbarModalBar = activeDocument.getElementById(
         "cMenuToolbarModalBar"
       );
       setBottomValue(settings);

@@ -10,6 +10,8 @@ import {
   SliderComponent,
   ToggleComponent,
   ButtonComponent,
+  CachedMetadata,
+  requireApiVersion,
   App,
 } from "obsidian";
 import { wait } from "src/util/util";
@@ -27,6 +29,9 @@ import addIcons, {
 import { setMenuVisibility, setBottomValue } from "src/util/statusBarConstants";
 import { fullscreenMode, workplacefullscreenMode } from "src/util/fullscreen";
 import { t } from "src/translations/helper";
+import { MarkdownIndex } from "src/util/mdindex";
+import { getViewInfo, isViewActive } from 'src/util/Viewinfo'
+import { removeHeadingNumbering, updateHeadingNumbering, updateTableOfContents } from 'src/util/headingnumber'
 
 export default class cMenuToolbarPlugin extends Plugin {
   app: App;
@@ -122,9 +127,8 @@ export default class cMenuToolbarPlugin extends Plugin {
     });
 
     document.addEventListener('mouseup', (e) => {
-
       if (e.button) {
-        if (window.isCTxt || window.isBgC|| window.isText) {
+        if (window.isCTxt || window.isBgC || window.isText) {
           QuiteFormatBrushes();
           window.newNotice = new Notice(t("Format Brush Off!"));
         }
@@ -134,31 +138,67 @@ export default class cMenuToolbarPlugin extends Plugin {
       //let cmEditor = view.sourceMode.cmEditor;
       let cmEditor = view.editor;
       if (cmEditor.hasFocus()) {
-        if (cmEditor.getSelection() == null ||cmEditor.getSelection() == "") {
+        if (this.settings.positionStyle == "following")
+          followingbar(this.settings)
+        else
+        if (cmEditor.getSelection() == null || cmEditor.getSelection() == "") {
           return
         } else {
-          if(this.settings.positionStyle == "following")
-          {
-            followingbar(this.settings)
-          }
-
           if (window.isCTxt) {
             Setfontcolor(app, this.settings.cMenuFontColor);
           } else if (window.isBgC) {
             Setbackgroundcolor(app, this.settings.cMenuBackgroundColor);
-          }else if (window.isText) {
+          } else if (window.isText) {
             FormatEraser();
           }
 
         }
 
-      } else if (window.isCTxt || window.isBgC) {
+      } else if (window.isCTxt || window.isBgC || window.isText) {
         QuiteFormatBrushes();
         window.newNotice = new Notice(t("Format Brush Off!"));
 
       }
     });
+    if (requireApiVersion("0.15.0")) {
+      this.app.workspace.on('window-open', (leaf) => {
+        this.registerDomEvent(leaf.doc, 'mouseup', (e) => {
+          if (e.button) {
+            if (window.isCTxt || window.isBgC || window.isText) {
+              QuiteFormatBrushes();
+              window.newNotice = new Notice(t("Format Brush Off!"));
+            }
+          }
+          let view = this.app.workspace.getActiveViewOfType(MarkdownView);
+          if (!view) { return; };
+          //let cmEditor = view.sourceMode.cmEditor;
+          let cmEditor = view.editor;
+          if (cmEditor.hasFocus()) {
+            if (this.settings.positionStyle == "following")
+              followingbar(this.settings)
+            else
+            if (cmEditor.getSelection() == null || cmEditor.getSelection() == "") {
+              return
+            } else {
+              if (window.isCTxt) {
+                Setfontcolor(app, this.settings.cMenuFontColor);
+              } else if (window.isBgC) {
+                Setbackgroundcolor(app, this.settings.cMenuBackgroundColor);
+              } else if (window.isText) {
+                FormatEraser();
+              }
 
+            }
+
+          } else if (window.isCTxt || window.isBgC || window.isText) {
+            QuiteFormatBrushes();
+            window.newNotice = new Notice(t("Format Brush Off!"));
+
+          }
+
+        });
+      });
+    }
     this.addSettingTab(new cMenuToolbarSettingTab(this.app, this));
     this.registerEvent(this.app.workspace.on("active-leaf-change", this.handlecMenuToolbar));
     this.registerEvent(this.app.workspace.on("window-open", this.handlecMenuToolbar_pop));
@@ -327,6 +367,65 @@ export default class cMenuToolbarPlugin extends Plugin {
       icon: "header-6"
     });
 
+    this.addCommand({
+      id: "add-heading-serial-number",
+      name: "Add Heading Serial Number",
+      checkCallback: (checking: boolean) => {
+        const markdownView =
+          this.app.workspace.getActiveViewOfType(MarkdownView);
+        if (markdownView) {
+          if (!checking) {
+            const editor = markdownView.editor;
+            const cursor = editor.getCursor();
+
+            const lines = editor.getValue().split("\n");
+            const markdownIndex = new MarkdownIndex();
+            const newlines = markdownIndex.addMarkdownIndex(lines);
+            editor.setValue(newlines.join("\n"));
+
+            editor.setCursor(cursor);
+          }
+          return true;
+        }
+        return false;
+      },
+    });
+    this.addCommand({
+      id: 'number-headings',
+      name: 'Number all headings in document',
+      checkCallback: (checking: boolean) => {
+        if (checking) return isViewActive(this.app)
+
+        const viewInfo = getViewInfo(this.app)
+        if (viewInfo) {
+
+          updateHeadingNumbering(viewInfo)
+          setTimeout(() => {
+            // HACK: This must happen after a timeout so that there is time for the editor transaction to complete
+            const postNumberingViewInfo = getViewInfo(this.app)
+            updateTableOfContents(postNumberingViewInfo)
+          }, 3000)
+
+          // NOTE: The line below is intentionally commented out, since this command is the same as
+          //       the above command, except for this line
+          // showNumberingDoneMessage(this.app, settings, viewInfo)
+        }
+
+        return false
+      }
+    })
+
+    this.addCommand({
+      id: 'remove-number-headings',
+      name: 'Remove numbering from all headings in document',
+      checkCallback: (checking: boolean) => {
+        if (checking) return isViewActive(this.app)
+        const viewInfo = getViewInfo(this.app)
+        removeHeadingNumbering(viewInfo)
+
+        return true
+      }
+    })
 
     const applyCommand = (command: commandPlot, editor: Editor) => {
       const selectedText = editor.getSelection();
@@ -578,8 +677,8 @@ export default class cMenuToolbarPlugin extends Plugin {
           console.log(`%ccMenuToolbar refreshed`, "color: Violet");
         });
       });
-    
-    
+
+
       menu.addItem((item) => {
 
         item.setIcon("sliders")
@@ -620,7 +719,7 @@ export default class cMenuToolbarPlugin extends Plugin {
 
     if (this.settings.cMenuVisibility == true) {
       setTimeout(() => {
-
+        selfDestruct();
         cMenuToolbarPopover(this.app, this)
       }, 400);
 
