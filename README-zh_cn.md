@@ -87,6 +87,18 @@
    
        ![](https://ghproxy.com/https://raw.githubusercontent.com/cumany/cumany/main/pic/202209072157728.gif)
 
+### 跟其他插件协作
+
+1. [emjoi toolbar ](obsidian://show-plugin?id=obsidian-emoji-toolbar)快捷插入表情
+   ![](https://ghproxy.com/https://raw.githubusercontent.com/cumany/cumany/main/pic/202209092001600.gif)
+
+
+2.  [Obsidian-Table-Generator](https://github.com/Quorafind/Obsidian-Table-Generator/)  & [ob-table-enhance](https://github.com/Stardusten/ob-table-enhancer) 快捷插入表格并编辑
+   ![](https://ghproxy.com/https://raw.githubusercontent.com/cumany/cumany/main/pic/202209092008571.gif)
+
+> 上面插件均可从示例库获取，示例库的插件一般都经过了优化并修复了一些错误
+☟☟☟
+
 ### 完整示例库分享
 
 这是可以让你大开眼界的 Obsidian 示例库，里面有很多眼花缭乱的功能和示例，相信你看过一定会惊叹，这是 Obsidian 吗？

@@ -77,7 +77,23 @@ Please Refer: [How to install Obsidian Plugins](https://forum.obsidian.md/t/plug
    20. Adaptive shrinkage of toolbar icon width
        ![](https://ghproxy.com/https://raw.githubusercontent.com/cumany/cumany/main/pic/202209072157728.gif)
 
+
+
+Work with other plugins
+
+1. [emjoi toolbar ](obsidian://show-plugin?id=obsidian-emoji-toolbar)快捷插入表情
+   ![](https://ghproxy.com/https://raw.githubusercontent.com/cumany/cumany/main/pic/202209092001600.gif)
+
+
+2.  [Obsidian-Table-Generator](https://github.com/Quorafind/Obsidian-Table-Generator/)  & [ob-table-enhance](https://github.com/Stardusten/ob-table-enhancer) Quickly Insert a table and edit 
+   ![](https://ghproxy.com/https://raw.githubusercontent.com/cumany/cumany/main/pic/202209092008571.gif)
+
+> The above plugins are available from the example vault , all of which have been optimized and have some bugs fixed
+☟☟☟
+
 ### Full Vault showcase
 
 This is the Obsidian example vault is amazing, there are a lot of dazzling features and showcase, I believe you will wonder a bit, is this Obsidian?
 [Blue-topaz-examples](https://github.com/cumany/Blue-topaz-examples)
+
+
