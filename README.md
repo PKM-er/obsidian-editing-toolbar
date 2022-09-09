@@ -18,6 +18,7 @@ _[点击这里](./README-zh_cn.md)查看中文文档。_
   - [how-to-install](#how-to-install)
   - [Video Introduction](#video-introduction)
   - [Key Features](#key-features)
+    - [Work with other plugins](#work-with-other-plugins)
     - [Full Vault showcase](#full-vault-showcase)
 
 ## how-to-install
@@ -76,6 +77,21 @@ Please Refer: [How to install Obsidian Plugins](https://forum.obsidian.md/t/plug
        ![](https://ghproxy.com/https://raw.githubusercontent.com/cumany/cumany/main//pic/202209071731151.gif)
    20. Adaptive shrinkage of toolbar icon width
        ![](https://ghproxy.com/https://raw.githubusercontent.com/cumany/cumany/main/pic/202209072157728.gif)
+
+
+
+### Work with other plugins
+
+1. [emjoi toolbar ](obsidian://show-plugin?id=obsidian-emoji-toolbar)快捷插入表情
+   ![](https://ghproxy.com/https://raw.githubusercontent.com/cumany/cumany/main/pic/202209092001600.gif)
+
+
+2.  [Obsidian-Table-Generator](https://github.com/Quorafind/Obsidian-Table-Generator/)  & [ob-table-enhance](https://github.com/Stardusten/ob-table-enhancer) Quickly Insert a table and edit 
+   ![](https://ghproxy.com/https://raw.githubusercontent.com/cumany/cumany/main/pic/202209092008571.gif)
+
+> The above plugins are available from the example vault , all of which have been optimized and have some bugs fixed
+☟☟☟
+
 
 ### Full Vault showcase
 
