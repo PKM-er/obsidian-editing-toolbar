@@ -270,12 +270,12 @@ export class cMenuToolbarSettingTab extends PluginSettingTab {
      
 
               if (subresult) {
-
+                
                 const [removed] = subresult.splice(command.oldIndex, 1);
                 subresult.splice(command.newIndex, 0, removed);
                 this.plugin.saveSettings();
               }
-            }
+            } else
             if (command.to.className === "cMenuToolbarSettingsTabsContainer") {
       
               const arrayResult = this.plugin.settings.menuCommands;
@@ -287,7 +287,7 @@ export class cMenuToolbarSettingTab extends PluginSettingTab {
               const [removed] = subresult.splice(command.oldIndex, 1);
               arrayResult.splice(command.newIndex, 0, removed);
               this.plugin.saveSettings();
-            }
+            } else
             if (command.from.className === "cMenuToolbarSettingsTabsContainer") {
        
 

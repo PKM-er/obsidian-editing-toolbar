@@ -703,13 +703,15 @@ export function cMenuToolbarPopover(
         "cMenuToolbarModalBar"
       );
       setBottomValue(settings);
-      settings.cMenuVisibility == false
-        ? (cMenuToolbarModalBar.style.visibility = "hidden")
-        : settings.positionStyle == "following" ?
-          (cMenuToolbarModalBar.style.visibility = "hidden") : (cMenuToolbarModalBar.style.visibility = "visible");
-    } else {
-      selfDestruct();
-    }
+      
+        settings.cMenuVisibility == false
+          ? (cMenuToolbarModalBar.style.visibility = "hidden")
+          : settings.positionStyle == "following" ?
+            (cMenuToolbarModalBar?.style.visibility = "hidden") : (cMenuToolbarModalBar?.style.visibility = "visible");
+      } else {
+        selfDestruct();
+      }
+    
   }
   createMenu();
 }
