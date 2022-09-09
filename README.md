@@ -82,7 +82,7 @@ Please Refer: [How to install Obsidian Plugins](https://forum.obsidian.md/t/plug
 
 ### Work with other plugins
 
-1. [emjoi toolbar ](obsidian://show-plugin?id=obsidian-emoji-toolbar)快捷插入表情
+1. [emjoi toolbar ](obsidian://show-plugin?id=obsidian-emoji-toolbar) Quickly Insert a  emoji 
    ![](https://ghproxy.com/https://raw.githubusercontent.com/cumany/cumany/main/pic/202209092001600.gif)
 
 
