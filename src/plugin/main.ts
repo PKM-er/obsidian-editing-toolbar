@@ -10,6 +10,7 @@ import {
   SliderComponent,
   ToggleComponent,
   ButtonComponent,
+  requireApiVersion,
   App,
 } from "obsidian";
 import { wait } from "src/util/util";
@@ -27,6 +28,7 @@ import addIcons, {
 import { setMenuVisibility, setBottomValue } from "src/util/statusBarConstants";
 import { fullscreenMode, workplacefullscreenMode } from "src/util/fullscreen";
 import { t } from "src/translations/helper";
+
 
 export default class cMenuToolbarPlugin extends Plugin {
   app: App;
@@ -122,9 +124,8 @@ export default class cMenuToolbarPlugin extends Plugin {
     });
 
     document.addEventListener('mouseup', (e) => {
-
       if (e.button) {
-        if (window.isCTxt || window.isBgC|| window.isText) {
+        if (window.isCTxt || window.isBgC || window.isText) {
           QuiteFormatBrushes();
           window.newNotice = new Notice(t("Format Brush Off!"));
         }
@@ -134,31 +135,67 @@ export default class cMenuToolbarPlugin extends Plugin {
       //let cmEditor = view.sourceMode.cmEditor;
       let cmEditor = view.editor;
       if (cmEditor.hasFocus()) {
-        if (cmEditor.getSelection() == null ||cmEditor.getSelection() == "") {
-          return
-        } else {
-          if(this.settings.positionStyle == "following")
-          {
-            followingbar(this.settings)
+        if (this.settings.positionStyle == "following")
+          followingbar(this.settings)
+        else
+          if (cmEditor.getSelection() == null || cmEditor.getSelection() == "") {
+            return
+          } else {
+            if (window.isCTxt) {
+              Setfontcolor(app, this.settings.cMenuFontColor);
+            } else if (window.isBgC) {
+              Setbackgroundcolor(app, this.settings.cMenuBackgroundColor);
+            } else if (window.isText) {
+              FormatEraser();
+            }
+
           }
 
-          if (window.isCTxt) {
-            Setfontcolor(app, this.settings.cMenuFontColor);
-          } else if (window.isBgC) {
-            Setbackgroundcolor(app, this.settings.cMenuBackgroundColor);
-          }else if (window.isText) {
-            FormatEraser();
-          }
-
-        }
-
-      } else if (window.isCTxt || window.isBgC) {
+      } else if (window.isCTxt || window.isBgC || window.isText) {
         QuiteFormatBrushes();
         window.newNotice = new Notice(t("Format Brush Off!"));
 
       }
     });
+    if (requireApiVersion("0.15.0")) {
+      this.app.workspace.on('window-open', (leaf) => {
+        this.registerDomEvent(leaf.doc, 'mouseup', (e) => {
+          if (e.button) {
+            if (window.isCTxt || window.isBgC || window.isText) {
+              QuiteFormatBrushes();
+              window.newNotice = new Notice(t("Format Brush Off!"));
+            }
+          }
+          let view = this.app.workspace.getActiveViewOfType(MarkdownView);
+          if (!view) { return; };
+          //let cmEditor = view.sourceMode.cmEditor;
+          let cmEditor = view.editor;
+          if (cmEditor.hasFocus()) {
+            if (this.settings.positionStyle == "following")
+              followingbar(this.settings)
+            else
+              if (cmEditor.getSelection() == null || cmEditor.getSelection() == "") {
+                return
+              } else {
+                if (window.isCTxt) {
+                  Setfontcolor(app, this.settings.cMenuFontColor);
+                } else if (window.isBgC) {
+                  Setbackgroundcolor(app, this.settings.cMenuBackgroundColor);
+                } else if (window.isText) {
+                  FormatEraser();
+                }
 
+              }
+
+          } else if (window.isCTxt || window.isBgC || window.isText) {
+            QuiteFormatBrushes();
+            window.newNotice = new Notice(t("Format Brush Off!"));
+
+          }
+
+        });
+      });
+    }
     this.addSettingTab(new cMenuToolbarSettingTab(this.app, this));
     this.registerEvent(this.app.workspace.on("active-leaf-change", this.handlecMenuToolbar));
     this.registerEvent(this.app.workspace.on("window-open", this.handlecMenuToolbar_pop));
@@ -578,8 +615,8 @@ export default class cMenuToolbarPlugin extends Plugin {
           console.log(`%ccMenuToolbar refreshed`, "color: Violet");
         });
       });
-    
-    
+
+
       menu.addItem((item) => {
 
         item.setIcon("sliders")
@@ -620,7 +657,7 @@ export default class cMenuToolbarPlugin extends Plugin {
 
     if (this.settings.cMenuVisibility == true) {
       setTimeout(() => {
-
+        selfDestruct();
         cMenuToolbarPopover(this.app, this)
       }, 400);
 
