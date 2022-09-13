@@ -56,7 +56,8 @@ export function selfDestruct() {
   }
   if(rootSplits)
   rootSplits.forEach((rootSplit: WorkspaceParentExt) => {
-    clearToolbar(rootSplit.containerEl)
+    if(rootSplit?.containerEl)
+    clearToolbar(rootSplit?.containerEl)
   });
 
 }
