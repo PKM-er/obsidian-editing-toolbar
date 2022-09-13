@@ -1,5 +1,7 @@
-
+import  {requireApiVersion} from "obsidian"
+let activeDocument: Document;
 export const setMenuVisibility = (cMenuVisibility: boolean) => {
+  requireApiVersion("0.15.0")?activeDocument=activeWindow.document:activeDocument=window.document;
   let cMenuToolbarModalBar = activeDocument.getElementById("cMenuToolbarModalBar");
   if (cMenuToolbarModalBar) {
     cMenuVisibility == false
@@ -11,6 +13,7 @@ export const setMenuVisibility = (cMenuVisibility: boolean) => {
 export const setBottomValue = (
   settings: any
 ) => {
+  requireApiVersion("0.15.0")?activeDocument=activeWindow.document:activeDocument=window.document;
   let cMenuToolbarModalBar = activeDocument.getElementById("cMenuToolbarModalBar");
   if (cMenuToolbarModalBar) {
 

@@ -1,6 +1,7 @@
 
 import type cMenuToolbarPlugin from "src/plugin/main";
-import { App, Notice, Command, MarkdownView, ButtonComponent } from "obsidian";
+import { App, Notice, Command, requireApiVersion, MarkdownView, ButtonComponent, WorkspaceParent, WorkspaceWindow } from "obsidian";
+import { WorkspaceExt, WorkspaceItemExt, WorkspaceParentExt } from 'src/util/obsidian-ext';
 import { setBottomValue } from "src/util/statusBarConstants";
 import { backcolorpicker, colorpicker } from "src/util/util";
 import { t } from "src/translations/helper";
@@ -10,28 +11,54 @@ window.ISMORE = false;
 window.isBgC = false;
 window.isCTxt = false;
 window.isText = false;
+let activeDocument: Document;
 
+export function getRootSplits(): WorkspaceParentExt[] {
+  const rootSplits: WorkspaceParentExt[] = [];
 
+  // push the main window's root split to the list
+  rootSplits.push(app.workspace.rootSplit as WorkspaceParent as WorkspaceParentExt)
+
+  // @ts-ignore floatingSplit is undocumented
+  const floatingSplit = app.workspace.floatingSplit as WorkspaceParentExt;
+  floatingSplit?.children.forEach((child: WorkspaceParentExt) => {
+    // if this is a window, push it to the list 
+    if (child instanceof WorkspaceWindow) {
+      rootSplits.push(child);
+    }
+  });
+
+  return rootSplits;
+}
 export function selfDestruct() {
-  let cMenuToolbarModalBar = activeDocument.getElementById(
-    "cMenuToolbarModalBar"
-  );
-  let cMenuToolbarPopoverBar = activeDocument.getElementById(
-    "cMenuToolbarPopoverBar"
-  );
+  const rootSplits = getRootSplits();
+  const clearToolbar = (leaf: HTMLElement) => {
 
-  if (cMenuToolbarModalBar) {
-    if (cMenuToolbarModalBar.firstChild) {
-      cMenuToolbarModalBar.removeChild(cMenuToolbarModalBar.firstChild);
+    let cMenuToolbarModalBar = leaf.querySelector(
+      "#cMenuToolbarModalBar"
+    );
+    let cMenuToolbarPopoverBar = leaf.querySelector(
+      "#cMenuToolbarModalBar"
+    );
+
+    if (cMenuToolbarModalBar) {
+      if (cMenuToolbarModalBar.firstChild) {
+        cMenuToolbarModalBar.removeChild(cMenuToolbarModalBar.firstChild);
+      }
+      cMenuToolbarModalBar.remove();
     }
-    cMenuToolbarModalBar.remove();
-  }
-  if (cMenuToolbarPopoverBar) {
-    if (cMenuToolbarPopoverBar.firstChild) {
-      cMenuToolbarPopoverBar.removeChild(cMenuToolbarPopoverBar.firstChild);
+    if (cMenuToolbarPopoverBar) {
+      if (cMenuToolbarPopoverBar.firstChild) {
+        cMenuToolbarPopoverBar.removeChild(cMenuToolbarPopoverBar.firstChild);
+      }
+      cMenuToolbarPopoverBar.remove();
     }
-    cMenuToolbarPopoverBar.remove();
   }
+  if(rootSplits)
+  rootSplits.forEach((rootSplit: WorkspaceParentExt) => {
+    clearToolbar(rootSplit.containerEl)
+  });
+
 }
 export const getcoords = (editor: any) => {
   const cursor = editor.getCursor("from");
@@ -77,6 +104,7 @@ export function CreateDiv(selector: string) {
 }
 
 export function tabCell(app: App, plugin: cMenuToolbarPlugin, el: string) {
+  requireApiVersion("0.15.0") ? activeDocument = activeWindow.document : activeDocument = window.document;
   let tab = activeDocument.getElementById(el);
   // @ts-ignore
   let rows = tab.rows;
@@ -223,6 +251,7 @@ export const colorHex = function (color: string) {
 export function CreateMoreMenu(selector: HTMLDivElement) {
   // let  issubmenu= activeDocument.getElementById("cMenuToolbarModalBar").querySelector('.'+selector);
   // let barHeight = activeDocument.getElementById("cMenuToolbarModalBar").offsetHeight;
+  requireApiVersion("0.15.0") ? activeDocument = activeWindow.document : activeDocument = window.document;
   if (!window.ISMORE) return;
   let cMoreMenu = selector.createEl("span");
   cMoreMenu.addClass("more-menu");
@@ -337,6 +366,7 @@ export function FormatEraser() {
   };
 }
 export const followingbar = (settings: cMenuToolbarSettings) => {
+
   let isource = getModestate(app);
   let cMenuToolbarModalBar = activeDocument.getElementById(
     "cMenuToolbarModalBar"
@@ -350,25 +380,22 @@ export const followingbar = (settings: cMenuToolbarSettings) => {
 
 
     if (cMenuToolbarModalBar) {
-      if (!isource) {
-        cMenuToolbarModalBar.style.visibility = "hidden";
-        return;
-      }
-      let selection = editor.somethingSelected();
 
+      let selection = editor.somethingSelected();
+      let cMenuToolbarRows = settings.cMenuNumRows;
       selection
         ? (cMenuToolbarModalBar.style.visibility = "visible")
         : (cMenuToolbarModalBar.style.visibility = "hidden");
 
       let ElementCount = cMenuToolbarModalBar.childElementCount;
       if (ElementCount) {
-        ElementCount >= 40
-          ? cMenuToolbarModalBar.addClass("cMenuToolbarGrid")
-          : cMenuToolbarModalBar.addClass("cMenuToolbarFlex");
+        ElementCount == cMenuToolbarRows
+          ? (cMenuToolbarModalBar.addClass("cMenuToolbarGrid"),cMenuToolbarModalBar.removeClass("cMenuToolbarFlex"))
+          : (cMenuToolbarModalBar.addClass("cMenuToolbarFlex"),cMenuToolbarModalBar.removeClass("cMenuToolbarGrid"))
       } else {
         ElementCount = 0;
       }
-      let cMenuToolbarRows = settings.cMenuNumRows;
+     
       let cmheight = Math.ceil(ElementCount / cMenuToolbarRows);
 
       cMenuToolbarModalBar.style.height = 40 * cmheight + "px";
@@ -393,11 +420,15 @@ export const followingbar = (settings: cMenuToolbarSettings) => {
       let bodywidth = activeDocument.body.offsetWidth;
       /*添加判断边界 */
       cMenuToolbarModalBar.style.top = coords.top - barHeight - 30 + "px";
-      cMenuToolbarModalBar.style.left =
-        coords.left - leftwidth - rleftwidth + 20 + "px";
+      let leftpx = coords.left - leftwidth - rleftwidth + 20;
+  
       if (coords.left + barwidth + 15 > bodywidth)
-        cMenuToolbarModalBar.style.left = coords.left - leftwidth - rleftwidth - barwidth / 1.5 - 40 + "px";
+        leftpx = coords.left - leftwidth - rleftwidth - barwidth / 1.3 - 60;
+      if (leftpx < 0) leftpx = 0;
+      cMenuToolbarModalBar.style.left = leftpx + "px";
     }
+
+
   } else
     cMenuToolbarModalBar.style.visibility = "hidden"
 }
@@ -406,7 +437,7 @@ export function cMenuToolbarPopover(
   plugin: cMenuToolbarPlugin
 ): void {
   let settings = plugin.settings;
-
+  requireApiVersion("0.15.0") ? activeDocument = activeWindow.document : activeDocument = window.document;
   function createMenu() {
     const generateMenu = () => {
       let btnwidth = 0;
@@ -553,14 +584,14 @@ export function cMenuToolbarPopover(
               : button2.setIcon(item.icon);
 
             btnwidth += 26 + 36;
-            let Selection = createDiv("triangle-icon");
-            let submenu2 = Selection.createEl("div");
+            //  let Selection = createDiv("triangle-icon");
+            let submenu2 = createEl("div");
             submenu2.addClass("subitem");
 
             if (submenu2) {
               submenu2.innerHTML = colorpicker;
 
-              button2.buttonEl.insertAdjacentElement("afterbegin", Selection);
+              button2.buttonEl.insertAdjacentElement("afterbegin", submenu2);
               if (settings.cMenuFontColor)
                 activeDocument.getElementById(
                   "change-font-color-icon"
@@ -604,14 +635,14 @@ export function cMenuToolbarPopover(
               : button2.setIcon(item.icon);
 
             btnwidth += 26 + 36;
-            let Selection = CreateDiv("triangle-icon");
-            let submenu2 = Selection.createEl("div");
+            //  let Selection = CreateDiv("triangle-icon");
+            let submenu2 = createEl("div");
             submenu2.addClass("subitem");
             //   console.log(btnwidth,item.name)
             if (submenu2) {
               submenu2.innerHTML = backcolorpicker;
 
-              button2.buttonEl.insertAdjacentElement("afterbegin", Selection);
+              button2.buttonEl.insertAdjacentElement("afterbegin", submenu2);
               if (plugin.settings.cMenuBackgroundColor)
                 activeDocument.getElementById(
                   "change-background-color-icon"
@@ -703,15 +734,15 @@ export function cMenuToolbarPopover(
         "cMenuToolbarModalBar"
       );
       setBottomValue(settings);
-      
-        settings.cMenuVisibility == false
-          ? (cMenuToolbarModalBar.style.visibility = "hidden")
-          : settings.positionStyle == "following" ?
-            (cMenuToolbarModalBar?.style.visibility = "hidden") : (cMenuToolbarModalBar?.style.visibility = "visible");
-      } else {
-        selfDestruct();
-      }
-    
+
+      settings.cMenuVisibility == false
+        ? (cMenuToolbarModalBar.style.visibility = "hidden")
+        : settings.positionStyle == "following" ?
+          (cMenuToolbarModalBar?.style.visibility = "hidden") : (cMenuToolbarModalBar?.style.visibility = "visible");
+    } else {
+      selfDestruct();
+    }
+
   }
   createMenu();
 }

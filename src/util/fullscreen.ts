@@ -1,7 +1,8 @@
-import { App,MarkdownView } from "obsidian";
-
+import { App,MarkdownView,requireApiVersion } from "obsidian";
+let activeDocument: Document;
 export function workplacefullscreenMode(app: App)
 {
+    requireApiVersion("0.15.0")?activeDocument=activeWindow.document:activeDocument=window.document;
  let rightleaf= activeDocument.body?.querySelector(" .mod-right-split.is-collapsed");      
  let leftleaf= activeDocument.body?.querySelector(" .mod-left-split.is-collapsed");    
  if(rightleaf&&!leftleaf)   //@ts-ignore 

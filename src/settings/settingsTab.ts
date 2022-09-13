@@ -106,7 +106,7 @@ export class cMenuToolbarSettingTab extends PluginSettingTab {
         )
       .addSlider((slider) => {
         slider
-          .setLimits(1, 18, 1)
+          .setLimits(1, 32, 1)
           .setValue(this.plugin.settings.cMenuNumRows)
           .onChange(
             debounce(
