@@ -4,7 +4,7 @@ export default {
   'Choose where Editing Toolbar will append upon regeneration. To see the change, hit the refresh button below, or in the status bar menu.': '工具栏在Obsidian中的追加的位置，只对固定和跟随模式有效。如果你遇到工具栏显示问题，可以选择body试试。请点击下面或者状态栏菜单中的刷新按钮生效。',
   'Editing Toolbar aesthetic': '工具栏样式',
   'Choose between a glass morphism ,tiny and default style for Editing Toolbar. To see the change, hit the refresh button below, or in the status bar menu.': '样式有毛玻璃,简约和默认风格选择。请点击下面或者状态栏菜单中的刷新按钮生效。',
-  'Editing Toolbar posotion': '工具栏位置',
+  'Editing Toolbar position': '工具栏位置',
   'Choose between fixed position or cursor following mode.': '在固定位置,光标跟随模式或者置顶模式之间进行选择。',
   'Editing Toolbar columns': '工具栏栏目数',
   'Choose the number of columns per row to display on Editing Toolbar. To see the change, hit the refresh button below, or in the status bar menu.': '选择在Editing Toolbar上显示的每行的列数。',

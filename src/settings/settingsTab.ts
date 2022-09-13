@@ -82,7 +82,7 @@ export class cMenuToolbarSettingTab extends PluginSettingTab {
           });
       });
     new Setting(containerEl)
-      .setName(t('Editing Toolbar posotion')
+      .setName(t('Editing Toolbar position')
       )
       .setDesc(t('Choose between fixed position or cursor following mode.')
       )

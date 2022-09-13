@@ -3,7 +3,7 @@ export default {
 'Choose where Editing Toolbar will append upon regeneration. To see the change, hit the refresh button below, or in the status bar menu.':'Choose where Editing Toolbar will append upon regeneration. To see the change, hit the refresh button below, or in the status bar menu.',
 'Editing Toolbar aesthetic':'Editing Toolbar aesthetic',
 'Choose between a glass morphism ,tiny and default style for Editing Toolbar. To see the change, hit the refresh button below, or in the status bar menu.':'Choose between a glass morphism ,tiny and default style for Editing Toolbar. To see the change, hit the refresh button below, or in the status bar menu.',
-'Editing Toolbar posotion':'Editing Toolbar posotion',
+'Editing Toolbar position':'Editing Toolbar position',
 'Choose between fixed position or cursor following mode.':'Choose between fixed position or cursor following mode.',
 'Editing Toolbar columns':'Editing Toolbar columns',
 'Choose the number of columns per row to display on Editing Toolbar. To see the change, hit the refresh button below, or in the status bar menu.':'Choose the number of columns per row to display on Editing Toolbar. To see the change, hit the refresh button below, or in the status bar menu.',
