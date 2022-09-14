@@ -124,8 +124,7 @@ export default class cMenuToolbarPlugin extends Plugin {
         this.setupStatusBar();
       });
     });
-
-    document.addEventListener('mouseup', (e) => {
+    this.registerDomEvent(activeDocument, "mouseup", async (e) => {
       if (e.button) {
         if (window.isCTxt || window.isBgC || window.isText) {
           QuiteFormatBrushes();
@@ -134,13 +133,15 @@ export default class cMenuToolbarPlugin extends Plugin {
       }
       let view = this.app.workspace.getActiveViewOfType(MarkdownView);
       if (!view) { return; };
+
       //let cmEditor = view.sourceMode.cmEditor;
       let cmEditor = view.editor;
       if (cmEditor.hasFocus()) {
-        if (this.settings.positionStyle == "following")
-          followingbar(this.settings)
-        else
+        let cMenuToolbarModalBar = activeDocument.getElementById(
+          "cMenuToolbarModalBar"
+        );
           if (cmEditor.getSelection() == null || cmEditor.getSelection() == "") {
+            this.settings.positionStyle == "following"?cMenuToolbarModalBar.style.visibility = "hidden":true;
             return
           } else {
             if (window.isCTxt) {
@@ -149,10 +150,15 @@ export default class cMenuToolbarPlugin extends Plugin {
               Setbackgroundcolor(app, this.settings.cMenuBackgroundColor);
             } else if (window.isText) {
               FormatEraser();
+            } else if (this.settings.positionStyle == "following") {
+              this.registerDomEvent(activeDocument, "keydown", async (e) => {
+                if (cMenuToolbarModalBar)
+                  cMenuToolbarModalBar.style.visibility = "hidden"
+              })
+            
+              followingbar(this.settings)
             }
-
           }
-
       } else if (window.isCTxt || window.isBgC || window.isText) {
         QuiteFormatBrushes();
         window.newNotice = new Notice(t("Format Brush Off!"));
@@ -168,6 +174,7 @@ export default class cMenuToolbarPlugin extends Plugin {
               window.newNotice = new Notice(t("Format Brush Off!"));
             }
           }
+
           let view = this.app.workspace.getActiveViewOfType(MarkdownView);
           if (!view) { return; };
           //let cmEditor = view.sourceMode.cmEditor;
@@ -567,7 +574,7 @@ export default class cMenuToolbarPlugin extends Plugin {
 
       const menu = new Menu().addItem((item) => {
         item.setTitle(t("Hide & Show"));
-        item.setSection("settings");
+        requireApiVersion("0.15.0")?item.setSection("settings"):true;
         const itemDom = (item as any).dom as HTMLElement;
         const toggleComponent = new ToggleComponent(itemDom)
           .setValue(this.settings.cMenuVisibility)
@@ -599,7 +606,7 @@ export default class cMenuToolbarPlugin extends Plugin {
       menu.addItem((item) => {
 
         item.setIcon("cMenuToolbarAdd");
-        item.setSection("ButtonAdd");
+        requireApiVersion("0.15.0")?item.setSection("ButtonAdd"):true;
         item.onClick(() => {
           new CommandPicker(this).open();
         });
@@ -609,8 +616,8 @@ export default class cMenuToolbarPlugin extends Plugin {
       menu.addItem((item) => {
 
         item.setIcon("cMenuToolbarReload");
-
-        item.setSection("ButtonAdd");
+        requireApiVersion("0.15.0")?item.setSection("ButtonAdd"):true;
+      
         item.onClick(() => {
           setTimeout(() => {
             dispatchEvent(new Event("cMenuToolbar-NewCommand"));
@@ -623,8 +630,7 @@ export default class cMenuToolbarPlugin extends Plugin {
       menu.addItem((item) => {
 
         item.setIcon("sliders")
-
-        item.setSection("ButtonAdd");
+        requireApiVersion("0.15.0")?item.setSection("ButtonAdd"):true;
         item.onClick(() => {
 
           new openSlider(this.app, this).open();
@@ -681,14 +687,14 @@ export default class cMenuToolbarPlugin extends Plugin {
       );
       if (!getModestate(app)) //no source mode
       {
-          if (cMenuToolbarModalBar) {
-            cMenuToolbarModalBar.style.visibility = "hidden"
-          }
+        if (cMenuToolbarModalBar) {
+          cMenuToolbarModalBar.style.visibility = "hidden"
         }
-       else {
+      }
+      else {
         if (cMenuToolbarModalBar) {
           cMenuToolbarModalBar.style.visibility = "visibility"
-        }else {
+        } else {
           setTimeout(() => {
             dispatchEvent(new Event("cMenuToolbar-NewCommand"));
           }, 100)
@@ -708,7 +714,7 @@ export default class cMenuToolbarPlugin extends Plugin {
         let currentleaf = activeDocument.body
           ?.querySelector(".workspace-leaf.mod-active");
 
-        let leafwidth = currentleaf?.querySelector<HTMLElement>(".markdown-source-view").offsetWidth??0
+        let leafwidth = currentleaf?.querySelector<HTMLElement>(".markdown-source-view").offsetWidth ?? 0
 
         if (this.settings.cMenuWidth && leafwidth) {
           if ((leafwidth - this.settings.cMenuWidth) < 78 && (leafwidth > this.settings.cMenuWidth))

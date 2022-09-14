@@ -58,7 +58,7 @@ export class ChooseFromIconList extends FuzzySuggestModal<string> {
       if (this.command.icon) //存在就修改不存在新增
       {
         let menuID = findmenuID(this.plugin, this.command, this.issub)
-        console.log(menuID);
+       // console.log(menuID);
         this.issub ? this.plugin.settings.menuCommands[menuID['index']].SubmenuCommands[menuID['subindex']].icon = item : this.plugin.settings.menuCommands[menuID['index']].icon = item;
       } else {
         this.command.icon = item;

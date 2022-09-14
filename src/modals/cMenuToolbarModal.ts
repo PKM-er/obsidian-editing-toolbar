@@ -38,7 +38,7 @@ export function selfDestruct() {
       "#cMenuToolbarModalBar"
     );
     let cMenuToolbarPopoverBar = leaf.querySelector(
-      "#cMenuToolbarModalBar"
+      "#cMenuToolbarPopoverBar"
     );
 
     if (cMenuToolbarModalBar) {
@@ -54,20 +54,20 @@ export function selfDestruct() {
       cMenuToolbarPopoverBar.remove();
     }
   }
-  if(rootSplits)
-  rootSplits.forEach((rootSplit: WorkspaceParentExt) => {
-    if(rootSplit?.containerEl)
-    clearToolbar(rootSplit?.containerEl)
-  });
+  if (rootSplits)
+    rootSplits.forEach((rootSplit: WorkspaceParentExt) => {
+      if (rootSplit?.containerEl)
+        clearToolbar(rootSplit?.containerEl)
+    });
 
 }
 export const getcoords = (editor: any) => {
-  const cursor = editor.getCursor("from");
+  const cursorFrom = editor.getCursor("head");
 
   let coords;
   if (editor.cursorCoords) coords = editor.cursorCoords(true, "window");
   else if (editor.coordsAtPos) {
-    const offset = editor.posToOffset(cursor);
+    const offset = editor.posToOffset(cursorFrom);
     coords = editor.cm.coordsAtPos?.(offset) ?? editor.coordsAtPos(offset);
   } else return;
 
@@ -377,7 +377,6 @@ export const followingbar = (settings: cMenuToolbarSettings) => {
     const activeLeaf = app.workspace.getActiveViewOfType(MarkdownView);
     const view = activeLeaf;
     const editor = view.editor;
-    let coords = getcoords(editor);
 
 
     if (cMenuToolbarModalBar) {
@@ -391,12 +390,12 @@ export const followingbar = (settings: cMenuToolbarSettings) => {
       let ElementCount = cMenuToolbarModalBar.childElementCount;
       if (ElementCount) {
         ElementCount == cMenuToolbarRows
-          ? (cMenuToolbarModalBar.addClass("cMenuToolbarGrid"),cMenuToolbarModalBar.removeClass("cMenuToolbarFlex"))
-          : (cMenuToolbarModalBar.addClass("cMenuToolbarFlex"),cMenuToolbarModalBar.removeClass("cMenuToolbarGrid"))
+          ? (cMenuToolbarModalBar.addClass("cMenuToolbarGrid"), cMenuToolbarModalBar.removeClass("cMenuToolbarFlex"))
+          : (cMenuToolbarModalBar.addClass("cMenuToolbarFlex"), cMenuToolbarModalBar.removeClass("cMenuToolbarGrid"))
       } else {
         ElementCount = 0;
       }
-     
+
       let cmheight = Math.ceil(ElementCount / cMenuToolbarRows);
 
       cMenuToolbarModalBar.style.height = 40 * cmheight + "px";
@@ -419,14 +418,21 @@ export const followingbar = (settings: cMenuToolbarSettings) => {
       ).offsetHeight;
 
       let bodywidth = activeDocument.body.offsetWidth;
+      let coords = getcoords(editor);
+      let cursor_head = editor.getCursor("head").ch
+      let cursor_from = editor.getCursor("from").ch
+    
+      let toppx = 0;
       /*添加判断边界 */
-      cMenuToolbarModalBar.style.top = coords.top - barHeight - 30 + "px";
       let leftpx = coords.left - leftwidth - rleftwidth + 20;
-  
       if (coords.left + barwidth + 15 > bodywidth)
         leftpx = coords.left - leftwidth - rleftwidth - barwidth / 1.3 - 60;
+      cursor_head == cursor_from ?
+        toppx = coords.top - barHeight - 30 : (toppx = coords.top, leftpx = leftpx - 40);
       if (leftpx < 0) leftpx = 0;
-      cMenuToolbarModalBar.style.left = leftpx + "px";
+      cMenuToolbarModalBar.style.visibility == "visible" ?
+        (cMenuToolbarModalBar.style.left = leftpx + "px", cMenuToolbarModalBar.style.top = toppx + "px") : true;
+
     }
 
 
@@ -584,7 +590,7 @@ export function cMenuToolbarPopover(
               ? (button2.buttonEl.innerHTML = item.icon)
               : button2.setIcon(item.icon);
 
-            btnwidth += 26 + 36;
+            btnwidth += 26;
             //  let Selection = createDiv("triangle-icon");
             let submenu2 = createEl("div");
             submenu2.addClass("subitem");
@@ -635,7 +641,7 @@ export function cMenuToolbarPopover(
               ? (button2.buttonEl.innerHTML = item.icon)
               : button2.setIcon(item.icon);
 
-            btnwidth += 26 + 36;
+            btnwidth += 26;
             //  let Selection = CreateDiv("triangle-icon");
             let submenu2 = createEl("div");
             submenu2.addClass("subitem");
