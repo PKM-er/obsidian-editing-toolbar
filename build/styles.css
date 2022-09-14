@@ -9,6 +9,7 @@
   border-radius: 6px;
   position: absolute;
   transition: 200ms ease;
+  -webkit-transition: 200ms ease;
   min-width: fit-content;
   justify-content: space-around;
   z-index: var(--layer-status-bar);
@@ -425,6 +426,7 @@ font-size: 10px;
     z-index: var(--layer-menu);
     user-select: none;
     transform: translateY(90%) translateX(-40%);
+    -webkit-transform: translateY(90%) translateX(-40%);
     display: flex;
     
 }
@@ -456,6 +458,7 @@ font-size: 10px;
  
  visibility:hidden;
  transition: all 0.3s linear;
+ -webkit-transition:  all 0.3s linear;
 }
 
 
@@ -496,11 +499,13 @@ bottom:calc(100% + 1em);
 {
   visibility:hidden;
   transition: all 0.3s linear;
+  -webkit-transition:  all 0.3s linear;
  }
 
 :is(#cMenuToolbarModalBar,#cMenuToolbarPopoverBar) button.cMenuToolbarCommandsubItem-font-color .subitem:hover  {
   visibility:visible;
   transition: all 0.3s linear;
+  -webkit-transition:  all 0.3s linear;
  }
 
 
@@ -508,10 +513,12 @@ bottom:calc(100% + 1em);
  
   visibility:visible;
  transition: all 0.3s linear;
+ -webkit-transition:  all 0.3s linear;
 }
 :is(#cMenuToolbarModalBar,#cMenuToolbarPopoverBar) button[class^=cMenuToolbarCommandsubItem] >.subitem:hover  {
   visibility:visible;
   transition: all 0.3s linear;
+  -webkit-transition:  all 0.3s linear;
  }
 
  .cMenuToolbarCommandsubItem-font-color button
@@ -574,6 +581,7 @@ flex: 0;
 .setting-item button.cMenuToolbarSettingsIcon{
   display: block;
   transform: translateX(-30%); 
+  -webkit-transform: translateX(-30%); 
 }
 .setting-item button.cMenuToolbarSettingsIcon:empty::before{
  content: "❗";
@@ -678,6 +686,7 @@ background-color:transparent !important;
     height: 38px;
     align-items: center;
     transition: all 0.2s linear;
+    -webkit-transition:  all 0.2s linear;
     
 }
 
@@ -700,6 +709,7 @@ font-size: 10px;
     justify-content: center;
     align-items: center;
     transition: all 0.2s linear;
+    -webkit-transition:  all 0.2s linear;
 
  
 
@@ -726,6 +736,7 @@ font-size: 10px;
       margin-left: auto;
       margin-right: 25px;
       transition: all 0.1s linear;
+      -webkit-transition:  all 0.1s linear;
       margin-top: 32px;
     position: absolute;
     right: 0;
@@ -752,6 +763,7 @@ margin-left: 4px;
     justify-content: center;
     align-items: center;
     transition: all 0.2s linear;
+    -webkit-transition:  all 0.2s linear;
    
 }
 #cMenuToolbarPopoverBar :is(.cMenuToolbarCommandItem,button[class^=cMenuToolbarCommandsubItem]):hover{
