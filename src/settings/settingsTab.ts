@@ -79,6 +79,9 @@ export class cMenuToolbarSettingTab extends PluginSettingTab {
           .onChange((aestheticStyle: string) => {
             this.plugin.settings.aestheticStyle = aestheticStyle;
             this.plugin.saveSettings();
+            setTimeout(() => {
+              dispatchEvent(new Event("cMenuToolbar-NewCommand"));
+            }, 100);
           });
       });
     new Setting(containerEl)
@@ -98,6 +101,8 @@ export class cMenuToolbarSettingTab extends PluginSettingTab {
             dispatchEvent(new Event("cMenuToolbar-NewCommand"));
           });
       });
+    if(this.plugin.settings.positionStyle == "fixed")
+    {
     new Setting(containerEl)
       .setName(t('Editing Toolbar columns')
       )
@@ -120,6 +125,7 @@ export class cMenuToolbarSettingTab extends PluginSettingTab {
           )
           .setDynamicTooltip();
       });
+    }
     new Setting(containerEl)
       .setName(t('Editing Toolbar refresh')
       )

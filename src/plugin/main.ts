@@ -17,7 +17,7 @@ import { wait } from "src/util/util";
 import { appIcons } from "src/icons/appIcons";
 import { CommandPicker, openSlider } from "src/modals/suggesterModals";
 import { cMenuToolbarSettingTab } from "src/settings/settingsTab";
-import { selfDestruct, cMenuToolbarPopover, getModestate, QuiteFormatBrushes, Setfontcolor, Setbackgroundcolor, SetHeader, followingbar, FormatEraser } from "src/modals/cMenuToolbarModal";
+import { selfDestruct, cMenuToolbarPopover, getModestate, QuiteFormatBrushes, Setfontcolor, Setbackgroundcolor, SetHeader, followingbar, FormatEraser, isExistoolbar, resetToolbar } from "src/modals/cMenuToolbarModal";
 import { cMenuToolbarSettings, DEFAULT_SETTINGS } from "src/settings/settingsData";
 import addIcons, {
   addFeatherIcons,
@@ -124,7 +124,28 @@ export default class cMenuToolbarPlugin extends Plugin {
         this.setupStatusBar();
       });
     });
-    this.registerDomEvent(activeDocument, "mouseup", async (e) => {
+
+    this.init_evt(activeDocument);
+    if (requireApiVersion("0.15.0")) {
+      this.app.workspace.on('window-open', (leaf) => {
+        this.init_evt(leaf.doc)
+      });
+    }
+    this.addSettingTab(new cMenuToolbarSettingTab(this.app, this));
+    this.registerEvent(this.app.workspace.on("active-leaf-change", this.handlecMenuToolbar));
+    this.registerEvent(this.app.workspace.on("window-open", this.handlecMenuToolbar_pop));
+    this.registerEvent(this.app.workspace.on("layout-change", this.handlecMenuToolbar_layout));
+    this.registerEvent(this.app.workspace.on("resize", this.handlecMenuToolbar_resize));
+    if (this.settings.cMenuVisibility == true) {
+      setTimeout(() => {
+        dispatchEvent(new Event("cMenuToolbar-NewCommand"));
+      }, 100)
+    }
+
+  }
+
+  init_evt(container: Document) {
+    this.registerDomEvent(container, "mouseup", async (e: { button: any; }) => {
       if (e.button) {
         if (window.isCTxt || window.isBgC || window.isText) {
           QuiteFormatBrushes();
@@ -137,86 +158,38 @@ export default class cMenuToolbarPlugin extends Plugin {
       //let cmEditor = view.sourceMode.cmEditor;
       let cmEditor = view.editor;
       if (cmEditor.hasFocus()) {
-        let cMenuToolbarModalBar = activeDocument.getElementById(
-          "cMenuToolbarModalBar"
-        );
-          if (cmEditor.getSelection() == null || cmEditor.getSelection() == "") {
-            this.settings.positionStyle == "following"?cMenuToolbarModalBar.style.visibility = "hidden":true;
-            return
-          } else {
-            if (window.isCTxt) {
-              Setfontcolor(app, this.settings.cMenuFontColor);
-            } else if (window.isBgC) {
-              Setbackgroundcolor(app, this.settings.cMenuBackgroundColor);
-            } else if (window.isText) {
-              FormatEraser();
-            } else if (this.settings.positionStyle == "following") {
-              this.registerDomEvent(activeDocument, "keydown", async (e) => {
+        let cMenuToolbarModalBar = isExistoolbar(this.settings)
+
+        if (cmEditor.getSelection() == null || cmEditor.getSelection() == "") {
+          if (cMenuToolbarModalBar)
+            this.settings.positionStyle == "following" ? cMenuToolbarModalBar.style.visibility = "hidden" : true;
+          return
+        } else {
+          if (window.isCTxt) {
+            Setfontcolor(app, this.settings.cMenuFontColor);
+          } else if (window.isBgC) {
+            Setbackgroundcolor(app, this.settings.cMenuBackgroundColor);
+          } else if (window.isText) {
+            FormatEraser();
+          } else if (this.settings.positionStyle == "following") {
+            this.registerDomEvent(activeDocument, "keydown", async (e) => {
+              if (!e.shiftKey) {
                 if (cMenuToolbarModalBar)
                   cMenuToolbarModalBar.style.visibility = "hidden"
-              })
-            
-              followingbar(this.settings)
-            }
+              }
+
+            })
+
+            followingbar(this.settings)
           }
+        }
       } else if (window.isCTxt || window.isBgC || window.isText) {
         QuiteFormatBrushes();
         window.newNotice = new Notice(t("Format Brush Off!"));
 
       }
     });
-    if (requireApiVersion("0.15.0")) {
-      this.app.workspace.on('window-open', (leaf) => {
-        this.registerDomEvent(leaf.doc, 'mouseup', (e) => {
-          if (e.button) {
-            if (window.isCTxt || window.isBgC || window.isText) {
-              QuiteFormatBrushes();
-              window.newNotice = new Notice(t("Format Brush Off!"));
-            }
-          }
-
-          let view = this.app.workspace.getActiveViewOfType(MarkdownView);
-          if (!view) { return; };
-          //let cmEditor = view.sourceMode.cmEditor;
-          let cmEditor = view.editor;
-          if (cmEditor.hasFocus()) {
-            if (this.settings.positionStyle == "following")
-              followingbar(this.settings)
-            else
-              if (cmEditor.getSelection() == null || cmEditor.getSelection() == "") {
-                return
-              } else {
-                if (window.isCTxt) {
-                  Setfontcolor(app, this.settings.cMenuFontColor);
-                } else if (window.isBgC) {
-                  Setbackgroundcolor(app, this.settings.cMenuBackgroundColor);
-                } else if (window.isText) {
-                  FormatEraser();
-                }
-
-              }
-
-          } else if (window.isCTxt || window.isBgC || window.isText) {
-            QuiteFormatBrushes();
-            window.newNotice = new Notice(t("Format Brush Off!"));
-
-          }
-
-        });
-      });
-    }
-    this.addSettingTab(new cMenuToolbarSettingTab(this.app, this));
-    this.registerEvent(this.app.workspace.on("active-leaf-change", this.handlecMenuToolbar));
-    this.registerEvent(this.app.workspace.on("window-open", this.handlecMenuToolbar_pop));
-    this.registerEvent(this.app.workspace.on("layout-change", this.handlecMenuToolbar_layout));
-    this.registerEvent(this.app.workspace.on("resize", this.handlecMenuToolbar_resize));
-    setTimeout(() => {
-      dispatchEvent(new Event("cMenuToolbar-NewCommand"));
-    }, 100)
-
-
   }
-
   generateCommands() {
     //Hide-show menu
     this.addCommand({
@@ -574,7 +547,7 @@ export default class cMenuToolbarPlugin extends Plugin {
 
       const menu = new Menu().addItem((item) => {
         item.setTitle(t("Hide & Show"));
-        requireApiVersion("0.15.0")?item.setSection("settings"):true;
+        requireApiVersion("0.15.0") ? item.setSection("settings") : true;
         const itemDom = (item as any).dom as HTMLElement;
         const toggleComponent = new ToggleComponent(itemDom)
           .setValue(this.settings.cMenuVisibility)
@@ -606,7 +579,7 @@ export default class cMenuToolbarPlugin extends Plugin {
       menu.addItem((item) => {
 
         item.setIcon("cMenuToolbarAdd");
-        requireApiVersion("0.15.0")?item.setSection("ButtonAdd"):true;
+        requireApiVersion("0.15.0") ? item.setSection("ButtonAdd") : true;
         item.onClick(() => {
           new CommandPicker(this).open();
         });
@@ -616,8 +589,8 @@ export default class cMenuToolbarPlugin extends Plugin {
       menu.addItem((item) => {
 
         item.setIcon("cMenuToolbarReload");
-        requireApiVersion("0.15.0")?item.setSection("ButtonAdd"):true;
-      
+        requireApiVersion("0.15.0") ? item.setSection("ButtonAdd") : true;
+
         item.onClick(() => {
           setTimeout(() => {
             dispatchEvent(new Event("cMenuToolbar-NewCommand"));
@@ -630,7 +603,7 @@ export default class cMenuToolbarPlugin extends Plugin {
       menu.addItem((item) => {
 
         item.setIcon("sliders")
-        requireApiVersion("0.15.0")?item.setSection("ButtonAdd"):true;
+        requireApiVersion("0.15.0") ? item.setSection("ButtonAdd") : true;
         item.onClick(() => {
 
           new openSlider(this.app, this).open();
@@ -659,10 +632,15 @@ export default class cMenuToolbarPlugin extends Plugin {
   handlecMenuToolbar = () => {
 
     if (this.settings.cMenuVisibility == true) {
+      let toolbar = isExistoolbar(this.settings)
+      if (toolbar) {
+        if (this.settings.positionStyle != "following") {
+          toolbar.style.display = "visibility"
+        }
 
-      cMenuToolbarPopover(this.app, this)
-    } else {
-      return false;
+      } else {
+        cMenuToolbarPopover(this.app, this)
+      }
     }
   };
   handlecMenuToolbar_pop = () => {
@@ -670,35 +648,41 @@ export default class cMenuToolbarPlugin extends Plugin {
 
     if (this.settings.cMenuVisibility == true) {
       setTimeout(() => {
-        selfDestruct();
-        cMenuToolbarPopover(this.app, this)
-      }, 400);
+        if (!isExistoolbar(this.settings))
+          cMenuToolbarPopover(this.app, this)
+      }, 800);
 
     } else {
       return false;
     }
   };
   handlecMenuToolbar_layout = () => {
-    let isource = getModestate(app);
     requireApiVersion("0.15.0") ? activeDocument = activeWindow.document : activeDocument = window.document;
     if (this.settings.cMenuVisibility == true) {
-      let cMenuToolbarModalBar = activeDocument.getElementById(
-        "cMenuToolbarModalBar"
-      );
+
+      let cMenuToolbarModalBar = isExistoolbar(this.settings)
       if (!getModestate(app)) //no source mode
       {
+
         if (cMenuToolbarModalBar) {
           cMenuToolbarModalBar.style.visibility = "hidden"
+        } else {
+          cMenuToolbarPopover(app, this);
         }
       }
       else {
         if (cMenuToolbarModalBar) {
-          cMenuToolbarModalBar.style.visibility = "visibility"
+          if (this.settings.positionStyle == "following")
+            cMenuToolbarModalBar.style.visibility = "hidden"
+          else {
+            cMenuToolbarModalBar.style.visibility = "visible"
+          }
+
         } else {
-          setTimeout(() => {
-            dispatchEvent(new Event("cMenuToolbar-NewCommand"));
-          }, 100)
+          cMenuToolbarPopover(app, this);
         }
+
+
       }
 
     } else {
@@ -708,21 +692,24 @@ export default class cMenuToolbarPlugin extends Plugin {
 
   };
   handlecMenuToolbar_resize = () => {
+
     requireApiVersion("0.15.0") ? activeDocument = activeWindow.document : activeDocument = window.document;
-    if (this.settings.cMenuVisibility == true) {
+    if (this.settings.cMenuVisibility == true && this.settings.positionStyle == "top") {
+     // console.log("resize")
       if (getModestate(app)) {
         let currentleaf = activeDocument.body
           ?.querySelector(".workspace-leaf.mod-active");
 
         let leafwidth = currentleaf?.querySelector<HTMLElement>(".markdown-source-view").offsetWidth ?? 0
-
-        if (this.settings.cMenuWidth && leafwidth) {
-          if ((leafwidth - this.settings.cMenuWidth) < 78 && (leafwidth > this.settings.cMenuWidth))
-            return;
-          else {
-            setTimeout(() => {
-              dispatchEvent(new Event("cMenuToolbar-NewCommand"));
-            }, 100)
+        if (leafwidth > 0) {
+          if (this.settings.cMenuWidth && leafwidth) {
+            if ((leafwidth - this.settings.cMenuWidth) < 78 && (leafwidth > this.settings.cMenuWidth))
+              return;
+            else {
+              setTimeout(() => {
+                resetToolbar(), cMenuToolbarPopover(app, this);
+              }, 100)
+            }
           }
         }
       }

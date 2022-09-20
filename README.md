@@ -20,6 +20,7 @@ _[点击这里](./README-zh_cn.md)查看中文文档。_
   - [Key Features](#key-features)
     - [Work with other plugins](#work-with-other-plugins)
     - [Full Vault showcase](#full-vault-showcase)
+    - [support](#support)
 
 ## how-to-install
 
@@ -97,3 +98,10 @@ Please Refer: [How to install Obsidian Plugins](https://forum.obsidian.md/t/plug
 
 This is the Obsidian example vault is amazing, there are a lot of dazzling features and showcase, I believe you will wonder a bit, is this Obsidian?
 [Blue-topaz-examples](https://github.com/cumany/Blue-topaz-examples)
+
+### support
+Thank you very much for your support!
+![|400](https://ghproxy.com/https://raw.githubusercontent.com/cumany/cumany/main/pic/202209192228895.png)
+
+<div align="center"><a href="https://www.buymeacoffee.com/Cuman"><img src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee &emoji=&slug=Cuman&button_colour=BD5FFF&font_colour=ffffff&font_family=Poppins&outline_colour=000000&coffee_colour=FFDD00" /></a>
+</div>

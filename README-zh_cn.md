@@ -15,6 +15,7 @@
     - [功能特性](#功能特性)
     - [跟其他插件协作](#跟其他插件协作)
     - [完整示例库分享](#完整示例库分享)
+    - [支持与赞助](#赞助)
 
 ## 如何安装
 
@@ -103,3 +104,9 @@
 
 这是可以让你大开眼界的 Obsidian 示例库，里面有很多眼花缭乱的功能和示例，相信你看过一定会惊叹，这是 Obsidian 吗？
 [Blue-topaz-examples](https://github.com/cumany/Blue-topaz-examples)
+
+### 赞助
+
+Thank you very much for your support!
+
+![|400](https://ghproxy.com/https://raw.githubusercontent.com/cumany/cumany/main/pic/202209192228895.png)

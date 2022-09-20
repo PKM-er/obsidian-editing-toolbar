@@ -1,6 +1,6 @@
 
 import type cMenuToolbarPlugin from "src/plugin/main";
-import { App, Notice, Command, requireApiVersion, MarkdownView, ButtonComponent, WorkspaceParent, WorkspaceWindow } from "obsidian";
+import { App, Notice, Command, requireApiVersion, MarkdownView, ButtonComponent, WorkspaceParent, WorkspaceWindow, SettingTab } from "obsidian";
 import { WorkspaceExt, WorkspaceItemExt, WorkspaceParentExt } from 'src/util/obsidian-ext';
 import { setBottomValue } from "src/util/statusBarConstants";
 import { backcolorpicker, colorpicker } from "src/util/util";
@@ -30,29 +30,69 @@ export function getRootSplits(): WorkspaceParentExt[] {
 
   return rootSplits;
 }
+
+export function resetToolbar() {
+  requireApiVersion("0.15.0") ? activeDocument = activeWindow.document : activeDocument = window.document;
+  //  let currentleaf = activeDocument.body?.querySelector( ".workspace-leaf.mod-active");
+  let currentleaf = activeDocument;
+  let cMenuToolbarModalBar = currentleaf.querySelectorAll(
+    "#cMenuToolbarModalBar"
+  );
+  let cMenuToolbarPopoverBar = currentleaf.querySelectorAll(
+    "#cMenuToolbarPopoverBar"
+  );
+  cMenuToolbarModalBar.forEach(element => {
+    if (element) {
+      if (element.firstChild) {
+        element.removeChild(element.firstChild);
+      }
+      element.remove();
+    }
+
+  });
+  cMenuToolbarPopoverBar.forEach(element => {
+    if (element) {
+      if (element.firstChild) {
+        element.removeChild(element.firstChild);
+      }
+      element.remove();
+    }
+
+  });
+
+}
+
 export function selfDestruct() {
   const rootSplits = getRootSplits();
   const clearToolbar = (leaf: HTMLElement) => {
 
-    let cMenuToolbarModalBar = leaf.querySelector(
+    let cMenuToolbarModalBar = leaf.querySelectorAll(
       "#cMenuToolbarModalBar"
     );
-    let cMenuToolbarPopoverBar = leaf.querySelector(
+    let cMenuToolbarPopoverBar = leaf.querySelectorAll(
       "#cMenuToolbarPopoverBar"
     );
 
-    if (cMenuToolbarModalBar) {
-      if (cMenuToolbarModalBar.firstChild) {
-        cMenuToolbarModalBar.removeChild(cMenuToolbarModalBar.firstChild);
+    cMenuToolbarModalBar.forEach(element => {
+      if (element) {
+        if (element.firstChild) {
+          element.removeChild(element.firstChild);
+        }
+        element.remove();
       }
-      cMenuToolbarModalBar.remove();
-    }
-    if (cMenuToolbarPopoverBar) {
-      if (cMenuToolbarPopoverBar.firstChild) {
-        cMenuToolbarPopoverBar.removeChild(cMenuToolbarPopoverBar.firstChild);
+
+    });
+    cMenuToolbarPopoverBar.forEach(element => {
+      if (element) {
+        if (element.firstChild) {
+          element.removeChild(element.firstChild);
+        }
+        element.remove();
       }
-      cMenuToolbarPopoverBar.remove();
-    }
+
+    });
+
+
   }
   if (rootSplits)
     rootSplits.forEach((rootSplit: WorkspaceParentExt) => {
@@ -61,6 +101,54 @@ export function selfDestruct() {
     });
 
 }
+
+export function isExistoolbar(settings: cMenuToolbarSettings): HTMLElement {
+  const position = settings.positionStyle;
+  let container;
+  requireApiVersion("0.15.0") ? activeDocument = activeWindow.document : activeDocument = window.document;
+  position == "top" ? container = activeDocument?.querySelector(".workspace-leaf.mod-active")?.querySelector("#cMenuToolbarModalBar")
+    : container = activeDocument.getElementById("cMenuToolbarModalBar");
+  if (container) {
+    return container as HTMLElement;
+  } else {
+    return null
+  }
+  return null;
+}
+
+
+
+const getNestedObject = (nestedObj: any, pathArr: any[]) => {
+  return pathArr.reduce((obj, key) =>
+    (obj && obj[key] !== 'undefined') ? obj[key] : undefined, nestedObj);
+}
+
+function hilite(keys: any, how: string) {
+  // need to check if existing key combo is overridden by undefining it
+  if (keys && keys[1][0] !== undefined) {
+    return how + keys.flat(2).join('+').replace('Mod', 'Ctrl') + how;
+  } else {
+    return how + '–' + how;
+  }
+}
+
+function getHotkey(app: App, cmdid: string, highlight = true) {
+  // @ts-ignore
+  let arr = app.commands.findCommand(cmdid)
+  let hi = highlight ? '*' : '';
+  if (arr) {
+    let defkeys = arr.hotkeys ? [[getNestedObject(arr.hotkeys, [0, 'modifiers'])],
+    [getNestedObject(arr.hotkeys, [0, 'key'])]] : undefined;
+    // @ts-ignore
+    let ck = app.hotkeyManager.customKeys[arr.id];
+    var hotkeys = ck ? [[getNestedObject(ck, [0, 'modifiers'])], [getNestedObject(ck, [0, 'key'])]] : undefined;
+    return hotkeys ? hilite(hotkeys, hi) : hilite(defkeys, '');
+  } else
+    return "–"
+}
+
+
+
 export const getcoords = (editor: any) => {
   const cursorFrom = editor.getCursor("head");
 
@@ -74,22 +162,17 @@ export const getcoords = (editor: any) => {
   return coords;
 };
 
-export function getModestate(app: {
-  workspace: { getActiveViewOfType: (arg0: typeof MarkdownView) => any };
-}) {
+export function getModestate(app: App) {
   const activePane = app.workspace.getActiveViewOfType(MarkdownView);
   if (activePane) {
     let currentmode = activePane?.getMode();
-
-    if (currentmode === "empty") {
-      return false;
-    }
     if (currentmode == "preview") {
       return false;
-    }
-    if (currentmode == "source") {
-      return true;
-    }
+    } else
+      if (currentmode == "source") {
+        return true;
+      } else
+        return false;
   }
 }
 
@@ -106,35 +189,45 @@ export function CreateDiv(selector: string) {
 
 export function tabCell(app: App, plugin: cMenuToolbarPlugin, el: string) {
   requireApiVersion("0.15.0") ? activeDocument = activeWindow.document : activeDocument = window.document;
-  let tab = activeDocument.getElementById(el);
-  // @ts-ignore
-  let rows = tab.rows;
-  let rlen = rows.length;
-  for (let i = 1; i < rlen; i++) {
-    //遍历所有行
-    let cells = rows[i].cells; //得到这一行的所有单元格
-    for (let j = 0; j < cells.length; j++) {
-      //给每一个单元格添加click事件
-      cells[j].onclick = function () {
-        let backcolor = this.style.backgroundColor;
-        if (backcolor != "") {
-          backcolor = colorHex(backcolor);
-          if (el == "x-color-picker-table") {
-            plugin.settings.cMenuFontColor = backcolor;
-            Setfontcolor(app, backcolor);
-            activeDocument.getElementById("change-font-color-icon").style.fill =
-              plugin.settings.cMenuFontColor;
-          } else if (el == "x-backgroundcolor-picker-table") {
-            plugin.settings.cMenuBackgroundColor = backcolor;
-            Setbackgroundcolor(app, backcolor);
-            activeDocument.getElementById(
-              "change-background-color-icon"
-            ).style.fill = plugin.settings.cMenuBackgroundColor;
-          }
+  let container = isExistoolbar(plugin.settings) as HTMLElement;
+  let tab = container?.querySelector('#' + el);
+  if (tab) {
+    // @ts-ignore
+    let rows = tab.rows;
+    let rlen = rows.length;
+    for (let i = 1; i < rlen; i++) {
+      //遍历所有行
+      let cells = rows[i].cells; //得到这一行的所有单元格
+      for (let j = 0; j < cells.length; j++) {
+        //给每一个单元格添加click事件
+        cells[j].onclick = function () {
+          let backcolor = this.style.backgroundColor;
+          if (backcolor != "") {
+            backcolor = colorHex(backcolor);
+            if (el == "x-color-picker-table") {
+              plugin.settings.cMenuFontColor = backcolor;
+              Setfontcolor(app, backcolor);
+              let font_colour_dom = activeDocument.querySelectorAll("#change-font-color-icon")
+              font_colour_dom.forEach(element => {
+                let ele = element as HTMLElement
+                ele.style.fill = backcolor;
+              });
 
-          plugin.saveSettings();
-        }
-      };
+            } else if (el == "x-backgroundcolor-picker-table") {
+              plugin.settings.cMenuBackgroundColor = backcolor;
+              Setbackgroundcolor(app, backcolor);
+              let background_colour_dom = activeDocument.querySelectorAll("#change-background-color-icon")
+              background_colour_dom.forEach(element => {
+                let ele = element as HTMLElement
+                ele.style.fill = backcolor;
+              });
+              //  background_colour_dom.style.fill = plugin.settings.cMenuBackgroundColor;
+            }
+
+            plugin.saveSettings();
+          }
+        };
+      }
     }
   }
 }
@@ -253,6 +346,8 @@ export function CreateMoreMenu(selector: HTMLDivElement) {
   // let  issubmenu= activeDocument.getElementById("cMenuToolbarModalBar").querySelector('.'+selector);
   // let barHeight = activeDocument.getElementById("cMenuToolbarModalBar").offsetHeight;
   requireApiVersion("0.15.0") ? activeDocument = activeWindow.document : activeDocument = window.document;
+  let Morecontainer = activeDocument.body?.querySelector(".workspace-leaf.mod-active")?.querySelector("#cMenuToolbarPopoverBar") as HTMLElement;
+
   if (!window.ISMORE) return;
   let cMoreMenu = selector.createEl("span");
   cMoreMenu.addClass("more-menu");
@@ -261,17 +356,12 @@ export function CreateMoreMenu(selector: HTMLDivElement) {
     .setClass("cMenuToolbarCommandItem")
     .setTooltip(t("More"))
     .onClick(() => {
-      if (
-        activeDocument.getElementById("cMenuToolbarPopoverBar").style.visibility ==
-        "hidden"
-      ) {
-        activeDocument.getElementById("cMenuToolbarPopoverBar").style.visibility =
-          "visible";
-        activeDocument.getElementById("cMenuToolbarPopoverBar").style.height = "32px";
+      if (Morecontainer.style.visibility == "hidden") {
+        Morecontainer.style.visibility = "visible";
+        Morecontainer.style.height = "32px";
       } else {
-        activeDocument.getElementById("cMenuToolbarPopoverBar").style.visibility =
-          "hidden";
-        activeDocument.getElementById("cMenuToolbarPopoverBar").style.height = "0";
+        Morecontainer.style.visibility = "hidden";
+        Morecontainer.style.height = "0";
       }
     });
   morebutton.buttonEl.innerHTML = `<svg  width="14" height="14"  version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" enable-background="new 0 0 1024 1024" xml:space="preserve"><path fill="#666" d="M510.29 14.13 q17.09 -15.07 40.2 -14.07 q23.12 1 39.2 18.08 l334.66 385.92 q25.12 30.15 34.16 66.83 q9.04 36.68 0.5 73.87 q-8.54 37.19 -32.66 67.34 l-335.67 390.94 q-15.07 18.09 -38.69 20.1 q-23.62 2.01 -41.71 -13.07 q-18.08 -15.08 -20.09 -38.19 q-2.01 -23.12 13.06 -41.21 l334.66 -390.94 q11.06 -13.06 11.56 -29.65 q0.5 -16.58 -10.55 -29.64 l-334.67 -386.92 q-15.07 -17.09 -13.56 -40.7 q1.51 -23.62 19.59 -38.7 ZM81.17 14.13 q17.08 -15.07 40.19 -14.07 q23.11 1 39.2 18.08 l334.66 385.92 q25.12 30.15 34.16 66.83 q9.04 36.68 0.5 73.87 q-8.54 37.19 -32.66 67.34 l-335.67 390.94 q-15.07 18.09 -38.69 20.6 q-23.61 2.51 -41.7 -12.57 q-18.09 -15.08 -20.1 -38.69 q-2.01 -23.62 13.06 -41.71 l334.66 -390.94 q11.06 -13.06 11.56 -29.65 q0.5 -16.58 -10.55 -29.64 l-334.66 -386.92 q-15.08 -17.09 -13.57 -40.7 q1.51 -23.62 19.6 -38.7 Z"/></svg>`;
@@ -297,12 +387,22 @@ export function SetHeader(_str: string) {
     const editor = view.editor;
     let linetext = editor.getLine(editor.getCursor().line);
     let newstr, linend = "";
-    if (_str == "") {   //若为标题，转为普通文本
-      newstr = linetext.replace(/^(\>*(\[[!\w]+\])?\s*)#+\s/, "$1");
-    } else {  //列表、引用，先转为普通文本，再转为标题
-      newstr = linetext.replace(/^\s*(#*|\>|\-|\d+\.)\s*/m, "");
-      newstr = _str + " " + newstr;
+    const regex = /^(\>*(\[[!\w]+\])?\s*)#+\s/;
+    let matchstr
+    const match = linetext.match(regex);
+    if (match) matchstr = match[0].trim();
+    if (_str == matchstr)   //转换的跟原来的一致就取消标题
+    {
+      newstr = linetext.replace(regex, "$1");
+    } else {
+      if (_str == "") {   //若为标题，转为普通文本
+        newstr = linetext.replace(regex, "$1");
+      } else {  //列表、引用，先转为普通文本，再转为标题
+        newstr = linetext.replace(/^\s*(#*|\>|\-|\d+\.)\s*/m, "");
+        newstr = _str + " " + newstr;
+      }
     }
+
     if (newstr != "") {
       linend = editor.getRange(editor.getCursor(), { line: editor.getCursor().line, ch: linetext.length });
     } else {
@@ -369,9 +469,8 @@ export function FormatEraser() {
 export const followingbar = (settings: cMenuToolbarSettings) => {
 
   let isource = getModestate(app);
-  let cMenuToolbarModalBar = activeDocument.getElementById(
-    "cMenuToolbarModalBar"
-  );
+
+  let cMenuToolbarModalBar = isExistoolbar(settings);
   //console.log(activeLeaf.getViewState().state.mode)
   if (isource) {
     const activeLeaf = app.workspace.getActiveViewOfType(MarkdownView);
@@ -382,22 +481,20 @@ export const followingbar = (settings: cMenuToolbarSettings) => {
     if (cMenuToolbarModalBar) {
 
       let selection = editor.somethingSelected();
-      let cMenuToolbarRows = settings.cMenuNumRows;
+      // let cMenuToolbarRows = settings.cMenuNumRows;
       selection
         ? (cMenuToolbarModalBar.style.visibility = "visible")
         : (cMenuToolbarModalBar.style.visibility = "hidden");
 
-      let ElementCount = cMenuToolbarModalBar.childElementCount;
-      if (ElementCount) {
-        ElementCount == cMenuToolbarRows
-          ? (cMenuToolbarModalBar.addClass("cMenuToolbarGrid"), cMenuToolbarModalBar.removeClass("cMenuToolbarFlex"))
-          : (cMenuToolbarModalBar.addClass("cMenuToolbarFlex"), cMenuToolbarModalBar.removeClass("cMenuToolbarGrid"))
-      } else {
-        ElementCount = 0;
-      }
+      //   let ElementCount = cMenuToolbarModalBar.childElementCount;
+      //   if (ElementCount) {
+      //     ElementCount == cMenuToolbarRows
+      //  ? (cMenuToolbarModalBar.addClass("cMenuToolbarGrid"), cMenuToolbarModalBar.removeClass("cMenuToolbarFlex"))
+      cMenuToolbarModalBar.addClass("cMenuToolbarFlex")
+      cMenuToolbarModalBar.removeClass("cMenuToolbarGrid")
 
-      let cmheight = Math.ceil(ElementCount / cMenuToolbarRows);
-
+      // let cmheight = Math.ceil(ElementCount / cMenuToolbarRows);
+      let cmheight = 1;
       cMenuToolbarModalBar.style.height = 40 * cmheight + "px";
       if (settings.aestheticStyle == "tiny") {
         cMenuToolbarModalBar.style.height = 25 * cmheight + "px";
@@ -421,7 +518,7 @@ export const followingbar = (settings: cMenuToolbarSettings) => {
       let coords = getcoords(editor);
       let cursor_head = editor.getCursor("head").ch
       let cursor_from = editor.getCursor("from").ch
-    
+
       let toppx = 0;
       /*添加判断边界 */
       let leftpx = coords.left - leftwidth - rleftwidth + 20;
@@ -455,6 +552,7 @@ export function cMenuToolbarPopover(
             "style",
             `position: relative; grid-template-columns: repeat(auto-fit, minmax(28px, 1fr));`
           );
+          cMenuToolbar.className += " top";
         } else {
           cMenuToolbar.setAttribute(
             "style",
@@ -487,25 +585,25 @@ export function cMenuToolbarPopover(
         cMenuToolbar.removeClass("cMenuToolbarDefaultAesthetic");
       }
 
-      if (settings.positionStyle == "following") {
-        cMenuToolbar.style.visibility = "hidden";
-      }
+      //  if (settings.positionStyle == "following") {
+      //    cMenuToolbar.style.visibility = "hidden";
+      // }
 
       let leafwidth = 99999;
       if (settings.positionStyle == "top") {
         let currentleaf = activeDocument.body?.querySelector(
           ".workspace-leaf.mod-active"
         );
-        if (!activeDocument.getElementById("cMenuToolbarPopoverBar"))
-          currentleaf
-            ?.querySelector(".markdown-source-view")
+        if (!currentleaf?.querySelector("#cMenuToolbarPopoverBar"))
+          currentleaf?.querySelector(".markdown-source-view")
             .insertAdjacentElement("afterbegin", PopoverMenu);
         currentleaf
           ?.querySelector(".markdown-source-view")
           .insertAdjacentElement("afterbegin", cMenuToolbar);
-        leafwidth = currentleaf.querySelector<HTMLElement>(
+        leafwidth = currentleaf?.querySelector<HTMLElement>(
           ".markdown-source-view"
         ).offsetWidth;
+
       } else if (settings.appendMethod == "body") {
         activeDocument.body.appendChild(cMenuToolbar);
       } else if (settings.appendMethod == "workspace") {
@@ -517,10 +615,10 @@ export function cMenuToolbarPopover(
 
 
 
-      let cMenuToolbarPopoverBar = activeDocument.getElementById(
-        "cMenuToolbarPopoverBar"
-      );
+      let cMenuToolbarPopoverBar = activeDocument.body?.querySelector(".workspace-leaf.mod-active")
+        ?.querySelector("#cMenuToolbarPopoverBar") as HTMLElement
       settings.menuCommands.forEach((item, index) => {
+        let tip
         if ("SubmenuCommands" in item) {
           let _btn: any;
           if (btnwidth >= leafwidth - 26 * 4 && leafwidth > 100) {
@@ -546,8 +644,10 @@ export function cMenuToolbarPopover(
           if (submenu) {
             item.SubmenuCommands.forEach(
               (subitem: { name: string; id: any; icon: string }) => {
+                let hotkey =getHotkey(app, subitem.id);
+                hotkey == "–"?tip = subitem.name:tip = subitem.name + "(" + hotkey + ")";
                 let sub_btn = new ButtonComponent(submenu)
-                  .setTooltip(subitem.name)
+                  .setTooltip(tip)
                   .setClass("menu-item")
                   .onClick(() => {
                     //@ts-ignore
@@ -599,10 +699,8 @@ export function cMenuToolbarPopover(
               submenu2.innerHTML = colorpicker;
 
               button2.buttonEl.insertAdjacentElement("afterbegin", submenu2);
-              if (settings.cMenuFontColor)
-                activeDocument.getElementById(
-                  "change-font-color-icon"
-                ).style.fill = settings.cMenuFontColor;
+              //    if (settings.cMenuFontColor)
+              //     activeDocument.getElementById("change-font-color-icon").style.fill = settings.cMenuFontColor;
               tabCell(app, plugin, "x-color-picker-table");
               let el = submenu2.querySelector(
                 ".x-color-picker-wrapper"
@@ -650,10 +748,8 @@ export function cMenuToolbarPopover(
               submenu2.innerHTML = backcolorpicker;
 
               button2.buttonEl.insertAdjacentElement("afterbegin", submenu2);
-              if (plugin.settings.cMenuBackgroundColor)
-                activeDocument.getElementById(
-                  "change-background-color-icon"
-                ).style.fill = plugin.settings.cMenuBackgroundColor;
+              // if (plugin.settings.cMenuBackgroundColor)
+              //  activeDocument.getElementById("change-background-color-icon").style.fill = plugin.settings.cMenuBackgroundColor;
               tabCell(app, plugin, "x-backgroundcolor-picker-table");
               let el = submenu2.querySelector(
                 ".x-color-picker-wrapper"
@@ -679,7 +775,9 @@ export function cMenuToolbarPopover(
               window.ISMORE = true; //需要添加更多按钮
               button = new ButtonComponent(cMenuToolbarPopoverBar);
             } else button = new ButtonComponent(cMenuToolbar);
-            button.setTooltip(item.name).onClick(() => {
+            let hotkey =getHotkey(app, item.id);
+            hotkey == "–"?tip = item.name:tip = item.name + "(" + hotkey + ")";
+            button.setTooltip(tip).onClick(() => {
               //@ts-ignore
               app.commands.executeCommandById(item.id);
               if (settings.cMenuVisibility == false)
@@ -719,33 +817,13 @@ export function cMenuToolbarPopover(
     };
     let Markdown = app.workspace.getActiveViewOfType(MarkdownView);
     if (Markdown) {
-      let currentnode = activeDocument.getElementById("cMenuToolbarModalBar");
-      if (settings.positionStyle == "top") {
-        if (!getModestate(app)) return;
-        let activeleaf = activeDocument.body.querySelector(
-          ".workspace-leaf.mod-active"
-        );
-        if (activeleaf)
-          if (currentnode) {
-            if (!activeleaf.querySelector("#cMenuToolbarModalBar")) {
-              selfDestruct();
-            } else {
-              return;
-            }
-          }
-      } else {
-        if (currentnode) return;
-      }
+      if (isExistoolbar(plugin.settings)) return;
+
       generateMenu();
-      let cMenuToolbarModalBar = activeDocument.getElementById(
-        "cMenuToolbarModalBar"
-      );
+
       setBottomValue(settings);
 
-      settings.cMenuVisibility == false
-        ? (cMenuToolbarModalBar.style.visibility = "hidden")
-        : settings.positionStyle == "following" ?
-          (cMenuToolbarModalBar?.style.visibility = "hidden") : (cMenuToolbarModalBar?.style.visibility = "visible");
+
     } else {
       selfDestruct();
     }
