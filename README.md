@@ -101,7 +101,11 @@ This is the Obsidian example vault is amazing, there are a lot of dazzling featu
 
 ### support
 Thank you very much for your support!
-![|400](https://ghproxy.com/https://raw.githubusercontent.com/cumany/cumany/main/pic/202209192228895.png)
+
+<div align="center">
+<img src="https://ghproxy.com/https://raw.githubusercontent.com/cumany/cumany/main/pic/202209192228895.png" width="400px">
+</div>
+
 
 <div align="center"><a href="https://www.buymeacoffee.com/Cuman"><img src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee &emoji=&slug=Cuman&button_colour=BD5FFF&font_colour=ffffff&font_family=Poppins&outline_colour=000000&coffee_colour=FFDD00" /></a>
 </div>

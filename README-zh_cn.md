@@ -109,4 +109,6 @@
 
 Thank you very much for your support!
 
-![|400](https://ghproxy.com/https://raw.githubusercontent.com/cumany/cumany/main/pic/202209192228895.png)
+<div align="center">
+<img src="https://ghproxy.com/https://raw.githubusercontent.com/cumany/cumany/main/pic/202209192228895.png" width="400px">
+</div>
