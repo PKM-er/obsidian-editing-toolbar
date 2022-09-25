@@ -58,7 +58,7 @@ export class ChooseFromIconList extends FuzzySuggestModal<string> {
       if (this.command.icon) //存在就修改不存在新增
       {
         let menuID = findmenuID(this.plugin, this.command, this.issub)
-       // console.log(menuID);
+        // console.log(menuID);
         this.issub ? this.plugin.settings.menuCommands[menuID['index']].SubmenuCommands[menuID['subindex']].icon = item : this.plugin.settings.menuCommands[menuID['index']].icon = item;
       } else {
         this.command.icon = item;
@@ -102,7 +102,7 @@ export class CommandPicker extends FuzzySuggestModal<Command> {
     if (index > -1) //存在
     {
       new Notice("The command" + item.name + "already exists", 3000);
-    //  console.log(`%cCommand '${item.name}' already exists `, "color: Violet");
+      //  console.log(`%cCommand '${item.name}' already exists `, "color: Violet");
       return;
     } else {
       if (item.icon) {
@@ -235,19 +235,37 @@ export class openSlider extends Modal {
   onOpen() {
 
     const { contentEl } = this;
-    contentEl.createEl("p", { text:t("Drag the slider to move the position") });
-    
+    contentEl.createEl("p", { text: t("Drag the slider to move the position") });
+    if (this.plugin.settings.positionStyle == "top") {
+      let topem =  (this.plugin.settings.cMenuBottomValue - 4.25)*5;
+      new SliderComponent(contentEl)
+        .setLimits(0, 80, 0.5)
+        .setValue(topem)
+        .onChange(debounce(async (value) => {
+          console.log(`%c${value}px`, "color: Violet");
+          this.plugin.settings.cMenuBottomValue = value/5 + 4.25;
+          setBottomValue(this.plugin.settings);
+          await this.plugin.saveSettings();
+          setTimeout(() => {
+            dispatchEvent(new Event("cMenuToolbar-NewCommand"));
+          }, 100);
+        }, 100, true))
+        .setDynamicTooltip();
+    }else{
     new SliderComponent(contentEl)
-    .setLimits(2, 18, 0.25)
-    .setValue(this.plugin.settings.cMenuBottomValue)
-    .onChange(debounce(async (value) => {
-    console.log(`%c${value}em`, "color: Violet");
-    this.plugin.settings.cMenuBottomValue = value;
-    setBottomValue(this.plugin.settings);
-    await this.plugin.saveSettings();
-  }, 100, true))
-    .setDynamicTooltip();
-
+      .setLimits(2, 18, 0.25)
+      .setValue(this.plugin.settings.cMenuBottomValue)
+      .onChange(debounce(async (value) => {
+        console.log(`%c${value}em`, "color: Violet");
+        this.plugin.settings.cMenuBottomValue = value;
+        setBottomValue(this.plugin.settings);
+        await this.plugin.saveSettings();
+        setTimeout(() => {
+          dispatchEvent(new Event("cMenuToolbar-NewCommand"));
+        }, 100);
+      }, 100, true))
+      .setDynamicTooltip();
+    }
   }
   onClose() {
     const { contentEl } = this;

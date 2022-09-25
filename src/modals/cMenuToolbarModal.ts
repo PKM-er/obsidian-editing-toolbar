@@ -539,9 +539,11 @@ export function cMenuToolbarPopover(
       let cMenuToolbar = createEl("div");
       if (cMenuToolbar) {
         if (settings.positionStyle == "top") {
+        let topem =  (settings.cMenuBottomValue - 4.25)*5;
           cMenuToolbar.setAttribute(
             "style",
-            `position: relative; grid-template-columns: repeat(auto-fit, minmax(28px, 1fr));`
+            `position: relative; grid-template-columns: repeat(auto-fit, minmax(28px, 1fr));top: ${topem
+            }px;`
           );
           cMenuToolbar.className += " top";
         } else {
