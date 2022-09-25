@@ -19,9 +19,14 @@
 
 ## 如何安装
 
-1.  brat 安装。插件目前还没有上架官方商店可以通过  [BRAT Plugin](https://obsidian.md/plugins?id=obsidian42-brat)去安装。
+1.  (推荐)brat 安装。插件目前还没有上架官方商店可以通过  [BRAT Plugin](https://obsidian.md/plugins?id=obsidian42-brat)去安装。
     `cumany/obsidian-editing-toolbar`
-2.  手动安装 参考教程
+2.  所有的插件手动安装方法都是一样的，本插件也不例外。 
+    在[releases](https://github.com/cumany/obsidian-editing-toolbar/releases) 下载 `main.js` `mainfest.json` `styles.css` 三个文件
+    在Obsidian库目录下的 `.obsidian\plugins\` 新建一个插件目录名字`Obsidian-editing-toolbar`文件夹。把刚才下载的三个文件放进去。
+     ![](https://ghproxy.com/https://raw.githubusercontent.com/cumany/cumany/main/pic/202209221441394.png)
+    最后在obsidian中开启本插件即可。
+3.  手动安装教程
     [Plugins mini FAQ ](https://forum.obsidian.md/t/plugins-mini-faq/7737)
     [如何安装 obsdiain 插件](https://publish.obsidian.md/chinesehelp/01+2021%E6%96%B0%E6%95%99%E7%A8%8B/%E5%A6%82%E4%BD%95%E5%AE%89%E8%A3%85obsdiain%E6%8F%92%E4%BB%B6)
 

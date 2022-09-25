@@ -436,19 +436,8 @@ export function FormatEraser() {
       }
       else window.newNotice = new Notice(t("Clear formatting brush ON!\nClick the  mouse middle or right key to close the formatting-brush"), 0);
 
-      //new obsidian.Notice("请先划选部分文本，再执行命令！");
-      let reg1 = /(~~|%%|\*==|==|\*\*?|\<[^\<\>]*?\>|!?\[\[*|`|_|!?\[)([^!#=\[\]\<\>\`_\*~\(\)]*)$/;
-      let reg2 = /^([^!=\[\]\<\>\`_\*~\(\)]*)(~~|%%|==\*|==|\*\*?|\<[^\<\>]*\>|\]\]|`|_|\]\([^\(\)\[\]]*\))/;
-      if (selstart.match(reg1) != null && linend.match(reg2) != null) {
-        selstart = selstart.replace(reg1, "$2");
-        linend = linend.replace(reg2, "$1");
-        //笔记全文.replaceRange(selstart+linend, {line:当前行号,ch:0},{line:当前行号,ch:当前行文本.length});
-        editor.setLine(editor.getCursor().line, selstart + linend);
-        editor.setCursor({ line: editor.getCursor().line, ch: Number(selstart.length) });
-      }
-
     } else {
-      let mdText = /(^#+\s|(?<=^|\s*)#|^\>|^\- \[( |x)\]|^\+ |\<[^\<\>]+?\>|^1\. |^\s*\- |^\-+$|^\*+$|==\*|\*==|==\*\*|\*\*==|==\*\*\*|\*\*\*==)/mg;
+      let mdText = /(^#+\s|(?<=^|\s*)#|^\>|^\- \[( |x)\]|^\+ |\<[^\<\>]+?\>|^1\. |^\s*\- |^\-+$|^\*+$)/mg;
       selectText = selectText.replace(mdText, "");
       selectText = selectText.replace(/^[ ]+|[ ]+$/mg, "");
       selectText = selectText.replace(/\!?\[\[([^\[\]\|]*\|)*([^\(\)\[\]]+)\]\]/g, "$2");
@@ -456,9 +445,11 @@ export function FormatEraser() {
       selectText = selectText.replace(/`([^`]+)`/g, "$1");
       selectText = selectText.replace(/_([^_]+)_/g, "$1");
       selectText = selectText.replace(/==([^=]+)==/g, "$1");
+      selectText = selectText.replace(/\*\*\*([^\*]+)\*\*\*/g, "$1");
       selectText = selectText.replace(/\*\*?([^\*]+)\*\*?/g, "$1");
       selectText = selectText.replace(/~~([^~]+)~~/g, "$1");
-      selectText = selectText.replace(/(\r*\n)+/mg, "\r\n");
+ 
+     // selectText = selectText.replace(/(\r*\n)+/mg, "\r\n");
       editor.replaceSelection(selectText);
       //@ts-ignore
       app.commands.executeCommandById("editor:focus");
@@ -644,8 +635,8 @@ export function cMenuToolbarPopover(
           if (submenu) {
             item.SubmenuCommands.forEach(
               (subitem: { name: string; id: any; icon: string }) => {
-                let hotkey =getHotkey(app, subitem.id);
-                hotkey == "–"?tip = subitem.name:tip = subitem.name + "(" + hotkey + ")";
+                let hotkey = getHotkey(app, subitem.id);
+                hotkey == "–" ? tip = subitem.name : tip = subitem.name + "(" + hotkey + ")";
                 let sub_btn = new ButtonComponent(submenu)
                   .setTooltip(tip)
                   .setClass("menu-item")
@@ -775,8 +766,8 @@ export function cMenuToolbarPopover(
               window.ISMORE = true; //需要添加更多按钮
               button = new ButtonComponent(cMenuToolbarPopoverBar);
             } else button = new ButtonComponent(cMenuToolbar);
-            let hotkey =getHotkey(app, item.id);
-            hotkey == "–"?tip = item.name:tip = item.name + "(" + hotkey + ")";
+            let hotkey = getHotkey(app, item.id);
+            hotkey == "–" ? tip = item.name : tip = item.name + "(" + hotkey + ")";
             button.setTooltip(tip).onClick(() => {
               //@ts-ignore
               app.commands.executeCommandById(item.id);
@@ -825,7 +816,8 @@ export function cMenuToolbarPopover(
 
 
     } else {
-      selfDestruct();
+      //  selfDestruct();
+      return;
     }
 
   }

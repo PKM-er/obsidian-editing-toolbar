@@ -127,13 +127,12 @@ export default class cMenuToolbarPlugin extends Plugin {
 
     this.init_evt(activeDocument);
     if (requireApiVersion("0.15.0")) {
-      this.app.workspace.on('window-open', (leaf) => {
-        this.init_evt(leaf.doc)
+     this.app.workspace.on('window-open', (leaf) => {
+        this.init_evt(leaf.doc);
       });
     }
     this.addSettingTab(new cMenuToolbarSettingTab(this.app, this));
     this.registerEvent(this.app.workspace.on("active-leaf-change", this.handlecMenuToolbar));
-    this.registerEvent(this.app.workspace.on("window-open", this.handlecMenuToolbar_pop));
     this.registerEvent(this.app.workspace.on("layout-change", this.handlecMenuToolbar_layout));
     this.registerEvent(this.app.workspace.on("resize", this.handlecMenuToolbar_resize));
     if (this.settings.cMenuVisibility == true) {
@@ -623,14 +622,13 @@ export default class cMenuToolbarPlugin extends Plugin {
     selfDestruct();
     console.log("cMenuToolbar unloaded");
     this.app.workspace.off("active-leaf-change", this.handlecMenuToolbar);
-    this.app.workspace.off("window-open", this.handlecMenuToolbar_pop);
+
     this.app.workspace.off("layout-change", this.handlecMenuToolbar_layout);
     this.app.workspace.off("resize", this.handlecMenuToolbar_resize);
   }
 
 
   handlecMenuToolbar = () => {
-
     if (this.settings.cMenuVisibility == true) {
       let toolbar = isExistoolbar(this.settings)
       if (toolbar) {
@@ -639,36 +637,24 @@ export default class cMenuToolbarPlugin extends Plugin {
         }
 
       } else {
-        cMenuToolbarPopover(this.app, this)
+
+        setTimeout(() => {
+          cMenuToolbarPopover(this.app, this)
+        }, 100);         
       }
     }
   };
-  handlecMenuToolbar_pop = () => {
 
-
-    if (this.settings.cMenuVisibility == true) {
-      setTimeout(() => {
-        if (!isExistoolbar(this.settings))
-          cMenuToolbarPopover(this.app, this)
-      }, 800);
-
-    } else {
-      return false;
-    }
-  };
   handlecMenuToolbar_layout = () => {
     requireApiVersion("0.15.0") ? activeDocument = activeWindow.document : activeDocument = window.document;
     if (this.settings.cMenuVisibility == true) {
-
       let cMenuToolbarModalBar = isExistoolbar(this.settings)
       if (!getModestate(app)) //no source mode
       {
 
         if (cMenuToolbarModalBar) {
           cMenuToolbarModalBar.style.visibility = "hidden"
-        } else {
-          cMenuToolbarPopover(app, this);
-        }
+        } 
       }
       else {
         if (cMenuToolbarModalBar) {
@@ -679,7 +665,10 @@ export default class cMenuToolbarPlugin extends Plugin {
           }
 
         } else {
-          cMenuToolbarPopover(app, this);
+  
+          setTimeout(() => {
+            cMenuToolbarPopover(this.app, this)
+          }, 100);    
         }
 
 
@@ -695,20 +684,20 @@ export default class cMenuToolbarPlugin extends Plugin {
 
     requireApiVersion("0.15.0") ? activeDocument = activeWindow.document : activeDocument = window.document;
     if (this.settings.cMenuVisibility == true && this.settings.positionStyle == "top") {
-     // console.log("resize")
       if (getModestate(app)) {
         let currentleaf = activeDocument.body
           ?.querySelector(".workspace-leaf.mod-active");
-
         let leafwidth = currentleaf?.querySelector<HTMLElement>(".markdown-source-view").offsetWidth ?? 0
+        if(leafwidth==window.leafwidth) return false;
         if (leafwidth > 0) {
+          window.leafwidth=leafwidth
           if (this.settings.cMenuWidth && leafwidth) {
             if ((leafwidth - this.settings.cMenuWidth) < 78 && (leafwidth > this.settings.cMenuWidth))
               return;
             else {
               setTimeout(() => {
                 resetToolbar(), cMenuToolbarPopover(app, this);
-              }, 100)
+              }, 200)
             }
           }
         }

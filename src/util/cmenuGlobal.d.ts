@@ -7,6 +7,7 @@ declare global {
      isCTxt: boolean ;
      isText: boolean ;
      newNotice: any;
+     leafwidth:number;
 }
 }
 
