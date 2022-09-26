@@ -214,6 +214,11 @@ export default class cMenuToolbarPlugin extends Plugin {
 
     });
     this.addCommand({
+      id: 'off-Format-Brush',
+      name: 'OFF Format Brush',
+      callback: () => QuiteFormatBrushes(),
+    });
+    this.addCommand({
       id: 'change-font-color',
       name: 'Change font color[html]',
       callback: () => Setfontcolor(app, this.settings.cMenuFontColor ?? "#2DC26B"),

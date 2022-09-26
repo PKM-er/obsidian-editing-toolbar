@@ -1,3 +1,4 @@
+### [中文](./README-zh_cn.md) | English
 # obsidian-editing-toolbar Plugin
 
 ![](cmenu-demo.gif)
@@ -9,7 +10,6 @@ This plugin was specifically designed for note-takers that want to have a simple
 
 > It is recommended to work with [Enhanced Editing Plugin](https://github.com/obsidian-canzi/Enhanced-editing), which can add more useful editing commands.
 
-_[点击这里](./README-zh_cn.md)查看中文文档。_
 
 ## TOC
 

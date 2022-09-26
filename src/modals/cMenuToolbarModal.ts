@@ -239,7 +239,14 @@ export function Setfontcolor(app: App, color: string) {
     const view = activeLeaf;
     const editor = view.editor;
     let selectText = editor.getSelection();
-    if (selectText == null || "") {
+    if (selectText == null || selectText.trim() == "") {
+      //如果没有选中内容激活格式刷
+      QuiteFormatBrushes();
+      window.isCTxt = true;
+      window.newNotice = new Notice(
+        t("Font-Color formatting brush ON!"),
+        0
+      );
       return;
     }
 
@@ -277,7 +284,14 @@ export function Setbackgroundcolor(app: App, color: string) {
     const view = activeLeaf;
     const editor = view.editor;
     let selectText = editor.getSelection();
-    if (selectText == null || selectText == "") {
+    if (selectText == null || selectText.trim() == "") {
+      //如果没有选中内容激活格式刷
+      QuiteFormatBrushes();
+      window.isBgC = true;
+      window.newNotice = new Notice(
+        t("Background-color formatting brush ON!"),
+        0
+      );
       return;
     }
     let _html0 =
@@ -448,8 +462,8 @@ export function FormatEraser() {
       selectText = selectText.replace(/\*\*\*([^\*]+)\*\*\*/g, "$1");
       selectText = selectText.replace(/\*\*?([^\*]+)\*\*?/g, "$1");
       selectText = selectText.replace(/~~([^~]+)~~/g, "$1");
- 
-     // selectText = selectText.replace(/(\r*\n)+/mg, "\r\n");
+
+      // selectText = selectText.replace(/(\r*\n)+/mg, "\r\n");
       editor.replaceSelection(selectText);
       //@ts-ignore
       app.commands.executeCommandById("editor:focus");
@@ -539,7 +553,7 @@ export function cMenuToolbarPopover(
       let cMenuToolbar = createEl("div");
       if (cMenuToolbar) {
         if (settings.positionStyle == "top") {
-        let topem =  (settings.cMenuBottomValue - 4.25)*5;
+          let topem = (settings.cMenuBottomValue - 4.25) * 5;
           cMenuToolbar.setAttribute(
             "style",
             `position: relative; grid-template-columns: repeat(auto-fit, minmax(28px, 1fr));top: ${topem
@@ -704,12 +718,13 @@ export function cMenuToolbarPopover(
                 .setIcon("remix-Brush2Line")
                 .setTooltip(t("Format Brush"))
                 .onClick(() => {
-                  QuiteFormatBrushes();
-                  window.isCTxt = true;
-                  window.newNotice = new Notice(
-                    t("Font-Color formatting brush ON!"),
-                    0
-                  );
+                    QuiteFormatBrushes();
+                    window.isCTxt = true;
+                    window.newNotice = new Notice(
+                      t("Font-Color formatting brush ON!"),
+                      0
+                    );
+                  
                 });
             }
           } else if (item.id == "obsidian-editing-toolbar:change-background-color") {
@@ -753,12 +768,13 @@ export function cMenuToolbarPopover(
                 .setIcon("remix-Brush2Line")
                 .setTooltip(t("Format Brush"))
                 .onClick(() => {
-                  QuiteFormatBrushes();
-                  window.isBgC = true;
-                  window.newNotice = new Notice(
-                    t("Background-color formatting brush ON!"),
-                    0
-                  );
+                    QuiteFormatBrushes();
+                    window.isBgC = true;
+                    window.newNotice = new Notice(
+                      t("Font-Color formatting brush ON!"),
+                      0
+                    );
+                  
                 });
             }
           } else {
@@ -815,7 +831,8 @@ export function cMenuToolbarPopover(
       generateMenu();
 
       setBottomValue(settings);
-
+    
+      setsvgColor(settings.cMenuFontColor,settings.cMenuBackgroundColor)
 
     } else {
       //  selfDestruct();
@@ -824,4 +841,27 @@ export function cMenuToolbarPopover(
 
   }
   createMenu();
+}
+
+function setsvgColor(fontcolor: string,bgcolor: string)
+{
+  requireApiVersion("0.15.0") ? activeDocument = activeWindow.document : activeDocument = window.document;
+  let font_colour_dom = activeDocument.querySelectorAll("#change-font-color-icon")
+  if(font_colour_dom)
+  {
+    font_colour_dom.forEach(element => {
+      let ele = element as HTMLElement
+      ele.style.fill = fontcolor;
+    });
+  }
+
+  let background_colour_dom = activeDocument.querySelectorAll("#change-background-color-icon")
+  if(background_colour_dom)
+  {
+    background_colour_dom.forEach(element => {
+      let ele = element as HTMLElement
+      ele.style.fill = bgcolor;
+    });
+  }
+ 
 }

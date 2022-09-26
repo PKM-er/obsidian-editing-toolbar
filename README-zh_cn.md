@@ -1,3 +1,5 @@
+### 中文 | [English](./README.md)
+
 # obsidian-editing-toolbar 插件
 
 感谢 [cmenu](https://github.com/chetachiezikeuzor/cMenu-Plugin)插件的开发，给我了很多灵感，但这个插件已经一年多没有维护了，于是我重新魔改了它，并增加了很多有趣的功能，包括置顶工具栏,光标跟随等，于是 Cmenu toolbar 就诞生了。
