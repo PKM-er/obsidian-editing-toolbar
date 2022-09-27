@@ -1,4 +1,3 @@
-import * as featherIcons from "feather-icons";
 import * as remixicons from "react-icons/ri/";
 //import * as boxicons from "react-icons/bi/";
 import { renderToString } from "react-dom/server";
@@ -36,18 +35,6 @@ export default function addIcons() {
   });
 }
 
-export function addFeatherIcons(appIcons: string[]) {
-  Object.values(featherIcons.icons).forEach((icon) => {
-    const svg = icon.toSvg({
-      viewBox: "0 0 24 24",
-      width: "100",
-      height: "100",
-      "stroke-width": "2",
-    });
-    addIcon("feather-" + icon.name, svg);
-    appIcons.push("feather-" + icon.name);
-  });
-}
 
 export function addRemixIcons(appIcons: string[]) {
   const iconKeys: Icon[] = [];

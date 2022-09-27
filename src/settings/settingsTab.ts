@@ -2,7 +2,7 @@ import type cMenuToolbarPlugin from "src/plugin/main";
 import { CommandPicker,ChooseFromIconList, ChangeCmdname } from "src/modals/suggesterModals";
 import { App, Setting, PluginSettingTab, Command } from "obsidian";
 import { APPEND_METHODS, AESTHETIC_STYLES, POSITION_STYLES } from "src/settings/settingsData";
-import { selfDestruct, cMenuToolbarPopover, checksvg } from "src/modals/cMenuToolbarModal";
+import { selfDestruct, cMenuToolbarPopover, checkHtml } from "src/modals/cMenuToolbarModal";
 import Sortable from "sortablejs";
 import { debounce } from "obsidian";
 import { GenNonDuplicateID } from "src/util/util";
@@ -215,7 +215,7 @@ export class cMenuToolbarSettingTab extends PluginSettingTab {
               .onClick(async() => {
                 new ChooseFromIconList(this.plugin, newCommand, false).open();
               });
-            checksvg(newCommand.icon) ? addicon.buttonEl.innerHTML = newCommand.icon : addicon.setIcon(newCommand.icon)
+            checkHtml(newCommand.icon) ? addicon.buttonEl.innerHTML = newCommand.icon : addicon.setIcon(newCommand.icon)
           })
           .addButton((deleteButton) => {
             deleteButton
@@ -328,7 +328,7 @@ export class cMenuToolbarSettingTab extends PluginSettingTab {
                   new ChooseFromIconList(this.plugin, subCommand, true).open();
                 });
 
-              checksvg(subCommand?.icon) ? addicon.buttonEl.innerHTML = subCommand.icon : addicon.setIcon(subCommand.icon)
+              checkHtml(subCommand?.icon) ? addicon.buttonEl.innerHTML = subCommand.icon : addicon.setIcon(subCommand.icon)
             })
             .setName(subCommand.name)
             .addButton((changename) => {
@@ -367,7 +367,7 @@ export class cMenuToolbarSettingTab extends PluginSettingTab {
               .onClick(async()=>  {
                 new ChooseFromIconList(this.plugin, newCommand, false).open();
               });
-            checksvg(newCommand.icon) ? addicon.buttonEl.innerHTML = newCommand.icon : addicon.setIcon(newCommand.icon)
+            checkHtml(newCommand.icon) ? addicon.buttonEl.innerHTML = newCommand.icon : addicon.setIcon(newCommand.icon)
           })
 
         if (newCommand.id == "cMenuToolbar-Divider-Line") setting.setClass("cMenuToolbar-Divider-Line")

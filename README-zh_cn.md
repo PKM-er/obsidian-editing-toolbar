@@ -8,7 +8,7 @@
 
 > 建议配合[增强编辑插件](https://github.com/obsidian-canzi/Enhanced-editing)，可以添加更多的实用的编辑指令。
 
-![](cmenu-demo.gif)
+![](editing-toolbar-demo.gif)
 
 ## 目录导航
 

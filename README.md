@@ -1,7 +1,7 @@
 ### [中文](./README-zh_cn.md) | English
 # obsidian-editing-toolbar Plugin
 
-![](cmenu-demo.gif)
+![](editing-toolbar-demo.gif)
 
 Thanks to the [cmenu](https://github.com/chetachiezikeuzor/cMenu-Plugin) plugin, which gave me a lot of inspiration, but this plugin has not been maintained for more than a year, so I re-modified it and added a lot of interesting features, including the top toolbar, cursor following, etc., so editing toolbar was created.
 

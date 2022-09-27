@@ -177,7 +177,7 @@ export const DEFAULT_SETTINGS: cMenuToolbarSettings = {
         {
           "id": "obsidian-editing-toolbar:editor:toggle-code",
           "name": "inline code",
-          "icon": "feather-code"
+          "icon": "code-glyph"
         },
         {
           id: "obsidian-editing-toolbar:codeblock",
@@ -209,7 +209,7 @@ export const DEFAULT_SETTINGS: cMenuToolbarSettings = {
     {
       "id": "SubmenuCommands-list",
       "name": "submenu-list",
-      "icon": "feather-list",
+      "icon": "bullet-list-glyph",
       "SubmenuCommands": [
         {
           "id": "editor:toggle-numbered-list",
