@@ -26,12 +26,14 @@ export function fullscreenMode(app: App) {
         if (!leaf)
             return;
         let el = leaf.containerEl ;
+        let modroot= document.body?.querySelector(".mod-vertical.mod-root") as HTMLElement
         let fullscreenMutationObserver: MutationObserver;
         fullscreenMutationObserver = new MutationObserver(function (mutationRecords) {
           mutationRecords.forEach(function (mutationRecord) {
               mutationRecord.addedNodes.forEach(function (node) {
-                if(isFull(el)){
+                if(isFull(modroot)){
               try{
+                
                   document.body.removeChild(node);
                   el.appendChild(node);
               }catch (error) 
@@ -48,11 +50,11 @@ export function fullscreenMode(app: App) {
      
       });
       el.addEventListener("fullscreenchange", function (event: any) {
-        if (!isFull(el)) {
+        if (!isFull(modroot)) {
             fullscreenMutationObserver.disconnect();
         }    
     });
-     if(isFull(el))
+     if(isFull(modroot))
      {
       fullscreenMutationObserver.disconnect();
  
@@ -61,7 +63,7 @@ export function fullscreenMode(app: App) {
      }else
      {
     
-    beFull(el)
+    beFull(modroot)
   fullscreenMutationObserver.observe(document.body, { childList: true });
 
  }
