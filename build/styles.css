@@ -35,6 +35,7 @@
   border-radius: 3px;
   font-size: initial !important;
   background-color: var(--background-primary-alt);
+  height: auto;
 }
 
 #cMenuToolbarModalBar button.cMenuToolbarCommandItem:hover {
@@ -355,7 +356,7 @@ body.theme-dark .modal-container.cMenuToolbar-Modal  .modal  input[type='range']
   justify-items: center;  
   border: none;
   backdrop-filter: none;
-  background-color: var(--background-secondary);
+  background-color: var(--color-base-00);
   box-shadow: 0 3px 6px -4px rgb(0 0 0 / 12%), 0 6px 16px 0 rgb(0 0 0 / 8%), 0 9px 28px 8px rgb(0 0 0 / 5%);
  }
 
@@ -425,8 +426,8 @@ font-size: 10px;
     position: absolute;
     z-index: var(--layer-menu);
     user-select: none;
-    transform: translateY(90%) translateX(-40%);
-    -webkit-transform: translateY(90%) translateX(-40%);
+    transform: translateY(90%) translateX(0%);
+    -webkit-transform: translateY(90%) translateX(0%);
     display: flex;
     
 }
@@ -440,12 +441,14 @@ font-size: 10px;
 {
     background-color: var(--background-primary);
     line-height:2em;
-    display: inline;
+    display: inline-flex;
+    box-shadow: none;
 }
 
 :is(#cMenuToolbarModalBar,#cMenuToolbarPopoverBar) button[class^=cMenuToolbarCommandsubItem]  >.subitem button:hover
 {
     background-color: var(--interactive-hover);
+    box-shadow: var(--input-shadow-hover);
 }
 
 
@@ -491,7 +494,7 @@ background-image: url("data:image/svg+xml,%3Csvg width='4' height='4' version='1
  :is(#cMenuToolbarModalBar,#cMenuToolbarPopoverBar):not(.top) button.cMenuToolbarCommandsubItem-font-color .x-color-picker-wrapper
 {
   top:auto;
-bottom:calc(100% + 1em);
+bottom:calc(100% + 1.8em);
 }
 
  
@@ -728,7 +731,7 @@ font-size: 10px;
     align-items: center;
     width: fit-content;
     z-index: var(--layer-status-bar); 
-    background-color: var(--background-secondary);
+    background-color: var(--color-base-10);
       background-clip: padding-box;
       border-radius: 6px;
       box-shadow: 0 3px 6px -4px rgba(0,0,0,.12),0 6px 16px 0 rgba(0,0,0,.08),0 9px 28px 8px rgba(0,0,0,.05);

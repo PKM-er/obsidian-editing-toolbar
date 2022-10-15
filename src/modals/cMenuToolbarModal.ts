@@ -525,7 +525,10 @@ export const createFollowingbar = (settings: cMenuToolbarSettings) => {
       let leftpx = coords.left - leftwidth - rleftwidth + 20;
       if (coords.left + barwidth + 15 > bodywidth)
         leftpx = coords.left - leftwidth - rleftwidth - barwidth / 1.3 - 60;
+      if(requireApiVersion("1.0.0"))
       cursor_head == cursor_from ?
+        toppx = coords.top - barHeight -10 : (toppx = coords.top + 25, leftpx = leftpx - 40);
+      else cursor_head == cursor_from ?
         toppx = coords.top - barHeight - 30 : (toppx = coords.top, leftpx = leftpx - 40);
       if (leftpx < 0) leftpx = 0;
       cMenuToolbarModalBar.style.visibility == "visible" ?

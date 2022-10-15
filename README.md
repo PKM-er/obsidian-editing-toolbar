@@ -31,6 +31,7 @@ Please Refer: [How to install Obsidian Plugins](https://forum.obsidian.md/t/plug
 [About Cmenu toolbar](https://www.bilibili.com/video/BV1mY4y1T7g2/)
 
 ## Key Features
+This differs from the cmenu plugin in the following points:
 
 1. add a new toolbar style tiny
 
@@ -40,8 +41,8 @@ Please Refer: [How to install Obsidian Plugins](https://forum.obsidian.md/t/plug
 
    ![](https://ghproxy.com/https://raw.githubusercontent.com/cumany/cumany/main//pic/202209071133753.png)
    ![](https://ghproxy.com/https://raw.githubusercontent.com/cumany/cumany/main//pic/202209071751006.gif)
-
-3. add some built-in commands
+3. support multi-window, multi-tab adapted to obsidian 0.14+
+4. add some built-in commands
    1. change-font-color
    2. change-background-color
    3. indent-list

@@ -2,7 +2,7 @@
 
 # obsidian-editing-toolbar 插件
 
-感谢 [cmenu](https://github.com/chetachiezikeuzor/cMenu-Plugin)插件的开发，给我了很多灵感，但这个插件已经一年多没有维护了，于是我重新魔改了它，并增加了很多有趣的功能，包括置顶工具栏,光标跟随等，于是 Cmenu toolbar 就诞生了。
+感谢 [cmenu](https://github.com/chetachiezikeuzor/cMenu-Plugin)插件的开发，给我了很多灵感，但这个插件已经一年多没有维护了，在重新魔改后，增加了很多有趣的功能，包括置顶工具栏,光标跟随等，于是  Editing Toolbar 就诞生了。
 **Obsidian Editing Toolbar**是一个提供类似于 MS-Word 的工具栏的插件，并增加了一个最小的和用户友好的文本编辑器模式，以获得更顺畅的写作/编辑体验。不需要记住复杂的 markdown 命令，类似于富文本编辑器的所见即所得。
 这个插件是专门为那些希望有一个简单的文本编辑器来帮助标记他们的笔记设计的。它解决了必须记住许多热键或命令来实现所需要的功能的问题。一个简单的工具条可以改善你在 Obsidian 中的写作体验。
 
@@ -48,7 +48,9 @@
    ![|400](https://ghproxy.com/https://raw.githubusercontent.com/cumany/cumany/main//pic/202209071133753.png)
    ![](https://ghproxy.com/https://raw.githubusercontent.com/cumany/cumany/main//pic/202209071751006.gif)
 
-3. 增加一些内置命令
+3. 支持 多窗口，多tab 适应obsidian 0.14+
+
+4. 增加一些内置命令
    1. change-font-color
     字体颜色调色板和格式刷
    2. change-background-color
@@ -65,14 +67,14 @@
       插入一个 html 代码，让文字两端对齐`<p align="justify">.....</p>`
    9. left
       插入一个 html 代码，让文字左对齐`<p align="left">.....</p>`
-   10. right  
+   10.  right  
         插入一个 html 代码，让文字右对齐`<p align="right">.....</p>`
-   11. center 居中对齐
+   11.  center 居中对齐
        插入一个 html 代码，让文字居中`<center>.....</center>`
-   12. fullscreen-focus
+   12.  fullscreen-focus
        默认绑定快捷键`Ctrl+shift+F11`。
        将使笔记页面全屏显示，让你更专注于写作本身。要退出全屏，请按 ESC 或再次执行全屏命令。
-   13. workplace-fullscreen-focus
+   13.  workplace-fullscreen-focus
        默认绑定快捷键`Ctrl+F11`。
        与全屏聚焦模式不同，这个模式只是隐藏了左右侧边栏的面板，它只是工作区全屏。
    14. head 1-6 级标题设置

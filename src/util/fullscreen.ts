@@ -49,7 +49,7 @@ export function fullscreenMode(app: App) {
           });
      
       });
-      el.addEventListener("fullscreenchange", function (event: any) {
+      modroot.addEventListener("fullscreenchange", function (event: any) {
         if (!isFull(modroot)) {
             fullscreenMutationObserver.disconnect();
         }    
