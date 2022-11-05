@@ -47,27 +47,11 @@ export const DEFAULT_SETTINGS: cMenuToolbarSettings = {
     {
       id: "editing-toolbar:header2-text",
       name: "Header 2",
-      hotkeys: [
-        {
-          "modifiers": [
-            "Mod"
-          ],
-          "key": "2"
-        }
-      ],
       icon: "header-2"
     },
     {
       id: "editing-toolbar:header3-text",
       name: "Header 3",
-      hotkeys: [
-        {
-          "modifiers": [
-            "Mod"
-          ],
-          "key": "3"
-        }
-      ],
       icon: "header-3"
     },
     {
@@ -78,53 +62,21 @@ export const DEFAULT_SETTINGS: cMenuToolbarSettings = {
         {
           id: "editing-toolbar:header1-text",
           name: "Header 1",
-          hotkeys: [
-            {
-              "modifiers": [
-                "Mod"
-              ],
-              "key": "1"
-            }
-          ],
           icon: "header-1"
         },
         {
           id: "editing-toolbar:header4-text",
           name: "Header 4",
-          hotkeys: [
-            {
-              "modifiers": [
-                "Mod"
-              ],
-              "key": "4"
-            }
-          ],
           icon: "header-4"
         },
         {
           id: "editing-toolbar:header5-text",
           name: "Header 5",
-          hotkeys: [
-            {
-              "modifiers": [
-                "Mod"
-              ],
-              "key": "5"
-            }
-          ],
           icon: "header-5"
         },
         {
           id: "editing-toolbar:header6-text",
           name: "Header 6",
-          hotkeys: [
-            {
-              "modifiers": [
-                "Mod"
-              ],
-              "key": "6"
-            }
-          ],
           icon: "header-6"
         }
       ]

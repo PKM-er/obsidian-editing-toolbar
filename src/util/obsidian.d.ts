@@ -1,17 +1,5 @@
 import "obsidian";
 
-import { Notice } from "obsidian";
-
-
-declare global {
-  var IS_MORE_Button: boolean;
-  var EN_BG_Format_Brush: boolean;
-  var EN_FontColor_Format_Brush: boolean;
-  var EN_Text_Format_Brush: boolean;
-  var newNotice: Notice;
-  var Leafwidth: number;
-}
-
 
 
 declare module "obsidian" {
