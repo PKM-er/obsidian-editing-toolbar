@@ -173,7 +173,7 @@ export default class cMenuToolbarPlugin extends Plugin {
             this.settings.positionStyle == "following" ? cMenuToolbarModalBar.style.visibility = "hidden" : true;
           return
         } else {
-          console.log(this.EN_FontColor_Format_Brush,'EN_FontColor_Format_Brush')
+       //   console.log(this.EN_FontColor_Format_Brush,'EN_FontColor_Format_Brush')
           if (this.EN_FontColor_Format_Brush) {
             setFontcolor(this.app, this, this.settings.cMenuFontColor);
           } else if (this.EN_BG_Format_Brush) {
@@ -638,10 +638,13 @@ export default class cMenuToolbarPlugin extends Plugin {
 
   handlecMenuToolbar = () => {
     if (this.settings.cMenuVisibility == true) {
+      let view = this.app.workspace.getActiveViewOfType(MarkdownView)
       let toolbar = isExistoolbar(this.app, this.settings)
+      if(view)
+      {
       if (toolbar) {
         if (this.settings.positionStyle != "following") {
-          toolbar.style.display = "visibility"
+          toolbar.style.visibility = "visible";
         }
 
       } else {
@@ -650,21 +653,24 @@ export default class cMenuToolbarPlugin extends Plugin {
           cMenuToolbarPopover(this.app, this)
         }, 100);
       }
+    } else{
+         toolbar.style.visibility = "hidden"; 
     }
+  }
   };
 
   handlecMenuToolbar_layout = () => {
     // requireApiVersion("0.15.0") ? activeDocument = activeWindow.document : activeDocument = window.document;
     if (this.settings.cMenuVisibility == true) {
       let cMenuToolbarModalBar = isExistoolbar(this.app, this.settings)
-      if (!getModestate(app)) //no source mode
+      let view = this.app.workspace.getActiveViewOfType(MarkdownView)
+      if ((getModestate(app)===false)|| (!view)) //no source mode
       {
-
         if (cMenuToolbarModalBar) {
           cMenuToolbarModalBar.style.visibility = "hidden"
         }
       }
-      else {
+      else  if (getModestate(app)===true) {
         if (cMenuToolbarModalBar) {
           if (this.settings.positionStyle == "following")
             cMenuToolbarModalBar.style.visibility = "hidden"
