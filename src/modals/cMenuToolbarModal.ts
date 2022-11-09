@@ -199,6 +199,7 @@ export function createTablecell(app: App, plugin: cMenuToolbarPlugin, el: string
           let backcolor = this.style.backgroundColor;
           if (backcolor != "") {
             backcolor = setcolorHex(backcolor);
+         //   console.log(backcolor,'backcolor')
             if (el == "x-color-picker-table") {
               plugin.settings.cMenuFontColor = backcolor;
               setFontcolor(app, plugin, backcolor);
@@ -313,6 +314,7 @@ export function setBackgroundcolor(app: App, plugin: cMenuToolbarPlugin, color: 
 
 export const setcolorHex = function (color: string) {
   let that = color;
+
   let reg = /^#([0-9a-fA-f]{3}|[0-9a-fA-f]{6})$/;
   if (/^(rgb|RGB)/.test(that)) {
     let aColor = that.replace(/(?:\(|\)|rgb|RGB)*/g, "").split(",");
@@ -321,6 +323,10 @@ export const setcolorHex = function (color: string) {
       let hex = Number(aColor[i]).toString(16);
       if (hex === "0") {
         hex += hex;
+      }
+      if(hex.length==1)
+      {
+        hex= '0'+hex;
       }
       strHex += hex;
     }
@@ -337,7 +343,6 @@ export const setcolorHex = function (color: string) {
       for (let i = 0; i < aNum.length; i += 1) {
         numHex += aNum[i] + aNum[i];
       }
-      //  console.log(numHex);
       return numHex;
     }
   } else {

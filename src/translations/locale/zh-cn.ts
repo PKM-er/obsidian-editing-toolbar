@@ -14,7 +14,7 @@ export default {
   'Format Brush Off!': '关闭格式刷！',
   'Hide & Show': '隐藏 & 显示',
   'Editing Toolbar will only refresh automatically after you have either added or deleted a command from it. To see UI changes to cMenuToolbar (above settings changes) use the refresh button. If you forget to refresh in settings, no worries. There is also a refresh button in the cMenuToolbar status bar menu.': '对外观的更改生效需要使用刷新按钮。如果你忘记在设置中刷新，在状态栏菜单中也有一个刷新按钮。',
-  'Font-Color formatting brush ON!': '字体颜色格式刷开启！',
+  'Font-Color formatting brush ON!': '字体颜色格式刷开启\n点击鼠标中键或者右键关闭格式刷',
   'More': '更多',
   'Font Colors': '字体颜色',
   'Format Brush': '格式刷',

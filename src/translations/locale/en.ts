@@ -28,7 +28,7 @@ export default {
 'Please enter a new name：':'Please enter a new name：',
 'Drag the slider to move the position':'Drag the slider to move the position',
 'Plugin Settings':'Plugin Settings',
-'Background-color formatting brush ON!':'Background-color formatting brush ON!',
+'Background-color formatting brush ON!':'Background-color formatting brush ON!\nClick the  mouse middle or right key to close the formatting-brush',
 'Clear formatting brush ON!':'Clear formatting brush ON!',
 'Clear formatting brush ON!\nClick the  mouse middle or right key to close the formatting-brush':'Clear formatting brush ON!\nClick the  mouse middle or right key to close the formatting-brush',
 
