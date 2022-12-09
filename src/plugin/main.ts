@@ -644,7 +644,11 @@ export default class cMenuToolbarPlugin extends Plugin {
       {
       if (toolbar) {
         if (this.settings.positionStyle != "following") {
-          toolbar.style.visibility = "visible";
+          try {
+            toolbar.style.visibility = "visible";
+          } catch(err) {
+            console.log(toolbar,"toolbar_error");
+          }       
         }
 
       } else {
@@ -653,8 +657,6 @@ export default class cMenuToolbarPlugin extends Plugin {
           cMenuToolbarPopover(this.app, this)
         }, 100);
       }
-    } else{
-         toolbar.style.visibility = "hidden"; 
     }
   }
   };
