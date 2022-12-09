@@ -493,7 +493,10 @@ background-image: url("data:image/svg+xml,%3Csvg width='4' height='4' version='1
  :is(#cMenuToolbarModalBar,#cMenuToolbarPopoverBar):not(.top) button.cMenuToolbarCommandsubItem-font-color .x-color-picker-wrapper
 {
   top:auto;
-bottom:calc(100% + 1.8em);
+bottom:calc(100%);
+}
+:is(#cMenuToolbarModalBar,#cMenuToolbarPopoverBar):not(.top) button[class^=cMenuToolbarCommandsubItem]:not(.cMenuToolbarSecond) >.subitem {
+  bottom: calc(100% + 2.8em);
 }
 
  
@@ -517,11 +520,11 @@ bottom:calc(100% + 1.8em);
  transition: all 0.3s linear;
  -webkit-transition:  all 0.3s linear;
 }
-:is(#cMenuToolbarModalBar,#cMenuToolbarPopoverBar) button[class^=cMenuToolbarCommandsubItem] >.subitem:hover  {
+/* :is(#cMenuToolbarModalBar,#cMenuToolbarPopoverBar) button[class^=cMenuToolbarCommandsubItem] >.subitem:hover  {
   visibility:visible;
   transition: all 0.3s linear;
   -webkit-transition:  all 0.3s linear;
- }
+ } */
 
  .cMenuToolbarCommandsubItem-font-color button
 {

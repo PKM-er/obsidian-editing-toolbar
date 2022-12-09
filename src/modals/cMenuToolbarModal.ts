@@ -630,6 +630,7 @@ export function cMenuToolbarPopover(
         let tip
         if ("SubmenuCommands" in item) {
           let _btn: any;
+    
           if (btnwidth >= leafwidth - 26 * 4 && leafwidth > 100) {
             //说明已经溢出
             plugin.setIS_MORE_Button(true);
@@ -638,7 +639,10 @@ export function cMenuToolbarPopover(
           } else _btn = new ButtonComponent(cMenuToolbar);
 
           _btn.setClass("cMenuToolbarCommandsubItem" + index);
-
+          if(index >= settings.cMenuNumRows)
+          {
+            _btn.setClass("cMenuToolbarSecond");
+          }
           checkHtml(item.icon)
             ? (_btn.buttonEl.innerHTML = item.icon)
             : _btn.setIcon(item.icon);
@@ -805,6 +809,10 @@ export function cMenuToolbarPopover(
             });
 
             button.setClass("cMenuToolbarCommandItem");
+            if(index >= settings.cMenuNumRows)
+            {
+              button.setClass("cMenuToolbarSecond");
+            }
             if (item.id == "cMenuToolbar-Divider-Line")
               button.setClass("cMenuToolbar-Divider-Line");
             checkHtml(item.icon)
