@@ -22,6 +22,7 @@ export interface cMenuToolbarSettings {
   cMenuVisibility: boolean;
   cMenuBottomValue: number;
   cMenuNumRows: number;
+  autohide:boolean;
 }
 
 export const DEFAULT_SETTINGS: cMenuToolbarSettings = {
@@ -242,5 +243,6 @@ export const DEFAULT_SETTINGS: cMenuToolbarSettings = {
   cMenuNumRows: 12,
   cMenuWidth: 300,
   cMenuFontColor: "#2DC26B",
-  cMenuBackgroundColor: "#d3f8b6"
+  cMenuBackgroundColor: "#d3f8b6",
+  autohide:false
 };

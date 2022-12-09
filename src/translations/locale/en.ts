@@ -31,5 +31,6 @@ export default {
 'Background-color formatting brush ON!':'Background-color formatting brush ON!\nClick the  mouse middle or right key to close the formatting-brush',
 'Clear formatting brush ON!':'Clear formatting brush ON!',
 'Clear formatting brush ON!\nClick the  mouse middle or right key to close the formatting-brush':'Clear formatting brush ON!\nClick the  mouse middle or right key to close the formatting-brush',
-
+'The toolbar is displayed when the mouse moves over it, otherwise it is automatically hidden':'The toolbar is displayed when the mouse moves over it, otherwise it is automatically hidden',
+'Editing Toolbar Auto-hide':'Editing Toolbar Auto-hide',
 };

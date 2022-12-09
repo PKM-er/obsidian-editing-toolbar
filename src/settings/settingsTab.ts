@@ -1,5 +1,5 @@
 import type cMenuToolbarPlugin from "src/plugin/main";
-import { CommandPicker,ChooseFromIconList, ChangeCmdname } from "src/modals/suggesterModals";
+import { CommandPicker, ChooseFromIconList, ChangeCmdname } from "src/modals/suggesterModals";
 import { App, Setting, PluginSettingTab, Command } from "obsidian";
 import { APPEND_METHODS, AESTHETIC_STYLES, POSITION_STYLES } from "src/settings/settingsData";
 import { selfDestruct, cMenuToolbarPopover, checkHtml } from "src/modals/cMenuToolbarModal";
@@ -8,12 +8,11 @@ import { debounce } from "obsidian";
 import { GenNonDuplicateID } from "src/util/util";
 import { t } from 'src/translations/helper';
 
-export function getComandindex(item: any,arr: any[]):number
-{
+export function getComandindex(item: any, arr: any[]): number {
   let idx;
-  arr.forEach((el,index) => {
+  arr.forEach((el, index) => {
     if (el.id === item) {
-     idx =index;
+      idx = index;
     }
   });
   return idx;
@@ -50,7 +49,7 @@ export class cMenuToolbarSettingTab extends PluginSettingTab {
       .setName(t('Editing Toolbar append method'))
       .setDesc(
         t('Choose where Editing Toolbar will append upon regeneration. To see the change, hit the refresh button below, or in the status bar menu.')
-        )
+      )
       .addDropdown((dropdown) => {
         let methods: Record<string, string> = {};
         APPEND_METHODS.map((method) => (methods[method] = method));
@@ -67,7 +66,7 @@ export class cMenuToolbarSettingTab extends PluginSettingTab {
       )
       .setDesc(
         t('Choose between a glass morphism ,tiny and default style for Editing Toolbar. To see the change, hit the refresh button below, or in the status bar menu.')
-        )
+      )
       .addDropdown((dropdown) => {
         let aesthetics: Record<string, string> = {};
         AESTHETIC_STYLES.map(
@@ -101,30 +100,46 @@ export class cMenuToolbarSettingTab extends PluginSettingTab {
             dispatchEvent(new Event("cMenuToolbar-NewCommand"));
           });
       });
-    if(this.plugin.settings.positionStyle == "fixed")
-    {
-    new Setting(containerEl)
-      .setName(t('Editing Toolbar columns')
-      )
-      .setDesc(
-        t('Choose the number of columns per row to display on Editing Toolbar. To see the change, hit the refresh button below, or in the status bar menu.')
+    if (this.plugin.settings.positionStyle == "top") {
+      new Setting(containerEl)
+        .setName(t('Editing Toolbar Auto-hide')
         )
-      .addSlider((slider) => {
-        slider
-          .setLimits(1, 32, 1)
-          .setValue(this.plugin.settings.cMenuNumRows)
-          .onChange(
-            debounce(
-              async (value: number) => {
-                this.plugin.settings.cMenuNumRows = value;
-                await this.plugin.saveSettings();
-              },
-              100,
-              true
+        .setDesc(
+          t('The toolbar is displayed when the mouse moves over it, otherwise it is automatically hidden')
+        )
+        .addToggle(toggle => toggle.setValue(this.plugin.settings?.autohide)
+          .onChange((value) => {
+            this.plugin.settings.autohide = value;
+            this.plugin.saveSettings();
+            setTimeout(() => {
+              this.display();
+              dispatchEvent(new Event("cMenuToolbar-NewCommand"));
+            }, 100);
+          }));
+    }
+    if (this.plugin.settings.positionStyle == "fixed") {
+      new Setting(containerEl)
+        .setName(t('Editing Toolbar columns')
+        )
+        .setDesc(
+          t('Choose the number of columns per row to display on Editing Toolbar. To see the change, hit the refresh button below, or in the status bar menu.')
+        )
+        .addSlider((slider) => {
+          slider
+            .setLimits(1, 32, 1)
+            .setValue(this.plugin.settings.cMenuNumRows)
+            .onChange(
+              debounce(
+                async (value: number) => {
+                  this.plugin.settings.cMenuNumRows = value;
+                  await this.plugin.saveSettings();
+                },
+                100,
+                true
+              )
             )
-          )
-          .setDynamicTooltip();
-      });
+            .setDynamicTooltip();
+        });
     }
     new Setting(containerEl)
       .setName(t('Editing Toolbar refresh')
@@ -150,7 +165,7 @@ export class cMenuToolbarSettingTab extends PluginSettingTab {
       )
       .setDesc(
         t("Add a command onto Editing Toolbar from Obsidian's commands library. To reorder the commands, drag and drop the command items. To delete them, use the delete buttom to the right of the command item. Editing Toolbar will not automaticaly refresh after reordering commands. Use the refresh button above.")
-        )
+      )
       .addButton((addButton) => {
         addButton
           .setIcon("cMenuToolbarAdd")
@@ -212,7 +227,7 @@ export class cMenuToolbarSettingTab extends PluginSettingTab {
           .addButton((addicon) => {
             addicon
               .setClass("cMenuToolbarSettingsIcon")
-              .onClick(async() => {
+              .onClick(async () => {
                 new ChooseFromIconList(this.plugin, newCommand, false).open();
               });
             checkHtml(newCommand.icon) ? addicon.buttonEl.innerHTML = newCommand.icon : addicon.setIcon(newCommand.icon)
@@ -223,7 +238,7 @@ export class cMenuToolbarSettingTab extends PluginSettingTab {
               .setTooltip(t("Delete"))
               .setClass("cMenuToolbarSettingsButton")
               .setClass("cMenuToolbarSettingsButtonDelete")
-              .onClick(async() => {
+              .onClick(async () => {
                 this.plugin.settings.menuCommands.remove(newCommand);
                 await this.plugin.saveSettings();
                 this.display();
@@ -270,46 +285,46 @@ export class cMenuToolbarSettingTab extends PluginSettingTab {
 
 
             if (command.from.className === command.to.className) {
-     
+
               const arrayResult = this.plugin.settings.menuCommands;
               const subresult = arrayResult[index]?.SubmenuCommands;
-     
+
 
               if (subresult) {
-                
+
                 const [removed] = subresult.splice(command.oldIndex, 1);
                 subresult.splice(command.newIndex, 0, removed);
                 this.plugin.saveSettings();
               }
             } else
-            if (command.to.className === "cMenuToolbarSettingsTabsContainer") {
-      
-              const arrayResult = this.plugin.settings.menuCommands;
-              let cmdindex = getComandindex(command.path[1].dataset["id"], arrayResult);
-   
-              const subresult = arrayResult[cmdindex]?.SubmenuCommands;
+              if (command.to.className === "cMenuToolbarSettingsTabsContainer") {
+
+                const arrayResult = this.plugin.settings.menuCommands;
+                let cmdindex = getComandindex(command.path[1].dataset["id"], arrayResult);
+
+                const subresult = arrayResult[cmdindex]?.SubmenuCommands;
 
 
-              const [removed] = subresult.splice(command.oldIndex, 1);
-              arrayResult.splice(command.newIndex, 0, removed);
-              this.plugin.saveSettings();
-            } else
-            if (command.from.className === "cMenuToolbarSettingsTabsContainer") {
-       
+                const [removed] = subresult.splice(command.oldIndex, 1);
+                arrayResult.splice(command.newIndex, 0, removed);
+                this.plugin.saveSettings();
+              } else
+                if (command.from.className === "cMenuToolbarSettingsTabsContainer") {
 
-              const arrayResult = this.plugin.settings.menuCommands;
-      
-              let cmdindex = getComandindex(command.path[1].dataset["id"], arrayResult);
-   
-              const subresult = arrayResult[cmdindex]?.SubmenuCommands;
-              const [removed] = arrayResult.splice(command.oldIndex, 1);
-              subresult.splice(command.newIndex, 0, removed);
-              this.plugin.saveSettings();
-            }
+
+                  const arrayResult = this.plugin.settings.menuCommands;
+
+                  let cmdindex = getComandindex(command.path[1].dataset["id"], arrayResult);
+
+                  const subresult = arrayResult[cmdindex]?.SubmenuCommands;
+                  const [removed] = arrayResult.splice(command.oldIndex, 1);
+                  subresult.splice(command.newIndex, 0, removed);
+                  this.plugin.saveSettings();
+                }
             setTimeout(() => {
               dispatchEvent(new Event("cMenuToolbar-NewCommand"));
             }, 300);
-    
+
           },
 
         });
@@ -324,7 +339,7 @@ export class cMenuToolbarSettingTab extends PluginSettingTab {
             .addButton((addicon) => {
               addicon
                 .setClass("cMenuToolbarSettingsIcon")
-                .onClick(async()=> {
+                .onClick(async () => {
                   new ChooseFromIconList(this.plugin, subCommand, true).open();
                 });
 
@@ -336,7 +351,7 @@ export class cMenuToolbarSettingTab extends PluginSettingTab {
                 .setIcon("pencil")
                 .setTooltip(t("Change Command name"))
                 .setClass("cMenuToolbarSettingsButton")
-                .onClick(async()=> {
+                .onClick(async () => {
                   new ChangeCmdname(this.app, this.plugin, subCommand, true).open();
                 });
             })
@@ -346,7 +361,7 @@ export class cMenuToolbarSettingTab extends PluginSettingTab {
                 .setTooltip(t("Delete"))
                 .setClass("cMenuToolbarSettingsButton")
                 .setClass("cMenuToolbarSettingsButtonDelete")
-                .onClick(async()=>  {
+                .onClick(async () => {
                   newCommand.SubmenuCommands.remove(subCommand);
                   await this.plugin.saveSettings();
                   this.display();
@@ -364,7 +379,7 @@ export class cMenuToolbarSettingTab extends PluginSettingTab {
             addicon
               //    .setIcon(newCommand.icon)
               .setClass("cMenuToolbarSettingsIcon")
-              .onClick(async()=>  {
+              .onClick(async () => {
                 new ChooseFromIconList(this.plugin, newCommand, false).open();
               });
             checkHtml(newCommand.icon) ? addicon.buttonEl.innerHTML = newCommand.icon : addicon.setIcon(newCommand.icon)
@@ -379,7 +394,7 @@ export class cMenuToolbarSettingTab extends PluginSettingTab {
               .setIcon("pencil")
               .setTooltip(t("Change Command name"))
               .setClass("cMenuToolbarSettingsButton")
-              .onClick(async()=>  {
+              .onClick(async () => {
                 new ChangeCmdname(this.app, this.plugin, newCommand, false).open();
               });
           })
@@ -389,7 +404,7 @@ export class cMenuToolbarSettingTab extends PluginSettingTab {
               .setTooltip(t("Add submenu"))
               .setClass("cMenuToolbarSettingsButton")
               .setClass("cMenuToolbarSettingsButtonaddsub")
-              .onClick(async()=>  {
+              .onClick(async () => {
                 const submenu =
                   { id: "SubmenuCommands-" + GenNonDuplicateID(1), name: "submenu", icon: "remix-Filter3Line", SubmenuCommands: [] };
                 this.plugin.settings.menuCommands.splice(index + 1, 0, submenu);
@@ -407,7 +422,7 @@ export class cMenuToolbarSettingTab extends PluginSettingTab {
               .setTooltip(t("add hr"))
               .setClass("cMenuToolbarSettingsButton")
               .setClass("cMenuToolbarSettingsButtonaddsub")
-              .onClick(async()=> {
+              .onClick(async () => {
                 const dividermenu =
                   { id: "cMenuToolbar-Divider-Line", name: "HR", icon: "vertical-split" };
                 this.plugin.settings.menuCommands.splice(index + 1, 0, dividermenu);
@@ -425,7 +440,7 @@ export class cMenuToolbarSettingTab extends PluginSettingTab {
               .setTooltip(t("Delete"))
               .setClass("cMenuToolbarSettingsButton")
               .setClass("cMenuToolbarSettingsButtonDelete")
-              .onClick(async()=> { 
+              .onClick(async () => {
                 this.plugin.settings.menuCommands.remove(newCommand);
                 await this.plugin.saveSettings();
                 this.display();
@@ -467,6 +482,6 @@ const createDonateButton = (link: string): HTMLElement => {
   a.innerHTML = `<img src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee &emoji=&slug=Cuman&button_colour=BD5FFF&font_colour=ffffff&font_family=Poppins&outline_colour=000000&coffee_colour=FFDD00" />`;
   return a;
 };
- 
+
 
 

@@ -694,6 +694,15 @@ background-color:transparent !important;
     -webkit-transition:  all 0.2s linear;
     
 }
+#cMenuToolbarModalBar.top.autohide {
+    opacity: 0;    
+}
+ 
+
+#cMenuToolbarModalBar.top.autohide:hover  {
+    opacity: 1 ;  
+}
+  
 
 #cMenuToolbarModalBar.top :is(.cMenuToolbarCommandItem,button[class^=cMenuToolbarCommandsubItem]):not(.cMenuToolbar-Divider-Line)
 {

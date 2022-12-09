@@ -32,5 +32,6 @@ export default {
   'Background-color formatting brush ON!':'开启背景色格式刷',
   'Clear formatting brush ON!':'清除格式刷已开启',
   'Clear formatting brush ON!\nClick the  mouse middle or right key to close the formatting-brush':'清除格式刷已开启\n点击鼠标中键或者右键关闭格式刷',
-
+  'The toolbar is displayed when the mouse moves over it, otherwise it is automatically hidden':'当鼠标移到工具栏上方时，工具栏显示，否则自动隐藏',
+  'Editing Toolbar Auto-hide':'工具栏是否自动隐藏',
 };

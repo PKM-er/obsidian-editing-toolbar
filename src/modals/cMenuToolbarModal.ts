@@ -564,6 +564,10 @@ export function cMenuToolbarPopover(
             }px;`
           );
           cMenuToolbar.className += " top";
+          if (settings.autohide) 
+          {
+            cMenuToolbar.className += " autohide";
+          }
         } else {
           cMenuToolbar.setAttribute(
             "style",
