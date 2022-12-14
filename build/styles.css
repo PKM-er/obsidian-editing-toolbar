@@ -86,27 +86,27 @@ cMenuToolbar SETTING ITEMS
   padding: 18px 0 18px 0;
 }
 
-.sortable-fallback {
+.cMenuToolbarSettingsTabsContainer .sortable-fallback {
   cursor: grabbing;
   box-shadow: 0px 3px 32px rgb(31 38 135 / 15%);
 }
 
-.sortable-grab {
+.cMenuToolbarSettingsTabsContainer .sortable-grab {
   cursor: grabbing !important;
 }
 
-.sortable-ghost {
+.cMenuToolbarSettingsTabsContainer .sortable-ghost {
   opacity: 0.4;
   cursor: grabbing;
 }
 
-.sortable-chosen {
+.cMenuToolbarSettingsTabsContainer .sortable-chosen {
   cursor: grabbing;
   padding: 18px 0 18px 18px;
   background-color: var(--color-base-10,--background-primary);
 }
 
-.sortable-drag {
+.cMenuToolbarSettingsTabsContainer .sortable-drag {
   cursor: grabbing;
   box-shadow: 0px 3px 32px rgb(31 38 135 / 15%);
 }
