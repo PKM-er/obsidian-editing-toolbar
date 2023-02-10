@@ -246,6 +246,7 @@ export default class cMenuToolbarPlugin extends Plugin {
       name: 'indent list',
       callback: () => {
         const activeLeaf = this.app.workspace.getActiveViewOfType(MarkdownView);
+        if (!activeLeaf) return
         const view = activeLeaf;
         const editor = view.editor;
         //@ts-ignore
@@ -259,6 +260,7 @@ export default class cMenuToolbarPlugin extends Plugin {
       name: 'unindent-list',
       callback: () => {
         const activeLeaf = this.app.workspace.getActiveViewOfType(MarkdownView);
+        if (!activeLeaf) return
         const view = activeLeaf;
         const editor = view.editor;
         //@ts-ignore
@@ -272,6 +274,7 @@ export default class cMenuToolbarPlugin extends Plugin {
       name: 'undo editor',
       callback: () => {
         const activeLeaf = this.app.workspace.getActiveViewOfType(MarkdownView);
+        if (!activeLeaf) return
         const view = activeLeaf;
         const editor = view.editor;
         return editor.undo();
@@ -284,6 +287,7 @@ export default class cMenuToolbarPlugin extends Plugin {
       name: 'redo editor',
       callback: () => {
         const activeLeaf = this.app.workspace.getActiveViewOfType(MarkdownView);
+        if (!activeLeaf) return
         const view = activeLeaf;
         const editor = view.editor;
         return editor.redo();
