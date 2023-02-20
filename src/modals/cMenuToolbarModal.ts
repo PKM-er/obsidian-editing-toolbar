@@ -236,10 +236,12 @@ export function setFontcolor(app: App, plugin: cMenuToolbarPlugin, color: string
     const editor = view.editor;
     let selectText = editor.getSelection();
     if (selectText == null || selectText.trim() == "") {
+      /*
       //如果没有选中内容激活格式刷
       quiteFormatbrushes(plugin);
       plugin.setEN_FontColor_Format_Brush(true);
       plugin.setTemp_Notice(new Notice(t("Font-Color formatting brush ON!"), 0));
+      */
       return;
     }
 
