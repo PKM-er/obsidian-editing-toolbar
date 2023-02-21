@@ -33,4 +33,9 @@ export default {
 'Clear formatting brush ON!\nClick the  mouse middle or right key to close the formatting-brush':'Clear formatting brush ON!\nClick the  mouse middle or right key to close the formatting-brush',
 'The toolbar is displayed when the mouse moves over it, otherwise it is automatically hidden':'The toolbar is displayed when the mouse moves over it, otherwise it is automatically hidden',
 'Editing Toolbar Auto-hide':'Editing Toolbar Auto-hide',
+'Custom Backgroud Color':'Custom Backgroud Color',
+'Custom Font Color':'Custom Font Color',
+'🎨 Set custom background':'🎨 Set custom background',
+'🖌️ Set custom font color':'🖌️ Set custom font color',
+'Click on the picker to adjust the colour':'Click on the picker to adjust the colour'
 };

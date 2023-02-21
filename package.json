@@ -33,6 +33,7 @@
     "ts"
   ],
   "dependencies": {
+    "@simonwep/pickr": "^1.8.2",
     "feather-icons": "^4.28.0",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",

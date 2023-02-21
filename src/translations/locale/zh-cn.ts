@@ -34,4 +34,9 @@ export default {
   'Clear formatting brush ON!\nClick the  mouse middle or right key to close the formatting-brush':'清除格式刷已开启\n点击鼠标中键或者右键关闭格式刷',
   'The toolbar is displayed when the mouse moves over it, otherwise it is automatically hidden':'当鼠标移到工具栏上方时，工具栏显示，否则自动隐藏',
   'Editing Toolbar Auto-hide':'工具栏是否自动隐藏',
+  'Custom Backgroud Color':'设置自定义背景色',
+  'Custom Font Color':'设置自定义字体颜色',
+  '🎨 Set custom background':'🎨 设置自定义背景',
+  '🖌️ Set custom font color':'🖌️ 设置自定义字体颜色',
+  'Click on the picker to adjust the colour':'点击选取器来调整颜色'
 };

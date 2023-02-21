@@ -7,10 +7,11 @@ import {
   debounce,
   Editor,
   MarkdownView,
+  ItemView,
   SliderComponent,
   ToggleComponent,
   ButtonComponent,
-  requireApiVersion,
+  requireApiVersion,	
   App,
 } from "obsidian";
 import { wait } from "src/util/util";
@@ -21,7 +22,7 @@ import { selfDestruct, cMenuToolbarPopover, getModestate, quiteFormatbrushes, se
 import { cMenuToolbarSettings, DEFAULT_SETTINGS } from "src/settings/settingsData";
 import addIcons, {
   // addFeatherIcons,
-  addRemixIcons
+ // addRemixIcons
   // addBoxIcons
 } from "src/icons/customIcons";
 
@@ -124,7 +125,7 @@ export default class cMenuToolbarPlugin extends Plugin {
     requireApiVersion("0.15.0") ? activeDocument = activeWindow.document : activeDocument = window.document;
     await this.loadSettings();
     addIcons();
-    addRemixIcons(appIcons);
+    // addRemixIcons(appIcons);
     this.generateCommands();
     this.app.workspace.onLayoutReady(() => {
       setTimeout(() => {
@@ -246,7 +247,6 @@ export default class cMenuToolbarPlugin extends Plugin {
       name: 'indent list',
       callback: () => {
         const activeLeaf = this.app.workspace.getActiveViewOfType(MarkdownView);
-        if (!activeLeaf) return
         const view = activeLeaf;
         const editor = view.editor;
         //@ts-ignore
@@ -260,7 +260,6 @@ export default class cMenuToolbarPlugin extends Plugin {
       name: 'unindent-list',
       callback: () => {
         const activeLeaf = this.app.workspace.getActiveViewOfType(MarkdownView);
-        if (!activeLeaf) return
         const view = activeLeaf;
         const editor = view.editor;
         //@ts-ignore
@@ -274,7 +273,6 @@ export default class cMenuToolbarPlugin extends Plugin {
       name: 'undo editor',
       callback: () => {
         const activeLeaf = this.app.workspace.getActiveViewOfType(MarkdownView);
-        if (!activeLeaf) return
         const view = activeLeaf;
         const editor = view.editor;
         return editor.undo();
@@ -287,7 +285,6 @@ export default class cMenuToolbarPlugin extends Plugin {
       name: 'redo editor',
       callback: () => {
         const activeLeaf = this.app.workspace.getActiveViewOfType(MarkdownView);
-        if (!activeLeaf) return
         const view = activeLeaf;
         const editor = view.editor;
         return editor.redo();
@@ -642,10 +639,14 @@ export default class cMenuToolbarPlugin extends Plugin {
 
   handlecMenuToolbar = () => {
     if (this.settings.cMenuVisibility == true) {
-      let view = this.app.workspace.getActiveViewOfType(MarkdownView)
+      //const view = this.app.workspace.getActiveViewOfType(ItemView);
+      //console.log(view?.getViewType() )
+      
+     let view = this.app.workspace.getActiveViewOfType(MarkdownView)
       let toolbar = isExistoolbar(this.app, this.settings)
       if(view)
       {
+     
       if (toolbar) {
         if (this.settings.positionStyle != "following") {
           try {
@@ -667,6 +668,8 @@ export default class cMenuToolbarPlugin extends Plugin {
 
   handlecMenuToolbar_layout = () => {
     // requireApiVersion("0.15.0") ? activeDocument = activeWindow.document : activeDocument = window.document;
+    //const view = this.app.workspace.getActiveViewOfType(ItemView);
+    //console.log(view?.getViewType(),"handlecMenuToolbar_layout" )
     if (this.settings.cMenuVisibility == true) {
       let cMenuToolbarModalBar = isExistoolbar(this.app, this.settings)
       let view = this.app.workspace.getActiveViewOfType(MarkdownView)

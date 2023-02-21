@@ -1,43 +1,37 @@
 
-
-
 export async function wait(delay: number) {
   return new Promise((resolve) => setTimeout(resolve, delay));
 }
 // GenNonDuplicateID(3) 将生成类似 ix49wl2978w 的ID
-export function GenNonDuplicateID(randomLength: number){
+export function GenNonDuplicateID(randomLength: number) {
   let idStr = Date.now().toString(36)
-  idStr += Math.random().toString(36).substr(3,randomLength)
+  idStr += Math.random().toString(36).substr(3, randomLength)
   return idStr
 }
-export function findmenuID(plugin: { settings: { menuCommands: any; }; },command: { id: any; },issub: any){
+export function findmenuID(plugin: { settings: { menuCommands: any; }; }, command: { id: any; }, issub: any) {
   let index;
-  let res={"index":-1,"subindex":-1};
-  let menucmd=plugin.settings.menuCommands
-  if(issub)
-  {
-    menucmd.forEach((item: { SubmenuCommands: any[]; },idx: any) => {
-      if("SubmenuCommands" in item )
-      {  
-       index=   item.SubmenuCommands.findIndex((v) => v.id==  command.id);   
-       if(index>=0)
-       {
-        res= {"index":idx,"subindex":index};
-        return res;
-      }
+  let res = { "index": -1, "subindex": -1 };
+  let menucmd = plugin.settings.menuCommands
+  if (issub) {
+    menucmd.forEach((item: { SubmenuCommands: any[]; }, idx: any) => {
+      if ("SubmenuCommands" in item) {
+        index = item.SubmenuCommands.findIndex((v) => v.id == command.id);
+        if (index >= 0) {
+          res = { "index": idx, "subindex": index };
+          return res;
+        }
       }
     });
   }
-  else
-  {
-   index= menucmd.findIndex((v: { id: any; }) => v.id==  command.id);   
-   res= {"index":index,"subindex":-1};
+  else {
+    index = menucmd.findIndex((v: { id: any; }) => v.id == command.id);
+    res = { "index": index, "subindex": -1 };
   }
- return res;
+  return res;
 }
 
-
-export const colorpicker=`<div class='x-color-picker-wrapper'>
+export function colorpicker(plugin: { settings: { custom_fc1: any; custom_fc2: any; custom_fc3: any; custom_fc4: any; custom_fc5: any; }; }) {
+  return `<div class='x-color-picker-wrapper'>
 <div class='x-color-picker' >
   <table class="x-color-picker-table" id='x-color-picker-table'>
     <tbody>
@@ -137,13 +131,24 @@ export const colorpicker=`<div class='x-color-picker-wrapper'>
         <td style="background-color:#002060"><span></span></td>
         <td style="background-color:#7030a0"><span></span></td>
       </tr>
+      <tr>
+      <th colspan="10" class="ui-widget-content">Custom Font Colors</th>
+    </tr>
+    <tr>
+      <td style="background-color:${plugin.settings.custom_fc1}"><span></span></td>
+      <td style="background-color:${plugin.settings.custom_fc2}"><span></span></td>
+      <td style="background-color:${plugin.settings.custom_fc3}"><span></span></td>
+      <td style="background-color:${plugin.settings.custom_fc4}"><span></span></td>
+      <td style="background-color:${plugin.settings.custom_fc5}"><span></span></td>
+    </tr>
     </tbody>
   </table>
 </div>
 </div>`;
+}
 
-
-export const backcolorpicker=`<div class='x-color-picker-wrapper'>
+export function backcolorpicker(plugin: { settings: { custom_bg1: any; custom_bg2: any; custom_bg3: any; custom_bg4: any; custom_bg5: any; }; }) {
+  return `<div class='x-color-picker-wrapper'>
 <div class='x-color-picker' >
   <table class="x-color-picker-table" id='x-backgroundcolor-picker-table'>
     <tbody>
@@ -164,6 +169,7 @@ export const backcolorpicker=`<div class='x-color-picker-wrapper'>
         <td style="background-color:rgba(74, 82, 199, 0.2)"><span></span></td>
         <td style="background-color:rgba(136, 49, 204, 0.2)"><span></span></td>
       </tr>
+
       <tr>
       <th colspan="5" class="ui-widget-content">Highlighter Colors</th>
     </tr>
@@ -182,7 +188,19 @@ export const backcolorpicker=`<div class='x-color-picker-wrapper'>
       <td style="background-color:rgb(212, 177, 6);"><span></span></td>
       <td style="background-color:rgb(146, 84, 222);"><span></span></td>
     </tr>
+    <tr>
+    <th colspan="5" class="ui-widget-content">Custom Colors</th>
+  </tr>
+    <tr class="bottom">
+    <td style="background-color: ${plugin.settings.custom_bg1};"><span></span></td>
+    <td style="background-color:${plugin.settings.custom_bg2};"><span></span></td>
+    <td style="background-color:${plugin.settings.custom_bg3};"><span></span></td>
+    <td style="background-color:${plugin.settings.custom_bg4};"><span></span></td>
+    <td style="background-color:${plugin.settings.custom_bg5};"><span></span></td>
+  </tr>
     </tbody>
   </table>
 </div>
 </div>`;
+}
+
