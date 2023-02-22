@@ -9,6 +9,7 @@ import { GenNonDuplicateID } from "src/util/util";
 import { t } from 'src/translations/helper';
 
 import Pickr from "@simonwep/pickr";
+import { settings } from "cluster";
 
 
 function getPickrSettings(opts: {
@@ -50,6 +51,7 @@ function onPickrCancel(instance: Pickr) {
 }
 
 
+
 export function getComandindex(item: any, arr: any[]): number {
   let idx;
   arr.forEach((el, index) => {
@@ -63,7 +65,7 @@ export function getComandindex(item: any, arr: any[]): number {
 export class cMenuToolbarSettingTab extends PluginSettingTab {
   plugin: cMenuToolbarPlugin;
   appendMethod: string;
-
+  pickr:Pickr;
   constructor(app: App, plugin: cMenuToolbarPlugin) {
     super(app, plugin);
     this.plugin = plugin;
@@ -203,314 +205,82 @@ export class cMenuToolbarSettingTab extends PluginSettingTab {
           });
       });
 
-    let pickr: Pickr;
-    let pickr2: Pickr;
-    let pickr3: Pickr;
-    let pickr4: Pickr;
-    let pickr5: Pickr;
-    let fpickr: Pickr;
-    let fpickr2: Pickr;
-    let fpickr3: Pickr;
-    let fpickr4: Pickr;
-    let fpickr5: Pickr;
     let isView: true;
-
+   
+   
     new Setting(containerEl)
       .setName(t('🎨 Set custom background'))
       .setDesc(t('Click on the picker to adjust the colour'))
       .setClass('custom_bg')
       .then((setting) => {
-        pickr = Pickr.create(
-          getPickrSettings({
-            isView,
-            el: setting.controlEl.createDiv({ cls: "picker" }),
-            containerEl,
-            swatches: null,
-            opacity: true,
-            defaultColor: this.plugin.settings?.custom_bg1??'#FFB78B8C'
-          })
-        )
-          .on("save", async (color: Pickr.HSVaColor, instance: Pickr) => {
-
-            if (!color) return;
-            this.plugin.settings.custom_bg1 = color.toHEXA().toString()
-            await this.plugin.saveSettings();
-            instance.hide();
-            instance.addSwatch(color.toHEXA().toString());
-          })
-          .on("show", () => {
-            const { result } = (pickr.getRoot() as any).interaction;
-
-            requestAnimationFrame(() =>
-              requestAnimationFrame(() => result.select())
-            );
-          })
-          .on("cancel", onPickrCancel);
-        pickr2 = Pickr.create(
-          getPickrSettings({
-            isView,
-            el: setting.controlEl.createDiv({ cls: "picker" }),
-            containerEl,
-            swatches: null,
-            opacity: true,
-            defaultColor: this.plugin.settings?.custom_bg2??'#CDF4698C'
-          })
-        )
-          .on("save", async (color: Pickr.HSVaColor, instance: Pickr) => {
-
-            if (!color) return;
-            this.plugin.settings.custom_bg2 = color.toHEXA().toString()
-            await this.plugin.saveSettings();
-            instance.hide();
-            instance.addSwatch(color.toHEXA().toString());
-          })
-          .on("show", () => {
-            const { result } = (pickr2.getRoot() as any).interaction;
-
-            requestAnimationFrame(() =>
-              requestAnimationFrame(() => result.select())
-            );
-          })
-          .on("cancel", onPickrCancel);
-        pickr3 = Pickr.create(
-          getPickrSettings({
-            isView,
-            el: setting.controlEl.createDiv({ cls: "picker" }),
-            containerEl,
-            swatches: null,
-            opacity: true,
-            defaultColor: this.plugin.settings?.custom_bg3??'#A0CCF68C'
-          })
-        )
-          .on("save", async (color: Pickr.HSVaColor, instance: Pickr) => {
-
-            if (!color) return;
-            this.plugin.settings.custom_bg3 = color.toHEXA().toString()
-            await this.plugin.saveSettings();
-            instance.hide();
-            instance.addSwatch(color.toHEXA().toString());
-          })
-          .on("show", () => {
-            const { result } = (pickr3.getRoot() as any).interaction;
-
-            requestAnimationFrame(() =>
-              requestAnimationFrame(() => result.select())
-            );
-          })
-          .on("cancel", onPickrCancel);
-        pickr4 = Pickr.create(
-          getPickrSettings({
-            isView,
-            el: setting.controlEl.createDiv({ cls: "picker" }),
-            containerEl,
-            swatches: null,
-            opacity: true,
-            defaultColor: this.plugin.settings?.custom_bg4??'#F0A7D88C'
-          })
-        )
-          .on("save", async (color: Pickr.HSVaColor, instance: Pickr) => {
-
-            if (!color) return;
-            this.plugin.settings.custom_bg4 = color.toHEXA().toString()
-            await this.plugin.saveSettings();
-            instance.hide();
-            instance.addSwatch(color.toHEXA().toString());
-          })
-          .on("show", () => {
-            const { result } = (pickr4.getRoot() as any).interaction;
-
-            requestAnimationFrame(() =>
-              requestAnimationFrame(() => result.select())
-            );
-          })
-          .on("cancel", onPickrCancel);
-        pickr5 = Pickr.create(
-          getPickrSettings({
-            isView,
-            el: setting.controlEl.createDiv({ cls: "picker" }),
-            containerEl,
-            swatches: null,
-            opacity: true,
-            defaultColor: this.plugin.settings?.custom_bg5??'#ADEFEF8C'
-          })
-        )
-          .on("save", async (color: Pickr.HSVaColor, instance: Pickr) => {
-
-            if (!color) return;
-            this.plugin.settings.custom_bg5 = color.toHEXA().toString()
-            await this.plugin.saveSettings();
-            instance.hide();
-            instance.addSwatch(color.toHEXA().toString());
-          })
-          .on("show", () => {
-            const { result } = (pickr5.getRoot() as any).interaction;
-
-            requestAnimationFrame(() =>
-              requestAnimationFrame(() => result.select())
-            );
-          })
-          .on("cancel", onPickrCancel);
+        for (let i = 0; i < 5; i++) {
+           this.pickr = Pickr.create(
+            getPickrSettings({
+              isView,
+              el: setting.controlEl.createDiv({ cls: "picker" }),
+              containerEl,
+              swatches: null,
+              opacity: true,
+              defaultColor: this.plugin.settings[`custom_bg${i + 1}`] ,
+            })
+          )
+            .on("save", async (color: Pickr.HSVaColor, instance: Pickr) => {
+              if (!color) return;
+              this.plugin.settings[`custom_bg${i + 1}`] = color.toHEXA().toString();
+              await this.plugin.saveSettings();
+              instance.hide();
+              instance.addSwatch(color.toHEXA().toString());
+            })
+            .on("show", () => {
+              const { result } = (this.pickr.getRoot() as any).interaction;
+              requestAnimationFrame(() =>
+                requestAnimationFrame(() => result.select())
+              );
+            })
+            .on("cancel", onPickrCancel);
+           
+        }
+    
+       
       })
-      .addExtraButton((b) => {
-        b.setIcon("reset")
-          .onClick(() => {
-            pickr.setColor('#FFB78B8C');
-            pickr2.setColor('#CDF4698C');
-            pickr3.setColor('#A0CCF68C');
-            pickr4.setColor('#F0A7D88C');
-            pickr5.setColor('#ADEFEF8C');
-          })
-      });
-     
+    
 
-      new Setting(containerEl)
+
+    new Setting(containerEl)
       .setName(t('🖌️ Set custom font color'))
       .setDesc(t('Click on the picker to adjust the colour'))
       .setClass('custom_font')
       .then((setting) => {
-        fpickr = Pickr.create(
-          getPickrSettings({
-            isView,
-            el: setting.controlEl.createDiv({ cls: "picker" }),
-            containerEl,
-            swatches: null,
-            opacity: true,
-            defaultColor: this.plugin.settings?.custom_fc1??'#D83931'
-          })
-        )
-          .on("save", async (color: Pickr.HSVaColor, instance: Pickr) => {
-
-            if (!color) return;
-            this.plugin.settings.custom_fc1 = color.toHEXA().toString()
-            await this.plugin.saveSettings();
-            instance.hide();
-            instance.addSwatch(color.toHEXA().toString());
-          })
-          .on("show", () => {
-            const { result } = (fpickr.getRoot() as any).interaction;
-
-            requestAnimationFrame(() =>
-              requestAnimationFrame(() => result.select())
-            );
-          })
-          .on("cancel", onPickrCancel);
-        fpickr2 = Pickr.create(
-          getPickrSettings({
-            isView,
-            el: setting.controlEl.createDiv({ cls: "picker" }),
-            containerEl,
-            swatches: null,
-            opacity: true,
-            defaultColor: this.plugin.settings?.custom_fc2??'#de7802'
-          })
-        )
-          .on("save", async (color: Pickr.HSVaColor, instance: Pickr) => {
-
-            if (!color) return;
-            this.plugin.settings.custom_fc2 = color.toHEXA().toString()
-            await this.plugin.saveSettings();
-            instance.hide();
-            instance.addSwatch(color.toHEXA().toString());
-          })
-          .on("show", () => {
-            const { result } = (fpickr2.getRoot() as any).interaction;
-
-            requestAnimationFrame(() =>
-              requestAnimationFrame(() => result.select())
-            );
-          })
-          .on("cancel", onPickrCancel);
-        fpickr3 = Pickr.create(
-          getPickrSettings({
-            isView,
-            el: setting.controlEl.createDiv({ cls: "picker" }),
-            containerEl,
-            swatches: null,
-            opacity: true,
-            defaultColor: this.plugin.settings?.custom_fc3??'#245bdb'
-          })
-        )
-          .on("save", async (color: Pickr.HSVaColor, instance: Pickr) => {
-
-            if (!color) return;
-            this.plugin.settings.custom_fc3 = color.toHEXA().toString()
-            await this.plugin.saveSettings();
-            instance.hide();
-            instance.addSwatch(color.toHEXA().toString());
-          })
-          .on("show", () => {
-            const { result } = (fpickr3.getRoot() as any).interaction;
-
-            requestAnimationFrame(() =>
-              requestAnimationFrame(() => result.select())
-            );
-          })
-          .on("cancel", onPickrCancel);
-        fpickr4 = Pickr.create(
-          getPickrSettings({
-            isView,
-            el: setting.controlEl.createDiv({ cls: "picker" }),
-            containerEl,
-            swatches: null,
-            opacity: true,
-            defaultColor: this.plugin.settings?.custom_fc4??'#6425d0'
-          })
-        )
-          .on("save", async (color: Pickr.HSVaColor, instance: Pickr) => {
-
-            if (!color) return;
-            this.plugin.settings.custom_fc4 = color.toHEXA().toString()
-            await this.plugin.saveSettings();
-            instance.hide();
-            instance.addSwatch(color.toHEXA().toString());
-          })
-          .on("show", () => {
-            const { result } = (fpickr4.getRoot() as any).interaction;
-
-            requestAnimationFrame(() =>
-              requestAnimationFrame(() => result.select())
-            );
-          })
-          .on("cancel", onPickrCancel);
-        fpickr5 = Pickr.create(
-          getPickrSettings({
-            isView,
-            el: setting.controlEl.createDiv({ cls: "picker" }),
-            containerEl,
-            swatches: null,
-            opacity: true,
-            defaultColor: this.plugin.settings?.custom_fc5??'#646a73'
-          })
-        )
-          .on("save", async (color: Pickr.HSVaColor, instance: Pickr) => {
-
-            if (!color) return;
-            this.plugin.settings.custom_fc5 = color.toHEXA().toString()
-            await this.plugin.saveSettings();
-            instance.hide();
-            instance.addSwatch(color.toHEXA().toString());
-          })
-          .on("show", () => {
-            const { result } = (fpickr5.getRoot() as any).interaction;
-
-            requestAnimationFrame(() =>
-              requestAnimationFrame(() => result.select())
-            );
-          })
-          .on("cancel", onPickrCancel);
+  
+        for (let i = 0; i < 5; i++) {
+          this.pickr = Pickr.create(
+            getPickrSettings({
+              isView,
+              el: setting.controlEl.createDiv({ cls: "picker" }),
+              containerEl,
+              swatches: null,
+              opacity: true,
+              defaultColor: this.plugin.settings[`custom_fc${i + 1}`],
+            })
+          )
+            .on("save", async (color: Pickr.HSVaColor, instance: Pickr) => {
+              if (!color) return;
+              this.plugin.settings[`custom_fc${i + 1}`] = color.toHEXA().toString();
+              await this.plugin.saveSettings();
+              instance.hide();
+              instance.addSwatch(color.toHEXA().toString());
+            })
+            .on("show", () => {
+              const { result } = (this.pickr.getRoot() as any).interaction;
+              requestAnimationFrame(() =>
+                requestAnimationFrame(() => result.select())
+              );
+            })
+            .on("cancel", onPickrCancel);
+          
+        }
+      
       })
-      .addExtraButton((b) => {
-        b.setIcon("reset")
-          .onClick(() => {
-            fpickr.setColor('#D83931');
-            fpickr2.setColor('#de7802');
-            fpickr3.setColor('#245bdb');
-            fpickr4.setColor('#6425d0');
-            fpickr5.setColor('#646a73');
-          })
-      });
-     
-
 
     new Setting(containerEl)
       .setName(t('Editing Toolbar commands')
@@ -829,6 +599,7 @@ export class cMenuToolbarSettingTab extends PluginSettingTab {
     setTimeout(() => {
       dispatchEvent(new Event("cMenuToolbar-NewCommand"));
     }, 100);
+    this.pickr.destroyAndRemove();
   }
 }
 
