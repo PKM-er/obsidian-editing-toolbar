@@ -30,17 +30,19 @@ Please Refer: [How to install Obsidian Plugins](https://forum.obsidian.md/t/plug
 
 [About Cmenu toolbar](https://www.bilibili.com/video/BV1mY4y1T7g2/)
 
+[Obsidian 插件：Editing Toolbar 必装的可视化编辑工具]( https://pkmer.cn/show/20230329145815 )
+
 ## Key Features
 This differs from the cmenu plugin in the following points:
 
 1. add a new toolbar style tiny
 
-   ![](https://ghproxy.com/https://raw.githubusercontent.com/cumany/cumany/main//pic/202209071131715.png)
+   ![](https://raw.githubusercontent.com/cumany/cumany/main//pic/202209071131715.png)
 
 2. add toolbar position options, top, following
 
-   ![](https://ghproxy.com/https://raw.githubusercontent.com/cumany/cumany/main//pic/202209071133753.png)
-   ![](https://ghproxy.com/https://raw.githubusercontent.com/cumany/cumany/main//pic/202209071751006.gif)
+   ![](https://raw.githubusercontent.com/cumany/cumany/main//pic/202209071133753.png)
+   ![](https://raw.githubusercontent.com/cumany/cumany/main//pic/202209071751006.gif)
 3. support multi-window, multi-tab adapted to obsidian 0.14+
 4. add some built-in commands
    1. change-font-color
@@ -67,29 +69,29 @@ This differs from the cmenu plugin in the following points:
        Unlike fullscreen-focus mode, this one just hides the left and right sidebar panels, it's only workspace full screen
    14. head 1-6 level heading settings
        Default binding shortcut key `Ctrl+1,ctrl+2,...Ctrl+6`
-       ![](https://ghproxy.com/https://raw.githubusercontent.com/cumany/cumany/main//pic/202209071707695.png)
+       ![](https://raw.githubusercontent.com/cumany/cumany/main//pic/202209071707695.png)
    15. support custom command icons
-       ![](https://ghproxy.com/https://raw.githubusercontent.com/cumany/cumany/main//pic/202209071717111.gif)
+       ![](https://raw.githubusercontent.com/cumany/cumany/main//pic/202209071717111.gif)
    16. Support modify command name
-       ![](https://ghproxy.com/https://raw.githubusercontent.com/cumany/cumany/main//pic/202209071720159.gif)
+       ![](https://raw.githubusercontent.com/cumany/cumany/main//pic/202209071720159.gif)
    17. Support for adding submenus
-       ![](https://ghproxy.com/https://raw.githubusercontent.com/cumany/cumany/main//pic/202209071722207.gif)
+       ![](https://raw.githubusercontent.com/cumany/cumany/main//pic/202209071722207.gif)
    18. Support menu dragging and sorting
    19. Add formatting brush function Built-in two kinds of formatting brush for font color and background color (middle mouse button or right click can cancel the formatting brush status)
-       ![](https://ghproxy.com/https://raw.githubusercontent.com/cumany/cumany/main//pic/202209071731151.gif)
+       ![](https://raw.githubusercontent.com/cumany/cumany/main//pic/202209071731151.gif)
    20. Adaptive shrinkage of toolbar icon width
-       ![](https://ghproxy.com/https://raw.githubusercontent.com/cumany/cumany/main/pic/202209072157728.gif)
+       ![](https://raw.githubusercontent.com/cumany/cumany/main/pic/202209072157728.gif)
 
 
 
 ### Work with other plugins
 
 1. [emjoi toolbar ](obsidian://show-plugin?id=obsidian-emoji-toolbar) Quickly Insert a  emoji 
-   ![](https://ghproxy.com/https://raw.githubusercontent.com/cumany/cumany/main/pic/202209092001600.gif)
+   ![](https://raw.githubusercontent.com/cumany/cumany/main/pic/202209092001600.gif)
 
 
 2.  [Obsidian-Table-Generator](https://github.com/Quorafind/Obsidian-Table-Generator/)  & [ob-table-enhance](https://github.com/Stardusten/ob-table-enhancer) Quickly Insert a table and edit 
-   ![](https://ghproxy.com/https://raw.githubusercontent.com/cumany/cumany/main/pic/202209092008571.gif)
+   ![](https://raw.githubusercontent.com/cumany/cumany/main/pic/202209092008571.gif)
 
 > The above plugins are available from the example vault , all of which have been optimized and have some bugs fixed
 ☟☟☟
@@ -104,7 +106,7 @@ This is the Obsidian example vault is amazing, there are a lot of dazzling featu
 Thank you very much for your support!
 
 <div align="center">
-<img src="https://ghproxy.com/https://raw.githubusercontent.com/cumany/cumany/main/pic/202209192228895.png" width="400px">
+<img src="https://raw.githubusercontent.com/cumany/cumany/main/pic/202209192228895.png" width="400px">
 </div>
 
 

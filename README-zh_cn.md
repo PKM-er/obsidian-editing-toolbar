@@ -14,6 +14,10 @@
 
 QQ： 825255377
 
+## 详细教程 
+
+[Obsidian 插件：Editing Toolbar 必装的可视化编辑工具]( https://pkmer.cn/show/20230329145815 )
+
 ## 目录导航
 
     - [如何安装](#如何安装)
