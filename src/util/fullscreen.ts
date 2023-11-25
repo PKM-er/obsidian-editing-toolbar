@@ -26,7 +26,7 @@ export function fullscreenMode(app: App) {
         if (!leaf)
             return;
         let el = leaf.containerEl ;
-        let modroot= document.body?.querySelector(".mod-vertical.mod-root") as HTMLElement
+        let modroot= document.body?.querySelector(".mod-vertical.mod-root .workspace-tab-container") as HTMLElement
         let fullscreenMutationObserver: MutationObserver;
         fullscreenMutationObserver = new MutationObserver(function (mutationRecords) {
           mutationRecords.forEach(function (mutationRecord) {

@@ -62,10 +62,20 @@ export function getComandindex(item: any, arr: any[]): number {
   return idx;
 }
 
+function getComandindex2(array: any[]): number {
+  for (let i = 0; i < array.length; i++) {
+    const settingItem = array[i].querySelector('.setting-item');
+
+    if (settingItem && settingItem.dataset["id"]) {
+      return i;
+    }
+  }
+  return -1;
+}
 export class cMenuToolbarSettingTab extends PluginSettingTab {
   plugin: cMenuToolbarPlugin;
   appendMethod: string;
-  pickr:Pickr;
+  pickr: Pickr;
   constructor(app: App, plugin: cMenuToolbarPlugin) {
     super(app, plugin);
     this.plugin = plugin;
@@ -80,13 +90,14 @@ export class cMenuToolbarSettingTab extends PluginSettingTab {
     const { containerEl } = this;
     containerEl.empty();
     containerEl.createEl("h1", { text: "Obsidian Editing Toolbar" });
-    containerEl.createEl("span", { text: " 原创： " }).createEl("a", {
-      text: "Chetachi 👩🏽‍💻",
-      href: "https://github.com/chetachiezikeuzor",
-    });
-    containerEl.createEl("span", { text: "     修改者： " }).createEl("a", {
+
+    containerEl.createEl("span", { text: "     作者： " }).createEl("a", {
       text: "Cuman ✨",
       href: "https://github.com/cumany",
+    });
+    containerEl.createEl("span", { text: "     教程： " }).createEl("a", {
+      text: "pkmer.cn",
+      href: "https://pkmer.cn/show/20230329145815",
     });
     containerEl.createEl("h2", { text: t("Plugin Settings") });
     new Setting(containerEl)
@@ -206,22 +217,22 @@ export class cMenuToolbarSettingTab extends PluginSettingTab {
       });
 
     let isView: true;
-   
-   
+
+
     new Setting(containerEl)
       .setName(t('🎨 Set custom background'))
       .setDesc(t('Click on the picker to adjust the colour'))
       .setClass('custom_bg')
       .then((setting) => {
         for (let i = 0; i < 5; i++) {
-           this.pickr = Pickr.create(
+          this.pickr = Pickr.create(
             getPickrSettings({
               isView,
               el: setting.controlEl.createDiv({ cls: "picker" }),
               containerEl,
               swatches: null,
               opacity: true,
-              defaultColor: this.plugin.settings[`custom_bg${i + 1}`] ,
+              defaultColor: this.plugin.settings[`custom_bg${i + 1}`],
             })
           )
             .on("save", async (color: Pickr.HSVaColor, instance: Pickr) => {
@@ -238,12 +249,12 @@ export class cMenuToolbarSettingTab extends PluginSettingTab {
               );
             })
             .on("cancel", onPickrCancel);
-           
+
         }
-    
-       
+
+
       })
-    
+
 
 
     new Setting(containerEl)
@@ -251,7 +262,7 @@ export class cMenuToolbarSettingTab extends PluginSettingTab {
       .setDesc(t('Click on the picker to adjust the colour'))
       .setClass('custom_font')
       .then((setting) => {
-  
+
         for (let i = 0; i < 5; i++) {
           this.pickr = Pickr.create(
             getPickrSettings({
@@ -277,9 +288,9 @@ export class cMenuToolbarSettingTab extends PluginSettingTab {
               );
             })
             .on("cancel", onPickrCancel);
-          
+
         }
-      
+
       })
 
     new Setting(containerEl)
@@ -418,31 +429,48 @@ export class cMenuToolbarSettingTab extends PluginSettingTab {
                 subresult.splice(command.newIndex, 0, removed);
                 this.plugin.saveSettings();
               }
-            } else
-              if (command.to.className === "cMenuToolbarSettingsTabsContainer") {
+            } else if (command.to.className === "cMenuToolbarSettingsTabsContainer") {
+              // 从子菜单拖动到父菜单的逻辑
+              const arrayResult = this.plugin.settings.menuCommands;
 
-                const arrayResult = this.plugin.settings.menuCommands;
-                let cmdindex = getComandindex(command.path[1].dataset["id"], arrayResult);
+              let cmdindex = getComandindex(command.target.parentElement.dataset["id"], arrayResult);
+ 
+              const subresult = arrayResult[cmdindex]?.SubmenuCommands;
 
-                const subresult = arrayResult[cmdindex]?.SubmenuCommands;
+              if (subresult) {
+            
+                  const [removed] = subresult.splice(command.oldIndex, 1);
+                  arrayResult.splice(command.newIndex, 0, removed);
+                  this.plugin.saveSettings();
+                
+              } else {
+                console.error('Subresult is undefined.');
+              }
+            } else if (command.from.className === "cMenuToolbarSettingsTabsContainer") {
+              // 从父菜单拖动到子菜单的逻辑
+              const arrayResult = this.plugin.settings.menuCommands;
+              const fromDatasetId = command.target.parentElement.dataset["id"];
 
 
-                const [removed] = subresult.splice(command.oldIndex, 1);
-                arrayResult.splice(command.newIndex, 0, removed);
-                this.plugin.saveSettings();
-              } else
-                if (command.from.className === "cMenuToolbarSettingsTabsContainer") {
+
+              const cmdindex = getComandindex(fromDatasetId, arrayResult);
 
 
-                  const arrayResult = this.plugin.settings.menuCommands;
 
-                  let cmdindex = getComandindex(command.path[1].dataset["id"], arrayResult);
 
-                  const subresult = arrayResult[cmdindex]?.SubmenuCommands;
+              const subresult = arrayResult[cmdindex]?.SubmenuCommands;
+
+
+              if (subresult) {
+             
                   const [removed] = arrayResult.splice(command.oldIndex, 1);
                   subresult.splice(command.newIndex, 0, removed);
                   this.plugin.saveSettings();
-                }
+                
+              } else {
+                console.error('Subresult is undefined.');
+              }
+            }
             setTimeout(() => {
               dispatchEvent(new Event("cMenuToolbar-NewCommand"));
             }, 300);
@@ -494,6 +522,7 @@ export class cMenuToolbarSettingTab extends PluginSettingTab {
                 });
             });
           subsetting.nameEl;
+          
         });
       } else {
         setting

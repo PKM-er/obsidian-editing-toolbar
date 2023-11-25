@@ -30,7 +30,7 @@ QQ： 825255377
 2.  所有的插件手动安装方法都是一样的，本插件也不例外。 
     在[releases](https://github.com/cumany/obsidian-editing-toolbar/releases) 下载 `main.js` `mainfest.json` `styles.css` 三个文件
     在Obsidian库目录下的 `.obsidian\plugins\` 新建一个插件目录名字`Obsidian-editing-toolbar`文件夹。把刚才下载的三个文件放进去。
-     ![](https://ghproxy.com/https://raw.githubusercontent.com/cumany/cumany/main/pic/202209221441394.png)
+     ![](https://ghproxy.net/https://raw.githubusercontent.com/cumany/cumany/main/pic/202209221441394.png)
     最后在obsidian中开启本插件即可。
 3.  手动安装教程
     [Plugins mini FAQ ](https://forum.obsidian.md/t/plugins-mini-faq/7737)
@@ -46,11 +46,11 @@ QQ： 825255377
 
 1. 增加新的工具栏样式 tiny
 
-   ![|400](https://ghproxy.com/https://raw.githubusercontent.com/cumany/cumany/main//pic/202209071131715.png)
+   ![|400](https://ghproxy.net/https://raw.githubusercontent.com/cumany/cumany/main//pic/202209071131715.png)
 2. 增加工具栏位置选项，top，following
 
-   ![|400](https://ghproxy.com/https://raw.githubusercontent.com/cumany/cumany/main//pic/202209071133753.png)
-   ![](https://ghproxy.com/https://raw.githubusercontent.com/cumany/cumany/main//pic/202209071751006.gif)
+   ![|400](https://ghproxy.net/https://raw.githubusercontent.com/cumany/cumany/main//pic/202209071133753.png)
+   ![](https://ghproxy.net/https://raw.githubusercontent.com/cumany/cumany/main//pic/202209071751006.gif)
 
 3. 支持 多窗口，多tab 适应obsidian 0.14+
 
@@ -84,32 +84,32 @@ QQ： 825255377
    14. head 1-6 级标题设置
        默认绑定快捷键`Ctrl+1,ctrl+2,...Ctrl+6`。
 
-       ![](https://ghproxy.com/https://raw.githubusercontent.com/cumany/cumany/main//pic/202209071707695.png)
+       ![](https://ghproxy.net/https://raw.githubusercontent.com/cumany/cumany/main//pic/202209071707695.png)
    15. 支持自定义命令图标
 
-       ![](https://ghproxy.com/https://raw.githubusercontent.com/cumany/cumany/main//pic/202209071717111.gif)
+       ![](https://ghproxy.net/https://raw.githubusercontent.com/cumany/cumany/main//pic/202209071717111.gif)
    16. 支持修改命令名称
 
-       ![](https://ghproxy.com/https://raw.githubusercontent.com/cumany/cumany/main//pic/202209071720159.gif)
+       ![](https://ghproxy.net/https://raw.githubusercontent.com/cumany/cumany/main//pic/202209071720159.gif)
    17. 支持添加子菜单
 
-       ![](https://ghproxy.com/https://raw.githubusercontent.com/cumany/cumany/main//pic/202209071722207.gif)
+       ![](https://ghproxy.net/https://raw.githubusercontent.com/cumany/cumany/main//pic/202209071722207.gif)
    18. 支持菜单拖动排序
    19. 增加格式刷功能 内置字体颜色和背景颜色两种格式刷（鼠标中键或者右键可取消格式刷状态）
 
-       ![](https://ghproxy.com/https://raw.githubusercontent.com/cumany/cumany/main//pic/202209071731151.gif)
+       ![](https://ghproxy.net/https://raw.githubusercontent.com/cumany/cumany/main//pic/202209071731151.gif)
    20. 工具栏图标宽度自适应收缩
    
-       ![](https://ghproxy.com/https://raw.githubusercontent.com/cumany/cumany/main/pic/202209072157728.gif)
+       ![](https://ghproxy.net/https://raw.githubusercontent.com/cumany/cumany/main/pic/202209072157728.gif)
 
 ### 跟其他插件协作
 
 1. [emjoi toolbar ](obsidian://show-plugin?id=obsidian-emoji-toolbar)快捷插入表情
-   ![](https://ghproxy.com/https://raw.githubusercontent.com/cumany/cumany/main/pic/202209092001600.gif)
+   ![](https://ghproxy.net/https://raw.githubusercontent.com/cumany/cumany/main/pic/202209092001600.gif)
 
 
 2.  [Obsidian-Table-Generator](https://github.com/Quorafind/Obsidian-Table-Generator/)  & [ob-table-enhance](https://github.com/Stardusten/ob-table-enhancer) 快捷插入表格并编辑
-   ![](https://ghproxy.com/https://raw.githubusercontent.com/cumany/cumany/main/pic/202209092008571.gif)
+   ![](https://ghproxy.net/https://raw.githubusercontent.com/cumany/cumany/main/pic/202209092008571.gif)
 
 > 上面插件均可从示例库获取，示例库的插件一般都经过了优化并修复了一些错误
 ☟☟☟
@@ -123,5 +123,5 @@ QQ： 825255377
 Thank you very much for your support!
 
 <div align="center">
-<img src="https://ghproxy.com/https://raw.githubusercontent.com/cumany/cumany/main/pic/202209192228895.png" width="400px">
+<img src="https://ghproxy.net/https://raw.githubusercontent.com/cumany/cumany/main/pic/202209192228895.png" width="400px">
 </div>

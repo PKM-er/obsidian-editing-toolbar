@@ -714,12 +714,15 @@ button[class^=cMenuToolbarCommandsubItem]::after {
 
 #cMenuToolbarModalBar.top.autohide {
   opacity: 0;
+  transition: all 0.5s linear;
+  -webkit-transition: all 0.5s linear;  
 }
 
 
 #cMenuToolbarModalBar.top.autohide:hover {
   opacity: 1;
-  transition: all 0.5s linear;
+  transition: all 1s linear;
+  -webkit-transition: all 1s linear;  
 }
 
 
@@ -856,7 +859,9 @@ button[class^=cMenuToolbarCommandsubItem]::after {
   content: url("data:image/svg+xml,%3Csvg width='16' height='16' viewBox='0 0 1024 1024' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M511.674077 66.707284c-246.52265 0-446.347744 199.835328-446.347744 446.347744s199.825095 446.356954 446.347744 446.356954c246.50423 0 446.348768-199.844537 446.348768-446.356954S758.177284 66.707284 511.674077 66.707284zM744.967424 667.159826c21.8701 21.8701 21.8701 57.310264 0 79.199807-21.8701 21.851681-57.30924 21.851681-79.198783-0.019443L511.674077 592.264045 357.56007 746.359632c-21.8701 21.8701-57.30924 21.851681-79.17934-0.019443s-21.8701-57.290821 0-79.160921L432.493713 513.065262 278.379707 358.950232c-21.8701-21.86089-21.8701-57.328683 0-79.18855 21.8701-21.87931 57.30924-21.87931 79.17934 0l154.114007 154.104797 154.095587-154.104797c21.889543-21.87931 57.32766-21.87931 79.198783-0.010233 21.8701 21.8701 21.8701 57.348126 0 79.207993L590.89128 513.065262 744.967424 667.159826z' fill='%23666666'/%3E%3C/svg%3E");
 }
 
-:is(#cMenuToolbarModalBar, #cMenuToolbarPopoverBar) button.cMenuToolbarCommandItem.cMenuToolbar-Divider-Line {
+
+:is(#cMenuToolbarModalBar, #cMenuToolbarPopoverBar) button.cMenuToolbar-Divider-Line
+{
   min-width: unset;
   flex-shrink: 0;
   display: inline-flex;
@@ -866,14 +871,27 @@ button[class^=cMenuToolbarCommandsubItem]::after {
   opacity: 0.8;
   margin: 0;
 }
+:is(#cMenuToolbarModalBar, #cMenuToolbarPopoverBar) button[class^=cMenuToolbarCommandsubItem]>.subitem button.menu-item.cMenuToolbar-Divider-Line
+{  min-width: unset;
+  flex-shrink: 0;
+  display: inline-flex;
+  width: 0.6px;
+  background-color: var(--background-modifier-border);
+  height: 22px;
+  opacity: 0.8;
+  margin: 0;
+  padding: 0;
+  height: auto;
 
-.theme-dark :is(#cMenuToolbarModalBar, #cMenuToolbarPopoverBar) button.cMenuToolbarCommandItem.cMenuToolbar-Divider-Line {
+}
+
+.theme-dark :is(#cMenuToolbarModalBar, #cMenuToolbarPopoverBar) button.cMenuToolbar-Divider-Line {
 
   background-color: #4f4f5188;
 
 }
 
-:is(#cMenuToolbarModalBar, #cMenuToolbarPopoverBar) button.cMenuToolbarCommandItem.cMenuToolbar-Divider-Line svg {
+:is(#cMenuToolbarModalBar, #cMenuToolbarPopoverBar) button.cMenuToolbar-Divider-Line svg {
   display: none;
 }
 

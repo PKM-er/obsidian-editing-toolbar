@@ -659,6 +659,7 @@ export function cMenuToolbarPopover(
               if(settings.positionStyle != "top") 
               _btn.buttonEl.setAttribute('aria-label-position','top')
             }
+     
           checkHtml(item.icon)
             ? (_btn.buttonEl.innerHTML = item.icon)
             : _btn.setIcon(item.icon);
@@ -696,6 +697,8 @@ export function cMenuToolbarPopover(
                     if(settings.positionStyle != "top") 
                     sub_btn.buttonEl.setAttribute('aria-label-position','top')
                   }
+                  if (subitem.id == "cMenuToolbar-Divider-Line")
+                  sub_btn.setClass("cMenuToolbar-Divider-Line");
                 checkHtml(subitem.icon)
                   ? (sub_btn.buttonEl.innerHTML = subitem.icon)
                   : sub_btn.setIcon(subitem.icon);
