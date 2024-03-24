@@ -763,7 +763,7 @@ button[class^=cMenuToolbarCommandsubItem]::after {
   display: inline-flex;
   align-items: center;
   width: fit-content;
-  z-index: var(--layer-status-bar);
+  z-index: var(--layer-popover);
   background-color: var(--color-base-10, --background-primary);
   background-clip: padding-box;
   border-radius: 6px;
@@ -921,4 +921,18 @@ button[class^=cMenuToolbarCommandsubItem]::after {
 
 .setting-item.toolbar-cta {
   position: relative;
+}
+
+.toolbar-pickr  .pcr-last-color,
+.pickr  .pcr-button{
+  background-color: var(--pcr-color);
+}
+.toolbar-pickr .pcr-interaction :not(:is(input.pcr-save,.pcr-result)){
+  display:none;
+}
+.toolbar-pickr .pcr-swatches {
+  display:none;
+}
+.toolbar-pickr {
+  display:flex;
 }

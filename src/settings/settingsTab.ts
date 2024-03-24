@@ -26,6 +26,7 @@ function getPickrSettings(opts: {
     el,
     container: isView ? document.body : containerEl,
     theme: "nano",
+    appClass: 'toolbar-pickr',
     swatches,
     lockOpacity: !opacity,
     default: defaultColor,
