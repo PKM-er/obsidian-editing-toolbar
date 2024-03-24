@@ -533,7 +533,7 @@ export default class cMenuToolbarPlugin extends Plugin {
                                       : (char = 2);
           //@ts-ignore
           app.commands.executeCommandById(`${type["id"]}`);
-          editor.setCursor(curserEnd.line, curserEnd.ch + char);
+          if (type["id"] !== "editor:insert-link") editor.setCursor(curserEnd.line, curserEnd.ch + char);
           await wait(10);
           //@ts-ignore
           app.commands.executeCommandById("editor:focus");
