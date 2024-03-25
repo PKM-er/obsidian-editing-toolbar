@@ -653,7 +653,13 @@ export default class cMenuToolbarPlugin extends Plugin {
             toolbar.style.visibility = "visible";
           } catch(err) {
             console.log(toolbar,"toolbar_error");
-          }       
+          }
+        } else {
+          try {
+            toolbar.style.visibility = "hidden";
+          } catch(err) {
+            console.log(toolbar,"toolbar_error");
+          }
         }
 
       } else {
