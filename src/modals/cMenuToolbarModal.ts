@@ -102,7 +102,7 @@ export function isExistoolbar(app: App, settings: cMenuToolbarSettings): HTMLEle
   const position = settings.positionStyle;
   let container;
   requireApiVersion("0.15.0") ? activeDocument = activeWindow.document : activeDocument = window.document;
-  position == "top" ? container = app.workspace.activeLeaf.view.containerEl?.querySelector("#cMenuToolbarModalBar")
+  position == "top" ? container = app.workspace.activeLeaf?.view.containerEl?.querySelector("#cMenuToolbarModalBar")
     : container = activeDocument.getElementById("cMenuToolbarModalBar");
   if (container) {
     return container as HTMLElement;
