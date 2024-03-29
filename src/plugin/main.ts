@@ -171,12 +171,13 @@ export default class cMenuToolbarPlugin extends Plugin {
  
     requireApiVersion("0.15.0") ? activeDocument = activeWindow.document : activeDocument = window.document;
     await this.loadSettings();
+    this.addSettingTab(new cMenuToolbarSettingTab(this.app, this));
     let screenWidth = window.innerWidth > 0 ? window.innerWidth : screen.width;
     let isLoadOnMobile = this.settings?.isLoadOnMobile?this.settings.isLoadOnMobile:false;
    if (Platform.isMobileApp && !isLoadOnMobile) {
     if (screenWidth <= 768) {
       // 移动设备且屏幕宽度小于等于 768px，默认不开启toolbar
-      new Notice("Mobile devices are disabled by default, if enabled please update the Toolbar settings.", 3000);
+      new Notice("Mobile devices are disabled by default, if enabled please update the Toolbar settings.", 5000);
       console.log("editing toolbar disable loading on mobile");
       return;
     }
@@ -195,7 +196,7 @@ export default class cMenuToolbarPlugin extends Plugin {
         this.init_evt(leaf.doc);
       });
     }
-    this.addSettingTab(new cMenuToolbarSettingTab(this.app, this));
+
   
     this.registerEvent(this.app.workspace.on("thino-editor-created",this.handlecMenuToolbar));
     this.registerEvent(this.app.workspace.on("active-leaf-change", this.handlecMenuToolbar));
@@ -259,6 +260,7 @@ export default class cMenuToolbarPlugin extends Plugin {
       }
     });
   }
+  
   generateCommands() {
     //Hide-show menu
     this.addCommand({
