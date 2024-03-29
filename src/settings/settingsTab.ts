@@ -197,6 +197,22 @@ export class cMenuToolbarSettingTab extends PluginSettingTab {
             .setDynamicTooltip();
         });
     }
+
+    
+    new Setting(containerEl)
+      .setName(t('Mobile enabled or not')
+      )
+      .setDesc(
+        t("Whether to enable on mobile devices with device width less than 768px, the default is disable.")
+      )
+      .addToggle(toggle => toggle.setValue(this.plugin.settings?.isLoadOnMobile??false)
+        .onChange((value) => {
+          this.plugin.settings.isLoadOnMobile = value;
+          this.plugin.saveSettings();
+          setTimeout(() => {
+            dispatchEvent(new Event("cMenuToolbar-NewCommand"));
+          }, 100);
+        }));
     new Setting(containerEl)
       .setName(t('Editing Toolbar refresh')
       )

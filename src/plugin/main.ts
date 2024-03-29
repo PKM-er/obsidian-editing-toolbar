@@ -4,7 +4,7 @@ import {
   Notice,
   Command,
   setIcon,
-  debounce,
+  Platform,
   Editor,
   MarkdownView,
   ItemView,
@@ -84,7 +84,7 @@ export default class cMenuToolbarPlugin extends Plugin {
     {
       id: "editor:toggle-blockquote",
       name: "Toggle blockquote",
-      icon: "quote-glyph",
+      icon: "lucide-text-quote",
     },
     {
       id: "editor:toggle-bullet-list",
@@ -111,6 +111,52 @@ export default class cMenuToolbarPlugin extends Plugin {
       name: "Toggle numbered list",
       icon: "number-list-glyph",
     },
+    {
+      id: "editor:insert-callout",
+      name: "Toggle Callout ",
+      icon: "lucide-quote",
+    },
+    {
+      id: "editor:insert-mathblock",
+      name: "Toggle MathBlock",
+      icon: "lucide-sigma-square",
+    },
+    {
+      id: "editor:toggle-inline-math",
+      name: "Toggle inline math",
+      icon: "lucide-sigma",
+    },
+    {
+      id: "editor:insert-table",
+      name: "Toggle table",
+      icon: "lucide-table",
+    },
+    {
+      id: "editor:swap-line-up",
+      name: "Toggle swap line up",
+      icon: "lucide-corner-right-up",
+    },
+    {
+      id: "editor:swap-line-down",
+      name: "Toggle swap line down",
+      icon: "lucide-corner-right-down",
+    },
+    {
+      id: "editor:attach-file",
+      name: "Toggle upload attach file",
+      icon: "lucide-paperclip",
+    },
+    {
+      id: "editor:clear-formatting",
+      name: "Toggle clear formatting",
+      icon: "lucide-eraser",
+    },
+    {
+      id: "editor:cycle-list-checklist",
+      name: "Toggle cycle list checklist",
+      icon: "lucide-check-square",
+    }
+
   ];
 
   IS_MORE_Button: boolean;
@@ -122,10 +168,21 @@ export default class cMenuToolbarPlugin extends Plugin {
 
   async onload(): Promise<void> {
     console.log("cMenuToolbar v" + this.manifest.version + " loaded");
+ 
     requireApiVersion("0.15.0") ? activeDocument = activeWindow.document : activeDocument = window.document;
     await this.loadSettings();
+    let screenWidth = window.innerWidth > 0 ? window.innerWidth : screen.width;
+    let isLoadOnMobile = this.settings?.isLoadOnMobile?this.settings.isLoadOnMobile:false;
+   if (Platform.isMobileApp && !isLoadOnMobile) {
+    if (screenWidth <= 768) {
+      // 移动设备且屏幕宽度小于等于 768px，默认不开启toolbar
+      new Notice("Mobile devices are disabled by default, if enabled please update the Toolbar settings.", 3000);
+      console.log("editing toolbar disable loading on mobile");
+      return;
+    }
+  }
     addIcons();
-    // addRemixIcons(appIcons);
+    // addRemixIcconsole.log();ons(appIcons);
     this.generateCommands();
     this.app.workspace.onLayoutReady(() => {
       setTimeout(() => {
@@ -139,9 +196,12 @@ export default class cMenuToolbarPlugin extends Plugin {
       });
     }
     this.addSettingTab(new cMenuToolbarSettingTab(this.app, this));
+  
+    this.registerEvent(this.app.workspace.on("thino-editor-created",this.handlecMenuToolbar));
     this.registerEvent(this.app.workspace.on("active-leaf-change", this.handlecMenuToolbar));
     this.registerEvent(this.app.workspace.on("layout-change", this.handlecMenuToolbar_layout));
     this.registerEvent(this.app.workspace.on("resize", this.handlecMenuToolbar_resize));
+    // this.app.workspace.onLayoutReady(this.handlecMenuToolbar_editor.bind(this));
     if (this.settings.cMenuVisibility == true) {
       setTimeout(() => {
         dispatchEvent(new Event("cMenuToolbar-NewCommand"));
@@ -290,6 +350,60 @@ export default class cMenuToolbarPlugin extends Plugin {
         return editor.redo();
       },
       icon: "redo-glyph"
+
+    });
+    this.addCommand({
+      id: 'editor-copy',
+      name: 'copy editor',
+      callback: async() => {
+        const activeLeaf = this.app.workspace.getActiveViewOfType(MarkdownView);
+        const view = activeLeaf;
+        const editor = view.editor;
+        try {
+          await window.navigator.clipboard.writeText(editor.getSelection()); // 使用 window.navigator.clipboard.writeText() 方法将选定的文本写入剪贴板
+          app.commands.executeCommandById("editor:focus");
+        } catch (error) {
+          console.error("Copy failed:", error);
+      }
+      },
+      icon: "lucide-copy"
+
+    });
+    this.addCommand({
+      id: 'editor-paste',
+      name: 'paste editor',
+      callback: async() => {
+        const activeLeaf = this.app.workspace.getActiveViewOfType(MarkdownView);
+        const view = activeLeaf;
+        const editor = view.editor;
+        try {
+          var replaceSelection = editor.replaceSelection; // 获取编辑器的替换选区方法
+          var text = await window.navigator.clipboard.readText(); // 使用 window.navigator.clipboard.readText() 方法读取剪贴板中的文本
+          return replaceSelection.apply(editor, [text]); // 将读取的文本替换当前选区
+          app.commands.executeCommandById("editor:focus");
+      } catch (error) {
+          console.error("Paste failed:", error);
+      }
+      },
+      icon: "lucide-clipboard-type"
+
+    });
+    this.addCommand({
+      id: 'editor-cut',
+      name: 'cut editor',
+      callback: async() => {
+        const activeLeaf = this.app.workspace.getActiveViewOfType(MarkdownView);
+        const view = activeLeaf;
+        const editor = view.editor;
+        try {
+          await window.navigator.clipboard.writeText(editor.getSelection()); // 使用 window.navigator.clipboard.writeText() 方法将选定的文本写入剪贴板
+          editor.replaceSelection(""); // 清空选定的文本
+          app.commands.executeCommandById("editor:focus");
+      } catch (error) {
+          console.error("Cut failed:", error);
+      }
+      },
+      icon: "lucide-scissors"
 
     });
     this.addCommand({
@@ -630,22 +744,24 @@ export default class cMenuToolbarPlugin extends Plugin {
   onunload(): void {
     selfDestruct();
     console.log("cMenuToolbar unloaded");
+ 
     this.app.workspace.off("active-leaf-change", this.handlecMenuToolbar);
-
     this.app.workspace.off("layout-change", this.handlecMenuToolbar_layout);
     this.app.workspace.off("resize", this.handlecMenuToolbar_resize);
   }
-
+ 
 
   handlecMenuToolbar = () => {
     if (this.settings.cMenuVisibility == true) {
       //const view = this.app.workspace.getActiveViewOfType(ItemView);
       //console.log(view?.getViewType() )
-      
-     let view = this.app.workspace.getActiveViewOfType(MarkdownView)
+    //   const type= this.app.workspace.activeLeaf.getViewState().type
+    //   console.log(type,"active-leaf-chang" )
+    //  let view =   true
+    
       let toolbar = isExistoolbar(this.app, this.settings)
-      if(view)
-      {
+      // if(view)
+      
      
       if (toolbar) {
         if (this.settings.positionStyle != "following") {
@@ -665,20 +781,24 @@ export default class cMenuToolbarPlugin extends Plugin {
       } else {
 
         setTimeout(() => {
+          console.log("cMenuToolbarPopover begin..." )
           cMenuToolbarPopover(this.app, this)
         }, 100);
       }
-    }
+    
   }
   };
 
   handlecMenuToolbar_layout = () => {
     // requireApiVersion("0.15.0") ? activeDocument = activeWindow.document : activeDocument = window.document;
     //const view = this.app.workspace.getActiveViewOfType(ItemView);
-    //console.log(view?.getViewType(),"handlecMenuToolbar_layout" )
+    // const type= this.app.workspace.activeLeaf.getViewState().type
+    // console.log(type,"handlecMenuToolbar_layout" )
     if (this.settings.cMenuVisibility == true) {
       let cMenuToolbarModalBar = isExistoolbar(this.app, this.settings)
-      let view = this.app.workspace.getActiveViewOfType(MarkdownView)
+      // console.log(cMenuToolbarModalBar,"cMenuToolbarModalBar" )
+      //let view = this.app.workspace.getActiveViewOfType(MarkdownView) || true
+      let view = true
       if ((getModestate(app)===false)|| (!view)) //no source mode
       {
         if (cMenuToolbarModalBar) {
@@ -694,7 +814,7 @@ export default class cMenuToolbarPlugin extends Plugin {
           }
 
         } else {
-
+          // console.log("cMenuToolbarPopover begin..." )
           setTimeout(() => {
             cMenuToolbarPopover(this.app, this)
           }, 100);
@@ -710,13 +830,15 @@ export default class cMenuToolbarPlugin extends Plugin {
 
   };
   handlecMenuToolbar_resize = () => {
-
+    // const type= this.app.workspace.activeLeaf.getViewState().type
+    // console.log(type,"handlecMenuToolbar_layout" )
     //requireApiVersion("0.15.0") ? activeDocument = activeWindow.document : activeDocument = window.document;
     if (this.settings.cMenuVisibility == true && this.settings.positionStyle == "top") {
       if (getModestate(app)) {
-        let view = this.app.workspace.getActiveViewOfType(MarkdownView)
+        let view = this.app.workspace.getActiveViewOfType(MarkdownView) || true
         if (view) {
-          let leafwidth = view.containerEl?.querySelector<HTMLElement>(".markdown-source-view").offsetWidth ?? 0
+          let leafwidth= this.app.workspace.activeLeaf.view.leaf.width??0
+          //let leafwidth = view.containerEl?.querySelector<HTMLElement>(".markdown-source-view").offsetWidth ?? 0
           if (this.Leaf_Width == leafwidth) return false;
           if (leafwidth > 0) {
             this.Leaf_Width = leafwidth

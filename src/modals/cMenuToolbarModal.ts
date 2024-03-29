@@ -59,6 +59,9 @@ export function resetToolbar() {
 }
 
 export function selfDestruct() {
+  requireApiVersion("0.15.0") ? activeDocument = activeWindow.document : activeDocument = window.document;
+  const toolBarElement =activeDocument.getElementById("cMenuToolbarModalBar");
+  if(toolBarElement) toolBarElement.remove();
   const rootSplits = getRootSplits();
   const clearToolbar = (leaf: HTMLElement) => {
 
@@ -614,6 +617,7 @@ export function cMenuToolbarPopover(
       let leafwidth = 99999;
       if (settings.positionStyle == "top") {
         let currentleaf = app.workspace.activeLeaf.view.containerEl
+      
         if (!currentleaf?.querySelector("#cMenuToolbarPopoverBar"))
           currentleaf?.querySelector(".markdown-source-view")
             .insertAdjacentElement("afterbegin", PopoverMenu);
@@ -895,7 +899,7 @@ export function cMenuToolbarPopover(
       }
     };
     const view = app.workspace.getActiveViewOfType(ItemView);
-    if(view?.getViewType()==="markdown" ||view?.getViewType()==="canvas"){
+    if(view?.getViewType()==="markdown" ||view?.getViewType()==="thino_view"){
   //  let Markdown = app.workspace.getActiveViewOfType(MarkdownView);
    // if (Markdown) {
       if (isExistoolbar(app, plugin.settings)) return;

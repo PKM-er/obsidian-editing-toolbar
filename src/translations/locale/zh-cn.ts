@@ -38,5 +38,7 @@ export default {
   'Custom Font Color':'设置自定义字体颜色',
   '🎨 Set custom background':'🎨 设置自定义背景',
   '🖌️ Set custom font color':'🖌️ 设置自定义字体颜色',
-  'Click on the picker to adjust the colour':'点击选取器来调整颜色'
+  'Click on the picker to adjust the colour':'点击选取器来调整颜色',
+  'Mobile enabled or not': '是否在移动端启用',
+  'Whether to enable on mobile devices with device width less than 768px, the default is disable.':'是否在设备宽度小于768的移动设备启用。默认不启用'
 };

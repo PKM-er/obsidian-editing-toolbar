@@ -2,18 +2,38 @@ import { App, MarkdownView, requireApiVersion } from "obsidian";
 let activeDocument: Document;
 export function workplacefullscreenMode(app: App) {
     requireApiVersion("0.15.0") ? activeDocument = activeWindow.document : activeDocument = window.document;
-    let rightleaf = activeDocument.body?.querySelector(" .mod-right-split.is-collapsed");
-    let leftleaf = activeDocument.body?.querySelector(" .mod-left-split.is-collapsed");
-    if (rightleaf && !leftleaf)   //@ts-ignore 
-        app.commands.executeCommandById("app:toggle-left-sidebar");
-    if (!rightleaf && leftleaf)   //@ts-ignore 
-        app.commands.executeCommandById("app:toggle-right-sidebar");
-    if (!rightleaf && !leftleaf || rightleaf && leftleaf) {
+    let currentleaf = activeDocument;
 
-        //@ts-ignore
+
+    if (app.workspace.leftSplit.collapsed && app.workspace.rightSplit.collapsed) {
+        //@ts-ignore 
+        app.commands.executeCommandById("app:toggle-right-sidebar");
+        //@ts-ignore 
         app.commands.executeCommandById("app:toggle-left-sidebar");
-        //@ts-ignore
-        app.commands.executeCommandById("app:toggle-right-sidebar")
+        app.workspace.leftRibbon.show()
+
+        if (currentleaf.body.classList.contains('auto-hide-header')) {
+
+            currentleaf.body.classList.remove('auto-hide-header');
+        }
+    }
+    else {
+
+        if (!currentleaf.body.classList.contains('auto-hide-header')) {
+
+
+            currentleaf.body.classList.add('auto-hide-header');
+        }
+        app.workspace.leftRibbon.hide()
+        if (!app.workspace.leftSplit.collapsed) {
+            //@ts-ignore 
+            app.commands.executeCommandById("app:toggle-left-sidebar");
+
+        }
+        if (!app.workspace.rightSplit.collapsed) {
+            //@ts-ignore 
+            app.commands.executeCommandById("app:toggle-right-sidebar");
+        }
     }
 
 
@@ -22,8 +42,8 @@ export function workplacefullscreenMode(app: App) {
 
 //full screen mode
 export function fullscreenMode(app: App) {
-  
-   
+
+
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.toggleFull = exports.isFull = exports.exitFull = exports.beFull = void 0;
     let DOC_EL = document.documentElement;
