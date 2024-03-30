@@ -624,22 +624,9 @@ export class cMenuToolbarSettingTab extends PluginSettingTab {
       //    setting.nameEl;
     });
 
-    const cDonationDiv = containerEl.createEl("div", {
-      cls: "cDonationSection",
-    });
+  
 
-    const credit = createEl("p");
-    const donateText = createEl("p");
-    donateText.appendText(
-      "If you like this Plugin and are considering donating to support continued development, use the button below!"
-    );
-    credit.setAttribute("style", "color: var(--text-muted)");
-    cDonationDiv.appendChild(donateText);
-    cDonationDiv.appendChild(credit);
-
-    cDonationDiv.appendChild(
-      createDonateButton("https://www.buymeacoffee.com/cuman")
-    );
+    
   }
   hide(): void {
     setTimeout(() => {
@@ -649,13 +636,6 @@ export class cMenuToolbarSettingTab extends PluginSettingTab {
   }
 }
 
-const createDonateButton = (link: string): HTMLElement => {
-  const a = createEl("a");
-  a.setAttribute("href", link);
-  a.addClass("buymeacoffee-img");
-  a.innerHTML = `<img src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee &emoji=&slug=Cuman&button_colour=BD5FFF&font_colour=ffffff&font_family=Poppins&outline_colour=000000&coffee_colour=FFDD00" />`;
-  return a;
-};
-
+ 
 
 

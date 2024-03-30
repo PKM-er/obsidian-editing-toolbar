@@ -898,6 +898,7 @@ export function cMenuToolbarPopover(
         }, 100);
       }
     };
+    if(!plugin.isLoadMobile()) return ;
     const view = app.workspace.getActiveViewOfType(ItemView);
     if(view?.getViewType()==="markdown" ||view?.getViewType()==="thino_view"){
   //  let Markdown = app.workspace.getActiveViewOfType(MarkdownView);
@@ -916,6 +917,7 @@ export function cMenuToolbarPopover(
     }
 
   }
+ 
   createMenu();
 }
 

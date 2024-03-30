@@ -181,7 +181,6 @@ export default class cMenuToolbarPlugin extends Plugin {
         this.setupStatusBar();
       });
     });
-    if (this.isLoadMobile()) {
       this.init_evt(activeDocument);
       if (requireApiVersion("0.15.0")) {
         this.app.workspace.on('window-open', (leaf) => {
@@ -189,8 +188,8 @@ export default class cMenuToolbarPlugin extends Plugin {
         });
       }
 
-
-      this.registerEvent(this.app.workspace.on("thino-editor-created", this.handlecMenuToolbar));
+      const isThinoEnabled = app.plugins.enabledPlugins.has("obsidian-memos");
+      if(isThinoEnabled)  this.registerEvent(this.app.workspace.on("thino-editor-created", this.handlecMenuToolbar));
       this.registerEvent(this.app.workspace.on("active-leaf-change", this.handlecMenuToolbar));
       this.registerEvent(this.app.workspace.on("layout-change", this.handlecMenuToolbar_layout));
       this.registerEvent(this.app.workspace.on("resize", this.handlecMenuToolbar_resize));
@@ -200,7 +199,7 @@ export default class cMenuToolbarPlugin extends Plugin {
           dispatchEvent(new Event("cMenuToolbar-NewCommand"));
         }, 100)
       }
-    }
+    
 
   }
 
@@ -210,11 +209,11 @@ export default class cMenuToolbarPlugin extends Plugin {
     if (Platform.isMobileApp && !isLoadOnMobile) {
       if (screenWidth <= 768) {
         // 移动设备且屏幕宽度小于等于 768px，默认不开启toolbar
-        new Notice("Mobile devices are disabled by default, if enabled please update the Toolbar settings.", 5000);
         console.log("editing toolbar disable loading on mobile");
         return false;
       }
     }
+    return true;
   }
   init_evt(container: Document) {
 
