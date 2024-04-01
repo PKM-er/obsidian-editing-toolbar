@@ -956,6 +956,10 @@ div[data-type="thino_view"] .memo-editor-wrapper #cMenuToolbarModalBar ~ .cm-edi
     padding-left:16px;
     padding-right:16px; 
 }
+div[data-type=thino_view] .common-editor-wrapper .common-editor-inputer:has(#cMenuToolbarModalBar)
+{
+  min-height:118px;
+}
 
 
 body.auto-hide-header .workspace-tab-header-container:hover + .workspace-tab-container .workspace-leaf .workspace-leaf-content>.view-header {
