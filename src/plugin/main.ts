@@ -226,11 +226,12 @@ export default class cMenuToolbarPlugin extends Plugin {
           quiteFormatbrushes(this);
         }
       }
-      let view = this.app.workspace.getActiveViewOfType(MarkdownView);
-      if (!view) { return; };
+      // let view = this.app.workspace.getActiveViewOfType(MarkdownView);
+      if (!this.isView()) { return; };
 
       //let cmEditor = view.sourceMode.cmEditor;
-      let cmEditor = view.editor;
+
+      let cmEditor = this.app.workspace.activeEditor.editor;
       if (cmEditor.hasFocus()) {
         let cMenuToolbarModalBar = isExistoolbar(this.app, this.settings)
 
@@ -312,9 +313,9 @@ export default class cMenuToolbarPlugin extends Plugin {
       id: 'indent-list',
       name: 'indent list',
       callback: () => {
-        const activeLeaf = this.app.workspace.getActiveViewOfType(MarkdownView);
-        const view = activeLeaf;
-        const editor = view.editor;
+        //const activeLeaf = this.app.workspace.getActiveViewOfType(MarkdownView);
+        //const view = activeLeaf;
+        const editor = this.app.workspace.activeEditor.editor;
         //@ts-ignore
         return editor.indentList();
       },
@@ -327,7 +328,7 @@ export default class cMenuToolbarPlugin extends Plugin {
       callback: () => {
         const activeLeaf = this.app.workspace.getActiveViewOfType(MarkdownView);
         const view = activeLeaf;
-        const editor = view.editor;
+        const editor = this.app.workspace.activeEditor.editor;
         //@ts-ignore
         return editor.unindentList();
       },
@@ -340,7 +341,7 @@ export default class cMenuToolbarPlugin extends Plugin {
       callback: () => {
         const activeLeaf = this.app.workspace.getActiveViewOfType(MarkdownView);
         const view = activeLeaf;
-        const editor = view.editor;
+        const editor =  this.app.workspace.activeEditor.editor;
         return editor.undo();
       },
       icon: "undo-glyph"
@@ -352,7 +353,7 @@ export default class cMenuToolbarPlugin extends Plugin {
       callback: () => {
         const activeLeaf = this.app.workspace.getActiveViewOfType(MarkdownView);
         const view = activeLeaf;
-        const editor = view.editor;
+        const editor =  this.app.workspace.activeEditor.editor;
         return editor.redo();
       },
       icon: "redo-glyph"
@@ -364,7 +365,7 @@ export default class cMenuToolbarPlugin extends Plugin {
       callback: async () => {
         const activeLeaf = this.app.workspace.getActiveViewOfType(MarkdownView);
         const view = activeLeaf;
-        const editor = view.editor;
+        const editor =  this.app.workspace.activeEditor.editor;
         try {
           await window.navigator.clipboard.writeText(editor.getSelection()); // 使用 window.navigator.clipboard.writeText() 方法将选定的文本写入剪贴板
           app.commands.executeCommandById("editor:focus");
@@ -381,7 +382,7 @@ export default class cMenuToolbarPlugin extends Plugin {
       callback: async () => {
         const activeLeaf = this.app.workspace.getActiveViewOfType(MarkdownView);
         const view = activeLeaf;
-        const editor = view.editor;
+        const editor =  this.app.workspace.activeEditor.editor;
         try {
           var replaceSelection = editor.replaceSelection; // 获取编辑器的替换选区方法
           var text = await window.navigator.clipboard.readText(); // 使用 window.navigator.clipboard.readText() 方法读取剪贴板中的文本
@@ -400,7 +401,7 @@ export default class cMenuToolbarPlugin extends Plugin {
       callback: async () => {
         const activeLeaf = this.app.workspace.getActiveViewOfType(MarkdownView);
         const view = activeLeaf;
-        const editor = view.editor;
+        const editor =  this.app.workspace.activeEditor.editor;
         try {
           await window.navigator.clipboard.writeText(editor.getSelection()); // 使用 window.navigator.clipboard.writeText() 方法将选定的文本写入剪贴板
           editor.replaceSelection(""); // 清空选定的文本
@@ -595,16 +596,14 @@ export default class cMenuToolbarPlugin extends Plugin {
         name: `Toggle ${type}`,
         icon: `${type}-glyph`,
         callback: async () => {
-          const activeLeaf =
-            this.app.workspace.getActiveViewOfType(MarkdownView);
-          if (activeLeaf) {
+           
             const view = activeLeaf;
-            const editor = view.editor;
+            const editor =  this.app.workspace.activeEditor.editor;
             applyCommand(commandsMap[type], editor);
             await wait(10);
             //@ts-ignore
             app.commands.executeCommandById("editor:focus");
-          }
+          
         },
       });
     });
@@ -756,7 +755,13 @@ export default class cMenuToolbarPlugin extends Plugin {
     this.app.workspace.off("resize", this.handlecMenuToolbar_resize);
   }
 
-
+  isView()
+  {
+    const view = app.workspace.getActiveViewOfType(ItemView);
+    if(view?.getViewType()==="markdown" ||view?.getViewType()==="thino_view")
+    return true;
+    else return false;
+  }
   handlecMenuToolbar = () => {
     if (this.settings.cMenuVisibility == true) {
       //const view = this.app.workspace.getActiveViewOfType(ItemView);

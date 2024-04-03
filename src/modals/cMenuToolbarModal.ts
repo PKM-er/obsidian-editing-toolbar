@@ -240,9 +240,9 @@ export function createTablecell(app: App, plugin: cMenuToolbarPlugin, el: string
 export function setFontcolor(app: App, plugin: cMenuToolbarPlugin, color: string) {
   //from https://github.com/obsidian-canzi/Enhanced-editing
   const activeLeaf = app.workspace.getActiveViewOfType(MarkdownView);
-  if (activeLeaf) {
+ 
     const view = activeLeaf;
-    const editor = view.editor;
+    const editor = app.workspace.activeEditor.editor;
     let selectText = editor.getSelection();
     // if (selectText == null || selectText.trim() == "") {
     //   //如果没有选中内容激活格式刷
@@ -276,15 +276,15 @@ export function setFontcolor(app: App, plugin: cMenuToolbarPlugin, color: string
     editor.exec("goRight");
     // @ts-ignore
     app.commands.executeCommandById("editor:focus");
-  }
+  
 }
 
 export function setBackgroundcolor(app: App, plugin: cMenuToolbarPlugin, color: string) {
   //from https://github.com/obsidian-canzi/Enhanced-editing
   const activeLeaf = app.workspace.getActiveViewOfType(MarkdownView);
-  if (activeLeaf) {
+
     const view = activeLeaf;
-    const editor = view.editor;
+    const editor = app.workspace.activeEditor.editor;
     let selectText = editor.getSelection();
   //  console.log(selectText,'selectText')
     // if (selectText == null || selectText.trim() == "") {
@@ -319,7 +319,7 @@ export function setBackgroundcolor(app: App, plugin: cMenuToolbarPlugin, color: 
     editor.exec("goRight");
     //@ts-ignore
     app.commands.executeCommandById("editor:focus");
-  }
+  
 }
 
 export const setcolorHex = function (color: string) {
@@ -406,9 +406,9 @@ export function setHeader(_str: string) {
   //from https://github.com/obsidian-canzi/Enhanced-editing
 
   const activeLeaf = app.workspace.getActiveViewOfType(MarkdownView);
-  if (activeLeaf) {
+  
     const view = activeLeaf;
-    const editor = view.editor;
+    const editor = app.workspace.activeEditor.editor;;
     let linetext = editor.getLine(editor.getCursor().line);
     let newstr, linend = "";
     const regex = /^(\>*(\[[!\w]+\])?\s*)#+\s/;
@@ -434,13 +434,12 @@ export function setHeader(_str: string) {
     };
     editor.setLine(editor.getCursor().line, newstr);
     editor.setCursor({ line: editor.getCursor().line, ch: Number(newstr.length - linend.length) });
-  };
+  
 }
 export function setFormateraser(app: App, plugin: cMenuToolbarPlugin) {
-  const activeLeaf = app.workspace.getActiveViewOfType(MarkdownView);
-  if (activeLeaf) {
-    const view = activeLeaf;
-    const editor = view.editor
+
+     
+    const editor = app.workspace.activeEditor.editor;
     let linend;
     let selstart = editor.getRange({ line: editor.getCursor().line, ch: 0 }, editor.getCursor());
     let linetext = editor.getLine(editor.getCursor().line);
@@ -480,7 +479,7 @@ export function setFormateraser(app: App, plugin: cMenuToolbarPlugin) {
       app.commands.executeCommandById("editor:focus");
 
     }
-  };
+  
 }
 export const createFollowingbar = (app: App, settings: cMenuToolbarSettings) => {
 
