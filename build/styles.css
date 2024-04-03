@@ -10,7 +10,7 @@
   -webkit-transition: 100ms cubic-bezier(0.92, -0.53, 0.65, 1.21);
   min-width: fit-content;
   justify-content: space-around;
-  z-index: 51;
+  z-index: 50;
 
 }
 
@@ -26,7 +26,7 @@
   margin: 2px;
   border: none;
   display: flex;
-  cursor: pointer;
+  cursor: default;
   padding: 5px 6px;
   box-shadow: none;
   margin-left: 3px;
@@ -38,8 +38,10 @@
   height: auto;
 }
 
-#cMenuToolbarModalBar button.cMenuToolbarCommandItem:hover {
-  background-color: var(--background-secondary);
+#cMenuToolbarModalBar button.cMenuToolbarCommandItem:hover,
+#cMenuToolbarSecond:hover {
+ 
+ filter:invert(0.5);
 }
 
 /* #cMenuToolbarModalBar button.cMenuToolbarCommandItem svg {
@@ -269,7 +271,7 @@ cMenuToolbar STATUS BAR BUTTONS
 ----------------------------------------------------------------*/
 
 .cMenuToolbar-statusbar-button {
-  cursor: pointer;
+  cursor: default;
   display: flex;
   align-items: center;
   line-height: 1;
@@ -452,8 +454,7 @@ button[class^=cMenuToolbarCommandsubItem]::after {
 }
 
 :is(#cMenuToolbarModalBar, #cMenuToolbarPopoverBar) button[class^=cMenuToolbarCommandsubItem]>.subitem button:hover {
-  background-color: var(--interactive-hover);
-  box-shadow: var(--input-shadow-hover);
+  filter:invert(0.5);
 }
 
 
@@ -680,7 +681,7 @@ button[class^=cMenuToolbarCommandsubItem]::after {
 .x-color-picker-wrapper #x-color-picker-table td {
   font-size: 1px;
   padding: 9px;
-  cursor: pointer;
+  cursor: default;
   border: solid 1px var(--background-modifier-border);
 }
 
@@ -688,17 +689,18 @@ button[class^=cMenuToolbarCommandsubItem]::after {
   font-size: 1px;
   border-radius: 50%;
   padding: 9px;
-  cursor: pointer;
+  cursor: default;
   border: solid 1px var(--background-modifier-border);
 }
 
 .x-color-picker-wrapper .x-color-picker-table tr td:hover {
+  filter: brightness(1.2);
   box-shadow: 0 3px 6px -4px rgba(0, 0, 0, .12), 0 6px 16px 0 rgba(0, 0, 0, .08), 0 9px 28px 8px rgba(0, 0, 0, .05);
 }
 
-.x-color-picker-wrapper tbody>tr:hover {
+/* .x-color-picker-wrapper tbody>tr:hover {
   background-color: transparent !important;
-}
+} */
 
 /**top**/
 #cMenuToolbarModalBar.top {
@@ -736,7 +738,7 @@ button[class^=cMenuToolbarCommandsubItem]::after {
   padding: 0;
   border: none;
   background: transparent;
-  cursor: pointer;
+  cursor: default;
   outline: none;
   box-shadow: none;
   border-radius: 2px;
@@ -751,9 +753,9 @@ button[class^=cMenuToolbarCommandsubItem]::after {
 
 }
 
-#cMenuToolbarModalBar.top button.cMenuToolbarCommandItem:hover {
+/* #cMenuToolbarModalBar.top button.cMenuToolbarCommandItem:hover {
   background-color: var(--interactive-hover);
-}
+} */
 
 
 
@@ -790,7 +792,7 @@ button[class^=cMenuToolbarCommandsubItem]::after {
   padding: 0;
   border: none;
   background: transparent;
-  cursor: pointer;
+  cursor: default;
   outline: none;
   box-shadow: none;
   border-radius: 2px;
