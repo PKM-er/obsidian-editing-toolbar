@@ -242,7 +242,7 @@ export function setFontcolor(app: App, plugin: cMenuToolbarPlugin, color: string
   const activeLeaf = app.workspace.getActiveViewOfType(MarkdownView);
  
     const view = activeLeaf;
-    const editor = app.workspace.activeEditor.editor;
+    const editor = app.workspace.activeLeaf.view?.editor;
     let selectText = editor.getSelection();
     // if (selectText == null || selectText.trim() == "") {
     //   //如果没有选中内容激活格式刷
@@ -284,7 +284,7 @@ export function setBackgroundcolor(app: App, plugin: cMenuToolbarPlugin, color: 
   const activeLeaf = app.workspace.getActiveViewOfType(MarkdownView);
 
     const view = activeLeaf;
-    const editor = app.workspace.activeEditor.editor;
+    const editor = app.workspace.activeLeaf.view?.editor;
     let selectText = editor.getSelection();
   //  console.log(selectText,'selectText')
     // if (selectText == null || selectText.trim() == "") {
@@ -408,7 +408,7 @@ export function setHeader(_str: string) {
   const activeLeaf = app.workspace.getActiveViewOfType(MarkdownView);
   
     const view = activeLeaf;
-    const editor = app.workspace.activeEditor.editor;;
+    const editor = app.workspace.activeLeaf.view?.editor;;
     let linetext = editor.getLine(editor.getCursor().line);
     let newstr, linend = "";
     const regex = /^(\>*(\[[!\w]+\])?\s*)#+\s/;
@@ -439,7 +439,7 @@ export function setHeader(_str: string) {
 export function setFormateraser(app: App, plugin: cMenuToolbarPlugin) {
 
      
-    const editor = app.workspace.activeEditor.editor;
+    const editor = app.workspace.activeLeaf.view?.editor;
     let linend;
     let selstart = editor.getRange({ line: editor.getCursor().line, ch: 0 }, editor.getCursor());
     let linetext = editor.getLine(editor.getCursor().line);
