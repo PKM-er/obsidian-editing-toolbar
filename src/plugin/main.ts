@@ -326,8 +326,6 @@ export default class cMenuToolbarPlugin extends Plugin {
       id: 'undent-list',
       name: 'unindent-list',
       callback: () => {
-        const activeLeaf = this.app.workspace.getActiveViewOfType(MarkdownView);
-        const view = activeLeaf;
         const editor = this.app.workspace.activeLeaf.view?.editor;
         //@ts-ignore
         return editor.unindentList();
@@ -339,8 +337,6 @@ export default class cMenuToolbarPlugin extends Plugin {
       id: 'editor-undo',
       name: 'undo editor',
       callback: () => {
-        const activeLeaf = this.app.workspace.getActiveViewOfType(MarkdownView);
-        const view = activeLeaf;
         const editor =  this.app.workspace.activeLeaf.view?.editor;
         return editor.undo();
       },
@@ -363,8 +359,7 @@ export default class cMenuToolbarPlugin extends Plugin {
       id: 'editor-copy',
       name: 'copy editor',
       callback: async () => {
-        const activeLeaf = this.app.workspace.getActiveViewOfType(MarkdownView);
-        const view = activeLeaf;
+
         const editor =  this.app.workspace.activeLeaf.view?.editor;
         try {
           await window.navigator.clipboard.writeText(editor.getSelection()); // 使用 window.navigator.clipboard.writeText() 方法将选定的文本写入剪贴板
@@ -386,7 +381,7 @@ export default class cMenuToolbarPlugin extends Plugin {
         try {
           var replaceSelection = editor.replaceSelection; // 获取编辑器的替换选区方法
           var text = await window.navigator.clipboard.readText(); // 使用 window.navigator.clipboard.readText() 方法读取剪贴板中的文本
-          return replaceSelection.apply(editor, [text]); // 将读取的文本替换当前选区
+          if(text)  replaceSelection.apply(editor, [text]); // 将读取的文本替换当前选区
           app.commands.executeCommandById("editor:focus");
         } catch (error) {
           console.error("Paste failed:", error);
@@ -399,8 +394,7 @@ export default class cMenuToolbarPlugin extends Plugin {
       id: 'editor-cut',
       name: 'cut editor',
       callback: async () => {
-        const activeLeaf = this.app.workspace.getActiveViewOfType(MarkdownView);
-        const view = activeLeaf;
+
         const editor =  this.app.workspace.activeLeaf.view?.editor;
         try {
           await window.navigator.clipboard.writeText(editor.getSelection()); // 使用 window.navigator.clipboard.writeText() 方法将选定的文本写入剪贴板
@@ -596,8 +590,6 @@ export default class cMenuToolbarPlugin extends Plugin {
         name: `Toggle ${type}`,
         icon: `${type}-glyph`,
         callback: async () => {
-           
-            const view = activeLeaf;
             const editor =  this.app.workspace.activeLeaf.view?.editor;
             applyCommand(commandsMap[type], editor);
             await wait(10);
@@ -614,10 +606,7 @@ export default class cMenuToolbarPlugin extends Plugin {
         name: `${type["name"]}`,
         icon: `${type["icon"]}`,
         callback: async () => {
-          const activeLeaf =
-            this.app.workspace.getActiveViewOfType(MarkdownView);
-          const view = activeLeaf;
-          const editor = view.editor;
+          const editor =  this.app.workspace.activeLeaf.view?.editor;
           editor.getCursor("from");
           const curserEnd = editor.getCursor("to");
           let char;
@@ -846,8 +835,6 @@ export default class cMenuToolbarPlugin extends Plugin {
     //requireApiVersion("0.15.0") ? activeDocument = activeWindow.document : activeDocument = window.document;
     if (this.settings.cMenuVisibility == true && this.settings.positionStyle == "top") {
       if (getModestate(app)) {
-        let view = this.app.workspace.getActiveViewOfType(MarkdownView) || true
-        if (view) {
           let leafwidth = this.app.workspace.activeLeaf.view.leaf.width ?? 0
           //let leafwidth = view.containerEl?.querySelector<HTMLElement>(".markdown-source-view").offsetWidth ?? 0
           if (this.Leaf_Width == leafwidth) return false;
@@ -863,7 +850,7 @@ export default class cMenuToolbarPlugin extends Plugin {
               }
             }
           }
-        }
+        
       }
     } else {
       return false;

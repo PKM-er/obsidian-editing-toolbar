@@ -446,7 +446,7 @@ button[class^=cMenuToolbarCommandsubItem]::after {
 }
 
 :is(#cMenuToolbarModalBar, #cMenuToolbarPopoverBar) button[class^=cMenuToolbarCommandsubItem]>.subitem button.menu-item {
-  background-color: var(--background-secondary);
+  background-color: transparent;
   line-height: 2em;
   display: inline-flex;
   box-shadow: none;
@@ -536,9 +536,7 @@ button[class^=cMenuToolbarCommandsubItem]::after {
   background-color: transparent;
 }
 
-.cMenuToolbarCommandsubItem-font-color button:hover {
-  background-color: var(--interactive-normal);
-}
+ 
 
 .cMenuToolbarSettingsTabsContainer .cMenuToolbarCommandItem .setting-item-info {
 
