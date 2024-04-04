@@ -361,7 +361,7 @@ body.theme-dark .modal-container.cMenuToolbar-Modal .modal input[type='range'] {
 #cMenuToolbarModalBar.cMenuToolbarTinyAesthetic {
   align-items: center;
   justify-items: center;
-  border: none;
+  border: 1px solid var(--background-modifier-border-hover);
   backdrop-filter: none;
   background-color: var(--color-base-10, --background-primary);
 
