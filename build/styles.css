@@ -4,7 +4,7 @@
   padding: 3px;
   display: grid;
   user-select: none;
-  border-radius: 6px;
+  border-radius: var(--radius-m);
   position: absolute;
   transition: 100ms cubic-bezier(0.92, -0.53, 0.65, 1.21);
   -webkit-transition: 100ms cubic-bezier(0.92, -0.53, 0.65, 1.21);
@@ -32,7 +32,7 @@
   margin-left: 3px;
   margin-right: 3px;
   position: relative;
-  border-radius: 3px;
+  border-radius: var(--radius-s);
   font-size: initial !important;
   background-color: var(--background-primary-alt);
   height: auto;
@@ -70,7 +70,7 @@ button:not(.mod-cta):not(.mod-warning).cMenuToolbarSettingsButton.cMenuToolbarSe
 
 button.cMenuToolbarSettingsButton {
   padding: 4px 14px;
-  border-radius: 6px;
+  border-radius: var(--radius-m);
 }
 
 
@@ -159,7 +159,7 @@ cMenuToolbar CLASS CHANGES
   box-shadow: none;
   border: none;
   display: flex;
-  border-radius: 3px;
+  border-radius: var(--radius-s);
   font-size: 10px;
   margin-right: 0px;
   position: relative;
@@ -205,7 +205,7 @@ cMenuToolbar STATUS BAR MENU
   font-size: 12px;
   text-align: center;
   line-height: 1;
-  border-radius: 5px;
+  border-radius: var(--radius-m);
   height: auto;
   padding: 8px 5px 0px 5px;
   margin: 0 auto;
@@ -403,7 +403,7 @@ body.theme-dark .modal-container.cMenuToolbar-Modal .modal input[type='range'] {
   box-shadow: none;
   border: none;
   display: flex;
-  border-radius: 3px;
+  border-radius: var(--radius-s);
   font-size: 10px;
   margin-right: 0px;
   position: relative;
@@ -428,7 +428,7 @@ button[class^=cMenuToolbarCommandsubItem]::after {
 
 :is(#cMenuToolbarModalBar, #cMenuToolbarPopoverBar) button[class^=cMenuToolbarCommandsubItem]>.subitem {
   background-color: var(--color-base-10, --background-primary);
-  border-radius: 4px;
+  border-radius: var(--radius-s);
   border: 1px solid var(--background-modifier-border);
 
   position: absolute;
@@ -645,7 +645,7 @@ button[class^=cMenuToolbarCommandsubItem]::after {
   width: fit-content;
   font-weight: 400;
   font-family: Source Sans Pro, sans-serif;
-  border-radius: 4px;
+  border-radius: var(--radius-s);
   background-color: var(--color-base-10, --background-primary);
 }
 
@@ -734,7 +734,7 @@ button[class^=cMenuToolbarCommandsubItem]::after {
   cursor: default;
   outline: none;
   box-shadow: none;
-  border-radius: 2px;
+  border-radius: var(--radius-s);
   display: inline-flex;
   justify-content: center;
   align-items: center;
@@ -761,7 +761,7 @@ button[class^=cMenuToolbarCommandsubItem]::after {
   z-index: var(--layer-popover);
   background-color: var(--color-base-10, --background-primary);
   background-clip: padding-box;
-  border-radius: 6px;
+  border-radius: var(--radius-m);
 
   margin-left: auto;
   margin-right: 25px;
@@ -788,7 +788,7 @@ button[class^=cMenuToolbarCommandsubItem]::after {
   cursor: default;
   outline: none;
   box-shadow: none;
-  border-radius: 2px;
+  border-radius: var(--radius-s);
   display: inline-flex;
   justify-content: center;
   align-items: center;
