@@ -10,7 +10,7 @@
   -webkit-transition: 100ms cubic-bezier(0.92, -0.53, 0.65, 1.21);
   min-width: fit-content;
   justify-content: space-around;
-  z-index: 50;
+  z-index: var(--layer-modal);
 
 }
 
@@ -38,10 +38,10 @@
   height: auto;
 }
 
-#cMenuToolbarModalBar button.cMenuToolbarCommandItem:hover,
+:is(#cMenuToolbarModalBar, #cMenuToolbarPopoverBar) button[class^=cMenuToolbarCommandsubItem]>.subitem button:hover,
+:is(#cMenuToolbarModalBar, #cMenuToolbarPopoverBar) button[class^=cMenuToolbarCommand]:hover,
 #cMenuToolbarSecond:hover {
- 
- filter:invert(0.5);
+  background-color: var(--background-modifier-hover) !important;
 }
 
 /* #cMenuToolbarModalBar button.cMenuToolbarCommandItem svg {
@@ -364,7 +364,7 @@ body.theme-dark .modal-container.cMenuToolbar-Modal .modal input[type='range'] {
   border: none;
   backdrop-filter: none;
   background-color: var(--color-base-10, --background-primary);
- 
+
 }
 
 
@@ -430,7 +430,7 @@ button[class^=cMenuToolbarCommandsubItem]::after {
   background-color: var(--color-base-10, --background-primary);
   border-radius: 4px;
   border: 1px solid var(--background-modifier-border);
-  
+
   position: absolute;
   z-index: var(--layer-menu);
   user-select: none;
@@ -452,11 +452,6 @@ button[class^=cMenuToolbarCommandsubItem]::after {
   box-shadow: none;
   align-items: center;
 }
-
-:is(#cMenuToolbarModalBar, #cMenuToolbarPopoverBar) button[class^=cMenuToolbarCommandsubItem]>.subitem button:hover {
-  filter:invert(0.5);
-}
-
 
 :is(#cMenuToolbarModalBar, #cMenuToolbarPopoverBar) button[class^=cMenuToolbarCommandsubItem]>.subitem .menu-item {
   margin-left: 2px;
@@ -536,7 +531,7 @@ button[class^=cMenuToolbarCommandsubItem]::after {
   background-color: transparent;
 }
 
- 
+
 
 .cMenuToolbarSettingsTabsContainer .cMenuToolbarCommandItem .setting-item-info {
 
@@ -715,14 +710,14 @@ button[class^=cMenuToolbarCommandsubItem]::after {
 #cMenuToolbarModalBar.top.autohide {
   opacity: 0;
   transition: all 0.5s linear;
-  -webkit-transition: all 0.5s linear;  
+  -webkit-transition: all 0.5s linear;
 }
 
 
 #cMenuToolbarModalBar.top.autohide:hover {
   opacity: 1;
   transition: all 1s linear;
-  -webkit-transition: all 1s linear;  
+  -webkit-transition: all 1s linear;
 }
 
 
@@ -800,10 +795,6 @@ button[class^=cMenuToolbarCommandsubItem]::after {
   transition: all 0.2s linear;
   -webkit-transition: all 0.2s linear;
 
-}
-
-#cMenuToolbarPopoverBar :is(.cMenuToolbarCommandItem, button[class^=cMenuToolbarCommandsubItem]):hover {
-  background-color: var(--interactive-hover);
 }
 
 #cMenuToolbarModalBar .more-menu {
@@ -948,13 +939,13 @@ div[data-type="thino_view"] .memo-editor-wrapper:has(#cMenuToolbarModalBar)
 div[data-type="thino_view"] .memo-editor-wrapper:has(#cMenuToolbarModalBar) .common-tools-wrapper
 {
    padding-left:16px;
-    padding-right:16px; 
+    padding-right:16px;
 }
 div[data-type="thino_view"] .memo-editor-wrapper #cMenuToolbarModalBar ~ .cm-editor{
     padding-top:8px;
     padding-bottom:0px;
     padding-left:16px;
-    padding-right:16px; 
+    padding-right:16px;
 }
 div[data-type=thino_view] .common-editor-wrapper .common-editor-inputer:has(#cMenuToolbarModalBar)
 {
