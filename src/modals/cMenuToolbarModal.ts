@@ -618,11 +618,17 @@ export function cMenuToolbarPopover(
         let currentleaf = app.workspace.activeLeaf.view.containerEl
       
         if (!currentleaf?.querySelector("#cMenuToolbarPopoverBar"))
-          currentleaf?.querySelector(".markdown-source-view")
-            .insertAdjacentElement("afterbegin", PopoverMenu);
-        currentleaf
-          ?.querySelector(".markdown-source-view")
-          .insertAdjacentElement("afterbegin", cMenuToolbar);
+        {
+          const markdownDom =currentleaf?.querySelector(".markdown-source-view");
+          if(markdownDom)
+          markdownDom.insertAdjacentElement("afterbegin", PopoverMenu);
+          else return;
+        }
+        const markdownDom2 =currentleaf?.querySelector(".markdown-source-view");
+        if(markdownDom2)
+        markdownDom2.insertAdjacentElement("afterbegin", cMenuToolbar);
+        else return;
+
         leafwidth = currentleaf?.querySelector<HTMLElement>(
           ".markdown-source-view"
         ).offsetWidth;
