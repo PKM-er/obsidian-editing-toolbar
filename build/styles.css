@@ -942,7 +942,7 @@ div[data-type="thino_view"] .memo-editor-wrapper:has(#cMenuToolbarModalBar) .com
     padding-right:16px;
 }
 div[data-type="thino_view"] .memo-editor-wrapper #cMenuToolbarModalBar ~ .cm-editor{
-    padding-top:8px;
+    padding-top:38px;
     padding-bottom:0px;
     padding-left:16px;
     padding-right:16px;
@@ -952,7 +952,11 @@ div[data-type=thino_view] .common-editor-wrapper .common-editor-inputer:has(#cMe
   min-height:118px;
 }
 
-
+div[data-type=thino_view] #cMenuToolbarModalBar.top
+{
+  position:absolute!important;
+  width: 100%;
+}
 body.auto-hide-header .workspace-tab-header-container:hover + .workspace-tab-container .workspace-leaf .workspace-leaf-content>.view-header {
   margin-top: 0;
   transition: all 0.1s linear;
