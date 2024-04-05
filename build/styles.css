@@ -363,8 +363,8 @@ body.theme-dark .modal-container.cMenuToolbar-Modal .modal input[type='range'] {
   justify-items: center;
   border: 1px solid var(--background-modifier-border-hover);
   backdrop-filter: none;
-  background-color: var(--color-base-10, --background-primary);
-
+  background-color: var(--background-secondary);
+  height: 30px !important;
 }
 
 
