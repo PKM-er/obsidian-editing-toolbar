@@ -199,7 +199,7 @@ export default class cMenuToolbarPlugin extends Plugin {
           dispatchEvent(new Event("cMenuToolbar-NewCommand"));
         }, 100)
       }
-    
+
 
   }
 
@@ -230,7 +230,7 @@ export default class cMenuToolbarPlugin extends Plugin {
       if (!this.isView()) { return; };
 
       //let cmEditor = view.sourceMode.cmEditor;
-      
+
       let cmEditor = this.app.workspace.activeLeaf.view?.editor;
       if (cmEditor.hasFocus()) {
         let cMenuToolbarModalBar = isExistoolbar(this.app, this.settings)
@@ -254,7 +254,11 @@ export default class cMenuToolbarPlugin extends Plugin {
                   cMenuToolbarModalBar.style.visibility = "hidden"
               }
 
-            })
+            });
+
+            this.registerDomEvent(activeDocument, "wheel", () => {
+                if (cMenuToolbarModalBar) cMenuToolbarModalBar.style.visibility = "hidden"
+            });
 
             createFollowingbar(this.app, this.settings)
           }
@@ -595,7 +599,7 @@ export default class cMenuToolbarPlugin extends Plugin {
             await wait(10);
             //@ts-ignore
             app.commands.executeCommandById("editor:focus");
-          
+
         },
       });
     });
@@ -850,7 +854,7 @@ export default class cMenuToolbarPlugin extends Plugin {
               }
             }
           }
-        
+
       }
     } else {
       return false;
