@@ -18,7 +18,7 @@ import { wait } from "src/util/util";
 import { appIcons } from "src/icons/appIcons";
 import { CommandPicker, openSlider } from "src/modals/suggesterModals";
 import { cMenuToolbarSettingTab } from "src/settings/settingsTab";
-import { selfDestruct, cMenuToolbarPopover, getModestate, quiteFormatbrushes, setFontcolor, setBackgroundcolor, setHeader, createFollowingbar, setFormateraser, isExistoolbar, resetToolbar } from "src/modals/cMenuToolbarModal";
+import { selfDestruct, cMenuToolbarPopover, isSource, quiteFormatbrushes, setFontcolor, setBackgroundcolor, setHeader, createFollowingbar, setFormateraser, isExistoolbar, resetToolbar } from "src/modals/cMenuToolbarModal";
 import { cMenuToolbarSettings, DEFAULT_SETTINGS } from "src/settings/settingsData";
 import addIcons, {
   // addFeatherIcons,
@@ -803,13 +803,13 @@ export default class cMenuToolbarPlugin extends Plugin {
       // console.log(cMenuToolbarModalBar,"cMenuToolbarModalBar" )
       //let view = this.app.workspace.getActiveViewOfType(MarkdownView) || true
       let view = true
-      if ((getModestate(app) === false) || (!view)) //no source mode
+      if (!isSource(app) || (!view)) //no source mode
       {
         if (cMenuToolbarModalBar) {
           cMenuToolbarModalBar.style.visibility = "hidden"
         }
       }
-      else if (getModestate(app) === true) {
+      else if (isSource(app)) {
         if (cMenuToolbarModalBar) {
           if (this.settings.positionStyle == "following")
             cMenuToolbarModalBar.style.visibility = "hidden"
@@ -838,7 +838,7 @@ export default class cMenuToolbarPlugin extends Plugin {
     // console.log(type,"handlecMenuToolbar_layout" )
     //requireApiVersion("0.15.0") ? activeDocument = activeWindow.document : activeDocument = window.document;
     if (this.settings.cMenuVisibility == true && this.settings.positionStyle == "top") {
-      if (getModestate(app)) {
+      if (isSource(app)) {
           let leafwidth = this.app.workspace.activeLeaf.view.leaf.width ?? 0
           //let leafwidth = view.containerEl?.querySelector<HTMLElement>(".markdown-source-view").offsetWidth ?? 0
           if (this.Leaf_Width == leafwidth) return false;
