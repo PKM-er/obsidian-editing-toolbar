@@ -156,21 +156,11 @@ export const getCoords = (editor: any) => {
   return coords;
 };
 
-export function getModestate(app: App) {
+export function isSource(app: App) {
   const activePane = app.workspace.getActiveViewOfType(MarkdownView);
- // const view = app.workspace.getActiveViewOfType(ItemView);
-  //console.log(view?.getState().mode,"getState")
- 
-  if (activePane) {
-    let currentmode = activePane?.getMode();
-    if (currentmode == "preview") {
-      return false;
-    } else
-      if (currentmode == "source") {
-        return true;
-      } else
-        return false;
-  }
+
+  if (activePane) return activePane.getMode() === "source";
+  return false;
 }
 
 export function checkHtml(htmlStr: string) {
