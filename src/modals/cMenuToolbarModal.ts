@@ -489,21 +489,23 @@ export const createFollowingbar = (app: App, settings: cMenuToolbarSettings) => 
       cMenuToolbarModalBar.addClass("cMenuToolbarFlex");
       cMenuToolbarModalBar.removeClass("cMenuToolbarGrid");
 
-      const editorRect = activeDocument.querySelectorAll(".markdown-source-view")[0].getBoundingClientRect();
-      const toolbarWidth = cMenuToolbarModalBar.offsetWidth;
-      const toolbarHeight = cMenuToolbarModalBar.offsetHeight;
-      const coords = getCoords(editor);
-      const scrollBarWidth = 12;
+      if (cMenuToolbarModalBar.style.visibility === "visible") {
+          const editorRect = activeDocument.querySelectorAll(".markdown-source-view")[0].getBoundingClientRect();
+          const toolbarWidth = cMenuToolbarModalBar.offsetWidth;
+          const toolbarHeight = cMenuToolbarModalBar.offsetHeight;
+          const coords = getCoords(editor);
+          const scrollBarWidth = 12;
 
-      let lefPosition = coords.left - editorRect.left;
-      if (lefPosition + toolbarWidth + scrollBarWidth > editorRect.width)
-          lefPosition = editorRect.width - toolbarWidth - scrollBarWidth;
+          let lefPosition = coords.left - editorRect.left;
+          if (lefPosition + toolbarWidth + scrollBarWidth > editorRect.width)
+              lefPosition = editorRect.width - toolbarWidth - scrollBarWidth;
 
-      let topPosition = coords.top - toolbarHeight;
-      if (topPosition <= editorRect.top) topPosition += toolbarHeight * 2;
+          let topPosition = coords.top - toolbarHeight;
+          if (topPosition <= editorRect.top) topPosition += toolbarHeight * 2;
 
-      cMenuToolbarModalBar.style.left = lefPosition + "px";
-      cMenuToolbarModalBar.style.top = topPosition + "px";
+          cMenuToolbarModalBar.style.left = lefPosition + "px";
+          cMenuToolbarModalBar.style.top = topPosition + "px";
+      }
     }
   } else cMenuToolbarModalBar.style.visibility = "hidden"
 }
