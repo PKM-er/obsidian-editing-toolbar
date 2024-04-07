@@ -156,21 +156,11 @@ export const getCoords = (editor: any) => {
   return coords;
 };
 
-export function getModestate(app: App) {
+export function isSource(app: App) {
   const activePane = app.workspace.getActiveViewOfType(MarkdownView);
- // const view = app.workspace.getActiveViewOfType(ItemView);
-  //console.log(view?.getState().mode,"getState")
- 
-  if (activePane) {
-    let currentmode = activePane?.getMode();
-    if (currentmode == "preview") {
-      return false;
-    } else
-      if (currentmode == "source") {
-        return true;
-      } else
-        return false;
-  }
+
+  if (activePane) return activePane.getMode() === "source";
+  return false;
 }
 
 export function checkHtml(htmlStr: string) {
@@ -478,19 +468,19 @@ export function setFormateraser(app: App, plugin: cMenuToolbarPlugin) {
 
 }
 export const createFollowingbar = (app: App, settings: cMenuToolbarSettings) => {
-  let isSource = getModestate(app);
   let cMenuToolbarModalBar = isExistoolbar(app, settings);
 
-  if (isSource) {
+  if (isSource(app)) {
     const editor = app.workspace.getActiveViewOfType(MarkdownView).editor;
 
     if (cMenuToolbarModalBar) {
       cMenuToolbarModalBar.style.visibility = editor.somethingSelected() ? "visible" : "hidden";
+      cMenuToolbarModalBar.style.height = (settings.aestheticStyle === "tiny") ? 30 + "px" : 40 + "px";
       cMenuToolbarModalBar.addClass("cMenuToolbarFlex");
       cMenuToolbarModalBar.removeClass("cMenuToolbarGrid");
 
       if (cMenuToolbarModalBar.style.visibility === "visible") {
-          const editorRect = activeDocument.querySelectorAll(".markdown-source-view")[0].getBoundingClientRect();
+          const editorRect = editor.containerEl.getBoundingClientRect();
           const toolbarWidth = cMenuToolbarModalBar.offsetWidth;
           const toolbarHeight = cMenuToolbarModalBar.offsetHeight;
           const coords = getCoords(editor);
