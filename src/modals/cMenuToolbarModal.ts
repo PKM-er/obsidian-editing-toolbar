@@ -144,7 +144,8 @@ function getHotkey(app: App, cmdid: string, highlight = true) {
 
 
 export const getCoords = (editor: any) => {
-  const cursorFrom = editor.getCursor("head");
+  let cursorFrom = editor.getCursor("head");
+  if (editor.getCursor("head").ch !== editor.getCursor("from").ch) cursorFrom.ch = Math.max(0, cursorFrom.ch - 1);
 
   let coords;
   if (editor.cursorCoords) coords = editor.cursorCoords(true, "window");
@@ -471,30 +472,43 @@ export const createFollowingbar = (app: App, settings: cMenuToolbarSettings) => 
   let cMenuToolbarModalBar = isExistoolbar(app, settings);
 
   if (isSource(app)) {
-    const editor = app.workspace.getActiveViewOfType(MarkdownView).editor;
-
     if (cMenuToolbarModalBar) {
+      const editor = app.workspace.getActiveViewOfType(MarkdownView).editor;
+
       cMenuToolbarModalBar.style.visibility = editor.somethingSelected() ? "visible" : "hidden";
       cMenuToolbarModalBar.style.height = (settings.aestheticStyle === "tiny") ? 30 + "px" : 40 + "px";
       cMenuToolbarModalBar.addClass("cMenuToolbarFlex");
       cMenuToolbarModalBar.removeClass("cMenuToolbarGrid");
 
       if (cMenuToolbarModalBar.style.visibility === "visible") {
-          const editorRect = editor.containerEl.getBoundingClientRect();
-          const toolbarWidth = cMenuToolbarModalBar.offsetWidth;
-          const toolbarHeight = cMenuToolbarModalBar.offsetHeight;
-          const coords = getCoords(editor);
-          const scrollBarWidth = 12;
+        // @ts-ignore
+        const editorRect = editor.containerEl.getBoundingClientRect();
+        const toolbarWidth = cMenuToolbarModalBar.offsetWidth;
+        const toolbarHeight = cMenuToolbarModalBar.offsetHeight;
+        const coords = getCoords(editor);
+        const isSelectionFromBottomToTop = editor.getCursor("head").ch == editor.getCursor("from").ch;
+        const rightMargin = 12;
 
-          let lefPosition = coords.left - editorRect.left;
-          if (lefPosition + toolbarWidth + scrollBarWidth > editorRect.width)
-              lefPosition = editorRect.width - toolbarWidth - scrollBarWidth;
+        const sideDockWidth = activeDocument.getElementsByClassName("mod-left-split")[0]?.clientWidth ?? 0;
+        const sideDockRibbonWidth = activeDocument.getElementsByClassName("side-dock-ribbon mod-left")[0]?.clientWidth ?? 0;
+        const leftSideDockWidth = sideDockWidth + sideDockRibbonWidth;
 
-          let topPosition = coords.top - toolbarHeight;
-          if (topPosition <= editorRect.top) topPosition += toolbarHeight * 2;
+        let leftPosition = coords.left - leftSideDockWidth;
+        if (leftPosition + toolbarWidth + rightMargin >= editorRect.right)
+          leftPosition = Math.max(0, editorRect.right - toolbarWidth - leftSideDockWidth - rightMargin);
 
-          cMenuToolbarModalBar.style.left = lefPosition + "px";
-          cMenuToolbarModalBar.style.top = topPosition + "px";
+        let topPosition = 0;
+
+        if (isSelectionFromBottomToTop) {
+          topPosition = coords.top - toolbarHeight - 10;
+          if (topPosition <= editorRect.top) topPosition = editorRect.top + toolbarHeight;
+        } else {
+          topPosition = coords.top + 25;
+          if (topPosition >= editorRect.bottom - toolbarHeight) topPosition = editorRect.bottom - 2 * toolbarHeight;
+        }
+
+        cMenuToolbarModalBar.style.left = leftPosition + "px";
+        cMenuToolbarModalBar.style.top = topPosition + "px";
       }
     }
   } else cMenuToolbarModalBar.style.visibility = "hidden"
