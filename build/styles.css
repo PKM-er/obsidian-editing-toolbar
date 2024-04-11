@@ -364,7 +364,6 @@ body.theme-dark .modal-container.cMenuToolbar-Modal .modal input[type='range'] {
   border: 1px solid var(--background-modifier-border-hover);
   backdrop-filter: none;
   background-color: var(--background-secondary);
-  height: 30px !important;
 }
 
 

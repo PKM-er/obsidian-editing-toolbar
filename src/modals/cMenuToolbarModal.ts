@@ -103,10 +103,8 @@ export function selfDestruct() {
 
 export function isExistoolbar(app: App, settings: cMenuToolbarSettings): HTMLElement {
   requireApiVersion("0.15.0") ? activeDocument = activeWindow.document : activeDocument = window.document;
-  let container = settings.positionStyle == "top" ?
-      app.workspace.getActiveViewOfType(MarkdownView).containerEl?.querySelector("#cMenuToolbarModalBar") :
-      activeDocument.getElementById("cMenuToolbarModalBar");
-
+  let container = settings.positionStyle == "top" ?  app.workspace.activeLeaf?.view.containerEl?.querySelector("#cMenuToolbarModalBar")
+      : activeDocument.getElementById("cMenuToolbarModalBar");
    return (container) ? container as HTMLElement : null;
 }
 
