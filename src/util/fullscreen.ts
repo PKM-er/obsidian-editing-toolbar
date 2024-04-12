@@ -6,9 +6,9 @@ export function workplacefullscreenMode(app: App) {
 
 
     if (app.workspace.leftSplit.collapsed && app.workspace.rightSplit.collapsed) {
-        //@ts-ignore 
+        //@ts-ignore
         app.commands.executeCommandById("app:toggle-right-sidebar");
-        //@ts-ignore 
+        //@ts-ignore
         app.commands.executeCommandById("app:toggle-left-sidebar");
         app.workspace.leftRibbon.show()
 
@@ -26,12 +26,12 @@ export function workplacefullscreenMode(app: App) {
         }
         app.workspace.leftRibbon.hide()
         if (!app.workspace.leftSplit.collapsed) {
-            //@ts-ignore 
+            //@ts-ignore
             app.commands.executeCommandById("app:toggle-left-sidebar");
 
         }
         if (!app.workspace.rightSplit.collapsed) {
-            //@ts-ignore 
+            //@ts-ignore
             app.commands.executeCommandById("app:toggle-right-sidebar");
         }
     }
@@ -100,7 +100,7 @@ export function fullscreenMode(app: App) {
         });
 
     });
-    modroot.addEventListener("fullscreenchange", function (event: any) {
+    modroot.addEventListener("fullscreenchange", function () {
         if (!isFull(modroot)) {
             fullscreenMutationObserver.disconnect();
         }

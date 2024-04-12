@@ -1,6 +1,6 @@
 
 import type cMenuToolbarPlugin from "src/plugin/main";
-import { App, Notice, debounce, requireApiVersion, ItemView,MarkdownView, ButtonComponent, WorkspaceParent, WorkspaceWindow, SettingTab, WorkspaceParentExt, View } from "obsidian";
+import { App, Notice, requireApiVersion, ItemView,MarkdownView, ButtonComponent, WorkspaceParent, WorkspaceWindow, WorkspaceParentExt } from "obsidian";
 import { setBottomValue } from "src/util/statusBarConstants";
 import { backcolorpicker, colorpicker } from "src/util/util";
 import { t } from "src/translations/helper";
@@ -19,7 +19,7 @@ export function getRootSplits(): WorkspaceParentExt[] {
   // @ts-ignore floatingSplit is undocumented
   const floatingSplit = app.workspace.floatingSplit as WorkspaceParentExt;
   floatingSplit?.children.forEach((child: WorkspaceParentExt) => {
-    // if this is a window, push it to the list 
+    // if this is a window, push it to the list
     if (child instanceof WorkspaceWindow) {
       rootSplits.push(child);
     }
@@ -193,24 +193,24 @@ export function createTablecell(app: App, plugin: cMenuToolbarPlugin, el: string
           // console.log(backcolor,'backcolor')
             if (el == "x-color-picker-table") {
               plugin.settings.cMenuFontColor = backcolor;
-              setFontcolor(app, plugin, backcolor);
+              setFontcolor(app, backcolor);
               let font_colour_dom = activeDocument.querySelectorAll("#change-font-color-icon")
               font_colour_dom.forEach(element => {
                 let ele = element as HTMLElement
                 ele.style.fill = backcolor;
               });
 
-            } else if (el == "x-backgroundcolor-picker-table") {   
+            } else if (el == "x-backgroundcolor-picker-table") {
                 plugin.settings.cMenuBackgroundColor = backcolor;
                 //console.log("333")
-                setBackgroundcolor(app, plugin, backcolor);
+                setBackgroundcolor(app, backcolor);
                 let background_colour_dom = activeDocument.querySelectorAll("#change-background-color-icon")
                 background_colour_dom.forEach(element => {
                   let ele = element as HTMLElement
                   ele.style.fill = backcolor;
                 });
-            
-      
+
+
               //  background_colour_dom.style.fill = plugin.settings.cMenuBackgroundColor;
             }
             plugin.saveSettings();
@@ -222,12 +222,9 @@ export function createTablecell(app: App, plugin: cMenuToolbarPlugin, el: string
   }
 }
 
-export function setFontcolor(app: App, plugin: cMenuToolbarPlugin, color: string) {
+export function setFontcolor(app: App, color: string) {
   //from https://github.com/obsidian-canzi/Enhanced-editing
-  const activeLeaf = app.workspace.getActiveViewOfType(MarkdownView);
- 
-    const view = activeLeaf;
-    const editor = app.workspace.activeLeaf.view?.editor;
+    const editor = app.workspace.getActiveViewOfType(MarkdownView).editor;
     let selectText = editor.getSelection();
     // if (selectText == null || selectText.trim() == "") {
     //   //如果没有选中内容激活格式刷
@@ -261,15 +258,12 @@ export function setFontcolor(app: App, plugin: cMenuToolbarPlugin, color: string
     editor.exec("goRight");
     // @ts-ignore
     app.commands.executeCommandById("editor:focus");
-  
+
 }
 
-export function setBackgroundcolor(app: App, plugin: cMenuToolbarPlugin, color: string) {
+export function setBackgroundcolor(app: App, color: string) {
   //from https://github.com/obsidian-canzi/Enhanced-editing
-  const activeLeaf = app.workspace.getActiveViewOfType(MarkdownView);
-
-    const view = activeLeaf;
-    const editor = app.workspace.activeLeaf.view?.editor;
+    const editor = app.workspace.getActiveViewOfType(MarkdownView).editor;
     let selectText = editor.getSelection();
   //  console.log(selectText,'selectText')
     // if (selectText == null || selectText.trim() == "") {
@@ -304,7 +298,7 @@ export function setBackgroundcolor(app: App, plugin: cMenuToolbarPlugin, color: 
     editor.exec("goRight");
     //@ts-ignore
     app.commands.executeCommandById("editor:focus");
-  
+
 }
 
 export const setcolorHex = function (color: string) {
@@ -389,11 +383,7 @@ export function quiteFormatbrushes(plugin:cMenuToolbarPlugin) {
 
 export function setHeader(_str: string) {
   //from https://github.com/obsidian-canzi/Enhanced-editing
-
-  const activeLeaf = app.workspace.getActiveViewOfType(MarkdownView);
-  
-    const view = activeLeaf;
-    const editor = app.workspace.activeLeaf.view?.editor;;
+    const editor = app.workspace.getActiveViewOfType(MarkdownView).editor;
     let linetext = editor.getLine(editor.getCursor().line);
     let newstr, linend = "";
     const regex = /^(\>*(\[[!\w]+\])?\s*)#+\s/;
@@ -419,21 +409,11 @@ export function setHeader(_str: string) {
     };
     editor.setLine(editor.getCursor().line, newstr);
     editor.setCursor({ line: editor.getCursor().line, ch: Number(newstr.length - linend.length) });
-  
+
 }
 export function setFormateraser(app: App, plugin: cMenuToolbarPlugin) {
+    const editor = app.workspace.getActiveViewOfType(MarkdownView).editor;
 
-     
-    const editor = app.workspace.activeLeaf.view?.editor;
-    let linend;
-    let selstart = editor.getRange({ line: editor.getCursor().line, ch: 0 }, editor.getCursor());
-    let linetext = editor.getLine(editor.getCursor().line);
-
-    if (linetext != "") {
-      linend = editor.getRange(editor.getCursor(), { line: editor.getCursor().line, ch: linetext.length });
-    } else {
-      linend = editor.getRange(editor.getCursor(), { line: editor.getCursor().line, ch: 0 });
-    };
     let selectText = editor.getSelection();
     if (selectText == null || selectText == "") {
       quiteFormatbrushes(plugin);
@@ -464,8 +444,8 @@ export function setFormateraser(app: App, plugin: cMenuToolbarPlugin) {
       app.commands.executeCommandById("editor:focus");
 
     }
-
 }
+
 export const createFollowingbar = (app: App, settings: cMenuToolbarSettings) => {
   let cMenuToolbarModalBar = isExistoolbar(app, settings);
 
@@ -521,6 +501,7 @@ export function cMenuToolbarPopover(
   function createMenu() {
     const generateMenu = () => {
       let btnwidth = 0;
+      let leafwidth = 0;
       let cMenuToolbar = createEl("div");
       if (cMenuToolbar) {
         if (settings.positionStyle == "top") {
@@ -531,7 +512,7 @@ export function cMenuToolbarPopover(
             }px;`
           );
           cMenuToolbar.className += " top";
-          if (settings.autohide) 
+          if (settings.autohide)
           {
             cMenuToolbar.className += " autohide";
           }
@@ -571,10 +552,9 @@ export function cMenuToolbarPopover(
       //    cMenuToolbar.style.visibility = "hidden";
       // }
 
-      let leafwidth = 99999;
       if (settings.positionStyle == "top") {
-        let currentleaf = app.workspace.activeLeaf.view.containerEl
-      
+        let currentleaf = app.workspace.getActiveViewOfType(MarkdownView).containerEl;
+
         if (!currentleaf?.querySelector("#cMenuToolbarPopoverBar"))
         {
           const markdownDom =currentleaf?.querySelector(".markdown-source-view");
@@ -602,13 +582,13 @@ export function cMenuToolbarPopover(
 
 
 
-      let cMenuToolbarPopoverBar = app.workspace.activeLeaf.view.containerEl
+      let cMenuToolbarPopoverBar = app.workspace.getActiveViewOfType(MarkdownView).containerEl
         ?.querySelector("#cMenuToolbarPopoverBar") as HTMLElement
       settings.menuCommands.forEach((item, index) => {
-        let tip
+        let tip;
         if ("SubmenuCommands" in item) {
           let _btn: any;
-    
+
           if (btnwidth >= leafwidth - 26 * 4 && leafwidth > 100) {
             //说明已经溢出
             plugin.setIS_MORE_Button(true);
@@ -623,10 +603,10 @@ export function cMenuToolbarPopover(
           }
           else
             {
-              if(settings.positionStyle != "top") 
+              if(settings.positionStyle != "top")
               _btn.buttonEl.setAttribute('aria-label-position','top')
             }
-     
+
           checkHtml(item.icon)
             ? (_btn.buttonEl.innerHTML = item.icon)
             : _btn.setIcon(item.icon);
@@ -661,7 +641,7 @@ export function cMenuToolbarPopover(
                   });
                   if(index < settings.cMenuNumRows)
                   {
-                    if(settings.positionStyle != "top") 
+                    if(settings.positionStyle != "top")
                     sub_btn.buttonEl.setAttribute('aria-label-position','top')
                   }
                   if (subitem.id == "cMenuToolbar-Divider-Line")
@@ -736,7 +716,7 @@ export function cMenuToolbarPopover(
                       let settingEI = app.setting.activeTab.containerEl.querySelector(".custom_font")
                       if (settingEI) { settingEI.addClass?.("toolbar-cta"); }
                     }, 200);
-  
+
                   });
             }
           } else if (item.id == "editing-toolbar:change-background-color") {
@@ -800,7 +780,7 @@ export function cMenuToolbarPopover(
                       let settingEI = app.setting.activeTab.containerEl.querySelector(".custom_bg")
                       if (settingEI) { settingEI.addClass?.("toolbar-cta"); }
                     }, 200);
-  
+
                   });
 
             }
@@ -829,11 +809,11 @@ export function cMenuToolbarPopover(
             button.setClass("cMenuToolbarCommandItem");
             if(index >= settings.cMenuNumRows)
             {
-             
+
               button.setClass("cMenuToolbarSecond");
             }else
-            { 
-              if(settings.positionStyle != "top") 
+            {
+              if(settings.positionStyle != "top")
               button.buttonEl.setAttribute('aria-label-position','top')
             }
             if (item.id == "cMenuToolbar-Divider-Line")
@@ -880,7 +860,7 @@ export function cMenuToolbarPopover(
     }
 
   }
- 
+
   createMenu();
 }
 
