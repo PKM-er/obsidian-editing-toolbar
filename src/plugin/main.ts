@@ -216,28 +216,26 @@ export default class cMenuToolbarPlugin extends Plugin {
     return true;
   }
   init_evt(container: Document) {
-
     this.EN_FontColor_Format_Brush = false;
     this.EN_BG_Format_Brush = false;
     this.EN_Text_Format_Brush = false;
+
     this.registerDomEvent(container, "mouseup", async (e: { button: any; }) => {
       if (e.button) {
         if (this.EN_FontColor_Format_Brush || this.EN_BG_Format_Brush || this.EN_Text_Format_Brush) {
           quiteFormatbrushes(this);
         }
       }
-      // let view = this.app.workspace.getActiveViewOfType(MarkdownView);
-      if (!this.isView()) { return; };
 
-      //let cmEditor = view.sourceMode.cmEditor;
+      if (!this.isView()) return;
 
-      let cmEditor = this.app.workspace.activeLeaf.view?.editor;
+      let cmEditor = this.app.workspace.getActiveViewOfType(MarkdownView).editor;
       if (cmEditor.hasFocus()) {
-        let cMenuToolbarModalBar = isExistoolbar(this.app, this.settings)
+        let cMenuToolbarModalBar = isExistoolbar(this.app, this.settings);
 
         if (cmEditor.getSelection() == null || cmEditor.getSelection() == "") {
-          if (cMenuToolbarModalBar)
-            this.settings.positionStyle == "following" ? cMenuToolbarModalBar.style.visibility = "hidden" : true;
+          if (cMenuToolbarModalBar && this.settings.positionStyle == "following")
+            cMenuToolbarModalBar.style.visibility = "hidden";
           return
         } else {
           //   console.log(this.EN_FontColor_Format_Brush,'EN_FontColor_Format_Brush')
@@ -248,25 +246,24 @@ export default class cMenuToolbarPlugin extends Plugin {
           } else if (this.EN_Text_Format_Brush) {
             setFormateraser(this.app, this);
           } else if (this.settings.positionStyle == "following") {
-            this.registerDomEvent(activeDocument, "keydown", async (e) => {
-              if (!e.shiftKey) {
-                if (cMenuToolbarModalBar)
-                  cMenuToolbarModalBar.style.visibility = "hidden"
-              }
-
-            });
-
-            this.registerDomEvent(activeDocument, "wheel", () => {
-                if (cMenuToolbarModalBar) cMenuToolbarModalBar.style.visibility = "hidden"
-            });
-
-            createFollowingbar(this.app, this.settings)
+            createFollowingbar(this.app, this.settings);
           }
         }
       } else if (this.EN_FontColor_Format_Brush || this.EN_BG_Format_Brush || this.EN_Text_Format_Brush) {
         quiteFormatbrushes(this);
-
       }
+    });
+
+    this.registerDomEvent(activeDocument, "keydown", (e) => {
+      if (this.settings.positionStyle !== "following") return;
+      const cMenuToolbarModalBar = isExistoolbar(this.app, this.settings);
+      if (!e.shiftKey && cMenuToolbarModalBar) cMenuToolbarModalBar.style.visibility = "hidden";
+    });
+
+    this.registerDomEvent(activeDocument, "wheel", () => {
+      if (this.settings.positionStyle !== "following") return;
+      const cMenuToolbarModalBar = isExistoolbar(this.app, this.settings);
+      if (cMenuToolbarModalBar) cMenuToolbarModalBar.style.visibility = "hidden";
     });
   }
 
