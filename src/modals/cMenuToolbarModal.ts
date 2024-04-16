@@ -102,16 +102,12 @@ export function selfDestruct() {
 }
 
 export function isExistoolbar(app: App, settings: cMenuToolbarSettings): HTMLElement {
-  const position = settings.positionStyle;
-  let container;
   requireApiVersion("0.15.0") ? activeDocument = activeWindow.document : activeDocument = window.document;
-  position == "top" ? container = app.workspace.activeLeaf?.view.containerEl?.querySelector("#cMenuToolbarModalBar")
-    : container = activeDocument.getElementById("cMenuToolbarModalBar");
-  if (container) {
-    return container as HTMLElement;
-  } else {
-    return null
-  }
+  let container = settings.positionStyle == "top" ?
+      app.workspace.getActiveViewOfType(MarkdownView).containerEl?.querySelector("#cMenuToolbarModalBar") :
+      activeDocument.getElementById("cMenuToolbarModalBar");
+
+   return (container) ? container as HTMLElement : null;
 }
 
 
@@ -148,7 +144,8 @@ function getHotkey(app: App, cmdid: string, highlight = true) {
 
 
 export const getCoords = (editor: any) => {
-  const cursorFrom = editor.getCursor("head");
+  let cursorFrom = editor.getCursor("head");
+  if (editor.getCursor("head").ch !== editor.getCursor("from").ch) cursorFrom.ch = Math.max(0, cursorFrom.ch - 1);
 
   let coords;
   if (editor.cursorCoords) coords = editor.cursorCoords(true, "window");
@@ -160,21 +157,11 @@ export const getCoords = (editor: any) => {
   return coords;
 };
 
-export function getModestate(app: App) {
+export function isSource(app: App) {
   const activePane = app.workspace.getActiveViewOfType(MarkdownView);
- // const view = app.workspace.getActiveViewOfType(ItemView);
-  //console.log(view?.getState().mode,"getState")
- 
-  if (activePane) {
-    let currentmode = activePane?.getMode();
-    if (currentmode == "preview") {
-      return false;
-    } else
-      if (currentmode == "source") {
-        return true;
-      } else
-        return false;
-  }
+
+  if (activePane) return activePane.getMode() === "source";
+  return false;
 }
 
 export function checkHtml(htmlStr: string) {
@@ -479,81 +466,54 @@ export function setFormateraser(app: App, plugin: cMenuToolbarPlugin) {
       app.commands.executeCommandById("editor:focus");
 
     }
-  
+
 }
 export const createFollowingbar = (app: App, settings: cMenuToolbarSettings) => {
-
-  let isource = getModestate(app);
-
   let cMenuToolbarModalBar = isExistoolbar(app, settings);
-  //console.log(activeLeaf.getViewState().state.mode)
-  if (isource) {
-    const activeLeaf = app.workspace.getActiveViewOfType(MarkdownView);
-    const view = activeLeaf;
-    const editor = view.editor;
 
-
+  if (isSource(app)) {
     if (cMenuToolbarModalBar) {
+      const editor = app.workspace.getActiveViewOfType(MarkdownView).editor;
 
-      let selection = editor.somethingSelected();
-      // let cMenuToolbarRows = settings.cMenuNumRows;
-      selection
-        ? (cMenuToolbarModalBar.style.visibility = "visible")
-        : (cMenuToolbarModalBar.style.visibility = "hidden");
+      cMenuToolbarModalBar.style.visibility = editor.somethingSelected() ? "visible" : "hidden";
+      cMenuToolbarModalBar.style.height = (settings.aestheticStyle === "tiny") ? 30 + "px" : 40 + "px";
+      cMenuToolbarModalBar.addClass("cMenuToolbarFlex");
+      cMenuToolbarModalBar.removeClass("cMenuToolbarGrid");
 
-      //   let ElementCount = cMenuToolbarModalBar.childElementCount;
-      //   if (ElementCount) {
-      //     ElementCount == cMenuToolbarRows
-      //  ? (cMenuToolbarModalBar.addClass("cMenuToolbarGrid"), cMenuToolbarModalBar.removeClass("cMenuToolbarFlex"))
-      cMenuToolbarModalBar.addClass("cMenuToolbarFlex")
-      cMenuToolbarModalBar.removeClass("cMenuToolbarGrid")
+      if (cMenuToolbarModalBar.style.visibility === "visible") {
+        // @ts-ignore
+        const editorRect = editor.containerEl.getBoundingClientRect();
+        const toolbarWidth = cMenuToolbarModalBar.offsetWidth;
+        const toolbarHeight = cMenuToolbarModalBar.offsetHeight;
+        const coords = getCoords(editor);
+        const isSelectionFromBottomToTop = editor.getCursor("head").ch == editor.getCursor("from").ch;
+        const rightMargin = 12;
 
-      // let cmheight = Math.ceil(ElementCount / cMenuToolbarRows);
-      let cmheight = 1;
-      cMenuToolbarModalBar.style.height = 40 * cmheight + "px";
-      if (settings.aestheticStyle == "tiny") {
-        cMenuToolbarModalBar.style.height = 25 * cmheight + "px";
+        const sideDockWidth = activeDocument.getElementsByClassName("mod-left-split")[0]?.clientWidth ?? 0;
+        const sideDockRibbonWidth = activeDocument.getElementsByClassName("side-dock-ribbon mod-left")[0]?.clientWidth ?? 0;
+        const leftSideDockWidth = sideDockWidth + sideDockRibbonWidth;
+
+        let leftPosition = coords.left - leftSideDockWidth;
+        if (leftPosition + toolbarWidth + rightMargin >= editorRect.right)
+          leftPosition = Math.max(0, editorRect.right - toolbarWidth - leftSideDockWidth - rightMargin);
+
+        let topPosition = 0;
+
+        if (isSelectionFromBottomToTop) {
+          topPosition = coords.top - toolbarHeight - 10;
+          if (topPosition <= editorRect.top) topPosition = editorRect.top + toolbarHeight;
+        } else {
+          topPosition = coords.top + 25;
+          if (topPosition >= editorRect.bottom - toolbarHeight) topPosition = editorRect.bottom - 2 * toolbarHeight;
+        }
+
+        cMenuToolbarModalBar.style.left = leftPosition + "px";
+        cMenuToolbarModalBar.style.top = topPosition + "px";
       }
-      let rleftwidth =
-        activeDocument.getElementsByClassName("side-dock-ribbon mod-left")[0]
-          ?.clientWidth ?? 0;
-
-      let leftwidth =
-        activeDocument.getElementsByClassName("mod-left-split")[0]
-          ?.clientWidth ?? 0;
-
-      let barwidth = activeDocument.getElementById(
-        "cMenuToolbarModalBar"
-      ).offsetWidth;
-      let barHeight = activeDocument.getElementById(
-        "cMenuToolbarModalBar"
-      ).offsetHeight;
-
-      let bodywidth = activeDocument.body.offsetWidth;
-      let coords = getCoords(editor);
-      let cursor_head = editor.getCursor("head").ch
-      let cursor_from = editor.getCursor("from").ch
-
-      let toppx = 0;
-      /*添加判断边界 */
-      let leftpx = coords.left - leftwidth - rleftwidth + 20;
-      if (coords.left + barwidth + 15 > bodywidth)
-        leftpx = coords.left - leftwidth - rleftwidth - barwidth / 1.3 - 60;
-      if (requireApiVersion("1.0.0"))
-        cursor_head == cursor_from ?
-          toppx = coords.top - barHeight - 10 : (toppx = coords.top + 25, leftpx = leftpx - 40);
-      else cursor_head == cursor_from ?
-        toppx = coords.top - barHeight - 30 : (toppx = coords.top, leftpx = leftpx - 40);
-      if (leftpx < 0) leftpx = 0;
-      cMenuToolbarModalBar.style.visibility == "visible" ?
-        (cMenuToolbarModalBar.style.left = leftpx + "px", cMenuToolbarModalBar.style.top = toppx + "px") : true;
-
     }
-
-
-  } else
-    cMenuToolbarModalBar.style.visibility = "hidden"
+  } else cMenuToolbarModalBar.style.visibility = "hidden"
 }
+
 export function cMenuToolbarPopover(
   app: App,
   plugin: cMenuToolbarPlugin
