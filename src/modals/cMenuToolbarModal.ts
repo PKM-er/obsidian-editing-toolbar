@@ -224,7 +224,7 @@ export function createTablecell(app: App, plugin: cMenuToolbarPlugin, el: string
 
 export function setFontcolor(app: App, color: string) {
   //from https://github.com/obsidian-canzi/Enhanced-editing
-    const editor = app.workspace.getActiveViewOfType(MarkdownView).editor;
+    const editor = app.workspace.activeLeaf.view?.editor;
     let selectText = editor.getSelection();
     // if (selectText == null || selectText.trim() == "") {
     //   //如果没有选中内容激活格式刷
@@ -263,7 +263,7 @@ export function setFontcolor(app: App, color: string) {
 
 export function setBackgroundcolor(app: App, color: string) {
   //from https://github.com/obsidian-canzi/Enhanced-editing
-    const editor = app.workspace.getActiveViewOfType(MarkdownView).editor;
+    const editor = app.workspace.activeLeaf.view?.editor;
     let selectText = editor.getSelection();
   //  console.log(selectText,'selectText')
     // if (selectText == null || selectText.trim() == "") {
@@ -383,7 +383,7 @@ export function quiteFormatbrushes(plugin:cMenuToolbarPlugin) {
 
 export function setHeader(_str: string) {
   //from https://github.com/obsidian-canzi/Enhanced-editing
-    const editor = app.workspace.getActiveViewOfType(MarkdownView).editor;
+    const editor = app.workspace.activeLeaf.view?.editor;
     let linetext = editor.getLine(editor.getCursor().line);
     let newstr, linend = "";
     const regex = /^(\>*(\[[!\w]+\])?\s*)#+\s/;
@@ -412,7 +412,7 @@ export function setHeader(_str: string) {
 
 }
 export function setFormateraser(app: App, plugin: cMenuToolbarPlugin) {
-    const editor = app.workspace.getActiveViewOfType(MarkdownView).editor;
+    const editor = app.workspace.activeLeaf.view?.editor;
 
     let selectText = editor.getSelection();
     if (selectText == null || selectText == "") {
@@ -451,7 +451,7 @@ export const createFollowingbar = (app: App, settings: cMenuToolbarSettings) => 
 
   if (isSource(app)) {
     if (cMenuToolbarModalBar) {
-      const editor = app.workspace.getActiveViewOfType(MarkdownView).editor;
+      const editor = app.workspace.activeLeaf.view?.editor;
 
       cMenuToolbarModalBar.style.visibility = editor.somethingSelected() ? "visible" : "hidden";
       cMenuToolbarModalBar.style.height = (settings.aestheticStyle === "tiny") ? 30 + "px" : 40 + "px";
@@ -553,7 +553,7 @@ export function cMenuToolbarPopover(
       // }
 
       if (settings.positionStyle == "top") {
-        let currentleaf = app.workspace.getActiveViewOfType(MarkdownView).containerEl;
+        let currentleaf = app.workspace.activeLeaf.view.containerEl;
 
         if (!currentleaf?.querySelector("#cMenuToolbarPopoverBar"))
         {
@@ -582,8 +582,8 @@ export function cMenuToolbarPopover(
 
 
 
-      let cMenuToolbarPopoverBar = app.workspace.getActiveViewOfType(MarkdownView).containerEl
-        ?.querySelector("#cMenuToolbarPopoverBar") as HTMLElement
+      let cMenuToolbarPopoverBar = app.workspace.activeLeaf.view.containerEl
+        ?.querySelector("#cMenuToolbarPopoverBar") as HTMLElement;
       settings.menuCommands.forEach((item, index) => {
         let tip;
         if ("SubmenuCommands" in item) {
