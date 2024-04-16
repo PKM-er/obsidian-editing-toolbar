@@ -9,7 +9,6 @@ import { GenNonDuplicateID } from "src/util/util";
 import { t } from 'src/translations/helper';
 
 import Pickr from "@simonwep/pickr";
-import { settings } from "cluster";
 
 
 function getPickrSettings(opts: {
@@ -63,16 +62,6 @@ export function getComandindex(item: any, arr: any[]): number {
   return idx;
 }
 
-function getComandindex2(array: any[]): number {
-  for (let i = 0; i < array.length; i++) {
-    const settingItem = array[i].querySelector('.setting-item');
-
-    if (settingItem && settingItem.dataset["id"]) {
-      return i;
-    }
-  }
-  return -1;
-}
 export class cMenuToolbarSettingTab extends PluginSettingTab {
   plugin: cMenuToolbarPlugin;
   appendMethod: string;
@@ -198,7 +187,7 @@ export class cMenuToolbarSettingTab extends PluginSettingTab {
         });
     }
 
-    
+
     new Setting(containerEl)
       .setName(t('Mobile enabled or not')
       )
@@ -428,9 +417,7 @@ export class cMenuToolbarSettingTab extends PluginSettingTab {
           forceFallback: true,
           fallbackClass: "sortable-fallback",
           easing: "cubic-bezier(1, 0, 0, 1)",
-          onStart: function (evt) {
-            //   console.log(evt);
-          },
+          onStart: function () {},
           onSort: (command) => {
 
 
@@ -451,15 +438,15 @@ export class cMenuToolbarSettingTab extends PluginSettingTab {
               const arrayResult = this.plugin.settings.menuCommands;
 
               let cmdindex = getComandindex(command.target.parentElement.dataset["id"], arrayResult);
- 
+
               const subresult = arrayResult[cmdindex]?.SubmenuCommands;
 
               if (subresult) {
-            
+
                   const [removed] = subresult.splice(command.oldIndex, 1);
                   arrayResult.splice(command.newIndex, 0, removed);
                   this.plugin.saveSettings();
-                
+
               } else {
                 console.error('Subresult is undefined.');
               }
@@ -479,11 +466,11 @@ export class cMenuToolbarSettingTab extends PluginSettingTab {
 
 
               if (subresult) {
-             
+
                   const [removed] = arrayResult.splice(command.oldIndex, 1);
                   subresult.splice(command.newIndex, 0, removed);
                   this.plugin.saveSettings();
-                
+
               } else {
                 console.error('Subresult is undefined.');
               }
@@ -539,7 +526,7 @@ export class cMenuToolbarSettingTab extends PluginSettingTab {
                 });
             });
           subsetting.nameEl;
-          
+
         });
       } else {
         setting
@@ -624,9 +611,9 @@ export class cMenuToolbarSettingTab extends PluginSettingTab {
       //    setting.nameEl;
     });
 
-  
 
-    
+
+
   }
   hide(): void {
     setTimeout(() => {
@@ -636,6 +623,6 @@ export class cMenuToolbarSettingTab extends PluginSettingTab {
   }
 }
 
- 
+
 
 
