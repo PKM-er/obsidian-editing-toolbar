@@ -156,11 +156,17 @@ export const getCoords = (editor: any) => {
 };
 
 export function isSource(app: App) {
-  const activePane = app.workspace.getActiveViewOfType(MarkdownView);
+  const activeLeaf = app.workspace.activeLeaf; // 获取当前活动的 leaf
 
-  if (activePane) return activePane.getMode() === "source";
-  return false;
+  if (activeLeaf) {
+    const activeView = activeLeaf.view; // 获取 leaf 的 view
+    if (activeView) {
+      return activeView.getMode() === "source"; // 检查当前 view 的模式是否是 "source"
+    }
+  }
+  return false; // 如果未能获取到合适的 view，返回 false
 }
+
 
 export function checkHtml(htmlStr: string) {
   let reg = /<[^>]+>/g;
@@ -242,8 +248,9 @@ export function setFontcolor(app: App, color: string) {
     if (_html3.test(selectText)) {
       return;
     } else if (_html0.test(selectText)) {
+      
       if (_html1.test(selectText)) {
-
+        selectText = selectText.replace(/<font color="[^"]+">|<\/font>/g, ''); //应用新颜色之前先清空旧颜色
         selectText = selectText.replace(_html1, _html2);
       } else {
         selectText = selectText.replace(
@@ -252,6 +259,7 @@ export function setFontcolor(app: App, color: string) {
         );
       }
     } else {
+      selectText = selectText.replace(/<font color=["'#0-9a-zA-Z]+>[^<]+<\/font>/g, ''); //应用新颜色之前先清空旧颜色
       selectText = selectText.replace(/^(.+)$/gm, _html2);
     }
     editor.replaceSelection(selectText);
@@ -344,8 +352,9 @@ export function createMoremenu(app: App, plugin: cMenuToolbarPlugin, selector: H
   // let barHeight = activeDocument.getElementById("cMenuToolbarModalBar").offsetHeight;
   // requireApiVersion("0.15.0") ? activeDocument = activeWindow.document : activeDocument = window.document;
   //let Morecontainer = activeDocument.body?.querySelector(".workspace-leaf.mod-active")?.querySelector("#cMenuToolbarPopoverBar") as HTMLElement;
-  let view = app.workspace.getActiveViewOfType(MarkdownView)
-  if (view) {
+  // let view = app.workspace.getActiveViewOfType(MarkdownView)
+  const view = app.workspace.getActiveViewOfType(ItemView);
+  if(view?.getViewType()==="markdown" ||view?.getViewType()==="thino_view"){
     let Morecontainer = view.containerEl.querySelector("#cMenuToolbarPopoverBar") as HTMLElement
     if (!plugin.IS_MORE_Button) return;
     let cMoreMenu = selector.createEl("span");

@@ -345,8 +345,6 @@ export default class cMenuToolbarPlugin extends Plugin {
       id: 'editor-redo',
       name: 'redo editor',
       callback: () => {
-        const activeLeaf = this.app.workspace.getActiveViewOfType(MarkdownView);
-        const view = activeLeaf;
         const editor =  app.workspace.activeLeaf.view?.editor;
         return editor.redo();
       },
@@ -777,7 +775,7 @@ export default class cMenuToolbarPlugin extends Plugin {
       } else {
 
         setTimeout(() => {
-          console.log("cMenuToolbarPopover begin...")
+          // console.log("cMenuToolbarPopover begin...")
           cMenuToolbarPopover(this.app, this)
         }, 100);
       }
