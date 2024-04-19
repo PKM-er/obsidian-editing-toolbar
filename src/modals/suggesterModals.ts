@@ -1,16 +1,16 @@
-import type cMenuToolbarPlugin from "src/plugin/main";
-import { appIcons } from "src/icons/appIcons";
+import type EditingToolbarPlugin from "../main";
+import { appIcons } from "../obsidian/icons/appIcons";
 import { Notice, Command, setIcon, FuzzyMatch, FuzzySuggestModal, Modal, SliderComponent, TextAreaComponent, TextComponent, debounce, App } from "obsidian";
-import { findmenuID } from "src/util/util";
-import { setBottomValue } from "src/util/statusBarConstants";
-import { t } from "src/translations/helper";
+import { findmenuID } from "../utils/util";
+import { setBottomValue } from "../obsidian/common/statusBar";
+import { t } from "../translations/helper";
 
 export class ChooseFromIconList extends FuzzySuggestModal<string> {
-  plugin: cMenuToolbarPlugin;
+  plugin: EditingToolbarPlugin;
   command: Command;
   issub: boolean;
 
-  constructor(plugin: cMenuToolbarPlugin, command: Command, issub: boolean = false) {
+  constructor(plugin: EditingToolbarPlugin, command: Command, issub: boolean = false) {
     super(plugin.app);
     this.plugin = plugin;
     this.command = command;
@@ -29,7 +29,7 @@ export class ChooseFromIconList extends FuzzySuggestModal<string> {
   }
 
   getItems(): string[] {
-    return appIcons;
+    return Object.keys(appIcons);
   }
 
   getItemText(item: string): string {
@@ -59,6 +59,7 @@ export class ChooseFromIconList extends FuzzySuggestModal<string> {
       {
         let menuID = findmenuID(this.plugin, this.command, this.issub)
         // console.log(menuID);
+        //@ts-ignore
         this.issub ? this.plugin.settings.menuCommands[menuID['index']].SubmenuCommands[menuID['subindex']].icon = item : this.plugin.settings.menuCommands[menuID['index']].icon = item;
       } else {
         this.command.icon = item;
@@ -80,7 +81,7 @@ export class ChooseFromIconList extends FuzzySuggestModal<string> {
 export class CommandPicker extends FuzzySuggestModal<Command> {
   command: Command;
 
-  constructor(private plugin: cMenuToolbarPlugin) {
+  constructor(private plugin: EditingToolbarPlugin) {
     super(plugin.app);
     this.app;
     this.setPlaceholder("Choose a command");
@@ -96,7 +97,7 @@ export class CommandPicker extends FuzzySuggestModal<Command> {
   }
 
   async onChooseItem(item: Command): Promise<void> {
-    let index = this.plugin.settings.menuCommands.findIndex((v) => v.id == item.id);
+    let index = this.plugin.settings.menuCommands.findIndex((v:any) => v.id == item.id);
     //  console.log(index)
 
     if (index > -1) //存在
@@ -123,12 +124,12 @@ export class CommandPicker extends FuzzySuggestModal<Command> {
 }
 
 export class CustomIcon extends Modal {
-  plugin: cMenuToolbarPlugin;
+  plugin: EditingToolbarPlugin;
   item: Command;
   issub: boolean;
   submitEnterCallback: (this: HTMLTextAreaElement, ev: KeyboardEvent) => any;
 
-  constructor(app: App, plugin: cMenuToolbarPlugin, item: Command, issub: boolean) {
+  constructor(app: App, plugin: EditingToolbarPlugin, item: Command, issub: boolean) {
     super(plugin.app);
     this.plugin = plugin;
     this.item = item;
@@ -156,6 +157,7 @@ export class CustomIcon extends Modal {
 
         } else {
           let subindex = menuID['subindex']
+          //@ts-ignore
           subindex === -1 ? this.plugin.settings.menuCommands[menuID["index"]].SubmenuCommands.push(this.item) : this.plugin.settings.menuCommands[menuID['index']].SubmenuCommands[subindex].icon = value
 
         }
@@ -175,11 +177,11 @@ export class CustomIcon extends Modal {
 
 
 export class ChangeCmdname extends Modal {
-  plugin: cMenuToolbarPlugin;
+  plugin: EditingToolbarPlugin;
   item: Command;
   issub: boolean;
   submitEnterCallback: (this: HTMLInputElement, ev: KeyboardEvent) => any;
-  constructor(app: App, plugin: cMenuToolbarPlugin, item: Command, issub: boolean) {
+  constructor(app: App, plugin: EditingToolbarPlugin, item: Command, issub: boolean) {
     super(plugin.app);
     this.plugin = plugin;
     this.item = item;
@@ -209,6 +211,7 @@ export class ChangeCmdname extends Modal {
 
         } else {
           let subindex = menuID['subindex']
+          //@ts-ignore
           subindex === -1 ? this.plugin.settings.menuCommands[menuID["index"]].SubmenuCommands.push(this.item) : this.plugin.settings.menuCommands[menuID['index']].SubmenuCommands[subindex].name = value
 
         }
@@ -226,8 +229,8 @@ export class ChangeCmdname extends Modal {
 };
 
 export class openSlider extends Modal {
-  plugin: cMenuToolbarPlugin;
-  constructor(app: App, plugin: cMenuToolbarPlugin) {
+  plugin: EditingToolbarPlugin;
+  constructor(plugin: EditingToolbarPlugin) {
     super(plugin.app);
     this.plugin = plugin;
     this.containerEl.addClass("cMenuToolbar-Modal");
@@ -244,7 +247,7 @@ export class openSlider extends Modal {
         .onChange(debounce(async (value) => {
           console.log(`%c${value}px`, "color: Violet");
           this.plugin.settings.cMenuBottomValue = value/5 + 4.25;
-          setBottomValue(this.plugin.settings);
+          setBottomValue(this.plugin);
           await this.plugin.saveSettings();
           setTimeout(() => {
             dispatchEvent(new Event("cMenuToolbar-NewCommand"));
@@ -258,7 +261,7 @@ export class openSlider extends Modal {
       .onChange(debounce(async (value) => {
         console.log(`%c${value}em`, "color: Violet");
         this.plugin.settings.cMenuBottomValue = value;
-        setBottomValue(this.plugin.settings);
+        setBottomValue(this.plugin);
         await this.plugin.saveSettings();
         setTimeout(() => {
           dispatchEvent(new Event("cMenuToolbar-NewCommand"));
