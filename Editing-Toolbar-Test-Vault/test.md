@@ -8,7 +8,7 @@ templify: cornell
 
 ### Cues
 
-**fweffwef
+fweffwef
 
 # Notes
 

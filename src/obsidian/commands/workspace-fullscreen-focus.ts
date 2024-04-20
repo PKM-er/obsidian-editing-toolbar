@@ -5,7 +5,7 @@ import { appIcons } from "../icons/appIcons"
 export default function workspaceFullscreenFocus(plugin: EditingToolbarPlugin): Command {
     const name = "Workspace Fullscreen Focus"
     return {
-        id: name.replaceAll(" ", "-").toLocaleLowerCase(),
+        id: "workplace-fullscreen-focus",
         name,
         hotkeys: [{ modifiers: ['Mod'], key: "F11" }],
         icon: appIcons["remix-SplitCellsHorizontal"],
