@@ -156,13 +156,15 @@ export const getCoords = (editor: any) => {
 };
 
 export function isSource(app: App) {
+  const view = app.workspace.getActiveViewOfType(ItemView);
+  if(view?.getViewType()==="markdown" ||view?.getViewType()==="thino_view"){
   const activeLeaf = app.workspace.activeLeaf; // 获取当前活动的 leaf
-
   if (activeLeaf) {
     const activeView = activeLeaf.view; // 获取 leaf 的 view
     if (activeView) {
       return activeView.getMode() === "source"; // 检查当前 view 的模式是否是 "source"
     }
+  }
   }
   return false; // 如果未能获取到合适的 view，返回 false
 }
