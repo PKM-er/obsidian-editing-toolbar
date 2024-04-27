@@ -1,4 +1,4 @@
-import { type Command, MarkdownView } from "obsidian"
+import { type Command } from "obsidian"
 import type EditingToolbarPlugin from "../../main"
 import { appIcons } from "../icons/appIcons"
 

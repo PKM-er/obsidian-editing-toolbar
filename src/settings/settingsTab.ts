@@ -1,7 +1,7 @@
 import type cMenuToolbarPlugin from "../main";
 import { CommandPicker, ChooseFromIconList, ChangeCmdname } from "../modals/suggesterModals";
 import { App, Setting, PluginSettingTab, Command } from "obsidian";
-import { APPEND_METHODS, AESTHETIC_STYLES, POSITION_STYLES } from "./settingsData";
+import { APPEND_METHODS, AESTHETIC_STYLES, POSITION_STYLES, EditingCommand } from "./settingsData";
 import Sortable from "sortablejs";
 import { debounce } from "obsidian";
 import { GenNonDuplicateID } from "../utils/util";
@@ -351,7 +351,7 @@ export class cMenuToolbarSettingTab extends PluginSettingTab {
         });
 
 
-        this.plugin.settings.menuCommands.forEach((newCommand: Command, index: number) => {
+        this.plugin.settings.menuCommands.forEach((newCommand: EditingCommand, index: number) => {
             const setting = new Setting(cMenuToolbarCommandsContainer)
 
             if ("SubmenuCommands" in newCommand) {

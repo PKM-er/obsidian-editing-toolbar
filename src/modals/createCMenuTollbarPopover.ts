@@ -332,9 +332,9 @@ export function createCMenuToolbarPopover(
                     }
                     if (item.id == "cMenuToolbar-Divider-Line")
                         button.setClass("cMenuToolbar-Divider-Line");
-                        checkHtml(item.icon)
-                            ? (button.buttonEl.innerHTML = item.icon)
-                            : button.setIcon(item.icon);
+                    checkHtml(item.icon)
+                        ? (button.buttonEl.innerHTML = item.icon)
+                        : button.setIcon(item.icon);
                     //let __btnwidth2;
                     // if (button.buttonEl.offsetWidth > 100) __btnwidth2 = 26;
                     // else {

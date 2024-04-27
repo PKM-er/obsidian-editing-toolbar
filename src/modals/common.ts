@@ -3,7 +3,7 @@ import EditingToolbarPlugin from "../main";
 
 export function isExistoolbar(plugin: EditingToolbarPlugin): HTMLElement | null {
     const activeDocument = plugin.getActiveDocument()
-    let container = plugin.settings.positionStyle == "top" ? app.workspace.activeLeaf?.view.containerEl?.querySelector("#cMenuToolbarModalBar")
+    let container = plugin.settings.positionStyle == "top" ? plugin.app.workspace.activeLeaf?.view.containerEl?.querySelector("#cMenuToolbarModalBar")
         : activeDocument.getElementById("cMenuToolbarModalBar");
     return (container) ? container as HTMLElement : null;
 }

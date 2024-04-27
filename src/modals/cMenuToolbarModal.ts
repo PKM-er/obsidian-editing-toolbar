@@ -148,7 +148,6 @@ export function setFormateraser(plugin: EditingToolbarPlugin) {
 
         // selectText = selectText.replace(/(\r*\n)+/mg, "\r\n");
         editor.replaceSelection(selectText);
-        //@ts-ignore
         app.commands.executeCommandById("editor:focus");
 
     }

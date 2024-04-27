@@ -3,20 +3,17 @@ export const APPEND_METHODS = ["body", "workspace"];
 export const AESTHETIC_STYLES = ["glass", "default", "tiny"];
 export const POSITION_STYLES = ["fixed", "following", "top"];
 
-
-
-declare module 'obsidian' {
-    export interface Command {
-        SubmenuCommands?: Command[];
-    }
+export interface EditingCommand extends Command {
+    SubmenuCommands?: Command[]
 }
+
 export interface EditingToolbarSettings {
     cMenuWidth: number;
     cMenuFontColor: string;
     cMenuBackgroundColor: string;
     aestheticStyle: string;
     positionStyle: string;
-    menuCommands: Command[];
+    menuCommands: EditingCommand[];
     appendMethod: string;
     shouldShowMenuOnSelect: boolean;
     cMenuVisibility: boolean;
