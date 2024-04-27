@@ -8,6 +8,7 @@ import { GenNonDuplicateID } from "../utils/util";
 import { t } from '../translations/helper';
 
 import Pickr from "@simonwep/pickr";
+import "@simonwep/pickr/dist/themes/nano.min.css"
 import { selfDestruct } from "../modals/cMenuToolbarModal";
 import { createCMenuToolbarPopover } from "../modals/createCMenuTollbarPopover";
 import { checkHtml } from "../modals/common";

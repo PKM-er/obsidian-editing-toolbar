@@ -4,7 +4,7 @@ templify: cornell
 
 # ==Point==
 
-==fwef==
+<font color="#1f497d">==fwef==</font>
 
 ### Cues
 
