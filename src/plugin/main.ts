@@ -29,19 +29,21 @@ import { setMenuVisibility } from "src/util/statusBarConstants";
 import { fullscreenMode, workplacefullscreenMode } from "src/util/fullscreen";
 import { t } from "src/translations/helper";
 
-import { EditorToolbar } from '../components/EditorToolbar';
-import { ToolbarSettings } from '../settings/ToolbarSettings';
-import { CommandRegistry } from '../commands/CommandRegistry';
-import { EventManager } from '../events/EventManager';
+
+
 import { ViewUtils } from 'src/util/viewUtils';
 
+
+
 let activeDocument: Document;
+
 
 export default class editingToolbarPlugin extends Plugin {
   app: App;
   settings: editingToolbarSettings;
   statusBarIcon: HTMLElement;
-  editingToolbar: HTMLElement;
+ 
+
   modCommands: Command[] = [
     {
       id: "editor:insert-embed",
@@ -168,10 +170,6 @@ export default class editingToolbarPlugin extends Plugin {
   Temp_Notice: Notice;
   Leaf_Width: number;
 
-  private toolbar: EditorToolbar;
-  private commandRegistry: CommandRegistry;
-  private eventManager: EventManager;
-
   async onload(): Promise<void> {
     console.log("editingToolbar v" + this.manifest.version + " loaded");
 
@@ -209,10 +207,7 @@ export default class editingToolbarPlugin extends Plugin {
         }, 100)
       }
 
-    // 初始化组件
-    this.toolbar = new EditorToolbar(this.app, this.settings as ToolbarSettings);
-    this.commandRegistry = new CommandRegistry(this.app, this);
-    this.eventManager = new EventManager(this.app, this);
+  
   }
 
   isLoadMobile() {
@@ -753,8 +748,8 @@ export default class editingToolbarPlugin extends Plugin {
     this.app.workspace.off("layout-change", this.handleeditingToolbar_layout);
     this.app.workspace.off("resize", this.handleeditingToolbar_resize);
 
-    this.toolbar.destroy();
-    this.eventManager.destroy();
+
+
   }
 
   isView() {
@@ -860,22 +855,5 @@ export default class editingToolbarPlugin extends Plugin {
 
   async saveSettings() {
     await this.saveData(this.settings);
-  }
-
-  public getSettings(): ToolbarSettings {
-    return this.settings as ToolbarSettings;
-  }
-
-  public getToolbar(): EditorToolbar {
-    return this.toolbar;
-  }
-
-  private getEditor(leaf: WorkspaceLeaf): Editor | null {
-    if (!leaf || !leaf.view) {
-      return null;
-    }
-
-    // @ts-ignore - Obsidian 类型定义不完整
-    return leaf.view.editor;
   }
 }
