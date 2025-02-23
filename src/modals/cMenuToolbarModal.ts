@@ -1,11 +1,10 @@
-
 import type cMenuToolbarPlugin from "src/plugin/main";
 import { App, Notice, requireApiVersion, ItemView,MarkdownView, ButtonComponent, WorkspaceParent, WorkspaceWindow, WorkspaceParentExt } from "obsidian";
 import { setBottomValue } from "src/util/statusBarConstants";
 import { backcolorpicker, colorpicker } from "src/util/util";
 import { t } from "src/translations/helper";
 import { cMenuToolbarSettings } from "src/settings/settingsData";
-
+import { ViewUtils } from 'src/util/viewUtils';
 
 let activeDocument: Document;
 
@@ -155,19 +154,7 @@ export const getCoords = (editor: any) => {
   return coords;
 };
 
-export function isSource(app: App) {
-  const view = app.workspace.getActiveViewOfType(ItemView);
-  if(view?.getViewType()==="markdown" ||view?.getViewType()==="thino_view"){
-  const activeLeaf = app.workspace.activeLeaf; // 获取当前活动的 leaf
-  if (activeLeaf) {
-    const activeView = activeLeaf.view; // 获取 leaf 的 view
-    if (activeView) {
-      return activeView.getMode() === "source"; // 检查当前 view 的模式是否是 "source"
-    }
-  }
-  }
-  return false; // 如果未能获取到合适的 view，返回 false
-}
+
 
 
 export function checkHtml(htmlStr: string) {
@@ -350,34 +337,29 @@ export const setcolorHex = function (color: string) {
 };
 
 export function createMoremenu(app: App, plugin: cMenuToolbarPlugin, selector: HTMLDivElement) {
-  // let  issubmenu= activeDocument.getElementById("cMenuToolbarModalBar").querySelector('.'+selector);
-  // let barHeight = activeDocument.getElementById("cMenuToolbarModalBar").offsetHeight;
-  // requireApiVersion("0.15.0") ? activeDocument = activeWindow.document : activeDocument = window.document;
-  //let Morecontainer = activeDocument.body?.querySelector(".workspace-leaf.mod-active")?.querySelector("#cMenuToolbarPopoverBar") as HTMLElement;
-  // let view = app.workspace.getActiveViewOfType(MarkdownView)
   const view = app.workspace.getActiveViewOfType(ItemView);
-  if(view?.getViewType()==="markdown" ||view?.getViewType()==="thino_view"){
-    let Morecontainer = view.containerEl.querySelector("#cMenuToolbarPopoverBar") as HTMLElement
-    if (!plugin.IS_MORE_Button) return;
-    let cMoreMenu = selector.createEl("span");
-    cMoreMenu.addClass("more-menu");
-    let morebutton = new ButtonComponent(cMoreMenu);
-    morebutton
-      .setClass("cMenuToolbarCommandItem")
-      .setTooltip(t("More"))
-      .onClick(() => {
-        if (Morecontainer.style.visibility == "hidden") {
-          Morecontainer.style.visibility = "visible";
-          Morecontainer.style.height = "32px";
-        } else {
-          Morecontainer.style.visibility = "hidden";
-          Morecontainer.style.height = "0";
-        }
-      });
-    morebutton.buttonEl.innerHTML = `<svg  width="14" height="14"  version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" enable-background="new 0 0 1024 1024" xml:space="preserve"><path fill="#666" d="M510.29 14.13 q17.09 -15.07 40.2 -14.07 q23.12 1 39.2 18.08 l334.66 385.92 q25.12 30.15 34.16 66.83 q9.04 36.68 0.5 73.87 q-8.54 37.19 -32.66 67.34 l-335.67 390.94 q-15.07 18.09 -38.69 20.1 q-23.62 2.01 -41.71 -13.07 q-18.08 -15.08 -20.09 -38.19 q-2.01 -23.12 13.06 -41.21 l334.66 -390.94 q11.06 -13.06 11.56 -29.65 q0.5 -16.58 -10.55 -29.64 l-334.67 -386.92 q-15.07 -17.09 -13.56 -40.7 q1.51 -23.62 19.59 -38.7 ZM81.17 14.13 q17.08 -15.07 40.19 -14.07 q23.11 1 39.2 18.08 l334.66 385.92 q25.12 30.15 34.16 66.83 q9.04 36.68 0.5 73.87 q-8.54 37.19 -32.66 67.34 l-335.67 390.94 q-15.07 18.09 -38.69 20.6 q-23.61 2.51 -41.7 -12.57 q-18.09 -15.08 -20.1 -38.69 q-2.01 -23.62 13.06 -41.71 l334.66 -390.94 q11.06 -13.06 11.56 -29.65 q0.5 -16.58 -10.55 -29.64 l-334.66 -386.92 q-15.08 -17.09 -13.57 -40.7 q1.51 -23.62 19.6 -38.7 Z"/></svg>`;
-    plugin.setIS_MORE_Button(false);
-    return cMoreMenu;
-  }
+  if(!ViewUtils.isAllowedViewType(view)) return;
+
+  let Morecontainer = view.containerEl.querySelector("#cMenuToolbarPopoverBar") as HTMLElement
+  if (!plugin.IS_MORE_Button) return;
+  let cMoreMenu = selector.createEl("span");
+  cMoreMenu.addClass("more-menu");
+  let morebutton = new ButtonComponent(cMoreMenu);
+  morebutton
+    .setClass("cMenuToolbarCommandItem")
+    .setTooltip(t("More"))
+    .onClick(() => {
+      if (Morecontainer.style.visibility == "hidden") {
+        Morecontainer.style.visibility = "visible";
+        Morecontainer.style.height = "32px";
+      } else {
+        Morecontainer.style.visibility = "hidden";
+        Morecontainer.style.height = "0";
+      }
+    });
+  morebutton.buttonEl.innerHTML = `<svg  width="14" height="14"  version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" enable-background="new 0 0 1024 1024" xml:space="preserve"><path fill="#666" d="M510.29 14.13 q17.09 -15.07 40.2 -14.07 q23.12 1 39.2 18.08 l334.66 385.92 q25.12 30.15 34.16 66.83 q9.04 36.68 0.5 73.87 q-8.54 37.19 -32.66 67.34 l-335.67 390.94 q-15.07 18.09 -38.69 20.1 q-23.62 2.01 -41.71 -13.07 q-18.08 -15.08 -20.09 -38.19 q-2.01 -23.12 13.06 -41.21 l334.66 -390.94 q11.06 -13.06 11.56 -29.65 q0.5 -16.58 -10.55 -29.64 l-334.67 -386.92 q-15.07 -17.09 -13.56 -40.7 q1.51 -23.62 19.59 -38.7 ZM81.17 14.13 q17.08 -15.07 40.19 -14.07 q23.11 1 39.2 18.08 l334.66 385.92 q25.12 30.15 34.16 66.83 q9.04 36.68 0.5 73.87 q-8.54 37.19 -32.66 67.34 l-335.67 390.94 q-15.07 18.09 -38.69 20.6 q-23.61 2.51 -41.7 -12.57 q-18.09 -15.08 -20.1 -38.69 q-2.01 -23.62 13.06 -41.71 l334.66 -390.94 q11.06 -13.06 11.56 -29.65 q0.5 -16.58 -10.55 -29.64 l-334.66 -386.92 q-15.08 -17.09 -13.57 -40.7 q1.51 -23.62 19.6 -38.7 Z"/></svg>`;
+  plugin.setIS_MORE_Button(false);
+  return cMoreMenu;
 }
 
 export function quiteFormatbrushes(plugin:cMenuToolbarPlugin) {
@@ -457,10 +439,18 @@ export function setFormateraser(app: App, plugin: cMenuToolbarPlugin) {
     }
 }
 
-export const createFollowingbar = (app: App, settings: cMenuToolbarSettings) => {
+export function createFollowingbar(app: App, settings: cMenuToolbarSettings) {
   let cMenuToolbarModalBar = isExistoolbar(app, settings);
 
-  if (isSource(app)) {
+  const view = app.workspace.getActiveViewOfType(ItemView);
+  if (!ViewUtils.isAllowedViewType(view)) {
+    if(cMenuToolbarModalBar) {
+      cMenuToolbarModalBar.style.visibility = "hidden";
+    }
+    return;
+  }
+
+  if (ViewUtils.isSourceMode(view)) {
     if (cMenuToolbarModalBar) {
       const editor = app.workspace.activeLeaf.view?.editor;
 
@@ -500,15 +490,15 @@ export const createFollowingbar = (app: App, settings: cMenuToolbarSettings) => 
         cMenuToolbarModalBar.style.top = topPosition + "px";
       }
     }
-  } else cMenuToolbarModalBar.style.visibility = "hidden"
+  } else {
+    cMenuToolbarModalBar.style.visibility = "hidden";
+  }
 }
 
-export function cMenuToolbarPopover(
-  app: App,
-  plugin: cMenuToolbarPlugin
-): void {
+export function cMenuToolbarPopover(app: App, plugin: cMenuToolbarPlugin): void {
   let settings = plugin.settings;
   requireApiVersion("0.15.0") ? activeDocument = activeWindow.document : activeDocument = window.document;
+  
   function createMenu() {
     const generateMenu = () => {
       let btnwidth = 0;
@@ -854,7 +844,8 @@ export function cMenuToolbarPopover(
     };
     if(!plugin.isLoadMobile()) return ;
     const view = app.workspace.getActiveViewOfType(ItemView);
-    if(view?.getViewType()==="markdown" ||view?.getViewType()==="thino_view"){
+    if(ViewUtils.isAllowedViewType(view))  
+      {
   //  let Markdown = app.workspace.getActiveViewOfType(MarkdownView);
    // if (Markdown) {
       if (isExistoolbar(app, plugin.settings)) return;

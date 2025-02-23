@@ -17,7 +17,7 @@ import {
 import { wait } from "src/util/util";
 import { CommandPicker, openSlider } from "src/modals/suggesterModals";
 import { cMenuToolbarSettingTab } from '../settings/settingsTab';
-import { selfDestruct, cMenuToolbarPopover, isSource, quiteFormatbrushes, setFontcolor, setBackgroundcolor, setHeader, createFollowingbar, setFormateraser, isExistoolbar, resetToolbar } from "src/modals/cMenuToolbarModal";
+import { selfDestruct, cMenuToolbarPopover, quiteFormatbrushes, setFontcolor, setBackgroundcolor, setHeader, createFollowingbar, setFormateraser, isExistoolbar, resetToolbar } from "src/modals/cMenuToolbarModal";
 import { cMenuToolbarSettings, DEFAULT_SETTINGS } from "src/settings/settingsData";
 import addIcons, {
   // addFeatherIcons,
@@ -33,6 +33,7 @@ import { EditorToolbar } from '../components/EditorToolbar';
 import { ToolbarSettings } from '../settings/ToolbarSettings';
 import { CommandRegistry } from '../commands/CommandRegistry';
 import { EventManager } from '../events/EventManager';
+import { ViewUtils } from 'src/util/viewUtils';
 
 let activeDocument: Document;
 
@@ -64,97 +65,97 @@ export default class cMenuToolbarPlugin extends Plugin {
     },
     {
       id: "editor:toggle-bold",
-      name: "Toggle bold",
+      name: "Bold",
       icon: "bold-glyph",
     },
     {
       id: "editor:toggle-italics",
-      name: "Toggle italics",
+      name: "Italics",
       icon: "italic-glyph",
     },
     {
       id: "editor:toggle-strikethrough",
-      name: "Toggle strikethrough",
+      name: "Strikethrough",
       icon: "strikethrough-glyph",
     },
     {
       id: "editor:toggle-code",
-      name: "Toggle code",
+      name: "Code",
       icon: "code-glyph",
     },
     {
       id: "editor:toggle-blockquote",
-      name: "Toggle blockquote",
+      name: "Blockquote",
       icon: "lucide-text-quote",
     },
     {
       id: "editor:toggle-bullet-list",
-      name: "Toggle bullet",
+      name: "Bullet list",
       icon: "bullet-list-glyph",
     },
     {
       id: "editor:toggle-checklist-status",
-      name: "Toggle checklist status",
+      name: "Checklist status",
       icon: "checkbox-glyph",
     },
     {
       id: "editor:toggle-comments",
-      name: "Toggle comment",
+      name: "Comment",
       icon: "percent-sign-glyph",
     },
     {
       id: "editor:toggle-highlight",
-      name: "Toggle highlight",
+      name: "Highlight",
       icon: "highlight-glyph",
     },
     {
       id: "editor:toggle-numbered-list",
-      name: "Toggle numbered list",
+      name: "Numbered list",
       icon: "number-list-glyph",
     },
     {
       id: "editor:insert-callout",
-      name: "Toggle Callout ",
+      name: "Insert Callout ",
       icon: "lucide-quote",
     },
     {
       id: "editor:insert-mathblock",
-      name: "Toggle MathBlock",
+      name: "MathBlock",
       icon: "lucide-sigma-square",
     },
     {
       id: "editor:toggle-inline-math",
-      name: "Toggle inline math",
+      name: "Inline math",
       icon: "lucide-sigma",
     },
     {
       id: "editor:insert-table",
-      name: "Toggle table",
+      name: "Insert Table",
       icon: "lucide-table",
     },
     {
       id: "editor:swap-line-up",
-      name: "Toggle swap line up",
+      name: "Swap line up",
       icon: "lucide-corner-right-up",
     },
     {
       id: "editor:swap-line-down",
-      name: "Toggle swap line down",
+      name: "Swap line down",
       icon: "lucide-corner-right-down",
     },
     {
       id: "editor:attach-file",
-      name: "Toggle upload attach file",
+      name: "Attach file",
       icon: "lucide-paperclip",
     },
     {
       id: "editor:clear-formatting",
-      name: "Toggle clear formatting",
+      name: "Clear formatting",
       icon: "lucide-eraser",
     },
     {
       id: "editor:cycle-list-checklist",
-      name: "Toggle cycle list checklist",
+      name: "Cycle list checklist",
       icon: "lucide-check-square",
     }
 
@@ -324,7 +325,7 @@ export default class cMenuToolbarPlugin extends Plugin {
     });
     this.addCommand({
       id: 'indent-list',
-      name: 'indent list',
+      name: 'Indent list',
       callback: () => {
         //const activeLeaf = this.app.workspace.getActiveViewOfType(MarkdownView);
         //const view = activeLeaf;
@@ -337,7 +338,7 @@ export default class cMenuToolbarPlugin extends Plugin {
     });
     this.addCommand({
       id: 'undent-list',
-      name: 'unindent-list',
+      name: 'Unindent list',
       callback: () => {
         const editor = app.workspace.activeLeaf.view?.editor;
         // @ts-ignore - 使用扩展类型
@@ -348,7 +349,7 @@ export default class cMenuToolbarPlugin extends Plugin {
     });
     this.addCommand({
       id: 'editor-undo',
-      name: 'undo editor',
+      name: 'Undo editor',
       callback: () => {
         const editor =  app.workspace.activeLeaf.view?.editor;
         return editor?.undo();
@@ -358,7 +359,7 @@ export default class cMenuToolbarPlugin extends Plugin {
     });
     this.addCommand({
       id: 'editor-redo',
-      name: 'redo editor',
+      name: 'Redo editor',
       callback: () => {
         const editor =  app.workspace.activeLeaf.view?.editor;
         return editor?.redo();
@@ -368,7 +369,7 @@ export default class cMenuToolbarPlugin extends Plugin {
     });
     this.addCommand({
       id: 'editor-copy',
-      name: 'copy editor',
+      name: 'Copy editor',
       callback: async () => {
 
         const editor =  app.workspace.activeLeaf.view?.editor;
@@ -384,7 +385,7 @@ export default class cMenuToolbarPlugin extends Plugin {
     });
     this.addCommand({
       id: 'editor-paste',
-      name: 'paste editor',
+      name: 'Paste editor',
       callback: async () => {
         const editor =  app.workspace.activeLeaf.view?.editor;
         try {
@@ -401,7 +402,7 @@ export default class cMenuToolbarPlugin extends Plugin {
     });
     this.addCommand({
       id: 'editor-cut',
-      name: 'cut editor',
+      name: 'Cut editor',
       callback: async () => {
 
         const editor =  app.workspace.activeLeaf.view?.editor;
@@ -427,7 +428,7 @@ export default class cMenuToolbarPlugin extends Plugin {
     });
     this.addCommand({
       id: "workplace-fullscreen-focus",
-      name: "workplace-Fullscreen ",
+      name: "Workplace Fullscreen Focus",
       callback: () => {
         return workplacefullscreenMode(app)
       },
@@ -445,31 +446,31 @@ export default class cMenuToolbarPlugin extends Plugin {
     this.addCommand({
       id: 'header1-text',
       name: 'Header 1',
-      callback: () => setHeader("#"),
+      callback: () => {setHeader("#");  app.commands.executeCommandById("editor:focus");},
       icon: "header-1"
     });
     this.addCommand({
       id: 'header2-text',
       name: 'Header 2',
-      callback: () => setHeader("##"),
+      callback: () => {setHeader("##");  app.commands.executeCommandById("editor:focus");},
       icon: "header-2"
     });
     this.addCommand({
       id: 'header3-text',
       name: 'Header 3',
-      callback: () => setHeader("###"),
+      callback: () => {setHeader("###");  app.commands.executeCommandById("editor:focus");},
       icon: "header-3"
     });
     this.addCommand({
       id: 'header4-text',
       name: 'Header 4',
-      callback: () => setHeader("####"),
+      callback: () => {setHeader("####");  app.commands.executeCommandById("editor:focus");},
       icon: "header-4"
     });
     this.addCommand({
       id: 'header5-text',
       name: 'Header 5',
-      callback: () => setHeader("#####"),
+      callback: () => {setHeader("#####");  app.commands.executeCommandById("editor:focus");},
       icon: "header-5"
     });
     this.addCommand({
@@ -756,97 +757,65 @@ export default class cMenuToolbarPlugin extends Plugin {
     this.eventManager.destroy();
   }
 
-  isView()
-  {
-    const view = app.workspace.getActiveViewOfType(ItemView);
-    if(view?.getViewType()==="markdown" ||view?.getViewType()==="thino_view")
-    return true;
-    else return false;
+  isView() {
+    const view = this.app.workspace.getActiveViewOfType(ItemView);
+    return ViewUtils.isAllowedViewType(view);
   }
+
   handlecMenuToolbar = () => {
     if (this.settings.cMenuVisibility == true) {
-      //const view = this.app.workspace.getActiveViewOfType(ItemView);
-      //console.log(view?.getViewType() )
-      //   const type= this.app.workspace.activeLeaf.getViewState().type
-      //   console.log(type,"active-leaf-chang" )
-      //  let view =   true
-
-      let toolbar = isExistoolbar(this.app, this.settings)
-      // if(view)
-
+      const view = this.app.workspace.getActiveViewOfType(ItemView);
+      let toolbar = isExistoolbar(this.app, this.settings);
 
       if (toolbar) {
-        if (this.settings.positionStyle != "following") {
-          try {
-            toolbar.style.visibility = "visible";
-          } catch (err) {
-            console.log(toolbar, "toolbar_error");
-          }
-        } else {
-          try {
-            toolbar.style.visibility = "hidden";
-          } catch (err) {
-            console.log(toolbar, "toolbar_error");
-          }
+        if (!ViewUtils.isAllowedViewType(view)) {
+          toolbar.style.visibility = "hidden";
+          return;
         }
-
+        
+        if (this.settings.positionStyle != "following") {
+          toolbar.style.visibility = "visible";
+        } else {
+          toolbar.style.visibility = "hidden";
+        }
       } else {
-
         setTimeout(() => {
-          // console.log("cMenuToolbarPopover begin...")
-          cMenuToolbarPopover(this.app, this)
+          cMenuToolbarPopover(this.app, this);
         }, 100);
       }
-
     }
   };
 
   handlecMenuToolbar_layout = () => {
-    // requireApiVersion("0.15.0") ? activeDocument = activeWindow.document : activeDocument = window.document;
-    //const view = this.app.workspace.getActiveViewOfType(ItemView);
-    // const type= this.app.workspace.activeLeaf.getViewState().type
-    // console.log(type,"handlecMenuToolbar_layout" )
-    if (this.settings.cMenuVisibility == true) {
-      let cMenuToolbarModalBar = isExistoolbar(this.app, this.settings)
-      // console.log(cMenuToolbarModalBar,"cMenuToolbarModalBar" )
-      //let view = this.app.workspace.getActiveViewOfType(MarkdownView) || true
-      let view = true
-      if (!isSource(app) || (!view)) //no source mode
-      {
-        if (cMenuToolbarModalBar) {
-          cMenuToolbarModalBar.style.visibility = "hidden"
-        }
+    if (!this.settings.cMenuVisibility) return false;
+
+    const view = this.app.workspace.getActiveViewOfType(ItemView);
+    let cMenuToolbarModalBar = isExistoolbar(this.app, this.settings);
+
+    if (!ViewUtils.isSourceMode(view) || !ViewUtils.isAllowedViewType(view)) {
+      if (cMenuToolbarModalBar) {
+        cMenuToolbarModalBar.style.visibility = "hidden";
       }
-      else if (isSource(app)) {
-        if (cMenuToolbarModalBar) {
-          if (this.settings.positionStyle == "following")
-            cMenuToolbarModalBar.style.visibility = "hidden"
-          else {
-            cMenuToolbarModalBar.style.visibility = "visible"
-          }
-
-        } else {
-          // console.log("cMenuToolbarPopover begin..." )
-          setTimeout(() => {
-            cMenuToolbarPopover(this.app, this)
-          }, 100);
-        }
-
-
-      }
-
-    } else {
-      return false;
+      return;
     }
 
-
+    if (cMenuToolbarModalBar) {
+      cMenuToolbarModalBar.style.visibility = 
+        this.settings.positionStyle == "following" ? "hidden" : "visible";
+    } else {
+      setTimeout(() => {
+        cMenuToolbarPopover(this.app, this);
+      }, 100);
+    }
   };
+
   handlecMenuToolbar_resize = () => {
     // const type= this.app.workspace.activeLeaf.getViewState().type
     // console.log(type,"handlecMenuToolbar_layout" )
     //requireApiVersion("0.15.0") ? activeDocument = activeWindow.document : activeDocument = window.document;
     if (this.settings.cMenuVisibility == true && this.settings.positionStyle == "top") {
-      if (isSource(app)) {
+      const view = app.workspace.getActiveViewOfType(ItemView);
+      if (ViewUtils.isSourceMode(view)) {
           let leafwidth = this.app.workspace.activeLeaf.view.leaf.width ?? 0
           //let leafwidth = view.containerEl?.querySelector<HTMLElement>(".markdown-source-view").offsetWidth ?? 0
           if (this.Leaf_Width == leafwidth) return false;

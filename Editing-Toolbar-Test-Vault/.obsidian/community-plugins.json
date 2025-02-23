@@ -1,6 +1,7 @@
 [
   "plugin-reloader",
-  "editing-toolbar",
+  "meld-encrypt",
   "obsidian-style-settings",
-  "meld-encrypt"
+  "editing-toolbar",
+  "obsidian-memos"
 ]

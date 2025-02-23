@@ -42,12 +42,12 @@ export const DEFAULT_SETTINGS: cMenuToolbarSettings = {
     "menuCommands": [
       {
         "id": "editing-toolbar:editor-undo",
-        "name": "undo editor",
+        "name": "Undo editor",
         "icon": "undo-glyph"
       },
       {
         "id": "editing-toolbar:editor-redo",
-        "name": "redo editor",
+        "name": "Redo editor",
         "icon": "redo-glyph"
       },
       {
@@ -94,27 +94,27 @@ export const DEFAULT_SETTINGS: cMenuToolbarSettings = {
       },
       {
         "id": "editing-toolbar:editor:toggle-bold",
-        "name": "Toggle bold",
+        "name": "Bold",
         "icon": "bold-glyph"
       },
       {
         "id": "editing-toolbar:editor:toggle-italics",
-        "name": "Toggle italics",
+        "name": "Italics",
         "icon": "italic-glyph"
       },
       {
         "id": "editing-toolbar:editor:toggle-strikethrough",
-        "name": "Toggle strikethrough",
+        "name": "Strikethrough",
         "icon": "strikethrough-glyph"
       },
       {
         "id": "editing-toolbar:underline",
-        "name": "Toggle underline",
+        "name": "Underline",
         "icon": "underline-glyph"
       },
       {
         "id": "editor:toggle-highlight",
-        "name": "==Toggle highlight ==",
+        "name": "==Highlight==",
         "icon": "highlight-glyph"
       },
       {
@@ -124,44 +124,44 @@ export const DEFAULT_SETTINGS: cMenuToolbarSettings = {
         "SubmenuCommands": [
           {
             "id": "editing-toolbar:editor-copy",
-            "name": " copy ",
+            "name": "Copy",
             "icon": "lucide-copy"
           },
           {
             "id": "editing-toolbar:editor-cut",
-            "name": " cut ",
+            "name": "Cut",
             "icon": "lucide-scissors"
           },
           {
             "id": "editing-toolbar:editor-paste",
-            "name": "paste ",
+            "name": "Paste",
             "icon": "lucide-clipboard-type"
           },
           {
             "id": "editing-toolbar:editor:swap-line-down",
-            "name": "swap line down",
+            "name": "Swap line down",
             "icon": "lucide-corner-right-down"
           },
           {
             "id": "editing-toolbar:editor:swap-line-up",
-            "name": "swap line up",
+            "name": "Swap line up",
             "icon": "lucide-corner-right-up"
           }
         ]
       },
       {
         "id": "editing-toolbar:editor:attach-file",
-        "name": "upload attach file",
+        "name": "Attach file",
         "icon": "lucide-paperclip"
       },
       {
         "id": "editing-toolbar:editor:insert-table",
-        "name": "Toggle table",
+        "name": "Insert Table",
         "icon": "lucide-table"
       },
       {
         "id": "editing-toolbar:editor:cycle-list-checklist",
-        "name": "Toggle cycle list checklist",
+        "name": "Cycle list checklist",
         "icon": "check-circle"
       },
       {
@@ -171,12 +171,12 @@ export const DEFAULT_SETTINGS: cMenuToolbarSettings = {
         "SubmenuCommands": [
           {
             "id": "editing-toolbar:editor:toggle-blockquote",
-            "name": "Toggle blockquote",
+            "name": "Blockquote",
             "icon": "lucide-text-quote"
           },
           {
             "id": "editing-toolbar:editor:insert-callout",
-            "name": "Toggle Callout ",
+            "name": "Insert Callout ",
             "icon": "lucide-quote"
           }
         ]
@@ -188,37 +188,37 @@ export const DEFAULT_SETTINGS: cMenuToolbarSettings = {
         "SubmenuCommands": [
           {
             "id": "editing-toolbar:superscript",
-            "name": "Toggle superscript",
+            "name": "Superscript",
             "icon": "superscript-glyph"
           },
           {
             "id": "editing-toolbar:subscript",
-            "name": "Toggle subscript",
+            "name": "Subscript",
             "icon": "subscript-glyph"
           },
           {
             "id": "editing-toolbar:editor:toggle-code",
-            "name": "inline code",
+            "name": "Inline code",
             "icon": "code-glyph"
           },
           {
             "id": "editing-toolbar:codeblock",
-            "name": "Toggle codeblock",
+            "name": "Code block",
             "icon": "codeblock-glyph"
           },
           {
             "id": "editing-toolbar:editor:insert-wikilink",
-            "name": "insert wikilink [[]]",
+            "name": "Insert wikilink [[]]",
             "icon": "<svg width=\"15\" height=\"15\" focusable=\"false\" fill=\"currentColor\"  viewBox=\"0 0 1024 1024\"><g transform=\"scale(1, -1) translate(0, -896) scale(0.9, 0.9) \"><path class=\"path\" d=\"M306 134 l91 0 q1 0 1 -8 l0 -80 q0 -8 -1 -8 l-91 0 q-1 0 -1 7 q0 -8 -5 -8 l-45 0 q-5 0 -5 8 l0 784 q0 8 5 8 l45 0 q5 0 5 -8 q0 8 1 8 l91 0 q1 0 1 -8 l0 -80 q0 -8 -1 -8 l-91 0 q-1 0 -1 8 l0 -623 q0 8 1 8 ZM139 134 l91 0 q1 0 1 -8 l0 -80 q0 -8 -1 -8 l-91 0 q-1 0 -1 7 q0 -8 -5 -8 l-45 0 q-5 0 -5 8 l0 784 q0 8 5 8 l45 0 q5 0 5 -8 q0 8 1 8 l91 0 q1 0 1 -8 l0 -80 q0 -8 -1 -8 l-91 0 q-1 0 -1 8 l0 -623 q0 8 1 8 ZM711 134 q1 0 1 -8 l0 623 q0 -8 -1 -8 l-91 0 q-1 0 -1 8 l0 80 q0 8 1 8 l91 0 q1 0 1 -8 q0 8 4 8 l46 0 q4 0 4 -8 l0 -784 q0 -8 -4 -8 l-46 0 q-4 0 -4 8 q0 -7 -1 -7 l-91 0 q-1 0 -1 8 l0 80 q0 8 1 8 l91 0 ZM878 134 q1 0 1 -8 l0 623 q0 -8 -1 -8 l-91 0 q-1 0 -1 8 l0 80 q0 8 1 8 l91 0 q1 0 1 -8 q0 8 5 8 l45 0 q4 0 4 -8 l0 -784 q0 -8 -4 -8 l-45 0 q-5 0 -5 8 q0 -7 -1 -7 l-91 0 q-1 0 -1 8 l0 80 q0 8 1 8 l91 0 Z\"></path></g></svg>"
           },
           {
             "id": "editing-toolbar:editor:insert-embed",
-            "name": "insert embed ![[]]",
+            "name": "Insert embed ![[]]",
             "icon": "note-glyph"
           },
           {
             "id": "editing-toolbar:editor:insert-link",
-            "name": "insert link []()",
+            "name": "Insert link []()",
             "icon": "link-glyph"
           },
           {
@@ -228,12 +228,12 @@ export const DEFAULT_SETTINGS: cMenuToolbarSettings = {
           },
           {
             "id": "editing-toolbar:editor:toggle-inline-math",
-            "name": "Toggle inline math",
+            "name": "Inline math",
             "icon": "lucide-sigma"
           },
           {
             "id": "editing-toolbar:editor:insert-mathblock",
-            "name": "Toggle MathBlock",
+            "name": "MathBlock",
             "icon": "lucide-sigma-square"
           }
         ]
@@ -245,27 +245,27 @@ export const DEFAULT_SETTINGS: cMenuToolbarSettings = {
         "SubmenuCommands": [
           {
             "id": "editing-toolbar:editor:toggle-checklist-status",
-            "name": "checklist",
+            "name": "Checklist",
             "icon": "checkbox-glyph"
           },
           {
             "id": "editor:toggle-numbered-list",
-            "name": "numbered list",
+            "name": "Numbered list",
             "icon": "<svg width=\"18\" height=\"18\" focusable=\"false\" fill=\"currentColor\"  viewBox=\"0 0 1024 1024\"><g transform=\"scale(1, -1) translate(0, -896) scale(0.9, 0.9) \"><path class=\"path\" d=\"M860 424 q17 0 28.5 -11.5 q11.5 -11.5 11.5 -28 q0 -16.5 -11.5 -28.5 q-11.5 -12 -27.5 -12 l-457 0 q-17 0 -28.5 11.5 q-11.5 11.5 -11.5 28 q0 16.5 11.5 28.5 q11.5 12 27.5 12 l457 0 ZM860 756 q17 0 28.5 -11.5 q11.5 -11.5 11.5 -28 q0 -16.5 -11.5 -28.5 q-11.5 -12 -27.5 -12 l-457 0 q-17 0 -28.5 11.5 q-11.5 11.5 -11.5 28 q0 16.5 11.5 28.5 q11.5 12 27.5 12 l457 0 ZM860 92 q17 0 28.5 -11.5 q11.5 -11.5 11.5 -28 q0 -16.5 -11.5 -28.5 q-11.5 -12 -27.5 -12 l-457 0 q-17 0 -28.5 11.5 q-11.5 11.5 -11.5 28 q0 16.5 11.5 28.5 q11.5 12 27.5 12 l457 0 ZM264 136 l-3 -3 l-51 -57 l56 0 q14 0 24.5 -10 q10.5 -10 11.5 -25 l0 -1 q0 -15 -10.5 -25.5 q-10.5 -10.5 -24.5 -10.5 l-137 0 q-15 0 -25 10 q-10 10 -11 24.5 q-1 14.5 9 25.5 l63 70 l49 54 q7 7 7 16.5 q0 9.5 -7.5 16.5 q-7.5 7 -18.5 7 q-11 0 -18.5 -6.5 q-7.5 -6.5 -8.5 -16.5 l0 0 q0 -15 -10.5 -25.5 q-10.5 -10.5 -25.5 -10.5 q-15 0 -25.5 10.5 q-10.5 10.5 -10.5 25.5 q0 26 13.5 47.5 q13.5 21.5 36 34.5 q22.5 13 49 13 q26.5 0 49.5 -13 q23 -13 36 -34.5 q13 -21.5 13 -47.5 q0 -20 -7.5 -37.5 q-7.5 -17.5 -21.5 -30.5 l-1 -1 ZM173 794 q11 11 25 10.5 q14 -0.5 24.5 -10.5 q10.5 -10 10.5 -25 l0 -293 q0 -15 -10 -25.5 q-10 -10.5 -25 -10.5 q-15 0 -25.5 10 q-10.5 10 -11.5 25 l0 211 q-10 -8 -23.5 -7 q-13.5 1 -22.5 11 l-1 0 q-10 11 -9.5 25.5 q0.5 14.5 10.5 24.5 l58 54 Z\"></path></g></svg>"
           },
           {
             "id": "editor:toggle-bullet-list",
-            "name": "bullet list",
+            "name": "Bullet list",
             "icon": "<svg width=\"18\" height=\"18\" focusable=\"false\" fill=\"currentColor\"  viewBox=\"0 0 1024 1024\"><g transform=\"scale(1, -1) translate(0, -896) scale(0.9, 0.9) \"><path class=\"path\" d=\"M860 424 q17 0 28.5 -11.5 q11.5 -11.5 11.5 -28 q0 -16.5 -11.5 -28.5 q-11.5 -12 -27.5 -12 l-477 0 q-17 0 -28.5 11.5 q-11.5 11.5 -11.5 28 q0 16.5 11.5 28.5 q11.5 12 27.5 12 l477 0 ZM860 756 q17 0 28.5 -11.5 q11.5 -11.5 11.5 -28 q0 -16.5 -11.5 -28.5 q-11.5 -12 -27.5 -12 l-477 0 q-17 0 -28.5 11.5 q-11.5 11.5 -11.5 28 q0 16.5 11.5 28.5 q11.5 12 27.5 12 l477 0 ZM860 92 q17 0 28.5 -11.5 q11.5 -11.5 11.5 -28 q0 -16.5 -11.5 -28.5 q-11.5 -12 -27.5 -12 l-477 0 q-17 0 -28.5 11.5 q-11.5 11.5 -11.5 28 q0 16.5 11.5 28.5 q11.5 12 27.5 12 l477 0 ZM176 716 l0 0 ZM112 716 q0 -27 18.5 -45.5 q18.5 -18.5 45.5 -18.5 q27 0 45.5 18.5 q18.5 18.5 18.5 45.5 q0 27 -18.5 45.5 q-18.5 18.5 -45.5 18.5 q-27 0 -45.5 -18.5 q-18.5 -18.5 -18.5 -45.5 ZM176 384 l0 0 ZM112 384 q0 -27 18.5 -45.5 q18.5 -18.5 45.5 -18.5 q27 0 45.5 18.5 q18.5 18.5 18.5 45.5 q0 27 -18.5 45.5 q-18.5 18.5 -45.5 18.5 q-27 0 -45.5 -18.5 q-18.5 -18.5 -18.5 -45.5 ZM176 52 l0 0 ZM112 52 q0 -27 18.5 -45.5 q18.5 -18.5 45.5 -18.5 q27 0 45.5 18.5 q18.5 18.5 18.5 45.5 q0 27 -18.5 45.5 q-18.5 18.5 -45.5 18.5 q-27 0 -45.5 -18.5 q-18.5 -18.5 -18.5 -45.5 Z\"></path></g></svg>"
           },
           {
             "id": "editing-toolbar:undent-list",
-            "name": "unindent-list",
+            "name": "Unindent-list",
             "icon": "<svg width=\"18\" height=\"18\" focusable=\"false\" fill=\"currentColor\"  viewBox=\"0 0 1024 1024\"><g transform=\"scale(1, -1) translate(0, -896) scale(0.9, 0.9) \"><path class=\"path\" d=\"M872 302 q17 0 28.5 -11.5 q11.5 -11.5 11.5 -28 q0 -16.5 -11.5 -28.5 q-11.5 -12 -27.5 -12 l-429 0 q-17 0 -28.5 11.5 q-11.5 11.5 -11.5 28 q0 16.5 11.5 28.5 q11.5 12 27.5 12 l429 0 ZM872 542 q17 0 28.5 -11.5 q11.5 -11.5 11.5 -28 q0 -16.5 -11.5 -28.5 q-11.5 -12 -27.5 -12 l-429 0 q-17 0 -28.5 11.5 q-11.5 11.5 -11.5 28 q0 16.5 11.5 28.5 q11.5 12 27.5 12 l429 0 ZM872 784 q17 0 28.5 -11.5 q11.5 -11.5 11.5 -28 q0 -16.5 -11.5 -28.5 q-11.5 -12 -27.5 -12 l-721 0 q-17 0 -28.5 11.5 q-11.5 11.5 -11.5 28 q0 16.5 11.5 28.5 q11.5 12 27.5 12 l721 0 ZM872 62 q17 0 28.5 -11.5 q11.5 -11.5 11.5 -28 q0 -16.5 -11.5 -28.5 q-11.5 -12 -27.5 -12 l-721 0 q-17 0 -28.5 11.5 q-11.5 11.5 -11.5 28 q0 16.5 11.5 28.5 q11.5 12 27.5 12 l721 0 ZM244 534 l-123 -122 q-8 -7 -8 -18 q0 -11 8 -18 l123 -122 q8 -7 19 -7 q11 0 18.5 7.5 q7.5 7.5 7.5 18.5 l0 242 q0 11 -7.5 18.5 q-7.5 7.5 -18.5 7.5 q-11 0 -19 -7 Z\"></path></g></svg>"
           },
           {
             "id": "editing-toolbar:indent-list",
-            "name": "indent list",
+            "name": "Indent list",
             "icon": "<svg width=\"18\" height=\"18\" focusable=\"false\" fill=\"currentColor\"  viewBox=\"0 0 1024 1024\"><g transform=\"scale(1, -1) translate(0, -896) scale(0.9, 0.9) \"><path class=\"path\" d=\"M872 302 q17 0 28.5 -11.5 q11.5 -11.5 11.5 -28 q0 -16.5 -11.5 -28.5 q-11.5 -12 -27.5 -12 l-429 0 q-17 0 -28.5 11.5 q-11.5 11.5 -11.5 28 q0 16.5 11.5 28.5 q11.5 12 27.5 12 l429 0 ZM872 542 q17 0 28.5 -11.5 q11.5 -11.5 11.5 -28 q0 -16.5 -11.5 -28.5 q-11.5 -12 -27.5 -12 l-429 0 q-17 0 -28.5 11.5 q-11.5 11.5 -11.5 28 q0 16.5 11.5 28.5 q11.5 12 27.5 12 l429 0 ZM872 784 q17 0 28.5 -11.5 q11.5 -11.5 11.5 -28 q0 -16.5 -11.5 -28.5 q-11.5 -12 -27.5 -12 l-721 0 q-17 0 -28.5 11.5 q-11.5 11.5 -11.5 28 q0 16.5 11.5 28.5 q11.5 12 27.5 12 l721 0 ZM872 62 q17 0 28.5 -11.5 q11.5 -11.5 11.5 -28 q0 -16.5 -11.5 -28.5 q-11.5 -12 -27.5 -12 l-721 0 q-17 0 -28.5 11.5 q-11.5 11.5 -11.5 28 q0 16.5 11.5 28.5 q11.5 12 27.5 12 l721 0 ZM158 534 l124 -122 q7 -7 7 -18 q0 -11 -7 -18 l-124 -122 q-7 -7 -18 -7 q-11 0 -19 7.5 q-8 7.5 -8 18.5 l0 242 q0 11 8 18.5 q8 7.5 19 7.5 q11 0 18 -7 Z\"></path></g></svg>"
           }
         ]
@@ -314,7 +314,7 @@ export const DEFAULT_SETTINGS: cMenuToolbarSettings = {
       },
       {
         "id": "editing-toolbar:workplace-fullscreen-focus",
-        "name": "workplace-Fullscreen ",
+        "name": "Workplace-Fullscreen ",
         "icon": "exit-fullscreen"
       }
     ],
@@ -337,5 +337,5 @@ export const DEFAULT_SETTINGS: cMenuToolbarSettings = {
     "custom_fc3": "#245BDB",
     "custom_fc4": "#6425D0",
     "custom_fc5": "#646A73",
-    "isLoadOnMobile": false
+    "isLoadOnMobile": false,
   }

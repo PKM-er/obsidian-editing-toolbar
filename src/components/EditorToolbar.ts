@@ -2,7 +2,7 @@ import { App, WorkspaceLeaf, Editor, MarkdownView, View, requireApiVersion } fro
 import { ToolbarSettings } from '../settings/ToolbarSettings';
 import { ToolbarUI } from './ToolbarUI';
 import { ToolbarCommands } from './ToolbarCommands';
-
+import { ViewUtils } from '../util/viewUtils';
 interface Position {
   top?: number;
   left?: number;
@@ -102,7 +102,7 @@ export class EditorToolbar {
 
   private isValidView(view: View): boolean {
     const viewType = view.getViewType();
-    return viewType === 'markdown' || viewType === 'thino_view';
+    return ViewUtils.isAllowedViewType(view);
   }
 
   private updateToolbarForLeaf(leaf: WorkspaceLeaf) {
