@@ -7,42 +7,55 @@ import Sortable from "sortablejs";
 import { debounce } from "obsidian";
 import { GenNonDuplicateID } from "src/util/util";
 import { t } from 'src/translations/helper';
+import { ToolbarCommand } from './ToolbarSettings';
 
 import Pickr from "@simonwep/pickr";
+import '@simonwep/pickr/dist/themes/nano.min.css';
 
+// 添加类型定义
+interface SubmenuCommand {
+  id: string;
+  name: string;
+  icon: string;
+  SubmenuCommands: ToolbarCommand[];
+}
 
 function getPickrSettings(opts: {
   isView: boolean;
   el: HTMLElement;
   containerEl: HTMLElement;
-  swatches: string[];
-  opacity: boolean | undefined;
+  swatches: string[] | null;
+  opacity: boolean;
   defaultColor: string;
 }): Pickr.Options {
-  const { el, isView, containerEl, swatches, opacity, defaultColor } = opts;
-
   return {
-    el,
-    container: isView ? document.body : containerEl,
-    theme: "nano",
+    el: opts.el,
+    theme: 'nano',
+    container: opts.isView ? document.body : opts.containerEl,
     appClass: 'toolbar-pickr',
-    swatches,
-    lockOpacity: !opacity,
-    default: defaultColor,
-    position: "left-middle",
+    swatches: opts.swatches || [
+      '#ff0000',
+      '#00ff00',
+      '#0000ff',
+      '#ffff00',
+      '#00ffff',
+    ],
+    defaultRepresentation: 'HEXA',
+    default: opts.defaultColor || '#000000',
+    position: 'bottom-start',
     components: {
       preview: true,
+      opacity: opts.opacity,
       hue: true,
-      opacity: !!opacity,
       interaction: {
         hex: true,
         rgba: true,
         hsla: true,
         input: true,
-        cancel: true,
-        save: true,
-      },
-    },
+        clear: true,
+        save: true
+      }
+    }
   };
 }
 
@@ -231,35 +244,32 @@ export class cMenuToolbarSettingTab extends PluginSettingTab {
       .setClass('custom_bg')
       .then((setting) => {
         for (let i = 0; i < 5; i++) {
+          const pickerContainer = setting.controlEl.createDiv({ cls: "picker" });
+          
           this.pickr = Pickr.create(
             getPickrSettings({
-              isView,
-              el: setting.controlEl.createDiv({ cls: "picker" }),
-              containerEl,
+              isView: true,
+              el: pickerContainer,
+              containerEl: setting.controlEl,
               swatches: null,
               opacity: true,
-              defaultColor: this.plugin.settings[`custom_bg${i + 1}`],
+              defaultColor: (this.plugin.settings as any)[`custom_bg${i + 1}`] || '#000000'
             })
           )
-            .on("save", async (color: Pickr.HSVaColor, instance: Pickr) => {
-              if (!color) return;
-              this.plugin.settings[`custom_bg${i + 1}`] = color.toHEXA().toString();
-              await this.plugin.saveSettings();
-              instance.hide();
-              instance.addSwatch(color.toHEXA().toString());
-            })
-            .on("show", () => {
-              const { result } = (this.pickr.getRoot() as any).interaction;
-              requestAnimationFrame(() =>
-                requestAnimationFrame(() => result.select())
-              );
-            })
-            .on("cancel", onPickrCancel);
-
+          .on('save', async (color: Pickr.HSVaColor, instance: Pickr) => {
+            if (!color) return;
+            (this.plugin.settings as any)[`custom_bg${i + 1}`] = color.toHEXA().toString();
+            await this.plugin.saveSettings();
+            instance.hide();
+            instance.addSwatch(color.toHEXA().toString());
+          })
+          .on('show', () => {
+            const { result } = (this.pickr.getRoot() as any).interaction;
+            requestAnimationFrame(() => result.select());
+          })
+          .on('cancel', onPickrCancel);
         }
-
-
-      })
+      });
 
 
 
@@ -277,12 +287,12 @@ export class cMenuToolbarSettingTab extends PluginSettingTab {
               containerEl,
               swatches: null,
               opacity: true,
-              defaultColor: this.plugin.settings[`custom_fc${i + 1}`],
+              defaultColor: (this.plugin.settings as any)[`custom_fc${i + 1}`],
             })
           )
             .on("save", async (color: Pickr.HSVaColor, instance: Pickr) => {
               if (!color) return;
-              this.plugin.settings[`custom_fc${i + 1}`] = color.toHEXA().toString();
+              (this.plugin.settings as any)[`custom_fc${i + 1}`] = color.toHEXA().toString();
               await this.plugin.saveSettings();
               instance.hide();
               instance.addSwatch(color.toHEXA().toString());
@@ -560,15 +570,19 @@ export class cMenuToolbarSettingTab extends PluginSettingTab {
               .setClass("cMenuToolbarSettingsButton")
               .setClass("cMenuToolbarSettingsButtonaddsub")
               .onClick(async () => {
-                const submenu =
-                  { id: "SubmenuCommands-" + GenNonDuplicateID(1), name: "submenu", icon: "remix-Filter3Line", SubmenuCommands: [] };
-                this.plugin.settings.menuCommands.splice(index + 1, 0, submenu);
+                const submenuCommand: SubmenuCommand = {
+                  id: "SubmenuCommands-" + GenNonDuplicateID(1),
+                  name: "submenu",
+                  icon: "remix-Filter3Line",
+                  SubmenuCommands: []
+                };
+                this.plugin.settings.menuCommands.splice(index + 1, 0, submenuCommand);
                 await this.plugin.saveSettings();
                 this.display();
                 setTimeout(() => {
                   dispatchEvent(new Event("cMenuToolbar-NewCommand"));
                 }, 100);
-                console.log(`%cCommand '${submenu.id}' add `, "color: #989cab");
+                console.log(`%cCommand '${submenuCommand.id}' add `, "color: #989cab");
               });
           })
           .addButton((addsubButton) => {

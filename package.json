@@ -12,20 +12,21 @@
   "author": "Cuman",
   "license": "MIT",
   "devDependencies": {
-    "@rollup/plugin-commonjs": "^18.0.0",
+    "@rollup/plugin-commonjs": "^18.1.0",
     "@rollup/plugin-node-resolve": "^11.2.1",
     "@rollup/plugin-typescript": "^8.5.0",
-    "@types/feather-icons": "^4.7.0",
-    "@types/node": "^14.17.6",
-    "@types/react-dom": "^17.0.9",
-    "@types/sortablejs": "^1.10.7",
-    "eslint-plugin-react": "^7.31.8",
+    "@types/feather-icons": "^4.29.4",
+    "@types/node": "^14.18.63",
+    "@types/react-dom": "^17.0.26",
+    "@types/sortablejs": "^1.15.8",
+    "eslint-plugin-react": "^7.37.4",
     "obsidian": "^0.15.9",
-    "rollup": "^2.56.3",
+    "rollup": "^2.79.2",
+    "rollup-plugin-styles": "^4.0.0",
     "rollup-plugin-terser": "^7.0.2",
     "rollup-watch": "^4.3.1",
-    "tslib": "^2.2.0",
-    "typescript": "^4.4.2",
+    "tslib": "^2.8.1",
+    "typescript": "^4.9.5",
     "typings": "^2.1.1"
   },
   "moduleFileExtensions": [
@@ -33,14 +34,14 @@
     "ts"
   ],
   "dependencies": {
-    "@simonwep/pickr": "^1.8.2",
-    "feather-icons": "^4.28.0",
+    "@simonwep/pickr": "^1.9.1",
+    "feather-icons": "^4.29.2",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
     "react-dom-server": "0.0.5",
-    "react-icons": "^4.2.0",
+    "react-icons": "^4.12.0",
     "remixicon": "^2.5.0",
-    "sortablejs": "^1.14.0",
-    "terser": "^5.15.0"
+    "sortablejs": "^1.15.6",
+    "terser": "^5.39.0"
   }
 }

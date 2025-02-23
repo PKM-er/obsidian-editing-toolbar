@@ -36,7 +36,8 @@ interface Plugins {
 interface Commands {
   commands: Record<string, Command>;
   addCommand(cmd: Command): void;
-  removeCommand(cmd: Command): void;
+  removeCommand(cmd: string): void;
+  executeCommandById(id: string): boolean;
 }
 
 
@@ -53,6 +54,11 @@ interface Commands {
 
   interface Editor {
     cm: CodeMirror.Editor;
+    getScrollerElement: () => HTMLElement;
+    containerEl: HTMLElement;
+    getSelection: () => string;
+    replaceSelection: (text: string) => void;
+    getCursor: () => EditorPosition;
   }
 
   interface EditorSuggestManager {
@@ -106,6 +112,22 @@ interface Commands {
   
   export class WorkspaceExt extends Workspace {
     floatingSplit: WorkspaceParentExt;
+  }
+
+  interface View {
+    editor: Editor | undefined;
+    leaf: WorkspaceLeaf | undefined;
+    getMode: () => string;
+  }
+
+  interface WorkspaceLeaf {
+    view: View;
+    width: number;
+  }
+
+  interface WorkspaceRibbon {
+    show(): void;
+    hide(): void;
   }
 
 }

@@ -11,10 +11,12 @@ import {
   ToggleComponent,
   requireApiVersion,
   App,
+  WorkspaceLeaf,
+  View
 } from "obsidian";
 import { wait } from "src/util/util";
 import { CommandPicker, openSlider } from "src/modals/suggesterModals";
-import { cMenuToolbarSettingTab } from "src/settings/settingsTab";
+import { cMenuToolbarSettingTab } from '../settings/settingsTab';
 import { selfDestruct, cMenuToolbarPopover, isSource, quiteFormatbrushes, setFontcolor, setBackgroundcolor, setHeader, createFollowingbar, setFormateraser, isExistoolbar, resetToolbar } from "src/modals/cMenuToolbarModal";
 import { cMenuToolbarSettings, DEFAULT_SETTINGS } from "src/settings/settingsData";
 import addIcons, {
@@ -27,8 +29,10 @@ import { setMenuVisibility } from "src/util/statusBarConstants";
 import { fullscreenMode, workplacefullscreenMode } from "src/util/fullscreen";
 import { t } from "src/translations/helper";
 
-
-
+import { EditorToolbar } from '../components/EditorToolbar';
+import { ToolbarSettings } from '../settings/ToolbarSettings';
+import { CommandRegistry } from '../commands/CommandRegistry';
+import { EventManager } from '../events/EventManager';
 
 let activeDocument: Document;
 
@@ -163,6 +167,10 @@ export default class cMenuToolbarPlugin extends Plugin {
   Temp_Notice: Notice;
   Leaf_Width: number;
 
+  private toolbar: EditorToolbar;
+  private commandRegistry: CommandRegistry;
+  private eventManager: EventManager;
+
   async onload(): Promise<void> {
     console.log("cMenuToolbar v" + this.manifest.version + " loaded");
 
@@ -186,7 +194,10 @@ export default class cMenuToolbarPlugin extends Plugin {
       }
 
       const isThinoEnabled = app.plugins.enabledPlugins.has("obsidian-memos");
-      if(isThinoEnabled)  this.registerEvent(this.app.workspace.on("thino-editor-created", this.handlecMenuToolbar));
+      if(isThinoEnabled) {
+        // @ts-ignore - 自定义事件
+        this.registerEvent(this.app.workspace.on("thino-editor-created", this.handlecMenuToolbar));
+      }
       this.registerEvent(this.app.workspace.on("active-leaf-change", this.handlecMenuToolbar));
       this.registerEvent(this.app.workspace.on("layout-change", this.handlecMenuToolbar_layout));
       this.registerEvent(this.app.workspace.on("resize", this.handlecMenuToolbar_resize));
@@ -197,7 +208,10 @@ export default class cMenuToolbarPlugin extends Plugin {
         }, 100)
       }
 
-
+    // 初始化组件
+    this.toolbar = new EditorToolbar(this.app, this.settings as ToolbarSettings);
+    this.commandRegistry = new CommandRegistry(this.app, this);
+    this.eventManager = new EventManager(this.app, this);
   }
 
   isLoadMobile() {
@@ -226,8 +240,9 @@ export default class cMenuToolbarPlugin extends Plugin {
 
       if (!this.isView()) return;
 
+      // @ts-ignore - 使用 obsidian-ex.d.ts 中的扩展类型
       let cmEditor = app.workspace.activeLeaf.view?.editor;
-      if (cmEditor.hasFocus()) {
+      if (cmEditor?.hasFocus()) {
         let cMenuToolbarModalBar = isExistoolbar(this.app, this.settings);
 
         if (cmEditor.getSelection() == null || cmEditor.getSelection() == "") {
@@ -314,8 +329,8 @@ export default class cMenuToolbarPlugin extends Plugin {
         //const activeLeaf = this.app.workspace.getActiveViewOfType(MarkdownView);
         //const view = activeLeaf;
         const editor = app.workspace.activeLeaf.view?.editor;
-        //@ts-ignore
-        return editor.indentList();
+        // @ts-ignore - 使用扩展类型
+        return editor?.indentList();
       },
       icon: "indent-glyph"
 
@@ -325,8 +340,8 @@ export default class cMenuToolbarPlugin extends Plugin {
       name: 'unindent-list',
       callback: () => {
         const editor = app.workspace.activeLeaf.view?.editor;
-        //@ts-ignore
-        return editor.unindentList();
+        // @ts-ignore - 使用扩展类型
+        return editor?.unindentList();
       },
       icon: "unindent-glyph"
 
@@ -336,7 +351,7 @@ export default class cMenuToolbarPlugin extends Plugin {
       name: 'undo editor',
       callback: () => {
         const editor =  app.workspace.activeLeaf.view?.editor;
-        return editor.undo();
+        return editor?.undo();
       },
       icon: "undo-glyph"
 
@@ -346,7 +361,7 @@ export default class cMenuToolbarPlugin extends Plugin {
       name: 'redo editor',
       callback: () => {
         const editor =  app.workspace.activeLeaf.view?.editor;
-        return editor.redo();
+        return editor?.redo();
       },
       icon: "redo-glyph"
 
@@ -736,6 +751,9 @@ export default class cMenuToolbarPlugin extends Plugin {
     this.app.workspace.off("active-leaf-change", this.handlecMenuToolbar);
     this.app.workspace.off("layout-change", this.handlecMenuToolbar_layout);
     this.app.workspace.off("resize", this.handlecMenuToolbar_resize);
+
+    this.toolbar.destroy();
+    this.eventManager.destroy();
   }
 
   isView()
@@ -873,5 +891,22 @@ export default class cMenuToolbarPlugin extends Plugin {
 
   async saveSettings() {
     await this.saveData(this.settings);
+  }
+
+  public getSettings(): ToolbarSettings {
+    return this.settings as ToolbarSettings;
+  }
+
+  public getToolbar(): EditorToolbar {
+    return this.toolbar;
+  }
+
+  private getEditor(leaf: WorkspaceLeaf): Editor | null {
+    if (!leaf || !leaf.view) {
+      return null;
+    }
+
+    // @ts-ignore - Obsidian 类型定义不完整
+    return leaf.view.editor;
   }
 }

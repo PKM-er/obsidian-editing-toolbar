@@ -117,9 +117,20 @@ export function fullscreenMode(app: App) {
 
     }
 
-    function getCurrentElement(el: HTMLElement) {
-        return el instanceof HTMLElement ? el : DOC_EL;
+    // 添加类型定义
+    interface HTMLElementWithFullscreen extends HTMLElement {
+      [key: string]: any;
     }
+
+    interface DocumentWithFullscreen extends Document {
+      [key: string]: any;
+    }
+
+    // 修改相关代码
+    function getCurrentElement(el: HTMLElement): HTMLElementWithFullscreen {
+      return el as HTMLElementWithFullscreen;
+    }
+
     function beFull(el: HTMLElement) {
 
         return getCurrentElement(el)[TYPE_REQUEST_FULL_SCREEN]();
@@ -129,11 +140,11 @@ export function fullscreenMode(app: App) {
         if (DOC_EL.contains(styleEl)) {
             headEl === null || headEl === void 0 ? void 0 : headEl.removeChild(styleEl);
         }
-        return document[TYPE_EXIT_FULL_SCREEN]();
+        return (document as DocumentWithFullscreen)[TYPE_EXIT_FULL_SCREEN]();
     }
     exports.exitFull = exitFull;
     function isFull(el: any) {
-        return getCurrentElement(el) === document[TYPE_FULL_SCREEN_ELEMENT];
+        return getCurrentElement(el) === (document as DocumentWithFullscreen)[TYPE_FULL_SCREEN_ELEMENT];
     }
     exports.isFull = isFull;
     function toggleFull(el: any) {

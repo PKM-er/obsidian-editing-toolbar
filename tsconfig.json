@@ -16,7 +16,11 @@
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "types": ["node"],
-    "lib": ["dom", "es5", "scripthost", "es2015"]
+    "lib": ["dom", "es5", "scripthost", "es2015"],
+    "typeRoots": [
+      "./node_modules/@types",
+      "./src/types"
+    ]
   },
   "include": ["**/*.ts", "main.js/*"],
   "exclude": ["node_modules/*"]
