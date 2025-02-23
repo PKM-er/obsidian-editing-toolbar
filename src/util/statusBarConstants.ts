@@ -2,11 +2,11 @@ import  {requireApiVersion} from "obsidian"
 let activeDocument: Document;
 export const setMenuVisibility = (cMenuVisibility: boolean) => {
   requireApiVersion("0.15.0")?activeDocument=activeWindow.document:activeDocument=window.document;
-  let cMenuToolbarModalBar = activeDocument.getElementById("cMenuToolbarModalBar");
-  if (cMenuToolbarModalBar) {
+  let editingToolbarModalBar = activeDocument.getElementById("editingToolbarModalBar");
+  if (editingToolbarModalBar) {
     cMenuVisibility == false
-      ? (cMenuToolbarModalBar.style.visibility = "hidden")
-      : (cMenuToolbarModalBar.style.visibility = "visible");
+      ? (editingToolbarModalBar.style.visibility = "hidden")
+      : (editingToolbarModalBar.style.visibility = "visible");
   }
 };
 
@@ -14,14 +14,14 @@ export const setBottomValue = (
   settings: any
 ) => {
   requireApiVersion("0.15.0")?activeDocument=activeWindow.document:activeDocument=window.document;
-  let cMenuToolbarModalBar = activeDocument.getElementById("cMenuToolbarModalBar");
+  let editingToolbarModalBar = activeDocument.getElementById("editingToolbarModalBar");
 
-  if (cMenuToolbarModalBar) {
+  if (editingToolbarModalBar) {
     
-    settings.positionStyle == "following" ? cMenuToolbarModalBar.style.visibility = "hidden" : true;
+    settings.positionStyle == "following" ? editingToolbarModalBar.style.visibility = "hidden" : true;
     if(settings.positionStyle == "fixed")
     {
-      cMenuToolbarModalBar.setAttribute("style", `left: calc(50% - calc(${cMenuToolbarModalBar.offsetWidth}px / 2)); bottom: ${settings.cMenuBottomValue}em; grid-template-columns: ${"1fr ".repeat(settings.cMenuNumRows)}`);
+      editingToolbarModalBar.setAttribute("style", `left: calc(50% - calc(${editingToolbarModalBar.offsetWidth}px / 2)); bottom: ${settings.cMenuBottomValue}em; grid-template-columns: ${"1fr ".repeat(settings.cMenuNumRows)}`);
     }
 }
 

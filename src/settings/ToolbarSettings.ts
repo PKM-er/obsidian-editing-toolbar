@@ -30,7 +30,7 @@ export interface ToolbarCommand {
   SubmenuCommands?: ToolbarCommand[];
 }
 
-export interface cMenuToolbarSettings {
+export interface editingToolbarSettings {
   enabled?: boolean;
   positionStyle: 'following' | 'top' | 'fixed';
   cMenuFontColor?: string;

@@ -1,12 +1,12 @@
 import { App, Command } from 'obsidian';
-import type cMenuToolbarPlugin from '../plugin/main';
+import type editingToolbarPlugin from '../plugin/main';
 
 export class CommandRegistry {
   private app: App;
-  private plugin: cMenuToolbarPlugin;
+  private plugin: editingToolbarPlugin;
   private commands: Command[] = [];
 
-  constructor(app: App, plugin: cMenuToolbarPlugin) {
+  constructor(app: App, plugin: editingToolbarPlugin) {
     this.app = app;
     this.plugin = plugin;
   }

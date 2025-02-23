@@ -1,4 +1,4 @@
-import type cMenuToolbarPlugin from "src/plugin/main";
+import type editingToolbarPlugin from "src/plugin/main";
 import { appIcons } from "src/icons/appIcons";
 import { Notice, Command, setIcon, FuzzyMatch, FuzzySuggestModal, Modal, SliderComponent, TextAreaComponent, TextComponent, debounce, App } from "obsidian";
 import { findmenuID } from "src/util/util";
@@ -6,11 +6,11 @@ import { setBottomValue } from "src/util/statusBarConstants";
 import { t } from "src/translations/helper";
 
 export class ChooseFromIconList extends FuzzySuggestModal<string> {
-  plugin: cMenuToolbarPlugin;
+  plugin: editingToolbarPlugin;
   command: Command;
   issub: boolean;
 
-  constructor(plugin: cMenuToolbarPlugin, command: Command, issub: boolean = false) {
+  constructor(plugin: editingToolbarPlugin, command: Command, issub: boolean = false) {
     super(plugin.app);
     this.plugin = plugin;
     this.command = command;
@@ -45,7 +45,7 @@ export class ChooseFromIconList extends FuzzySuggestModal<string> {
   }
 
   renderSuggestion(icon: FuzzyMatch<string>, iconItem: HTMLElement): void {
-    const span = createSpan({ cls: "cMenuToolbarIconPick" });
+    const span = createSpan({ cls: "editingToolbarIconPick" });
     iconItem.appendChild(span);
     setIcon(span, icon.item);
     super.renderSuggestion(icon, iconItem);
@@ -67,10 +67,10 @@ export class ChooseFromIconList extends FuzzySuggestModal<string> {
 
       await this.plugin.saveSettings();
       setTimeout(() => {
-        dispatchEvent(new Event("cMenuToolbar-NewCommand"));
+        dispatchEvent(new Event("editingToolbar-NewCommand"));
       }, 100);
       console.log(
-        `%cCommand '${this.command.name}' was added to cMenuToolbar`,
+        `%cCommand '${this.command.name}' was added to editingToolbar`,
         "color: Violet"
       );
     }
@@ -80,7 +80,7 @@ export class ChooseFromIconList extends FuzzySuggestModal<string> {
 export class CommandPicker extends FuzzySuggestModal<Command> {
   command: Command;
 
-  constructor(private plugin: cMenuToolbarPlugin) {
+  constructor(private plugin: editingToolbarPlugin) {
     super(plugin.app);
     this.app;
     this.setPlaceholder("Choose a command");
@@ -109,10 +109,10 @@ export class CommandPicker extends FuzzySuggestModal<Command> {
         this.plugin.settings.menuCommands.push(item);
         await this.plugin.saveSettings();
         setTimeout(() => {
-          dispatchEvent(new Event("cMenuToolbar-NewCommand"));
+          dispatchEvent(new Event("editingToolbar-NewCommand"));
         }, 100);
         console.log(
-          `%cCommand '${item.name}' was added to cMenuToolbar`,
+          `%cCommand '${item.name}' was added to editingToolbar`,
           "color: Violet"
         );
       } else {
@@ -123,17 +123,17 @@ export class CommandPicker extends FuzzySuggestModal<Command> {
 }
 
 export class CustomIcon extends Modal {
-  plugin: cMenuToolbarPlugin;
+  plugin: editingToolbarPlugin;
   item: Command;
   issub: boolean;
   submitEnterCallback: (this: HTMLTextAreaElement, ev: KeyboardEvent) => any;
 
-  constructor(app: App, plugin: cMenuToolbarPlugin, item: Command, issub: boolean) {
+  constructor(app: App, plugin: editingToolbarPlugin, item: Command, issub: boolean) {
     super(plugin.app);
     this.plugin = plugin;
     this.item = item;
     this.issub = issub;
-    this.containerEl.addClass("cMenuToolbar-Modal");
+    this.containerEl.addClass("editingToolbar-Modal");
     this.containerEl.addClass("customicon");
   }
   onOpen() {
@@ -168,23 +168,23 @@ export class CustomIcon extends Modal {
     const { contentEl } = this;
     contentEl.empty();
     setTimeout(() => {
-      dispatchEvent(new Event("cMenuToolbar-NewCommand"));
+      dispatchEvent(new Event("editingToolbar-NewCommand"));
     }, 100);
   }
 };
 
 
 export class ChangeCmdname extends Modal {
-  plugin: cMenuToolbarPlugin;
+  plugin: editingToolbarPlugin;
   item: Command;
   issub: boolean;
   submitEnterCallback: (this: HTMLInputElement, ev: KeyboardEvent) => any;
-  constructor(app: App, plugin: cMenuToolbarPlugin, item: Command, issub: boolean) {
+  constructor(app: App, plugin: editingToolbarPlugin, item: Command, issub: boolean) {
     super(plugin.app);
     this.plugin = plugin;
     this.item = item;
     this.issub = issub;
-    this.containerEl.addClass("cMenuToolbar-Modal");
+    this.containerEl.addClass("editingToolbar-Modal");
     this.containerEl.addClass("changename");
   }
   onOpen() {
@@ -220,26 +220,29 @@ export class ChangeCmdname extends Modal {
     const { contentEl } = this;
     contentEl.empty();
     setTimeout(() => {
-      dispatchEvent(new Event("cMenuToolbar-NewCommand"));
+      dispatchEvent(new Event("editingToolbar-NewCommand"));
     }, 100);
   }
 };
 
 export class openSlider extends Modal {
-  plugin: cMenuToolbarPlugin;
-  constructor(app: App, plugin: cMenuToolbarPlugin) {
+  plugin: editingToolbarPlugin;
+  constructor(app: App, plugin: editingToolbarPlugin) {
     super(plugin.app);
     this.plugin = plugin;
-    this.containerEl.addClass("cMenuToolbar-Modal");
+    this.containerEl.addClass("editingToolbar-Modal");
   }
   onOpen() {
-
     const { contentEl } = this;
     contentEl.createEl("p", { text: t("Drag the slider to move the position") });
+    
+    // 创建一个容器来放置滑动条和按钮
+    const containerEl = contentEl.createDiv({ cls: "slider-container" });
+    
     if (this.plugin.settings.positionStyle == "top") {
-      let topem =  (this.plugin.settings.cMenuBottomValue - 4.25)*5;
-      new SliderComponent(contentEl)
-        .setLimits(0, 80, 0.5)
+      let topem = (this.plugin.settings.cMenuBottomValue - 4.25)*5;
+      const slider = new SliderComponent(containerEl)
+        .setLimits(-40, 80, 0.5)
         .setValue(topem)
         .onChange(debounce(async (value) => {
           console.log(`%c${value}px`, "color: Violet");
@@ -247,24 +250,52 @@ export class openSlider extends Modal {
           setBottomValue(this.plugin.settings);
           await this.plugin.saveSettings();
           setTimeout(() => {
-            dispatchEvent(new Event("cMenuToolbar-NewCommand"));
+            dispatchEvent(new Event("editingToolbar-NewCommand"));
           }, 100);
         }, 100, true))
         .setDynamicTooltip();
-    }else{
-    new SliderComponent(contentEl)
-      .setLimits(2, 18, 0.25)
-      .setValue(this.plugin.settings.cMenuBottomValue)
-      .onChange(debounce(async (value) => {
-        console.log(`%c${value}em`, "color: Violet");
-        this.plugin.settings.cMenuBottomValue = value;
+
+      // 添加复位按钮
+      containerEl.createEl("button", {
+        text: t("Reset"),
+        cls: "reset-button"
+      }).addEventListener("click", async () => {
+        slider.setValue(0);
+        this.plugin.settings.cMenuBottomValue = 4.25;
         setBottomValue(this.plugin.settings);
         await this.plugin.saveSettings();
         setTimeout(() => {
-          dispatchEvent(new Event("cMenuToolbar-NewCommand"));
+          dispatchEvent(new Event("editingToolbar-NewCommand"));
         }, 100);
-      }, 100, true))
-      .setDynamicTooltip();
+      });
+    } else {
+      const slider = new SliderComponent(containerEl)
+        .setLimits(-12, 40, 0.25)
+        .setValue(this.plugin.settings.cMenuBottomValue)
+        .onChange(debounce(async (value) => {
+          console.log(`%c${value}em`, "color: Violet");
+          this.plugin.settings.cMenuBottomValue = value;
+          setBottomValue(this.plugin.settings);
+          await this.plugin.saveSettings();
+          setTimeout(() => {
+            dispatchEvent(new Event("editingToolbar-NewCommand"));
+          }, 100);
+        }, 100, true))
+        .setDynamicTooltip();
+
+      // 添加复位按钮
+      containerEl.createEl("button", {
+        text: t("Reset"),
+        cls: "reset-button"
+      }).addEventListener("click", async () => {
+        slider.setValue(4);
+        this.plugin.settings.cMenuBottomValue = 4;
+        setBottomValue(this.plugin.settings);
+        await this.plugin.saveSettings();
+        setTimeout(() => {
+          dispatchEvent(new Event("editingToolbar-NewCommand"));
+        }, 100);
+      });
     }
   }
   onClose() {

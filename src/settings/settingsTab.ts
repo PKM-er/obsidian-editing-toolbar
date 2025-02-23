@@ -1,8 +1,8 @@
-import type cMenuToolbarPlugin from "src/plugin/main";
+import type editingToolbarPlugin from "src/plugin/main";
 import { CommandPicker, ChooseFromIconList, ChangeCmdname } from "src/modals/suggesterModals";
 import { App, Setting, PluginSettingTab, Command } from "obsidian";
 import { APPEND_METHODS, AESTHETIC_STYLES, POSITION_STYLES } from "src/settings/settingsData";
-import { selfDestruct, cMenuToolbarPopover, checkHtml } from "src/modals/cMenuToolbarModal";
+import { selfDestruct, editingToolbarPopover, checkHtml } from "src/modals/editingToolbarModal";
 import Sortable from "sortablejs";
 import { debounce } from "obsidian";
 import { GenNonDuplicateID } from "src/util/util";
@@ -75,16 +75,16 @@ export function getComandindex(item: any, arr: any[]): number {
   return idx;
 }
 
-export class cMenuToolbarSettingTab extends PluginSettingTab {
-  plugin: cMenuToolbarPlugin;
+export class editingToolbarSettingTab extends PluginSettingTab {
+  plugin: editingToolbarPlugin;
   appendMethod: string;
   pickr: Pickr;
-  constructor(app: App, plugin: cMenuToolbarPlugin) {
+  constructor(app: App, plugin: editingToolbarPlugin) {
     super(app, plugin);
     this.plugin = plugin;
-    addEventListener("cMenuToolbar-NewCommand", () => {
+    addEventListener("editingToolbar-NewCommand", () => {
       selfDestruct();
-      cMenuToolbarPopover(app, this.plugin);
+      editingToolbarPopover(app, this.plugin);
       this.display();
     });
   }
@@ -137,7 +137,7 @@ export class cMenuToolbarSettingTab extends PluginSettingTab {
             this.plugin.settings.aestheticStyle = aestheticStyle;
             this.plugin.saveSettings();
             setTimeout(() => {
-              dispatchEvent(new Event("cMenuToolbar-NewCommand"));
+              dispatchEvent(new Event("editingToolbar-NewCommand"));
             }, 100);
           });
       });
@@ -155,7 +155,7 @@ export class cMenuToolbarSettingTab extends PluginSettingTab {
           .onChange((positionStyle: string) => {
             this.plugin.settings.positionStyle = positionStyle;
             this.plugin.saveSettings();
-            dispatchEvent(new Event("cMenuToolbar-NewCommand"));
+            dispatchEvent(new Event("editingToolbar-NewCommand"));
           });
       });
     if (this.plugin.settings.positionStyle == "top") {
@@ -171,7 +171,7 @@ export class cMenuToolbarSettingTab extends PluginSettingTab {
             this.plugin.saveSettings();
             setTimeout(() => {
               this.display();
-              dispatchEvent(new Event("cMenuToolbar-NewCommand"));
+              dispatchEvent(new Event("editingToolbar-NewCommand"));
             }, 100);
           }));
     }
@@ -212,26 +212,26 @@ export class cMenuToolbarSettingTab extends PluginSettingTab {
           this.plugin.settings.isLoadOnMobile = value;
           this.plugin.saveSettings();
           setTimeout(() => {
-            dispatchEvent(new Event("cMenuToolbar-NewCommand"));
+            dispatchEvent(new Event("editingToolbar-NewCommand"));
           }, 100);
         }));
     new Setting(containerEl)
       .setName(t('Editing Toolbar refresh')
       )
       .setDesc(
-        t("Editing Toolbar will only refresh automatically after you have either added or deleted a command from it. To see UI changes to cMenuToolbar (above settings changes) use the refresh button. If you forget to refresh in settings, no worries. There is also a refresh button in the cMenuToolbar status bar menu.")
+        t("Editing Toolbar will only refresh automatically after you have either added or deleted a command from it. To see UI changes to editingToolbar (above settings changes) use the refresh button. If you forget to refresh in settings, no worries. There is also a refresh button in the editingToolbar status bar menu.")
       )
       .addButton((reloadButton) => {
         reloadButton
-          .setIcon("cMenuToolbarReload")
-          .setClass("cMenuToolbarSettingsButton")
-          .setClass("cMenuToolbarSettingsButtonRefresh")
+          .setIcon("editingToolbarReload")
+          .setClass("editingToolbarSettingsButton")
+          .setClass("editingToolbarSettingsButtonRefresh")
           .setTooltip(t("Refresh"))
           .onClick(() => {
             setTimeout(() => {
-              dispatchEvent(new Event("cMenuToolbar-NewCommand"));
+              dispatchEvent(new Event("editingToolbar-NewCommand"));
             }, 100);
-            console.log(`%ccMenuToolbar refreshed`, "color: Violet");
+            console.log(`%ceditingToolbar refreshed`, "color: Violet");
           });
       });
 
@@ -317,22 +317,22 @@ export class cMenuToolbarSettingTab extends PluginSettingTab {
       )
       .addButton((addButton) => {
         addButton
-          .setIcon("cMenuToolbarAdd")
+          .setIcon("editingToolbarAdd")
           .setTooltip(t("Add"))
-          .setClass("cMenuToolbarSettingsButton")
-          .setClass("cMenuToolbarSettingsButtonAdd")
+          .setClass("editingToolbarSettingsButton")
+          .setClass("editingToolbarSettingsButtonAdd")
           .onClick(() => {
             new CommandPicker(this.plugin).open();
             setTimeout(() => {
-              dispatchEvent(new Event("cMenuToolbar-NewCommand"));
+              dispatchEvent(new Event("editingToolbar-NewCommand"));
             }, 100);
           });
       });
-    const cMenuToolbarCommandsContainer = containerEl.createEl("div", {
-      cls: "cMenuToolbarSettingsTabsContainer",
+    const editingToolbarCommandsContainer = containerEl.createEl("div", {
+      cls: "editingToolbarSettingsTabsContainer",
     });
     let dragele = "";
-    Sortable.create(cMenuToolbarCommandsContainer, {
+    Sortable.create(editingToolbarCommandsContainer, {
       group: "item",
       animation: 500,
       draggable: ".setting-item",
@@ -353,7 +353,7 @@ export class cMenuToolbarSettingTab extends PluginSettingTab {
           this.plugin.saveSettings();
         }
         setTimeout(() => {
-          dispatchEvent(new Event("cMenuToolbar-NewCommand"));
+          dispatchEvent(new Event("editingToolbar-NewCommand"));
         }, 300);
       },
       onStart: function (evt) {
@@ -364,18 +364,18 @@ export class cMenuToolbarSettingTab extends PluginSettingTab {
 
 
     this.plugin.settings.menuCommands.forEach((newCommand: Command, index: number) => {
-      const setting = new Setting(cMenuToolbarCommandsContainer)
+      const setting = new Setting(editingToolbarCommandsContainer)
 
       if ("SubmenuCommands" in newCommand) {
 
         setting.settingEl.setAttribute("data-id", newCommand.id)
         setting
-          .setClass("cMenuToolbarCommandItem")
-          .setClass("cMenuToolbarCommandsubItem")
+          .setClass("editingToolbarCommandItem")
+          .setClass("editingToolbarCommandsubItem")
           .setName(newCommand.name)
           .addButton((addicon) => {
             addicon
-              .setClass("cMenuToolbarSettingsIcon")
+              .setClass("editingToolbarSettingsIcon")
               .onClick(async () => {
                 new ChooseFromIconList(this.plugin, newCommand, false).open();
               });
@@ -383,34 +383,34 @@ export class cMenuToolbarSettingTab extends PluginSettingTab {
           })
           .addButton((deleteButton) => {
             deleteButton
-              .setIcon("cMenuToolbarDelete")
+              .setIcon("editingToolbarDelete")
               .setTooltip(t("Delete"))
-              .setClass("cMenuToolbarSettingsButton")
-              .setClass("cMenuToolbarSettingsButtonDelete")
+              .setClass("editingToolbarSettingsButton")
+              .setClass("editingToolbarSettingsButtonDelete")
               .onClick(async () => {
                 this.plugin.settings.menuCommands.remove(newCommand);
                 await this.plugin.saveSettings();
                 this.display();
                 setTimeout(() => {
-                  dispatchEvent(new Event("cMenuToolbar-NewCommand"));
+                  dispatchEvent(new Event("editingToolbar-NewCommand"));
                 }, 100);
-                console.log(`%cCommand '${newCommand.name}' was removed from cMenuToolbar`, "color: #989cab");
+                console.log(`%cCommand '${newCommand.name}' was removed from editingToolbar`, "color: #989cab");
               });
           });
 
 
-        if (newCommand.id == "cMenuToolbar-plugin:change-font-color") return;  //修改字体颜色指令单独处理
-        if (newCommand.id == "cMenuToolbar-plugin:change-background-color") return;  //修改字体颜色指令单独处理
+        if (newCommand.id == "editingToolbar-plugin:change-font-color") return;  //修改字体颜色指令单独处理
+        if (newCommand.id == "editingToolbar-plugin:change-background-color") return;  //修改字体颜色指令单独处理
 
-        const cMenuToolbarCommandsContainer_sub = setting.settingEl.createEl("div", {
-          cls: "cMenuToolbarSettingsTabsContainer_sub",
+        const editingToolbarCommandsContainer_sub = setting.settingEl.createEl("div", {
+          cls: "editingToolbarSettingsTabsContainer_sub",
         });
-        Sortable.create(cMenuToolbarCommandsContainer_sub, {
+        Sortable.create(editingToolbarCommandsContainer_sub, {
           group: {
             name: "item",
             pull: true,
             put: function () {
-              if (dragele.includes("cMenuToolbarCommandsubItem"))
+              if (dragele.includes("editingToolbarCommandsubItem"))
                 return false;
               else return true;
             }
@@ -443,7 +443,7 @@ export class cMenuToolbarSettingTab extends PluginSettingTab {
                 subresult.splice(command.newIndex, 0, removed);
                 this.plugin.saveSettings();
               }
-            } else if (command.to.className === "cMenuToolbarSettingsTabsContainer") {
+            } else if (command.to.className === "editingToolbarSettingsTabsContainer") {
               // 从子菜单拖动到父菜单的逻辑
               const arrayResult = this.plugin.settings.menuCommands;
 
@@ -460,7 +460,7 @@ export class cMenuToolbarSettingTab extends PluginSettingTab {
               } else {
                 console.error('Subresult is undefined.');
               }
-            } else if (command.from.className === "cMenuToolbarSettingsTabsContainer") {
+            } else if (command.from.className === "editingToolbarSettingsTabsContainer") {
               // 从父菜单拖动到子菜单的逻辑
               const arrayResult = this.plugin.settings.menuCommands;
               const fromDatasetId = command.target.parentElement.dataset["id"];
@@ -486,7 +486,7 @@ export class cMenuToolbarSettingTab extends PluginSettingTab {
               }
             }
             setTimeout(() => {
-              dispatchEvent(new Event("cMenuToolbar-NewCommand"));
+              dispatchEvent(new Event("editingToolbar-NewCommand"));
             }, 300);
 
           },
@@ -496,13 +496,13 @@ export class cMenuToolbarSettingTab extends PluginSettingTab {
 
 
         newCommand.SubmenuCommands.forEach((subCommand: Command) => {
-          const subsetting = new Setting(cMenuToolbarCommandsContainer_sub)
+          const subsetting = new Setting(editingToolbarCommandsContainer_sub)
 
           subsetting
-            .setClass("cMenuToolbarCommandItem")
+            .setClass("editingToolbarCommandItem")
             .addButton((addicon) => {
               addicon
-                .setClass("cMenuToolbarSettingsIcon")
+                .setClass("editingToolbarSettingsIcon")
                 .onClick(async () => {
                   new ChooseFromIconList(this.plugin, subCommand, true).open();
                 });
@@ -514,25 +514,25 @@ export class cMenuToolbarSettingTab extends PluginSettingTab {
               changename
                 .setIcon("pencil")
                 .setTooltip(t("Change Command name"))
-                .setClass("cMenuToolbarSettingsButton")
+                .setClass("editingToolbarSettingsButton")
                 .onClick(async () => {
                   new ChangeCmdname(this.app, this.plugin, subCommand, true).open();
                 });
             })
             .addButton((deleteButton) => {
               deleteButton
-                .setIcon("cMenuToolbarDelete")
+                .setIcon("editingToolbarDelete")
                 .setTooltip(t("Delete"))
-                .setClass("cMenuToolbarSettingsButton")
-                .setClass("cMenuToolbarSettingsButtonDelete")
+                .setClass("editingToolbarSettingsButton")
+                .setClass("editingToolbarSettingsButtonDelete")
                 .onClick(async () => {
                   newCommand.SubmenuCommands.remove(subCommand);
                   await this.plugin.saveSettings();
                   this.display();
                   setTimeout(() => {
-                    dispatchEvent(new Event("cMenuToolbar-NewCommand"));
+                    dispatchEvent(new Event("editingToolbar-NewCommand"));
                   }, 100);
-                  console.log(`%cCommand '${newCommand.name}' was removed from cMenuToolbar`, "color: #989cab");
+                  console.log(`%cCommand '${newCommand.name}' was removed from editingToolbar`, "color: #989cab");
                 });
             });
           subsetting.nameEl;
@@ -543,32 +543,32 @@ export class cMenuToolbarSettingTab extends PluginSettingTab {
           .addButton((addicon) => {
             addicon
               //    .setIcon(newCommand.icon)
-              .setClass("cMenuToolbarSettingsIcon")
+              .setClass("editingToolbarSettingsIcon")
               .onClick(async () => {
                 new ChooseFromIconList(this.plugin, newCommand, false).open();
               });
             checkHtml(newCommand.icon) ? addicon.buttonEl.innerHTML = newCommand.icon : addicon.setIcon(newCommand.icon)
           })
 
-        if (newCommand.id == "cMenuToolbar-Divider-Line") setting.setClass("cMenuToolbar-Divider-Line")
+        if (newCommand.id == "editingToolbar-Divider-Line") setting.setClass("editingToolbar-Divider-Line")
         setting
-          .setClass("cMenuToolbarCommandItem")
+          .setClass("editingToolbarCommandItem")
           .setName(newCommand.name)
           .addButton((changename) => {
             changename
               .setIcon("pencil")
               .setTooltip(t("Change Command name"))
-              .setClass("cMenuToolbarSettingsButton")
+              .setClass("editingToolbarSettingsButton")
               .onClick(async () => {
                 new ChangeCmdname(this.app, this.plugin, newCommand, false).open();
               });
           })
           .addButton((addsubButton) => {
             addsubButton
-              .setIcon("cMenuToolbarSub")
+              .setIcon("editingToolbarSub")
               .setTooltip(t("Add submenu"))
-              .setClass("cMenuToolbarSettingsButton")
-              .setClass("cMenuToolbarSettingsButtonaddsub")
+              .setClass("editingToolbarSettingsButton")
+              .setClass("editingToolbarSettingsButtonaddsub")
               .onClick(async () => {
                 const submenuCommand: SubmenuCommand = {
                   id: "SubmenuCommands-" + GenNonDuplicateID(1),
@@ -580,7 +580,7 @@ export class cMenuToolbarSettingTab extends PluginSettingTab {
                 await this.plugin.saveSettings();
                 this.display();
                 setTimeout(() => {
-                  dispatchEvent(new Event("cMenuToolbar-NewCommand"));
+                  dispatchEvent(new Event("editingToolbar-NewCommand"));
                 }, 100);
                 console.log(`%cCommand '${submenuCommand.id}' add `, "color: #989cab");
               });
@@ -589,34 +589,34 @@ export class cMenuToolbarSettingTab extends PluginSettingTab {
             addsubButton
               .setIcon("vertical-split")
               .setTooltip(t("add hr"))
-              .setClass("cMenuToolbarSettingsButton")
-              .setClass("cMenuToolbarSettingsButtonaddsub")
+              .setClass("editingToolbarSettingsButton")
+              .setClass("editingToolbarSettingsButtonaddsub")
               .onClick(async () => {
                 const dividermenu =
-                  { id: "cMenuToolbar-Divider-Line", name: "HR", icon: "vertical-split" };
+                  { id: "editingToolbar-Divider-Line", name: "HR", icon: "vertical-split" };
                 this.plugin.settings.menuCommands.splice(index + 1, 0, dividermenu);
                 await this.plugin.saveSettings();
                 this.display();
                 setTimeout(() => {
-                  dispatchEvent(new Event("cMenuToolbar-NewCommand"));
+                  dispatchEvent(new Event("editingToolbar-NewCommand"));
                 }, 100);
 
               });
           })
           .addButton((deleteButton) => {
             deleteButton
-              .setIcon("cMenuToolbarDelete")
+              .setIcon("editingToolbarDelete")
               .setTooltip(t("Delete"))
-              .setClass("cMenuToolbarSettingsButton")
-              .setClass("cMenuToolbarSettingsButtonDelete")
+              .setClass("editingToolbarSettingsButton")
+              .setClass("editingToolbarSettingsButtonDelete")
               .onClick(async () => {
                 this.plugin.settings.menuCommands.remove(newCommand);
                 await this.plugin.saveSettings();
                 this.display();
                 setTimeout(() => {
-                  dispatchEvent(new Event("cMenuToolbar-NewCommand"));
+                  dispatchEvent(new Event("editingToolbar-NewCommand"));
                 }, 100);
-                console.log(`%cCommand '${newCommand.name}' was removed from cMenuToolbar`, "color: #989cab");
+                console.log(`%cCommand '${newCommand.name}' was removed from editingToolbar`, "color: #989cab");
               });
           });
 
@@ -631,7 +631,7 @@ export class cMenuToolbarSettingTab extends PluginSettingTab {
   }
   hide(): void {
     setTimeout(() => {
-      dispatchEvent(new Event("cMenuToolbar-NewCommand"));
+      dispatchEvent(new Event("editingToolbar-NewCommand"));
     }, 100);
     this.pickr.destroyAndRemove();
   }

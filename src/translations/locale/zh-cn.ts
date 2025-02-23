@@ -13,7 +13,7 @@ export default {
   "Add a command onto Editing Toolbar from Obsidian's commands library. To reorder the commands, drag and drop the command items. To delete them, use the delete buttom to the right of the command item. Editing Toolbar will not automaticaly refresh after reordering commands. Use the refresh button above.": '从Obsidian的命令库中添加一个命令到工具栏。要重新排列命令，可以拖放命令项。要删除它们，请使用命令项右边的删除按钮。图标选择Custom可以自定义图标',
   'Format Brush Off!': '关闭格式刷！',
   'Hide & Show': '隐藏 & 显示',
-  'Editing Toolbar will only refresh automatically after you have either added or deleted a command from it. To see UI changes to cMenuToolbar (above settings changes) use the refresh button. If you forget to refresh in settings, no worries. There is also a refresh button in the cMenuToolbar status bar menu.': '对外观的更改生效需要使用刷新按钮。如果你忘记在设置中刷新，在状态栏菜单中也有一个刷新按钮。',
+  'Editing Toolbar will only refresh automatically after you have either added or deleted a command from it. To see UI changes to editingToolbar (above settings changes) use the refresh button. If you forget to refresh in settings, no worries. There is also a refresh button in the editingToolbar status bar menu.': '对外观的更改生效需要使用刷新按钮。如果你忘记在设置中刷新，在状态栏菜单中也有一个刷新按钮。',
   'Font-Color formatting brush ON!': '字体颜色格式刷开启\n点击鼠标中键或者右键关闭格式刷',
   'More': '更多',
   'Font Colors': '字体颜色',
@@ -40,5 +40,6 @@ export default {
   '🖌️ Set custom font color':'🖌️ 设置自定义字体颜色',
   'Click on the picker to adjust the colour':'点击选取器来调整颜色',
   'Mobile enabled or not': '是否在移动端启用',
-  'Whether to enable on mobile devices with device width less than 768px, the default is disable.':'是否在设备宽度小于768的移动设备启用。默认不启用'
+  'Whether to enable on mobile devices with device width less than 768px, the default is disable.':'是否在设备宽度小于768的移动设备启用。默认不启用',
+  'Reset':'重置'
 };

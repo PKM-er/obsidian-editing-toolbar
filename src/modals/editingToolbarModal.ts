@@ -1,9 +1,9 @@
-import type cMenuToolbarPlugin from "src/plugin/main";
+import type editingToolbarPlugin from "src/plugin/main";
 import { App, Notice, requireApiVersion, ItemView,MarkdownView, ButtonComponent, WorkspaceParent, WorkspaceWindow, WorkspaceParentExt } from "obsidian";
 import { setBottomValue } from "src/util/statusBarConstants";
 import { backcolorpicker, colorpicker } from "src/util/util";
 import { t } from "src/translations/helper";
-import { cMenuToolbarSettings } from "src/settings/settingsData";
+import { editingToolbarSettings } from "src/settings/settingsData";
 import { ViewUtils } from 'src/util/viewUtils';
 
 let activeDocument: Document;
@@ -30,13 +30,13 @@ export function getRootSplits(): WorkspaceParentExt[] {
 export function resetToolbar() {
   requireApiVersion("0.15.0") ? activeDocument = activeWindow.document : activeDocument = window.document;
   let currentleaf = activeDocument;
-  let cMenuToolbarModalBar = currentleaf.querySelectorAll(
-    "#cMenuToolbarModalBar"
+  let editingToolbarModalBar = currentleaf.querySelectorAll(
+    "#editingToolbarModalBar"
   );
-  let cMenuToolbarPopoverBar = currentleaf.querySelectorAll(
-    "#cMenuToolbarPopoverBar"
+  let editingToolbarPopoverBar = currentleaf.querySelectorAll(
+    "#editingToolbarPopoverBar"
   );
-  cMenuToolbarModalBar.forEach(element => {
+  editingToolbarModalBar.forEach(element => {
     if (element) {
       if (element.firstChild) {
         element.removeChild(element.firstChild);
@@ -45,7 +45,7 @@ export function resetToolbar() {
     }
 
   });
-  cMenuToolbarPopoverBar.forEach(element => {
+  editingToolbarPopoverBar.forEach(element => {
     if (element) {
       if (element.firstChild) {
         element.removeChild(element.firstChild);
@@ -59,19 +59,19 @@ export function resetToolbar() {
 
 export function selfDestruct() {
   requireApiVersion("0.15.0") ? activeDocument = activeWindow.document : activeDocument = window.document;
-  const toolBarElement =activeDocument.getElementById("cMenuToolbarModalBar");
+  const toolBarElement =activeDocument.getElementById("editingToolbarModalBar");
   if(toolBarElement) toolBarElement.remove();
   const rootSplits = getRootSplits();
   const clearToolbar = (leaf: HTMLElement) => {
 
-    let cMenuToolbarModalBar = leaf.querySelectorAll(
-      "#cMenuToolbarModalBar"
+    let editingToolbarModalBar = leaf.querySelectorAll(
+      "#editingToolbarModalBar"
     );
-    let cMenuToolbarPopoverBar = leaf.querySelectorAll(
-      "#cMenuToolbarPopoverBar"
+    let editingToolbarPopoverBar = leaf.querySelectorAll(
+      "#editingToolbarPopoverBar"
     );
 
-    cMenuToolbarModalBar.forEach(element => {
+    editingToolbarModalBar.forEach(element => {
       if (element) {
         if (element.firstChild) {
           element.removeChild(element.firstChild);
@@ -80,7 +80,7 @@ export function selfDestruct() {
       }
 
     });
-    cMenuToolbarPopoverBar.forEach(element => {
+    editingToolbarPopoverBar.forEach(element => {
       if (element) {
         if (element.firstChild) {
           element.removeChild(element.firstChild);
@@ -100,10 +100,10 @@ export function selfDestruct() {
 
 }
 
-export function isExistoolbar(app: App, settings: cMenuToolbarSettings): HTMLElement {
+export function isExistoolbar(app: App, settings: editingToolbarSettings): HTMLElement {
   requireApiVersion("0.15.0") ? activeDocument = activeWindow.document : activeDocument = window.document;
-  let container = settings.positionStyle == "top" ?  app.workspace.activeLeaf?.view.containerEl?.querySelector("#cMenuToolbarModalBar")
-      : activeDocument.getElementById("cMenuToolbarModalBar");
+  let container = settings.positionStyle == "top" ?  app.workspace.activeLeaf?.view.containerEl?.querySelector("#editingToolbarModalBar")
+      : activeDocument.getElementById("editingToolbarModalBar");
    return (container) ? container as HTMLElement : null;
 }
 
@@ -168,7 +168,7 @@ export function createDiv(selector: string) {
   return div;
 }
 
-export function createTablecell(app: App, plugin: cMenuToolbarPlugin, el: string) {
+export function createTablecell(app: App, plugin: editingToolbarPlugin, el: string) {
   requireApiVersion("0.15.0") ? activeDocument = activeWindow.document : activeDocument = window.document;
   let container = isExistoolbar(app, plugin.settings) as HTMLElement;
   let tab = container?.querySelector('#' + el);
@@ -336,17 +336,17 @@ export const setcolorHex = function (color: string) {
   }
 };
 
-export function createMoremenu(app: App, plugin: cMenuToolbarPlugin, selector: HTMLDivElement) {
+export function createMoremenu(app: App, plugin: editingToolbarPlugin, selector: HTMLDivElement) {
   const view = app.workspace.getActiveViewOfType(ItemView);
   if(!ViewUtils.isAllowedViewType(view)) return;
 
-  let Morecontainer = view.containerEl.querySelector("#cMenuToolbarPopoverBar") as HTMLElement
+  let Morecontainer = view.containerEl.querySelector("#editingToolbarPopoverBar") as HTMLElement
   if (!plugin.IS_MORE_Button) return;
   let cMoreMenu = selector.createEl("span");
   cMoreMenu.addClass("more-menu");
   let morebutton = new ButtonComponent(cMoreMenu);
   morebutton
-    .setClass("cMenuToolbarCommandItem")
+    .setClass("editingToolbarCommandItem")
     .setTooltip(t("More"))
     .onClick(() => {
       if (Morecontainer.style.visibility == "hidden") {
@@ -362,7 +362,7 @@ export function createMoremenu(app: App, plugin: cMenuToolbarPlugin, selector: H
   return cMoreMenu;
 }
 
-export function quiteFormatbrushes(plugin:cMenuToolbarPlugin) {
+export function quiteFormatbrushes(plugin:editingToolbarPlugin) {
   //from https://github.com/obsidian-canzi/Enhanced-editing
   //关闭所有格式刷变量
   if (plugin.Temp_Notice) plugin.Temp_Notice.hide();
@@ -404,7 +404,7 @@ export function setHeader(_str: string) {
     editor.setCursor({ line: editor.getCursor().line, ch: Number(newstr.length - linend.length) });
 
 }
-export function setFormateraser(app: App, plugin: cMenuToolbarPlugin) {
+export function setFormateraser(app: App, plugin: editingToolbarPlugin) {
     const editor = app.workspace.activeLeaf.view?.editor;
 
     let selectText = editor.getSelection();
@@ -439,31 +439,31 @@ export function setFormateraser(app: App, plugin: cMenuToolbarPlugin) {
     }
 }
 
-export function createFollowingbar(app: App, settings: cMenuToolbarSettings) {
-  let cMenuToolbarModalBar = isExistoolbar(app, settings);
+export function createFollowingbar(app: App, settings: editingToolbarSettings) {
+  let editingToolbarModalBar = isExistoolbar(app, settings);
 
   const view = app.workspace.getActiveViewOfType(ItemView);
   if (!ViewUtils.isAllowedViewType(view)) {
-    if(cMenuToolbarModalBar) {
-      cMenuToolbarModalBar.style.visibility = "hidden";
+    if(editingToolbarModalBar) {
+      editingToolbarModalBar.style.visibility = "hidden";
     }
     return;
   }
 
   if (ViewUtils.isSourceMode(view)) {
-    if (cMenuToolbarModalBar) {
+    if (editingToolbarModalBar) {
       const editor = app.workspace.activeLeaf.view?.editor;
 
-      cMenuToolbarModalBar.style.visibility = editor.somethingSelected() ? "visible" : "hidden";
-      cMenuToolbarModalBar.style.height = (settings.aestheticStyle === "tiny") ? 30 + "px" : 40 + "px";
-      cMenuToolbarModalBar.addClass("cMenuToolbarFlex");
-      cMenuToolbarModalBar.removeClass("cMenuToolbarGrid");
+      editingToolbarModalBar.style.visibility = editor.somethingSelected() ? "visible" : "hidden";
+      editingToolbarModalBar.style.height = (settings.aestheticStyle === "tiny") ? 30 + "px" : 40 + "px";
+      editingToolbarModalBar.addClass("editingToolbarFlex");
+      editingToolbarModalBar.removeClass("editingToolbarGrid");
 
-      if (cMenuToolbarModalBar.style.visibility === "visible") {
+      if (editingToolbarModalBar.style.visibility === "visible") {
         // @ts-ignore
         const editorRect = editor.containerEl.getBoundingClientRect();
-        const toolbarWidth = cMenuToolbarModalBar.offsetWidth;
-        const toolbarHeight = cMenuToolbarModalBar.offsetHeight;
+        const toolbarWidth = editingToolbarModalBar.offsetWidth;
+        const toolbarHeight = editingToolbarModalBar.offsetHeight;
         const coords = getCoords(editor);
         const isSelectionFromBottomToTop = editor.getCursor("head").ch == editor.getCursor("from").ch;
         const rightMargin = 12;
@@ -486,16 +486,16 @@ export function createFollowingbar(app: App, settings: cMenuToolbarSettings) {
           if (topPosition >= editorRect.bottom - toolbarHeight) topPosition = editorRect.bottom - 2 * toolbarHeight;
         }
 
-        cMenuToolbarModalBar.style.left = leftPosition + "px";
-        cMenuToolbarModalBar.style.top = topPosition + "px";
+        editingToolbarModalBar.style.left = leftPosition + "px";
+        editingToolbarModalBar.style.top = topPosition + "px";
       }
     }
   } else {
-    cMenuToolbarModalBar.style.visibility = "hidden";
+    editingToolbarModalBar.style.visibility = "hidden";
   }
 }
 
-export function cMenuToolbarPopover(app: App, plugin: cMenuToolbarPlugin): void {
+export function editingToolbarPopover(app: App, plugin: editingToolbarPlugin): void {
   let settings = plugin.settings;
   requireApiVersion("0.15.0") ? activeDocument = activeWindow.document : activeDocument = window.document;
   
@@ -503,60 +503,60 @@ export function cMenuToolbarPopover(app: App, plugin: cMenuToolbarPlugin): void 
     const generateMenu = () => {
       let btnwidth = 0;
       let leafwidth = 0;
-      let cMenuToolbar = createEl("div");
-      if (cMenuToolbar) {
+      let editingToolbar = createEl("div");
+      if (editingToolbar) {
         if (settings.positionStyle == "top") {
           let topem = (settings.cMenuBottomValue - 4.25) * 5;
-          cMenuToolbar.setAttribute(
+          editingToolbar.setAttribute(
             "style",
             `position: relative; grid-template-columns: repeat(auto-fit, minmax(28px, 1fr));top: ${topem
             }px;`
           );
-          cMenuToolbar.className += " top";
+          editingToolbar.className += " top";
           if (settings.autohide)
           {
-            cMenuToolbar.className += " autohide";
+            editingToolbar.className += " autohide";
           }
         } else {
-          cMenuToolbar.setAttribute(
+          editingToolbar.setAttribute(
             "style",
-            `left: calc(50% - calc(${cMenuToolbar.offsetWidth
+            `left: calc(50% - calc(${editingToolbar.offsetWidth
             }px / 2)); bottom: ${settings.cMenuBottomValue
             }em; grid-template-columns: ${"1fr ".repeat(settings.cMenuNumRows)}`
           );
         }
       }
-      cMenuToolbar.setAttribute("id", "cMenuToolbarModalBar");
+      editingToolbar.setAttribute("id", "editingToolbarModalBar");
       //二级弹出菜单
 
       let PopoverMenu = createEl("div");
-      PopoverMenu.addClass("cMenuToolbarpopover");
-      PopoverMenu.addClass("cMenuToolbarTinyAesthetic");
-      PopoverMenu.setAttribute("id", "cMenuToolbarPopoverBar");
+      PopoverMenu.addClass("editingToolbarpopover");
+      PopoverMenu.addClass("editingToolbarTinyAesthetic");
+      PopoverMenu.setAttribute("id", "editingToolbarPopoverBar");
       PopoverMenu.style.visibility = "hidden";
       PopoverMenu.style.height = "0";
       if (settings.aestheticStyle == "default") {
-        cMenuToolbar.addClass("cMenuToolbarDefaultAesthetic");
-        cMenuToolbar.removeClass("cMenuToolbarTinyAesthetic");
-        cMenuToolbar.removeClass("cMenuToolbarGlassAesthetic");
+        editingToolbar.addClass("editingToolbarDefaultAesthetic");
+        editingToolbar.removeClass("editingToolbarTinyAesthetic");
+        editingToolbar.removeClass("editingToolbarGlassAesthetic");
       } else if (settings.aestheticStyle == "tiny") {
-        cMenuToolbar.addClass("cMenuToolbarTinyAesthetic");
-        cMenuToolbar.removeClass("cMenuToolbarDefaultAesthetic");
-        cMenuToolbar.removeClass("cMenuToolbarGlassAesthetic");
+        editingToolbar.addClass("editingToolbarTinyAesthetic");
+        editingToolbar.removeClass("editingToolbarDefaultAesthetic");
+        editingToolbar.removeClass("editingToolbarGlassAesthetic");
       } else {
-        cMenuToolbar.addClass("cMenuToolbarGlassAesthetic");
-        cMenuToolbar.removeClass("cMenuToolbarTinyAesthetic");
-        cMenuToolbar.removeClass("cMenuToolbarDefaultAesthetic");
+        editingToolbar.addClass("editingToolbarGlassAesthetic");
+        editingToolbar.removeClass("editingToolbarTinyAesthetic");
+        editingToolbar.removeClass("editingToolbarDefaultAesthetic");
       }
 
       //  if (settings.positionStyle == "following") {
-      //    cMenuToolbar.style.visibility = "hidden";
+      //    editingToolbar.style.visibility = "hidden";
       // }
 
       if (settings.positionStyle == "top") {
         let currentleaf = app.workspace.activeLeaf.view.containerEl;
 
-        if (!currentleaf?.querySelector("#cMenuToolbarPopoverBar"))
+        if (!currentleaf?.querySelector("#editingToolbarPopoverBar"))
         {
           const markdownDom =currentleaf?.querySelector(".markdown-source-view");
           if(markdownDom)
@@ -565,7 +565,7 @@ export function cMenuToolbarPopover(app: App, plugin: cMenuToolbarPlugin): void 
         }
         const markdownDom2 =currentleaf?.querySelector(".markdown-source-view");
         if(markdownDom2)
-        markdownDom2.insertAdjacentElement("afterbegin", cMenuToolbar);
+        markdownDom2.insertAdjacentElement("afterbegin", editingToolbar);
         else return;
 
         leafwidth = currentleaf?.querySelector<HTMLElement>(
@@ -573,18 +573,18 @@ export function cMenuToolbarPopover(app: App, plugin: cMenuToolbarPlugin): void 
         ).offsetWidth;
 
       } else if (settings.appendMethod == "body") {
-        activeDocument.body.appendChild(cMenuToolbar);
+        activeDocument.body.appendChild(editingToolbar);
       } else if (settings.appendMethod == "workspace") {
         activeDocument.body
           ?.querySelector(".mod-vertical.mod-root")
-          .insertAdjacentElement("afterbegin", cMenuToolbar);
+          .insertAdjacentElement("afterbegin", editingToolbar);
       }
 
 
 
 
-      let cMenuToolbarPopoverBar = app.workspace.activeLeaf.view.containerEl
-        ?.querySelector("#cMenuToolbarPopoverBar") as HTMLElement;
+      let editingToolbarPopoverBar = app.workspace.activeLeaf.view.containerEl
+        ?.querySelector("#editingToolbarPopoverBar") as HTMLElement;
       settings.menuCommands.forEach((item, index) => {
         let tip;
         if ("SubmenuCommands" in item) {
@@ -594,13 +594,13 @@ export function cMenuToolbarPopover(app: App, plugin: cMenuToolbarPlugin): void 
             //说明已经溢出
             plugin.setIS_MORE_Button(true);
             // globalThis.IS_MORE_Button = true; //需要添加更多按钮
-            _btn = new ButtonComponent(cMenuToolbarPopoverBar);
-          } else _btn = new ButtonComponent(cMenuToolbar);
+            _btn = new ButtonComponent(editingToolbarPopoverBar);
+          } else _btn = new ButtonComponent(editingToolbar);
 
-          _btn.setClass("cMenuToolbarCommandsubItem" + index);
+          _btn.setClass("editingToolbarCommandsubItem" + index);
           if(index >= settings.cMenuNumRows)
           {
-            _btn.setClass("cMenuToolbarSecond");
+            _btn.setClass("editingToolbarSecond");
           }
           else
             {
@@ -633,11 +633,11 @@ export function cMenuToolbarPopover(app: App, plugin: cMenuToolbarPlugin): void 
                     app.commands.executeCommandById(subitem.id);
 
                     if (settings.cMenuVisibility == false)
-                      cMenuToolbar.style.visibility = "hidden";
+                      editingToolbar.style.visibility = "hidden";
                     else {
                       if (settings.positionStyle == "following") {
-                        cMenuToolbar.style.visibility = "hidden";
-                      } else cMenuToolbar.style.visibility = "visible";
+                        editingToolbar.style.visibility = "hidden";
+                      } else editingToolbar.style.visibility = "visible";
                     }
                   });
                   if(index < settings.cMenuNumRows)
@@ -645,8 +645,8 @@ export function cMenuToolbarPopover(app: App, plugin: cMenuToolbarPlugin): void 
                     if(settings.positionStyle != "top")
                     sub_btn.buttonEl.setAttribute('aria-label-position','top')
                   }
-                  if (subitem.id == "cMenuToolbar-Divider-Line")
-                  sub_btn.setClass("cMenuToolbar-Divider-Line");
+                  if (subitem.id == "editingToolbar-Divider-Line")
+                  sub_btn.setClass("editingToolbar-Divider-Line");
                 checkHtml(subitem.icon)
                   ? (sub_btn.buttonEl.innerHTML = subitem.icon)
                   : sub_btn.setIcon(subitem.icon);
@@ -657,19 +657,19 @@ export function cMenuToolbarPopover(app: App, plugin: cMenuToolbarPlugin): void 
           }
         } else {
           if (item.id == "editing-toolbar:change-font-color") {
-            let button2 = new ButtonComponent(cMenuToolbar);
+            let button2 = new ButtonComponent(editingToolbar);
             button2
-              .setClass("cMenuToolbarCommandsubItem-font-color")
+              .setClass("editingToolbarCommandsubItem-font-color")
               .setTooltip(t("Font Colors"))
               .onClick(() => {
                 //@ts-ignore
                 app.commands.executeCommandById(item.id);
                 if (settings.cMenuVisibility == false)
-                  cMenuToolbar.style.visibility = "hidden";
+                  editingToolbar.style.visibility = "hidden";
                 else {
                   if (settings.positionStyle == "following") {
-                    cMenuToolbar.style.visibility = "hidden";
-                  } else cMenuToolbar.style.visibility = "visible";
+                    editingToolbar.style.visibility = "hidden";
+                  } else editingToolbar.style.visibility = "visible";
                 }
               });
             checkHtml(item.icon)
@@ -721,19 +721,19 @@ export function cMenuToolbarPopover(app: App, plugin: cMenuToolbarPlugin): void 
                   });
             }
           } else if (item.id == "editing-toolbar:change-background-color") {
-            let button2 = new ButtonComponent(cMenuToolbar);
+            let button2 = new ButtonComponent(editingToolbar);
             button2
-              .setClass("cMenuToolbarCommandsubItem-font-color")
+              .setClass("editingToolbarCommandsubItem-font-color")
               .setTooltip(t("Background color"))
               .onClick(() => {
                 //@ts-ignore
                 app.commands.executeCommandById(item.id);
                 if (settings.cMenuVisibility == false)
-                  cMenuToolbar.style.visibility = "hidden";
+                  editingToolbar.style.visibility = "hidden";
                 else {
                   if (settings.positionStyle == "following") {
-                    cMenuToolbar.style.visibility = "hidden";
-                  } else cMenuToolbar.style.visibility = "visible";
+                    editingToolbar.style.visibility = "hidden";
+                  } else editingToolbar.style.visibility = "visible";
                 }
               });
             checkHtml(item.icon)
@@ -791,34 +791,34 @@ export function cMenuToolbarPopover(app: App, plugin: cMenuToolbarPlugin): void 
               //说明已经溢出
               plugin.setIS_MORE_Button(true);
               //globalpluginIS_MORE_Button = true; //需要添加更多按钮
-              button = new ButtonComponent(cMenuToolbarPopoverBar);
-            } else button = new ButtonComponent(cMenuToolbar);
+              button = new ButtonComponent(editingToolbarPopoverBar);
+            } else button = new ButtonComponent(editingToolbar);
             let hotkey = getHotkey(app, item.id);
             hotkey == "–" ? tip = item.name : tip = item.name + "(" + hotkey + ")";
             button.setTooltip(tip).onClick(() => {
               //@ts-ignore
               app.commands.executeCommandById(item.id);
               if (settings.cMenuVisibility == false)
-                cMenuToolbar.style.visibility = "hidden";
+                editingToolbar.style.visibility = "hidden";
               else {
                 if (settings.positionStyle == "following") {
-                  cMenuToolbar.style.visibility = "hidden";
-                } else cMenuToolbar.style.visibility = "visible";
+                  editingToolbar.style.visibility = "hidden";
+                } else editingToolbar.style.visibility = "visible";
               }
             });
 
-            button.setClass("cMenuToolbarCommandItem");
+            button.setClass("editingToolbarCommandItem");
             if(index >= settings.cMenuNumRows)
             {
 
-              button.setClass("cMenuToolbarSecond");
+              button.setClass("editingToolbarSecond");
             }else
             {
               if(settings.positionStyle != "top")
               button.buttonEl.setAttribute('aria-label-position','top')
             }
-            if (item.id == "cMenuToolbar-Divider-Line")
-              button.setClass("cMenuToolbar-Divider-Line");
+            if (item.id == "editingToolbar-Divider-Line")
+              button.setClass("editingToolbar-Divider-Line");
             checkHtml(item.icon)
               ? (button.buttonEl.innerHTML = item.icon)
               : button.setIcon(item.icon);
@@ -834,7 +834,7 @@ export function cMenuToolbarPopover(app: App, plugin: cMenuToolbarPlugin): void 
         }
       });
 
-      createMoremenu(app, plugin, cMenuToolbar);
+      createMoremenu(app, plugin, editingToolbar);
       if (Math.abs(plugin.settings.cMenuWidth - Number(btnwidth)) > 30) {
         plugin.settings.cMenuWidth = Number(btnwidth);
         setTimeout(() => {

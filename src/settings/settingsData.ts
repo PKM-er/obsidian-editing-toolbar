@@ -10,7 +10,7 @@ declare module 'obsidian' {
     SubmenuCommands?: Command[];
   }
 }
-export interface cMenuToolbarSettings {
+export interface editingToolbarSettings {
   cMenuWidth: number;
   cMenuFontColor: string;
   cMenuBackgroundColor: string;
@@ -36,7 +36,7 @@ export interface cMenuToolbarSettings {
   isLoadOnMobile:boolean;
 }
 
-export const DEFAULT_SETTINGS: cMenuToolbarSettings = {
+export const DEFAULT_SETTINGS: editingToolbarSettings = {
     "aestheticStyle": "default",
     "positionStyle": "top",
     "menuCommands": [

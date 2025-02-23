@@ -12,7 +12,7 @@ export default {
 "Add a command onto Editing Toolbar from Obsidian's commands library. To reorder the commands, drag and drop the command items. To delete them, use the delete buttom to the right of the command item. Editing Toolbar will not automaticaly refresh after reordering commands. Use the refresh button above.":"Add a command onto Editing Toolbar from Obsidian's commands library. To reorder the commands, drag and drop the command items. To delete them, use the delete buttom to the right of the command item. Editing Toolbar will not automaticaly refresh after reordering commands. Use the refresh button above.",
 'Format Brush Off!':'Format Brush Off!',
 'Hide & Show':'Hide & Show',
-'Editing Toolbar will only refresh automatically after you have either added or deleted a command from it. To see UI changes to cMenuToolbar (above settings changes) use the refresh button. If you forget to refresh in settings, no worries. There is also a refresh button in the cMenuToolbar status bar menu.':'Editing Toolbar will only refresh automatically after you have either added or deleted a command from it. To see UI changes to cMenuToolbar (above settings changes) use the refresh button. If you forget to refresh in settings, no worries. There is also a refresh button in the cMenuToolbar status bar menu.',
+'Editing Toolbar will only refresh automatically after you have either added or deleted a command from it. To see UI changes to editingToolbar (above settings changes) use the refresh button. If you forget to refresh in settings, no worries. There is also a refresh button in the editingToolbar status bar menu.':'Editing Toolbar will only refresh automatically after you have either added or deleted a command from it. To see UI changes to editingToolbar (above settings changes) use the refresh button. If you forget to refresh in settings, no worries. There is also a refresh button in the editingToolbar status bar menu.',
 'Font-Color formatting brush ON!':'Font-Color formatting brush ON!',
 'More':'More',
 'Font Colors':'Font Colors',
@@ -40,5 +40,6 @@ export default {
 'Click on the picker to adjust the colour':'Click on the picker to adjust the colour',
 'Mobile enabled or not':'Mobile enabled or not',
 'Whether to enable the plugin for the mobile client, the default is enabled.':'Whether to enable the plugin for the mobile client, the default is enabled.',
-'Whether to enable on mobile devices with device width less than 768px, the default is disable.':  'Whether to enable on mobile devices with device width less than 768px, the default is disable.'
+'Whether to enable on mobile devices with device width less than 768px, the default is disable.':  'Whether to enable on mobile devices with device width less than 768px, the default is disable.',
+'Reset':'Reset'
 };

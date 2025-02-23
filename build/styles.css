@@ -1,4 +1,4 @@
-#cMenuToolbarModalBar {
+#editingToolbarModalBar {
   width: auto;
   height: auto;
   padding: 3px;
@@ -14,15 +14,15 @@
 
 }
 
-#cMenuToolbarModalBar.cMenuToolbarFlex {
+#editingToolbarModalBar.editingToolbarFlex {
   display: flex;
 }
 
-#cMenuToolbarModalBar.cMenuToolbarFlex :is(.cMenuToolbarCommandItem, button[class^=cMenuToolbarCommandsubItem]) {
+#editingToolbarModalBar.editingToolbarFlex :is(.editingToolbarCommandItem, button[class^=editingToolbarCommandsubItem]) {
   min-width: 20px;
 }
 
-#cMenuToolbarModalBar .cMenuToolbarCommandItem {
+#editingToolbarModalBar .editingToolbarCommandItem {
   margin: 2px;
   border: none;
   display: flex;
@@ -38,37 +38,37 @@
   height: auto;
 }
 
-:is(#cMenuToolbarModalBar, #cMenuToolbarPopoverBar) button[class^=cMenuToolbarCommandsubItem]>.subitem button:hover,
-:is(#cMenuToolbarModalBar, #cMenuToolbarPopoverBar) button[class^=cMenuToolbarCommand]:hover,
-#cMenuToolbarSecond:hover {
+:is(#editingToolbarModalBar, #editingToolbarPopoverBar) button[class^=editingToolbarCommandsubItem]>.subitem button:hover,
+:is(#editingToolbarModalBar, #editingToolbarPopoverBar) button[class^=editingToolbarCommand]:hover,
+#editingToolbarSecond:hover {
   background-color: var(--background-modifier-hover) !important;
 }
 
-/* #cMenuToolbarModalBar button.cMenuToolbarCommandItem svg {
+/* #editingToolbarModalBar button.editingToolbarCommandItem svg {
   width: 1.3em;
   height: 1.3em;
 } */
 
 /*----------------------------------------------------------------
-cMenuToolbar SETTINGS BUTTONS
+editingToolbar SETTINGS BUTTONS
 ----------------------------------------------------------------*/
 
-.modal.mod-settings button:not(.mod-cta):not(.mod-warning).cMenuToolbarSettingsButton.cMenuToolbarSettingsButtonAdd,
-button:not(.mod-cta):not(.mod-warning).cMenuToolbarSettingsButton.cMenuToolbarSettingsButtonAdd {
+.modal.mod-settings button:not(.mod-cta):not(.mod-warning).editingToolbarSettingsButton.editingToolbarSettingsButtonAdd,
+button:not(.mod-cta):not(.mod-warning).editingToolbarSettingsButton.editingToolbarSettingsButtonAdd {
   background-color: var(--interactive-accent);
 }
 
-.modal.mod-settings button:not(.mod-cta):not(.mod-warning).cMenuToolbarSettingsButton.cMenuToolbarSettingsButtonDelete,
-button:not(.mod-cta):not(.mod-warning).cMenuToolbarSettingsButton.cMenuToolbarSettingsButtonDelete {
+.modal.mod-settings button:not(.mod-cta):not(.mod-warning).editingToolbarSettingsButton.editingToolbarSettingsButtonDelete,
+button:not(.mod-cta):not(.mod-warning).editingToolbarSettingsButton.editingToolbarSettingsButtonDelete {
   background-color: #989cab;
 }
 
-.modal.mod-settings button:not(.mod-cta):not(.mod-warning).cMenuToolbarSettingsButton.cMenuToolbarSettingsButtonRefresh,
-button:not(.mod-cta):not(.mod-warning).cMenuToolbarSettingsButton.cMenuToolbarSettingsButtonRefresh {
+.modal.mod-settings button:not(.mod-cta):not(.mod-warning).editingToolbarSettingsButton.editingToolbarSettingsButtonRefresh,
+button:not(.mod-cta):not(.mod-warning).editingToolbarSettingsButton.editingToolbarSettingsButtonRefresh {
   background-color: var(--text-accent);
 }
 
-button.cMenuToolbarSettingsButton {
+button.editingToolbarSettingsButton {
   padding: 4px 14px;
   border-radius: var(--radius-m);
 }
@@ -76,60 +76,60 @@ button.cMenuToolbarSettingsButton {
 
 
 /*----------------------------------------------------------------
-cMenuToolbar SETTING ITEMS
+editingToolbar SETTING ITEMS
 ----------------------------------------------------------------*/
-.setting-item.cMenuToolbarCommandItem:first-child {
+.setting-item.editingToolbarCommandItem:first-child {
   padding-top: 18px;
 }
 
-.cMenuToolbarCommandItem {
+.editingToolbarCommandItem {
   cursor: grab;
   padding: 18px 0 18px 0;
 }
 
-.cMenuToolbarSettingsTabsContainer .sortable-fallback {
+.editingToolbarSettingsTabsContainer .sortable-fallback {
   cursor: grabbing;
   box-shadow: 0px 3px 32px rgb(31 38 135 / 15%);
 }
 
-.cMenuToolbarSettingsTabsContainer .sortable-grab {
+.editingToolbarSettingsTabsContainer .sortable-grab {
   cursor: grabbing !important;
 }
 
-.cMenuToolbarSettingsTabsContainer .sortable-ghost {
+.editingToolbarSettingsTabsContainer .sortable-ghost {
   opacity: 0.4;
   cursor: grabbing;
 }
 
-.cMenuToolbarSettingsTabsContainer .sortable-chosen {
+.editingToolbarSettingsTabsContainer .sortable-chosen {
   cursor: grabbing;
   padding: 18px 0 18px 18px;
   background-color: var(--color-base-10, --background-primary);
 }
 
-.cMenuToolbarSettingsTabsContainer .sortable-drag {
+.editingToolbarSettingsTabsContainer .sortable-drag {
   cursor: grabbing;
   box-shadow: 0px 3px 32px rgb(31 38 135 / 15%);
 }
 
-.cMenuToolbarSettingsTabsContainer {
+.editingToolbarSettingsTabsContainer {
   border-top: 1px solid var(--background-modifier-border);
   border-bottom: 1px solid var(--background-modifier-border);
 }
 
 /*----------------------------------------------------------------
-cMenuToolbar CLASS CHANGES
+editingToolbar CLASS CHANGES
 ----------------------------------------------------------------*/
 
-#cMenuToolbarModalBar.cMenuToolbarDefaultAesthetic {
+#editingToolbarModalBar.editingToolbarDefaultAesthetic {
   border: 1px solid var(--background-modifier-border);
 }
 
-#cMenuToolbarModalBar.cMenuToolbarDefaultAesthetic:not(.top) :is(.cMenuToolbarCommandItem, button[class^=cMenuToolbarCommandsubItem]) {
+#editingToolbarModalBar.editingToolbarDefaultAesthetic:not(.top) :is(.editingToolbarCommandItem, button[class^=editingToolbarCommandsubItem]) {
   min-height: 28px;
 }
 
-#cMenuToolbarModalBar.cMenuToolbarDefaultAesthetic:not(.top) button[class^=cMenuToolbarCommandsubItem] {
+#editingToolbarModalBar.editingToolbarDefaultAesthetic:not(.top) button[class^=editingToolbarCommandsubItem] {
   margin: auto;
   padding: 6px;
   box-shadow: none;
@@ -140,20 +140,20 @@ cMenuToolbar CLASS CHANGES
 
 }
 
-.cMenuToolbarDefaultAesthetic {
+.editingToolbarDefaultAesthetic {
   background-color: var(--color-base-10, --background-primary);
 }
 
 
-#cMenuToolbarModalBar.cMenuToolbarGlassAesthetic,
-#cMenuToolbarModalBar.cMenuToolbarGlassAesthetic~#cMenuToolbarPopoverBar {
+#editingToolbarModalBar.editingToolbarGlassAesthetic,
+#editingToolbarModalBar.editingToolbarGlassAesthetic~#editingToolbarPopoverBar {
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
   box-shadow: none;
   background-color: transparent;
 }
 
-#cMenuToolbarModalBar.cMenuToolbarGlassAesthetic:not(.top) button[class^=cMenuToolbarCommandsubItem] {
+#editingToolbarModalBar.editingToolbarGlassAesthetic:not(.top) button[class^=editingToolbarCommandsubItem] {
   margin: auto;
   padding: 0px;
   box-shadow: none;
@@ -171,37 +171,37 @@ cMenuToolbar CLASS CHANGES
 }
 
 /*----------------------------------------------------------------
-cMenuToolbar ICONS
+editingToolbar ICONS
 ----------------------------------------------------------------*/
 
-.cMenuToolbarIconPick {
+.editingToolbarIconPick {
   line-height: normal;
   vertical-align: middle;
   margin-right: 8px;
 }
 
-.cMenuToolbarIconPick svg {
+.editingToolbarIconPick svg {
   width: 17px;
   height: 17px;
 }
 
 /*----------------------------------------------------------------
-cMenuToolbar STATUS BAR MENU
+editingToolbar STATUS BAR MENU
 ----------------------------------------------------------------*/
 
-.cMenuToolbar-statusbar-menu {
+.editingToolbar-statusbar-menu {
   text-align: center;
   width: 200px;
 }
 
 
-.cMenuToolbar-statusbar-menu .menu-item {
+.editingToolbar-statusbar-menu .menu-item {
   display: flex;
   align-items: center;
   flex-direction: row;
 }
 
-.cMenuToolbar-statusbar-menu .menu-item.settings-item {
+.editingToolbar-statusbar-menu .menu-item.settings-item {
   font-size: 12px;
   text-align: center;
   line-height: 1;
@@ -213,78 +213,78 @@ cMenuToolbar STATUS BAR MENU
   color: var(--text-faint);
 }
 
-.cMenuToolbar-statusbar-menu .menu-item.settings-item .menu-item-title {
+.editingToolbar-statusbar-menu .menu-item.settings-item .menu-item-title {
   text-align: center;
 }
 
-.cMenuToolbar-statusbar-menu .menu-item:hover,
-.cMenuToolbar-statusbar-menu .menu-item .selected:hover,
-.cMenuToolbar-statusbar-menu .menu-item.selected:not(.is-disabled):not(.is-label) {
+.editingToolbar-statusbar-menu .menu-item:hover,
+.editingToolbar-statusbar-menu .menu-item .selected:hover,
+.editingToolbar-statusbar-menu .menu-item.selected:not(.is-disabled):not(.is-label) {
   background-color: transparent;
 }
 
-.cMenuToolbar-statusbar-menu .menu-item-title {
+.editingToolbar-statusbar-menu .menu-item-title {
   margin-right: 10px;
 }
 
-.cMenuToolbar-statusbar-menu .slider {
+.editingToolbar-statusbar-menu .slider {
   width: 100%;
 }
 
-.cMenuToolbar-statusbar-menu .menu-item.buttonitem {
+.editingToolbar-statusbar-menu .menu-item.buttonitem {
   padding-top: 10px;
   padding-bottom: 4px;
   height: fit-content;
 }
 
-.cMenuToolbar-statusbar-menu .menu-item.buttonitem button.cMenuToolbarSettingsButton {
+.editingToolbar-statusbar-menu .menu-item.buttonitem button.editingToolbarSettingsButton {
   margin: 0;
 }
 
-.cMenuToolbar-statusbar-menu .menu-item-icon svg path {
+.editingToolbar-statusbar-menu .menu-item-icon svg path {
   fill: var(--text-muted);
 }
 
-.cMenuToolbar-statusbar-menu .menu-item-icon svg {
+.editingToolbar-statusbar-menu .menu-item-icon svg {
   stroke: var(--text-muted);
 }
 
-.cMenuToolbar-statusbar-menu>.menu-item:is([data-section="ButtonAdd"]) {
+.editingToolbar-statusbar-menu>.menu-item:is([data-section="ButtonAdd"]) {
   display: inline-flex;
   padding: 0px 0px 5px 5px;
   align-items: center;
 }
 
-.cMenuToolbar-statusbar-menu>.menu-item {
+.editingToolbar-statusbar-menu>.menu-item {
   display: inline-flex;
   padding: 0px 0px 5px 5px;
   align-items: center;
 }
 
-.cMenuToolbar-statusbar-menu>.menu-item:is([data-section="ButtonAdd"]) .menu-item-icon {
+.editingToolbar-statusbar-menu>.menu-item:is([data-section="ButtonAdd"]) .menu-item-icon {
   text-align: center;
 }
 
 
 /*----------------------------------------------------------------
-cMenuToolbar STATUS BAR BUTTONS
+editingToolbar STATUS BAR BUTTONS
 ----------------------------------------------------------------*/
 
-.cMenuToolbar-statusbar-button {
+.editingToolbar-statusbar-button {
   cursor: default;
   display: flex;
   align-items: center;
   line-height: 1;
 }
 
-.cMenuToolbar-statusbar-button svg {
+.editingToolbar-statusbar-button svg {
   display: flex;
   width: 1.3em;
   height: 1.3em;
 }
 
 /*----------------------------------------------------------------
-cMenuToolbar SUPPORT
+editingToolbar SUPPORT
 ---------------------------------------------`-------------------*/
 
 .cDonationSection {
@@ -296,24 +296,24 @@ cMenuToolbar SUPPORT
 }
 
 
-#cMenuToolbarModalBar {
+#editingToolbarModalBar {
   align-items: center;
   justify-items: center;
   border: none;
   backdrop-filter: none;
 }
 
-#cMenuToolbarModalBar.cMenuToolbarGlassAesthetic .cMenuToolbarCommandItem {
+#editingToolbarModalBar.editingToolbarGlassAesthetic .editingToolbarCommandItem {
 
   background-color: #ffffff00;
 }
 
-#cMenuToolbarModalBar.cMenuToolbarGlassAesthetic [class^=cMenuToolbarCommandsubItem] {
+#editingToolbarModalBar.editingToolbarGlassAesthetic [class^=editingToolbarCommandsubItem] {
 
   background-color: #ffffff00;
 }
 
-#cMenuToolbarModalBar .cMenuToolbarCommandItem {
+#editingToolbarModalBar .editingToolbarCommandItem {
   justify-content: center;
   align-content: center;
   place-items: center;
@@ -321,20 +321,20 @@ cMenuToolbar SUPPORT
 }
 
 
-/*  #cMenuToolbarModalBar.cMenuToolbarTinyAesthetic .cMenuToolbarCommandItem svg{
+/*  #editingToolbarModalBar.editingToolbarTinyAesthetic .editingToolbarCommandItem svg{
      width: 1em;
      height: 1em;
  } */
 
 
 
-div.modal-container.cMenuToolbar-Modal:not(.changename) .modal-bg {
+div.modal-container.editingToolbar-Modal:not(.changename) .modal-bg {
   background-color: transparent !important;
   backdrop-filter: none !important;
   position: relative;
 }
 
-.modal-container.cMenuToolbar-Modal:not(.changename) .modal {
+.modal-container.editingToolbar-Modal:not(.changename) .modal {
   padding: 10px 30px;
   min-width: 130px;
   position: absolute;
@@ -344,21 +344,21 @@ div.modal-container.cMenuToolbar-Modal:not(.changename) .modal-bg {
   backdrop-filter: blur(4px);
 }
 
-.modal-container.cMenuToolbar-Modal .modal-title {
+.modal-container.editingToolbar-Modal .modal-title {
   display: none;
 }
 
-.modal-container.cMenuToolbar-Modal .modal input[type='range'] {
+.modal-container.editingToolbar-Modal .modal input[type='range'] {
   width: 90%;
 
 }
 
-body.theme-dark .modal-container.cMenuToolbar-Modal .modal input[type='range'] {
+body.theme-dark .modal-container.editingToolbar-Modal .modal input[type='range'] {
   background-color: var(--background-secondary);
 }
 
 /*tiny 样式*/
-#cMenuToolbarModalBar.cMenuToolbarTinyAesthetic {
+#editingToolbarModalBar.editingToolbarTinyAesthetic {
   align-items: center;
   justify-items: center;
   border: 1px solid var(--background-modifier-border-hover);
@@ -367,7 +367,7 @@ body.theme-dark .modal-container.cMenuToolbar-Modal .modal input[type='range'] {
 }
 
 
-#cMenuToolbarModalBar.cMenuToolbarTinyAesthetic .cMenuToolbarCommandItem {
+#editingToolbarModalBar.editingToolbarTinyAesthetic .editingToolbarCommandItem {
   margin: auto;
   padding: 0px;
   box-shadow: none;
@@ -380,7 +380,7 @@ body.theme-dark .modal-container.cMenuToolbar-Modal .modal input[type='range'] {
 
 }
 
-#cMenuToolbarModalBar .cMenuToolbarCommandItem {
+#editingToolbarModalBar .editingToolbarCommandItem {
   margin: auto;
 
   padding: 0px;
@@ -396,7 +396,7 @@ body.theme-dark .modal-container.cMenuToolbar-Modal .modal input[type='range'] {
 }
 
 
-:is(#cMenuToolbarModalBar).cMenuToolbarTinyAesthetic:not(.top) button[class^=cMenuToolbarCommandsubItem] {
+:is(#editingToolbarModalBar).editingToolbarTinyAesthetic:not(.top) button[class^=editingToolbarCommandsubItem] {
   margin: auto;
   padding: 0px;
   box-shadow: none;
@@ -415,7 +415,7 @@ body.theme-dark .modal-container.cMenuToolbar-Modal .modal input[type='range'] {
 
 }
 
-button[class^=cMenuToolbarCommandsubItem]::after {
+button[class^=editingToolbarCommandsubItem]::after {
 
   content: url("data:image/svg+xml,%3Csvg width='4' height='4' version='1.1' xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1024 1024' enable-background='new 0 0 1024 1024' xml:space='preserve'%3E%3Cpath fill='%23666' d='M13.24 80.11 l461.75 560.8 q14.56 16.02 36.41 16.02 q21.85 0 36.42 -16.02 l463.2 -560.8 q10.2 -10.19 12.38 -24.75 q2.18 -14.57 -3.64 -27.68 q-5.82 -13.11 -18.21 -20.39 q-12.39 -7.29 -26.95 -7.29 l-924.95 0 q-20.4 0 -34.23 13.11 q-13.84 13.11 -15.29 32.77 q-1.46 19.66 13.11 34.23 Z'/%3E%3C/svg%3E");
 
@@ -425,7 +425,7 @@ button[class^=cMenuToolbarCommandsubItem]::after {
 }
 
 
-:is(#cMenuToolbarModalBar, #cMenuToolbarPopoverBar) button[class^=cMenuToolbarCommandsubItem]>.subitem {
+:is(#editingToolbarModalBar, #editingToolbarPopoverBar) button[class^=editingToolbarCommandsubItem]>.subitem {
   background-color: var(--color-base-10, --background-primary);
   border-radius: var(--radius-s);
   border: 1px solid var(--background-modifier-border);
@@ -439,12 +439,12 @@ button[class^=cMenuToolbarCommandsubItem]::after {
 
 }
 
-:is(#cMenuToolbarModalBar, #cMenuToolbarPopoverBar) button[class^=cMenuToolbarCommandsubItem]>.subitem svg {
+:is(#editingToolbarModalBar, #editingToolbarPopoverBar) button[class^=editingToolbarCommandsubItem]>.subitem svg {
   max-width: 1.3em;
   max-height: 1.3em;
 }
 
-:is(#cMenuToolbarModalBar, #cMenuToolbarPopoverBar) button[class^=cMenuToolbarCommandsubItem]>.subitem button.menu-item {
+:is(#editingToolbarModalBar, #editingToolbarPopoverBar) button[class^=editingToolbarCommandsubItem]>.subitem button.menu-item {
   background-color: transparent;
   line-height: 2em;
   display: inline-flex;
@@ -452,13 +452,13 @@ button[class^=cMenuToolbarCommandsubItem]::after {
   align-items: center;
 }
 
-:is(#cMenuToolbarModalBar, #cMenuToolbarPopoverBar) button[class^=cMenuToolbarCommandsubItem]>.subitem .menu-item {
+:is(#editingToolbarModalBar, #editingToolbarPopoverBar) button[class^=editingToolbarCommandsubItem]>.subitem .menu-item {
   margin-left: 2px;
   margin-right: 2px;
   padding: 0px 4px 0px 4px;
 }
 
-:is(#cMenuToolbarModalBar, #cMenuToolbarPopoverBar) button[class^=cMenuToolbarCommandsubItem]>.subitem {
+:is(#editingToolbarModalBar, #editingToolbarPopoverBar) button[class^=editingToolbarCommandsubItem]>.subitem {
 
   visibility: hidden;
   transition: all 0.3s linear;
@@ -469,7 +469,7 @@ button[class^=cMenuToolbarCommandsubItem]::after {
 
 
 
-:is(#cMenuToolbarModalBar, #cMenuToolbarPopoverBar) button.cMenuToolbarCommandsubItem-font-color .triangle-icon {
+:is(#editingToolbarModalBar, #editingToolbarPopoverBar) button.editingToolbarCommandsubItem-font-color .triangle-icon {
   position: absolute;
   margin-left: 18px;
   bottom: 8%;
@@ -485,60 +485,60 @@ button[class^=cMenuToolbarCommandsubItem]::after {
   border-left: 2px solid transparent;
 }
 
-:is(#cMenuToolbarModalBar, #cMenuToolbarPopoverBar):not(.top) button.cMenuToolbarCommandsubItem-font-color .triangle-icon {
+:is(#editingToolbarModalBar, #editingToolbarPopoverBar):not(.top) button.editingToolbarCommandsubItem-font-color .triangle-icon {
   margin-left: 16px;
 
 }
 
-:is(#cMenuToolbarModalBar, #cMenuToolbarPopoverBar):not(.top) button.cMenuToolbarCommandsubItem-font-color .x-color-picker-wrapper {
+:is(#editingToolbarModalBar, #editingToolbarPopoverBar):not(.top) button.editingToolbarCommandsubItem-font-color .x-color-picker-wrapper {
   top: auto;
   bottom: calc(100%);
 }
 
-:is(#cMenuToolbarModalBar, #cMenuToolbarPopoverBar):not(.top) button[class^=cMenuToolbarCommandsubItem]:not(.cMenuToolbarSecond)>.subitem {
+:is(#editingToolbarModalBar, #editingToolbarPopoverBar):not(.top) button[class^=editingToolbarCommandsubItem]:not(.editingToolbarSecond)>.subitem {
   bottom: calc(100% + 2.8em);
 }
 
 
-:is(#cMenuToolbarModalBar, #cMenuToolbarPopoverBar) button.cMenuToolbarCommandsubItem-font-color .subitem {
+:is(#editingToolbarModalBar, #editingToolbarPopoverBar) button.editingToolbarCommandsubItem-font-color .subitem {
   visibility: hidden;
   transition: all 0.3s linear;
   -webkit-transition: all 0.3s linear;
 }
 
-:is(#cMenuToolbarModalBar, #cMenuToolbarPopoverBar) button.cMenuToolbarCommandsubItem-font-color .subitem:hover {
+:is(#editingToolbarModalBar, #editingToolbarPopoverBar) button.editingToolbarCommandsubItem-font-color .subitem:hover {
   visibility: visible;
   transition: all 0.3s linear;
   -webkit-transition: all 0.3s linear;
 }
 
 
-:is(#cMenuToolbarModalBar, #cMenuToolbarPopoverBar) button[class^=cMenuToolbarCommandsubItem]:hover>.subitem {
+:is(#editingToolbarModalBar, #editingToolbarPopoverBar) button[class^=editingToolbarCommandsubItem]:hover>.subitem {
 
   visibility: visible;
   transition: all 0.3s linear;
   -webkit-transition: all 0.3s linear;
 }
 
-/* :is(#cMenuToolbarModalBar,#cMenuToolbarPopoverBar) button[class^=cMenuToolbarCommandsubItem] >.subitem:hover  {
+/* :is(#editingToolbarModalBar,#editingToolbarPopoverBar) button[class^=editingToolbarCommandsubItem] >.subitem:hover  {
   visibility:visible;
   transition: all 0.3s linear;
   -webkit-transition:  all 0.3s linear;
  } */
 
-.cMenuToolbarCommandsubItem-font-color button {
+.editingToolbarCommandsubItem-font-color button {
   background-color: transparent;
 }
 
 
 
-.cMenuToolbarSettingsTabsContainer .cMenuToolbarCommandItem .setting-item-info {
+.editingToolbarSettingsTabsContainer .editingToolbarCommandItem .setting-item-info {
 
   flex: 30%;
   margin: 0;
 }
 
-.cMenuToolbarSettingsTabsContainer .cMenuToolbarSettingsTabsContainer_sub {
+.editingToolbarSettingsTabsContainer .editingToolbarSettingsTabsContainer_sub {
   border-left: 1px solid var(--background-modifier-border);
   flex-flow: column;
   min-height: 45px;
@@ -548,66 +548,66 @@ button[class^=cMenuToolbarCommandsubItem]::after {
   flex: 70%;
 }
 
-.cMenuToolbarSettingsTabsContainer .cMenuToolbarSettingsTabsContainer_sub:empty {
+.editingToolbarSettingsTabsContainer .editingToolbarSettingsTabsContainer_sub:empty {
   border: 2px dashed rgba(var(--interactive-accent-rgb), 0.5);
 }
 
-.cMenuToolbarSettingsTabsContainer .cMenuToolbarSettingsTabsContainer_sub:empty::before {
+.editingToolbarSettingsTabsContainer .editingToolbarSettingsTabsContainer_sub:empty::before {
   content: "✖️Drag it here";
   margin: auto;
   font-size: 12px;
 }
 
-.cMenuToolbarSettingsTabsContainer .cMenuToolbarSettingsTabsContainer_sub .cMenuToolbarCommandItem {
+.editingToolbarSettingsTabsContainer .editingToolbarSettingsTabsContainer_sub .editingToolbarCommandItem {
   flex: auto;
   margin-left: 2em;
   ;
 }
 
-.cMenuToolbarSettingsTabsContainer .cMenuToolbarSettingsTabsContainer_sub .setting-item-control {
+.editingToolbarSettingsTabsContainer .editingToolbarSettingsTabsContainer_sub .setting-item-control {
   flex: 0;
 }
 
-.cMenuToolbarSettingsTabsContainer .cMenuToolbarCommandSubItem>.setting-item-info {
+.editingToolbarSettingsTabsContainer .editingToolbarCommandSubItem>.setting-item-info {
   flex: 70px;
 }
 
-.cMenuToolbarCommandSubItem>.setting-item-control {
+.editingToolbarCommandSubItem>.setting-item-control {
 
   justify-content: flex-start;
 }
 
-.modal.mod-settings button:not(.mod-cta):not(.mod-warning).cMenuToolbarSettingsButton.cMenuToolbarSettingsButtonaddsub {
+.modal.mod-settings button:not(.mod-cta):not(.mod-warning).editingToolbarSettingsButton.editingToolbarSettingsButtonaddsub {
   background-color: var(--background-secondary-alt);
 }
 
 
-.setting-item button.cMenuToolbarSettingsIcon {
+.setting-item button.editingToolbarSettingsIcon {
   display: block;
   transform: translateX(-30%);
   -webkit-transform: translateX(-30%);
 }
 
-.setting-item button.cMenuToolbarSettingsIcon:empty::before {
+.setting-item button.editingToolbarSettingsIcon:empty::before {
   content: "❗";
 }
 
-.setting-item button.cMenuToolbarSettingsIcon svg {
+.setting-item button.editingToolbarSettingsIcon svg {
   max-width: 1.5em;
   max-height: 1.5em;
 }
 
-.modal.mod-settings button:not(.mod-cta):not(.mod-warning).cMenuToolbarSettingsIcon:hover {
+.modal.mod-settings button:not(.mod-cta):not(.mod-warning).editingToolbarSettingsIcon:hover {
   background-color: var(--interactive-accent-hover);
 }
 
-.modal.mod-settings button:not(.mod-cta):not(.mod-warning).cMenuToolbarSettingsIcon {
+.modal.mod-settings button:not(.mod-cta):not(.mod-warning).editingToolbarSettingsIcon {
   background-color: transparent;
   box-shadow: 0 1px 1px 0px var(--background-modifier-border);
 }
 
 @media screen and (min-width: 781px) {
-  .cMenuToolbar-Modal .wideInputPromptInputEl {
+  .editingToolbar-Modal .wideInputPromptInputEl {
     width: 40rem;
     max-width: 100%;
     height: 20rem;
@@ -615,14 +615,14 @@ button[class^=cMenuToolbarCommandsubItem]::after {
   }
 }
 
-.cMenuToolbarcustomIcon svg {
+.editingToolbarcustomIcon svg {
   max-width: 1.3em;
   max-height: 1.3em;
   display: flex;
 }
 
 
-.cMenuToolbarSettingsButton svg {
+.editingToolbarSettingsButton svg {
   max-width: 1.3em;
   max-height: 1.3em;
   display: flex;
@@ -695,7 +695,7 @@ button[class^=cMenuToolbarCommandsubItem]::after {
 } */
 
 /**top**/
-#cMenuToolbarModalBar.top {
+#editingToolbarModalBar.top {
   display: flex;
   flex-wrap: nowrap;
   position: relative;
@@ -706,21 +706,21 @@ button[class^=cMenuToolbarCommandsubItem]::after {
 
 }
 
-#cMenuToolbarModalBar.top.autohide {
+#editingToolbarModalBar.top.autohide {
   opacity: 0;
   transition: all 0.5s linear;
   -webkit-transition: all 0.5s linear;
 }
 
 
-#cMenuToolbarModalBar.top.autohide:hover {
+#editingToolbarModalBar.top.autohide:hover {
   opacity: 1;
   transition: all 1s linear;
   -webkit-transition: all 1s linear;
 }
 
 
-#cMenuToolbarModalBar.top :is(.cMenuToolbarCommandItem, button[class^=cMenuToolbarCommandsubItem]):not(.cMenuToolbar-Divider-Line) {
+#editingToolbarModalBar.top :is(.editingToolbarCommandItem, button[class^=editingToolbarCommandsubItem]):not(.editingToolbar-Divider-Line) {
   font-size: 10px;
   margin-right: 0px;
   clear: both;
@@ -745,13 +745,13 @@ button[class^=cMenuToolbarCommandsubItem]::after {
 
 }
 
-/* #cMenuToolbarModalBar.top button.cMenuToolbarCommandItem:hover {
+/* #editingToolbarModalBar.top button.editingToolbarCommandItem:hover {
   background-color: var(--interactive-hover);
 } */
 
 
 
-#cMenuToolbarPopoverBar {
+#editingToolbarPopoverBar {
 
   padding: 0 10px;
   display: inline-flex;
@@ -771,7 +771,7 @@ button[class^=cMenuToolbarCommandsubItem]::after {
   right: 0;
 }
 
-#cMenuToolbarPopoverBar :is(.cMenuToolbarCommandItem, button[class^=cMenuToolbarCommandsubItem]) {
+#editingToolbarPopoverBar :is(.editingToolbarCommandItem, button[class^=editingToolbarCommandsubItem]) {
 
   height: 26px;
   margin-left: 4px;
@@ -796,7 +796,7 @@ button[class^=cMenuToolbarCommandsubItem]::after {
 
 }
 
-#cMenuToolbarModalBar .more-menu {
+#editingToolbarModalBar .more-menu {
   display: flex;
   align-items: center;
   box-shadow: none;
@@ -808,7 +808,7 @@ button[class^=cMenuToolbarCommandsubItem]::after {
 
 /*Divider-Line**/
 
-.cMenuToolbarSettingsTabsContainer .cMenuToolbar-Divider-Line {
+.editingToolbarSettingsTabsContainer .editingToolbar-Divider-Line {
   padding: 0;
 
   line-height: 0px;
@@ -818,39 +818,39 @@ button[class^=cMenuToolbarCommandsubItem]::after {
   background: rgba(var(--interactive-accent-rgb), 0.2);
 }
 
-.cMenuToolbarSettingsTabsContainer .cMenuToolbar-Divider-Line .setting-item-control button:not(:last-child) {
+.editingToolbarSettingsTabsContainer .editingToolbar-Divider-Line .setting-item-control button:not(:last-child) {
   display: none;
 }
 
-.cMenuToolbarSettingsTabsContainer .cMenuToolbar-Divider-Line .setting-item-info {
+.editingToolbarSettingsTabsContainer .editingToolbar-Divider-Line .setting-item-info {
   flex: 1 1 auto;
 }
 
-.cMenuToolbarSettingsTabsContainer .cMenuToolbar-Divider-Line .setting-item-control {
+.editingToolbarSettingsTabsContainer .editingToolbar-Divider-Line .setting-item-control {
   justify-content: flex-start;
 }
 
-.cMenuToolbarSettingsTabsContainer .cMenuToolbar-Divider-Line .setting-item-info .setting-item-name {
+.editingToolbarSettingsTabsContainer .editingToolbar-Divider-Line .setting-item-info .setting-item-name {
   font-size: 12px;
   text-align: right;
 
 }
 
-.cMenuToolbarSettingsTabsContainer .cMenuToolbar-Divider-Line .setting-item-control button:last-child {
+.editingToolbarSettingsTabsContainer .editingToolbar-Divider-Line .setting-item-control button:last-child {
   padding: 0;
   background-color: transparent !important;
 }
 
-.cMenuToolbarSettingsTabsContainer .cMenuToolbar-Divider-Line .setting-item-control button:last-child svg {
+.editingToolbarSettingsTabsContainer .editingToolbar-Divider-Line .setting-item-control button:last-child svg {
   display: none;
 }
 
-.cMenuToolbarSettingsTabsContainer .cMenuToolbar-Divider-Line .setting-item-control button:last-child::before {
+.editingToolbarSettingsTabsContainer .editingToolbar-Divider-Line .setting-item-control button:last-child::before {
   content: url("data:image/svg+xml,%3Csvg width='16' height='16' viewBox='0 0 1024 1024' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M511.674077 66.707284c-246.52265 0-446.347744 199.835328-446.347744 446.347744s199.825095 446.356954 446.347744 446.356954c246.50423 0 446.348768-199.844537 446.348768-446.356954S758.177284 66.707284 511.674077 66.707284zM744.967424 667.159826c21.8701 21.8701 21.8701 57.310264 0 79.199807-21.8701 21.851681-57.30924 21.851681-79.198783-0.019443L511.674077 592.264045 357.56007 746.359632c-21.8701 21.8701-57.30924 21.851681-79.17934-0.019443s-21.8701-57.290821 0-79.160921L432.493713 513.065262 278.379707 358.950232c-21.8701-21.86089-21.8701-57.328683 0-79.18855 21.8701-21.87931 57.30924-21.87931 79.17934 0l154.114007 154.104797 154.095587-154.104797c21.889543-21.87931 57.32766-21.87931 79.198783-0.010233 21.8701 21.8701 21.8701 57.348126 0 79.207993L590.89128 513.065262 744.967424 667.159826z' fill='%23666666'/%3E%3C/svg%3E");
 }
 
 
-:is(#cMenuToolbarModalBar, #cMenuToolbarPopoverBar) button.cMenuToolbar-Divider-Line
+:is(#editingToolbarModalBar, #editingToolbarPopoverBar) button.editingToolbar-Divider-Line
 {
   min-width: unset;
   flex-shrink: 0;
@@ -861,7 +861,7 @@ button[class^=cMenuToolbarCommandsubItem]::after {
   opacity: 0.8;
   margin: 0;
 }
-:is(#cMenuToolbarModalBar, #cMenuToolbarPopoverBar) button[class^=cMenuToolbarCommandsubItem]>.subitem button.menu-item.cMenuToolbar-Divider-Line
+:is(#editingToolbarModalBar, #editingToolbarPopoverBar) button[class^=editingToolbarCommandsubItem]>.subitem button.menu-item.editingToolbar-Divider-Line
 {  min-width: unset;
   flex-shrink: 0;
   display: inline-flex;
@@ -875,17 +875,17 @@ button[class^=cMenuToolbarCommandsubItem]::after {
 
 }
 
-.theme-dark :is(#cMenuToolbarModalBar, #cMenuToolbarPopoverBar) button.cMenuToolbar-Divider-Line {
+.theme-dark :is(#editingToolbarModalBar, #editingToolbarPopoverBar) button.editingToolbar-Divider-Line {
 
   background-color: #4f4f5188;
 
 }
 
-:is(#cMenuToolbarModalBar, #cMenuToolbarPopoverBar) button.cMenuToolbar-Divider-Line svg {
+:is(#editingToolbarModalBar, #editingToolbarPopoverBar) button.editingToolbar-Divider-Line svg {
   display: none;
 }
 
-.workspace-tabs.mod-stacked .workspace-tab-header:not(.is-active)+.workspace-leaf #cMenuToolbarModalBar {
+.workspace-tabs.mod-stacked .workspace-tab-header:not(.is-active)+.workspace-leaf #editingToolbarModalBar {
   opacity: 0;
 }
 
@@ -928,30 +928,30 @@ button[class^=cMenuToolbarCommandsubItem]::after {
 }
 
 
-div[data-type="thino_view"] .memo-editor-wrapper:has(#cMenuToolbarModalBar)
+div[data-type="thino_view"] .memo-editor-wrapper:has(#editingToolbarModalBar)
 {
     padding-top:0;
     padding-left:0;
     padding-right:0;
 }
 
-div[data-type="thino_view"] .memo-editor-wrapper:has(#cMenuToolbarModalBar) .common-tools-wrapper
+div[data-type="thino_view"] .memo-editor-wrapper:has(#editingToolbarModalBar) .common-tools-wrapper
 {
    padding-left:16px;
     padding-right:16px;
 }
-div[data-type="thino_view"] .memo-editor-wrapper #cMenuToolbarModalBar ~ .cm-editor{
+div[data-type="thino_view"] .memo-editor-wrapper #editingToolbarModalBar ~ .cm-editor{
     padding-top:38px;
     padding-bottom:0px;
     padding-left:16px;
     padding-right:16px;
 }
-div[data-type=thino_view] .common-editor-wrapper .common-editor-inputer:has(#cMenuToolbarModalBar)
+div[data-type=thino_view] .common-editor-wrapper .common-editor-inputer:has(#editingToolbarModalBar)
 {
   min-height:118px;
 }
 
-div[data-type=thino_view] #cMenuToolbarModalBar.top
+div[data-type=thino_view] #editingToolbarModalBar.top
 {
   position:absolute!important;
   width: 100%;

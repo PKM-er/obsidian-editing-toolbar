@@ -1,11 +1,11 @@
 export const appIcons: string[] = [
   // from obsidian app.js file
   "Custom",
-  "cMenuToolbar",
-  "cMenuToolbarSub",
-  "cMenuToolbarAdd",
-  "cMenuToolbarDelete",
-  "cMenuToolbarReload",
+  "editingToolbar",
+  "editingToolbarSub",
+  "editingToolbarAdd",
+  "editingToolbarDelete",
+  "editingToolbarReload",
   "codeblock-glyph",
   "underline-glyph",
   "superscript-glyph",

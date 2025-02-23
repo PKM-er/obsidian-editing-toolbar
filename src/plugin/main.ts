@@ -16,9 +16,9 @@ import {
 } from "obsidian";
 import { wait } from "src/util/util";
 import { CommandPicker, openSlider } from "src/modals/suggesterModals";
-import { cMenuToolbarSettingTab } from '../settings/settingsTab';
-import { selfDestruct, cMenuToolbarPopover, quiteFormatbrushes, setFontcolor, setBackgroundcolor, setHeader, createFollowingbar, setFormateraser, isExistoolbar, resetToolbar } from "src/modals/cMenuToolbarModal";
-import { cMenuToolbarSettings, DEFAULT_SETTINGS } from "src/settings/settingsData";
+import { editingToolbarSettingTab } from '../settings/settingsTab';
+import { selfDestruct, editingToolbarPopover, quiteFormatbrushes, setFontcolor, setBackgroundcolor, setHeader, createFollowingbar, setFormateraser, isExistoolbar, resetToolbar } from "src/modals/editingToolbarModal";
+import { editingToolbarSettings, DEFAULT_SETTINGS } from "src/settings/settingsData";
 import addIcons, {
   // addFeatherIcons,
   // addRemixIcons
@@ -37,11 +37,11 @@ import { ViewUtils } from 'src/util/viewUtils';
 
 let activeDocument: Document;
 
-export default class cMenuToolbarPlugin extends Plugin {
+export default class editingToolbarPlugin extends Plugin {
   app: App;
-  settings: cMenuToolbarSettings;
+  settings: editingToolbarSettings;
   statusBarIcon: HTMLElement;
-  cMenuToolbar: HTMLElement;
+  editingToolbar: HTMLElement;
   modCommands: Command[] = [
     {
       id: "editor:insert-embed",
@@ -173,11 +173,11 @@ export default class cMenuToolbarPlugin extends Plugin {
   private eventManager: EventManager;
 
   async onload(): Promise<void> {
-    console.log("cMenuToolbar v" + this.manifest.version + " loaded");
+    console.log("editingToolbar v" + this.manifest.version + " loaded");
 
     requireApiVersion("0.15.0") ? activeDocument = activeWindow.document : activeDocument = window.document;
     await this.loadSettings();
-    this.addSettingTab(new cMenuToolbarSettingTab(this.app, this));
+    this.addSettingTab(new editingToolbarSettingTab(this.app, this));
 
     addIcons();
     // addRemixIcconsole.log();ons(appIcons);
@@ -197,15 +197,15 @@ export default class cMenuToolbarPlugin extends Plugin {
       const isThinoEnabled = app.plugins.enabledPlugins.has("obsidian-memos");
       if(isThinoEnabled) {
         // @ts-ignore - 自定义事件
-        this.registerEvent(this.app.workspace.on("thino-editor-created", this.handlecMenuToolbar));
+        this.registerEvent(this.app.workspace.on("thino-editor-created", this.handleeditingToolbar));
       }
-      this.registerEvent(this.app.workspace.on("active-leaf-change", this.handlecMenuToolbar));
-      this.registerEvent(this.app.workspace.on("layout-change", this.handlecMenuToolbar_layout));
-      this.registerEvent(this.app.workspace.on("resize", this.handlecMenuToolbar_resize));
-      // this.app.workspace.onLayoutReady(this.handlecMenuToolbar_editor.bind(this));
+      this.registerEvent(this.app.workspace.on("active-leaf-change", this.handleeditingToolbar));
+      this.registerEvent(this.app.workspace.on("layout-change", this.handleeditingToolbar_layout));
+      this.registerEvent(this.app.workspace.on("resize", this.handleeditingToolbar_resize));
+      // this.app.workspace.onLayoutReady(this.handleeditingToolbar_editor.bind(this));
       if (this.settings.cMenuVisibility == true) {
         setTimeout(() => {
-          dispatchEvent(new Event("cMenuToolbar-NewCommand"));
+          dispatchEvent(new Event("editingToolbar-NewCommand"));
         }, 100)
       }
 
@@ -244,11 +244,11 @@ export default class cMenuToolbarPlugin extends Plugin {
       // @ts-ignore - 使用 obsidian-ex.d.ts 中的扩展类型
       let cmEditor = app.workspace.activeLeaf.view?.editor;
       if (cmEditor?.hasFocus()) {
-        let cMenuToolbarModalBar = isExistoolbar(this.app, this.settings);
+        let editingToolbarModalBar = isExistoolbar(this.app, this.settings);
 
         if (cmEditor.getSelection() == null || cmEditor.getSelection() == "") {
-          if (cMenuToolbarModalBar && this.settings.positionStyle == "following")
-            cMenuToolbarModalBar.style.visibility = "hidden";
+          if (editingToolbarModalBar && this.settings.positionStyle == "following")
+            editingToolbarModalBar.style.visibility = "hidden";
           return
         } else {
           //   console.log(this.EN_FontColor_Format_Brush,'EN_FontColor_Format_Brush')
@@ -269,14 +269,14 @@ export default class cMenuToolbarPlugin extends Plugin {
 
     this.registerDomEvent(activeDocument, "keydown", (e) => {
       if (this.settings.positionStyle !== "following") return;
-      const cMenuToolbarModalBar = isExistoolbar(this.app, this.settings);
-      if (!e.shiftKey && cMenuToolbarModalBar) cMenuToolbarModalBar.style.visibility = "hidden";
+      const editingToolbarModalBar = isExistoolbar(this.app, this.settings);
+      if (!e.shiftKey && editingToolbarModalBar) editingToolbarModalBar.style.visibility = "hidden";
     });
 
     this.registerDomEvent(activeDocument, "wheel", () => {
       if (this.settings.positionStyle !== "following") return;
-      const cMenuToolbarModalBar = isExistoolbar(this.app, this.settings);
-      if (cMenuToolbarModalBar) cMenuToolbarModalBar.style.visibility = "hidden";
+      const editingToolbarModalBar = isExistoolbar(this.app, this.settings);
+      if (editingToolbarModalBar) editingToolbarModalBar.style.visibility = "hidden";
     });
   }
 
@@ -285,12 +285,12 @@ export default class cMenuToolbarPlugin extends Plugin {
     this.addCommand({
       id: "hide-show-menu",
       name: "Hide/show ",
-      icon: "cMenuToolbar",
+      icon: "editingToolbar",
       callback: async () => {
         this.settings.cMenuVisibility = !this.settings.cMenuVisibility;
         this.settings.cMenuVisibility == true
           ? setTimeout(() => {
-            dispatchEvent(new Event("cMenuToolbar-NewCommand"));
+            dispatchEvent(new Event("editingToolbar-NewCommand"));
           }, 100)
           : setMenuVisibility(this.settings.cMenuVisibility);
         selfDestruct();
@@ -663,8 +663,8 @@ export default class cMenuToolbarPlugin extends Plugin {
   setupStatusBar() {
     addIcons();
     this.statusBarIcon = this.addStatusBarItem();
-    this.statusBarIcon.addClass("cMenuToolbar-statusbar-button");
-    setIcon(this.statusBarIcon, "cMenuToolbar");
+    this.statusBarIcon.addClass("editingToolbar-statusbar-button");
+    setIcon(this.statusBarIcon, "editingToolbar");
 
     this.registerDomEvent(this.statusBarIcon, "click", () => {
       const statusBarRect =
@@ -684,7 +684,7 @@ export default class cMenuToolbarPlugin extends Plugin {
           toggleComponent.setValue(this.settings.cMenuVisibility);
           this.settings.cMenuVisibility == true
             ? setTimeout(() => {
-              dispatchEvent(new Event("cMenuToolbar-NewCommand"));
+              dispatchEvent(new Event("editingToolbar-NewCommand"));
             }, 100)
             : setMenuVisibility(this.settings.cMenuVisibility);
           selfDestruct();
@@ -699,12 +699,12 @@ export default class cMenuToolbarPlugin extends Plugin {
       });
 
       const menuDom = (menu as any).dom as HTMLElement;
-      menuDom.addClass("cMenuToolbar-statusbar-menu");
+      menuDom.addClass("editingToolbar-statusbar-menu");
 
 
       menu.addItem((item) => {
 
-        item.setIcon("cMenuToolbarAdd");
+        item.setIcon("editingToolbarAdd");
         requireApiVersion("0.15.0") ? item.setSection("ButtonAdd") : true;
         item.onClick(() => {
           new CommandPicker(this).open();
@@ -714,14 +714,14 @@ export default class cMenuToolbarPlugin extends Plugin {
 
       menu.addItem((item) => {
 
-        item.setIcon("cMenuToolbarReload");
+        item.setIcon("editingToolbarReload");
         requireApiVersion("0.15.0") ? item.setSection("ButtonAdd") : true;
 
         item.onClick(() => {
           setTimeout(() => {
-            dispatchEvent(new Event("cMenuToolbar-NewCommand"));
+            dispatchEvent(new Event("editingToolbar-NewCommand"));
           }, 100);
-          console.log(`%ccMenuToolbar refreshed`, "color: Violet");
+          console.log(`%ceditingToolbar refreshed`, "color: Violet");
         });
       });
 
@@ -747,11 +747,11 @@ export default class cMenuToolbarPlugin extends Plugin {
 
   onunload(): void {
     selfDestruct();
-    console.log("cMenuToolbar unloaded");
+    console.log("editingToolbar unloaded");
 
-    this.app.workspace.off("active-leaf-change", this.handlecMenuToolbar);
-    this.app.workspace.off("layout-change", this.handlecMenuToolbar_layout);
-    this.app.workspace.off("resize", this.handlecMenuToolbar_resize);
+    this.app.workspace.off("active-leaf-change", this.handleeditingToolbar);
+    this.app.workspace.off("layout-change", this.handleeditingToolbar_layout);
+    this.app.workspace.off("resize", this.handleeditingToolbar_resize);
 
     this.toolbar.destroy();
     this.eventManager.destroy();
@@ -762,7 +762,7 @@ export default class cMenuToolbarPlugin extends Plugin {
     return ViewUtils.isAllowedViewType(view);
   }
 
-  handlecMenuToolbar = () => {
+  handleeditingToolbar = () => {
     if (this.settings.cMenuVisibility == true) {
       const view = this.app.workspace.getActiveViewOfType(ItemView);
       let toolbar = isExistoolbar(this.app, this.settings);
@@ -780,38 +780,38 @@ export default class cMenuToolbarPlugin extends Plugin {
         }
       } else {
         setTimeout(() => {
-          cMenuToolbarPopover(this.app, this);
+          editingToolbarPopover(this.app, this);
         }, 100);
       }
     }
   };
 
-  handlecMenuToolbar_layout = () => {
+  handleeditingToolbar_layout = () => {
     if (!this.settings.cMenuVisibility) return false;
 
     const view = this.app.workspace.getActiveViewOfType(ItemView);
-    let cMenuToolbarModalBar = isExistoolbar(this.app, this.settings);
+    let editingToolbarModalBar = isExistoolbar(this.app, this.settings);
 
     if (!ViewUtils.isSourceMode(view) || !ViewUtils.isAllowedViewType(view)) {
-      if (cMenuToolbarModalBar) {
-        cMenuToolbarModalBar.style.visibility = "hidden";
+      if (editingToolbarModalBar) {
+        editingToolbarModalBar.style.visibility = "hidden";
       }
       return;
     }
 
-    if (cMenuToolbarModalBar) {
-      cMenuToolbarModalBar.style.visibility = 
+    if (editingToolbarModalBar) {
+      editingToolbarModalBar.style.visibility = 
         this.settings.positionStyle == "following" ? "hidden" : "visible";
     } else {
       setTimeout(() => {
-        cMenuToolbarPopover(this.app, this);
+        editingToolbarPopover(this.app, this);
       }, 100);
     }
   };
 
-  handlecMenuToolbar_resize = () => {
+  handleeditingToolbar_resize = () => {
     // const type= this.app.workspace.activeLeaf.getViewState().type
-    // console.log(type,"handlecMenuToolbar_layout" )
+    // console.log(type,"handleeditingToolbar_layout" )
     //requireApiVersion("0.15.0") ? activeDocument = activeWindow.document : activeDocument = window.document;
     if (this.settings.cMenuVisibility == true && this.settings.positionStyle == "top") {
       const view = app.workspace.getActiveViewOfType(ItemView);
@@ -826,7 +826,7 @@ export default class cMenuToolbarPlugin extends Plugin {
                 return;
               else {
                 setTimeout(() => {
-                  resetToolbar(), cMenuToolbarPopover(app, this);
+                  resetToolbar(), editingToolbarPopover(app, this);
                 }, 200)
               }
             }

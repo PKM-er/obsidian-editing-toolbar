@@ -1,11 +1,11 @@
 import { App } from 'obsidian';
-import type cMenuToolbarPlugin from '../plugin/main';
+import type editingToolbarPlugin from '../plugin/main';
 
 export class EventManager {
   private app: App;
-  private plugin: cMenuToolbarPlugin;
+  private plugin: editingToolbarPlugin;
 
-  constructor(app: App, plugin: cMenuToolbarPlugin) {
+  constructor(app: App, plugin: editingToolbarPlugin) {
     this.app = app;
     this.plugin = plugin;
   }
