@@ -20,47 +20,38 @@ interface SubmenuCommand {
   SubmenuCommands: ToolbarCommand[];
 }
 
-function getPickrSettings(opts: {
+export function getPickrSettings(opts: {
   isView: boolean;
   el: HTMLElement;
   containerEl: HTMLElement;
-  swatches: string[] | null;
-  opacity: boolean;
+  swatches: string[];
+  opacity: boolean | undefined;
   defaultColor: string;
 }): Pickr.Options {
+  const { el, containerEl, swatches, opacity, defaultColor } = opts;
+
   return {
-    el: opts.el,
+    el,
+    container: containerEl,
     theme: 'nano',
-    container: opts.isView ? document.body : opts.containerEl,
-    appClass: 'toolbar-pickr',
-    swatches: opts.swatches || [
-      '#ff0000',
-      '#00ff00',
-      '#0000ff',
-      '#ffff00',
-      '#00ffff',
-    ],
-    defaultRepresentation: 'HEXA',
-    default: opts.defaultColor || '#000000',
-    position: 'bottom-start',
+    swatches,
+    lockOpacity: !opacity,
+    default: defaultColor,
+    position: 'left-middle',
     components: {
       preview: true,
-      opacity: opts.opacity,
       hue: true,
+      opacity: !!opacity,
       interaction: {
         hex: true,
-        rgba: true,
-        hsla: true,
+        rgba: false,
+        hsla: false,
         input: true,
-        clear: true,
-        save: true
-      }
-    }
+        cancel: true,
+        save: true,
+      },
+    },
   };
-}
-
-function onPickrCancel(instance: Pickr) {
-  instance.hide();
 }
 
 
@@ -78,7 +69,7 @@ export function getComandindex(item: any, arr: any[]): number {
 export class editingToolbarSettingTab extends PluginSettingTab {
   plugin: editingToolbarPlugin;
   appendMethod: string;
-  pickr: Pickr;
+  pickrs: Pickr[] = [];
   constructor(app: App, plugin: editingToolbarPlugin) {
     super(app, plugin);
     this.plugin = plugin;
@@ -90,6 +81,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
   }
 
   display(): void {
+    this.destroyPickrs();
     const { containerEl } = this;
     containerEl.empty();
     containerEl.createEl("h1", { text: "Obsidian Editing Toolbar" });
@@ -207,7 +199,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
       .setDesc(
         t("Whether to enable on mobile devices with device width less than 768px, the default is disable.")
       )
-      .addToggle(toggle => toggle.setValue(this.plugin.settings?.isLoadOnMobile??false)
+      .addToggle(toggle => toggle.setValue(this.plugin.settings?.isLoadOnMobile ?? false)
         .onChange((value) => {
           this.plugin.settings.isLoadOnMobile = value;
           this.plugin.saveSettings();
@@ -243,31 +235,30 @@ export class editingToolbarSettingTab extends PluginSettingTab {
       .setDesc(t('Click on the picker to adjust the colour'))
       .setClass('custom_bg')
       .then((setting) => {
+        const pickerContainer = setting.controlEl.createDiv({ cls: "pickr-container" });
+        
         for (let i = 0; i < 5; i++) {
-          const pickerContainer = setting.controlEl.createDiv({ cls: "picker" });
+          const pickerEl = pickerContainer.createDiv({ cls: "picker" });
           
-          this.pickr = Pickr.create(
+          const pickr = Pickr.create(
             getPickrSettings({
-              isView: true,
-              el: pickerContainer,
-              containerEl: setting.controlEl,
-              swatches: null,
+              isView: false,
+              el: pickerEl,
+              containerEl: pickerContainer,
+              swatches: [
+                '#FFB78B8C',
+                '#CDF4698C', 
+                '#A0CCF68C',
+                '#F0A7D88C',
+                '#ADEFEF8C',
+              ],
               opacity: true,
               defaultColor: (this.plugin.settings as any)[`custom_bg${i + 1}`] || '#000000'
             })
-          )
-          .on('save', async (color: Pickr.HSVaColor, instance: Pickr) => {
-            if (!color) return;
-            (this.plugin.settings as any)[`custom_bg${i + 1}`] = color.toHEXA().toString();
-            await this.plugin.saveSettings();
-            instance.hide();
-            instance.addSwatch(color.toHEXA().toString());
-          })
-          .on('show', () => {
-            const { result } = (this.pickr.getRoot() as any).interaction;
-            requestAnimationFrame(() => result.select());
-          })
-          .on('cancel', onPickrCancel);
+          );
+
+          this.setupPickrEvents(pickr, `custom_bg${i + 1}`);
+          this.pickrs.push(pickr);
         }
       });
 
@@ -278,36 +269,32 @@ export class editingToolbarSettingTab extends PluginSettingTab {
       .setDesc(t('Click on the picker to adjust the colour'))
       .setClass('custom_font')
       .then((setting) => {
-
+        const pickerContainer = setting.controlEl.createDiv({ cls: "pickr-container" });
+        
         for (let i = 0; i < 5; i++) {
-          this.pickr = Pickr.create(
+          const pickerEl = pickerContainer.createDiv({ cls: "picker" });
+          
+          const pickr = Pickr.create(
             getPickrSettings({
-              isView,
-              el: setting.controlEl.createDiv({ cls: "picker" }),
-              containerEl,
-              swatches: null,
+              isView: false,
+              el: pickerEl,
+              containerEl: pickerContainer,
+              swatches: [
+                '#D83931',
+                '#DE7802', 
+                '#245BDB',
+                '#6425D0',
+                '#646A73',
+              ],
               opacity: true,
-              defaultColor: (this.plugin.settings as any)[`custom_fc${i + 1}`],
+              defaultColor: (this.plugin.settings as any)[`custom_fc${i + 1}`] || '#000000'
             })
-          )
-            .on("save", async (color: Pickr.HSVaColor, instance: Pickr) => {
-              if (!color) return;
-              (this.plugin.settings as any)[`custom_fc${i + 1}`] = color.toHEXA().toString();
-              await this.plugin.saveSettings();
-              instance.hide();
-              instance.addSwatch(color.toHEXA().toString());
-            })
-            .on("show", () => {
-              const { result } = (this.pickr.getRoot() as any).interaction;
-              requestAnimationFrame(() =>
-                requestAnimationFrame(() => result.select())
-              );
-            })
-            .on("cancel", onPickrCancel);
+          );
 
+          this.setupPickrEvents(pickr, `custom_fc${i + 1}`);
+          this.pickrs.push(pickr);
         }
-
-      })
+      });
 
     new Setting(containerEl)
       .setName(t('Editing Toolbar commands')
@@ -427,7 +414,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
           forceFallback: true,
           fallbackClass: "sortable-fallback",
           easing: "cubic-bezier(1, 0, 0, 1)",
-          onStart: function () {},
+          onStart: function () { },
           onSort: (command) => {
 
 
@@ -453,9 +440,9 @@ export class editingToolbarSettingTab extends PluginSettingTab {
 
               if (subresult) {
 
-                  const [removed] = subresult.splice(command.oldIndex, 1);
-                  arrayResult.splice(command.newIndex, 0, removed);
-                  this.plugin.saveSettings();
+                const [removed] = subresult.splice(command.oldIndex, 1);
+                arrayResult.splice(command.newIndex, 0, removed);
+                this.plugin.saveSettings();
 
               } else {
                 console.error('Subresult is undefined.');
@@ -477,9 +464,9 @@ export class editingToolbarSettingTab extends PluginSettingTab {
 
               if (subresult) {
 
-                  const [removed] = arrayResult.splice(command.oldIndex, 1);
-                  subresult.splice(command.newIndex, 0, removed);
-                  this.plugin.saveSettings();
+                const [removed] = arrayResult.splice(command.oldIndex, 1);
+                subresult.splice(command.newIndex, 0, removed);
+                this.plugin.saveSettings();
 
               } else {
                 console.error('Subresult is undefined.');
@@ -629,11 +616,39 @@ export class editingToolbarSettingTab extends PluginSettingTab {
 
 
   }
+
+  private setupPickrEvents(pickr: Pickr, settingKey: string) {
+    pickr
+      .on('save', async (color: Pickr.HSVaColor, instance: Pickr) => {
+        if (!color) return;
+        (this.plugin.settings as any)[settingKey] = color.toHEXA().toString();
+        await this.plugin.saveSettings();
+        instance.hide();
+        instance.addSwatch(color.toHEXA().toString());
+      })
+      .on('show', () => {
+        const { result } = (pickr.getRoot() as any).interaction;
+        requestAnimationFrame(() => result.select());
+      })
+      .on('cancel', (instance: Pickr) => {
+        instance.hide();
+      });
+  }
+
+  private destroyPickrs() {
+    this.pickrs.forEach(pickr => {
+      if (pickr) {
+        pickr.destroyAndRemove();
+      }
+    });
+    this.pickrs = [];
+  }
+
   hide(): void {
+    this.destroyPickrs();
     setTimeout(() => {
       dispatchEvent(new Event("editingToolbar-NewCommand"));
     }, 100);
-    this.pickr.destroyAndRemove();
   }
 }
 

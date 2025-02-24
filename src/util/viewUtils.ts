@@ -7,7 +7,7 @@ export class ViewUtils {
     if (!view) return false;
     
     // 如果没有配置允许的类型,使用默认类型
-    const defaultAllowedTypes = ['markdown', 'markdown-view', 'thino_view', 'meld-encrypted-view'];
+    const defaultAllowedTypes = ['markdown', 'canvas', 'thino_view', 'meld-encrypted-view'];
     const types = defaultAllowedTypes;
     
     const viewType = view.getViewType();

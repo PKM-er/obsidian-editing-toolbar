@@ -970,5 +970,13 @@ body.auto-hide-header .workspace-tab-header-container + .workspace-tab-container
   transition: all 0.6s linear;
 }
  
+.setting-item:is(.custom_bg, .custom_font) .pickr-container {
+  display: flex;
+  gap: 8px;
+  position: relative;
+}
 
-
+.setting-item:is(.custom_bg, .custom_font) .pickr-container .picker {
+  width: 32px;
+  height: 32px;
+}

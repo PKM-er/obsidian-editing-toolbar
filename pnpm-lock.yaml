@@ -2,8 +2,8 @@ lockfileVersion: '6.0'
 
 dependencies:
   '@simonwep/pickr':
-    specifier: ^1.9.1
-    version: 1.9.1
+    specifier: https://github.com/nothingislost/pickr/archive/a17739f7aa1871b44da778cbb79ae76dae77d839.tar.gz
+    version: '@github.com/nothingislost/pickr/archive/a17739f7aa1871b44da778cbb79ae76dae77d839.tar.gz'
   feather-icons:
     specifier: ^4.29.2
     version: 4.29.2
@@ -308,13 +308,6 @@ packages:
       estree-walker: 2.0.2
       picomatch: 2.3.1
     dev: true
-
-  /@simonwep/pickr@1.9.1:
-    resolution: {integrity: sha512-fR3qmfAcPf/HSFS7GEnTmZLM3+xERv1+jyMBbzT63ilRRM8veYjI7ELvkHHKk0/du3lHp7uh/FqatjM3646X1g==}
-    dependencies:
-      core-js: 3.37.0
-      nanopop: 2.4.2
-    dev: false
 
   /@trysound/sax@0.2.0:
     resolution: {integrity: sha512-L7z9BgrNEcYyUYtF+HaEfiS5ebkh9jXqbszz7pC0hRBPaatV0XjSD3+eHrpqFemQfgwiFF0QPIarnIihIDn7OA==}
@@ -1016,11 +1009,6 @@ packages:
   /core-js@1.2.7:
     resolution: {integrity: sha512-ZiPp9pZlgxpWRu0M+YWbm6+aQ84XEfH1JRXvfOc/fILWI0VKhLC2LX13X1NYq4fULzLMq7Hfh43CSo2/aIaUPA==}
     deprecated: core-js@<3.23.3 is no longer maintained and not recommended for usage due to the number of issues. Because of the V8 engine whims, feature detection in old core-js versions could cause a slowdown up to 100x even if nothing is polyfilled. Some versions have web compatibility issues. Please, upgrade your dependencies to the actual version of core-js.
-    dev: false
-
-  /core-js@3.37.0:
-    resolution: {integrity: sha512-fu5vHevQ8ZG4og+LXug8ulUtVxjOcEYvifJr7L5Bfq9GOztVqsKd9/59hUk2ZSbCrS3BqUr3EpaYGIYzq7g3Ug==}
-    requiresBuild: true
     dev: false
 
   /core-js@3.40.0:
@@ -5019,3 +5007,12 @@ packages:
   /zip-object@0.1.0:
     resolution: {integrity: sha512-eujiZK9Z3F/WuswEIWqlaNUwUj67oRw4Op5a1VeKw4n9XBkV7EdxtgblroWBYvLmD7XqZ1cjqsbmE3jU43prTA==}
     dev: true
+
+  '@github.com/nothingislost/pickr/archive/a17739f7aa1871b44da778cbb79ae76dae77d839.tar.gz':
+    resolution: {tarball: https://github.com/nothingislost/pickr/archive/a17739f7aa1871b44da778cbb79ae76dae77d839.tar.gz}
+    name: '@simonwep/pickr'
+    version: 1.8.4
+    dependencies:
+      core-js: 3.40.0
+      nanopop: 2.4.2
+    dev: false

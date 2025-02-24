@@ -34,7 +34,7 @@
     "ts"
   ],
   "dependencies": {
-    "@simonwep/pickr": "^1.9.1",
+    "@simonwep/pickr": "https://github.com/nothingislost/pickr/archive/a17739f7aa1871b44da778cbb79ae76dae77d839.tar.gz",
     "feather-icons": "^4.29.2",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
