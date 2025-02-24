@@ -11,6 +11,7 @@ declare module 'obsidian' {
   }
 }
 export interface editingToolbarSettings {
+  lastVersion: string;
   cMenuWidth: number;
   cMenuFontColor: string;
   cMenuBackgroundColor: string;
@@ -37,6 +38,7 @@ export interface editingToolbarSettings {
 }
 
 export const DEFAULT_SETTINGS: editingToolbarSettings = {
+    "lastVersion": "0.0.0",
     "aestheticStyle": "default",
     "positionStyle": "top",
     "menuCommands": [

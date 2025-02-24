@@ -8,7 +8,7 @@ import { debounce } from "obsidian";
 import { GenNonDuplicateID } from "src/util/util";
 import { t } from 'src/translations/helper';
 import { ToolbarCommand } from './ToolbarSettings';
-
+import { UpdateNoticeModal } from "src/modals/updateModal";
 import Pickr from "@simonwep/pickr";
 import '@simonwep/pickr/dist/themes/nano.min.css';
 
@@ -19,6 +19,31 @@ interface SubmenuCommand {
   icon: string;
   SubmenuCommands: ToolbarCommand[];
 }
+
+interface SettingTab {
+  id: string;
+  name: string;
+  icon: string;
+}
+
+// 定义设置标签页
+const SETTING_TABS: SettingTab[] = [
+  {
+    id: 'general',
+    name: t('General'),
+    icon: 'gear'
+  },
+  {
+    id: 'appearance',
+    name: t('Appearance'),
+    icon: 'brush'
+  },
+  {
+    id: 'commands',
+    name: t('Commands'),
+    icon: 'command'
+  }
+];
 
 export function getPickrSettings(opts: {
   isView: boolean;
@@ -70,6 +95,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
   plugin: editingToolbarPlugin;
   appendMethod: string;
   pickrs: Pickr[] = [];
+  activeTab: string = 'general';
   constructor(app: App, plugin: editingToolbarPlugin) {
     super(app, plugin);
     this.plugin = plugin;
@@ -84,22 +110,54 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     this.destroyPickrs();
     const { containerEl } = this;
     containerEl.empty();
-    containerEl.createEl("h1", { text: "Obsidian Editing Toolbar" });
+    
+    // 保持现有的头部代码
+    this.createHeader(containerEl);
+    
+    // 创建标签页容器
+    const tabContainer = containerEl.createEl('div', {
+      cls: 'editing-toolbar-tabs'
+    });
 
-    containerEl.createEl("span", { text: "     作者： " }).createEl("a", {
-      text: "Cuman ✨",
-      href: "https://github.com/cumany",
+    // 创建标签页按钮
+    SETTING_TABS.forEach(tab => {
+      const tabButton = tabContainer.createEl('div', {
+        cls: `editing-toolbar-tab ${this.activeTab === tab.id ? 'active' : ''}`
+      });
+      
+      tabButton.createEl('span', { cls: `setting-editor-icon ${tab.icon}` });
+      tabButton.createEl('span', { text: tab.name });
+      
+      tabButton.addEventListener('click', () => {
+        this.activeTab = tab.id;
+        this.display();
+      });
     });
-    containerEl.createEl("span", { text: "     教程： " }).createEl("a", {
-      text: "pkmer.cn",
-      href: "https://pkmer.cn/show/20230329145815",
+
+    // 创建设置内容容器
+    const contentContainer = containerEl.createEl('div', {
+      cls: 'editing-toolbar-content'
     });
-    containerEl.createEl("h2", { text: t("Plugin Settings") });
+
+    // 根据当前激活的标签页显示对应设置
+    switch(this.activeTab) {
+      case 'general':
+        this.displayGeneralSettings(contentContainer);
+        break;
+      case 'appearance':
+        this.displayAppearanceSettings(contentContainer);
+        break;
+      case 'commands':
+        this.displayCommandSettings(contentContainer);
+        break;
+    }
+  }
+
+  // 拆分设置项到不同方法
+  private displayGeneralSettings(containerEl: HTMLElement): void {
     new Setting(containerEl)
       .setName(t('Editing Toolbar append method'))
-      .setDesc(
-        t('Choose where Editing Toolbar will append upon regeneration. To see the change, hit the refresh button below, or in the status bar menu.')
-      )
+      .setDesc(t('Choose where Editing Toolbar will append upon regeneration.'))
       .addDropdown((dropdown) => {
         let methods: Record<string, string> = {};
         APPEND_METHODS.map((method) => (methods[method] = method));
@@ -111,125 +169,167 @@ export class editingToolbarSettingTab extends PluginSettingTab {
             this.plugin.saveSettings();
           });
       });
-    new Setting(containerEl)
-      .setName(t('Editing Toolbar aesthetic')
-      )
-      .setDesc(
-        t('Choose between a glass morphism ,tiny and default style for Editing Toolbar. To see the change, hit the refresh button below, or in the status bar menu.')
-      )
-      .addDropdown((dropdown) => {
-        let aesthetics: Record<string, string> = {};
-        AESTHETIC_STYLES.map(
-          (aesthetic) => (aesthetics[aesthetic] = aesthetic)
-        );
-        dropdown.addOptions(aesthetics);
-        dropdown
-          .setValue(this.plugin.settings.aestheticStyle)
-          .onChange((aestheticStyle: string) => {
-            this.plugin.settings.aestheticStyle = aestheticStyle;
-            this.plugin.saveSettings();
-            setTimeout(() => {
-              dispatchEvent(new Event("editingToolbar-NewCommand"));
-            }, 100);
-          });
-      });
-    new Setting(containerEl)
-      .setName(t('Editing Toolbar position')
-      )
-      .setDesc(t('Choose between fixed position or cursor following mode.')
-      )
-      .addDropdown((dropdown) => {
-        let posotions: Record<string, string> = {};
-        POSITION_STYLES.map((posotion: string) => (posotions[posotion] = posotion));
-        dropdown.addOptions(posotions);
-        dropdown
-          .setValue(this.plugin.settings.positionStyle)
-          .onChange((positionStyle: string) => {
-            this.plugin.settings.positionStyle = positionStyle;
-            this.plugin.saveSettings();
-            dispatchEvent(new Event("editingToolbar-NewCommand"));
-          });
-      });
-    if (this.plugin.settings.positionStyle == "top") {
-      new Setting(containerEl)
-        .setName(t('Editing Toolbar Auto-hide')
-        )
-        .setDesc(
-          t('The toolbar is displayed when the mouse moves over it, otherwise it is automatically hidden')
-        )
-        .addToggle(toggle => toggle.setValue(this.plugin.settings?.autohide)
-          .onChange((value) => {
-            this.plugin.settings.autohide = value;
-            this.plugin.saveSettings();
-            setTimeout(() => {
-              this.display();
-              dispatchEvent(new Event("editingToolbar-NewCommand"));
-            }, 100);
-          }));
-    }
-    if (this.plugin.settings.positionStyle == "fixed") {
-      new Setting(containerEl)
-        .setName(t('Editing Toolbar columns')
-        )
-        .setDesc(
-          t('Choose the number of columns per row to display on Editing Toolbar. To see the change, hit the refresh button below, or in the status bar menu.')
-        )
-        .addSlider((slider) => {
-          slider
-            .setLimits(1, 32, 1)
-            .setValue(this.plugin.settings.cMenuNumRows)
-            .onChange(
-              debounce(
-                async (value: number) => {
-                  this.plugin.settings.cMenuNumRows = value;
-                  await this.plugin.saveSettings();
-                },
-                100,
-                true
-              )
-            )
-            .setDynamicTooltip();
-        });
-    }
 
-
+    // Mobile setting
     new Setting(containerEl)
-      .setName(t('Mobile enabled or not')
-      )
-      .setDesc(
-        t("Whether to enable on mobile devices with device width less than 768px, the default is disable.")
-      )
+      .setName(t('Mobile enabled or not'))
+      .setDesc(t("Whether to enable on mobile devices with device width less than 768px"))
       .addToggle(toggle => toggle.setValue(this.plugin.settings?.isLoadOnMobile ?? false)
         .onChange((value) => {
           this.plugin.settings.isLoadOnMobile = value;
           this.plugin.saveSettings();
-          setTimeout(() => {
-            dispatchEvent(new Event("editingToolbar-NewCommand"));
-          }, 100);
+          this.triggerRefresh();
         }));
+  }
+
+  private displayAppearanceSettings(containerEl: HTMLElement): void {
+    // Aesthetic style setting
     new Setting(containerEl)
-      .setName(t('Editing Toolbar refresh')
-      )
-      .setDesc(
-        t("Editing Toolbar will only refresh automatically after you have either added or deleted a command from it. To see UI changes to editingToolbar (above settings changes) use the refresh button. If you forget to refresh in settings, no worries. There is also a refresh button in the editingToolbar status bar menu.")
-      )
-      .addButton((reloadButton) => {
-        reloadButton
-          .setIcon("editingToolbarReload")
-          .setClass("editingToolbarSettingsButton")
-          .setClass("editingToolbarSettingsButtonRefresh")
-          .setTooltip(t("Refresh"))
-          .onClick(() => {
-            setTimeout(() => {
-              dispatchEvent(new Event("editingToolbar-NewCommand"));
-            }, 100);
-            console.log(`%ceditingToolbar refreshed`, "color: Violet");
+      .setName(t('Editing Toolbar aesthetic'))
+      .setDesc(t('Choose between a glass morphism, tiny and default style'))
+      .addDropdown((dropdown) => {
+        let aesthetics: Record<string, string> = {};
+        AESTHETIC_STYLES.map((aesthetic) => (aesthetics[aesthetic] = aesthetic));
+        dropdown
+          .addOptions(aesthetics)
+          .setValue(this.plugin.settings.aestheticStyle)
+          .onChange((value) => {
+            this.plugin.settings.aestheticStyle = value;
+            this.plugin.saveSettings();
+            this.triggerRefresh();
           });
       });
 
-    let isView: true;
+    // Position style setting
+    new Setting(containerEl)
+      .setName(t('Editing Toolbar position'))
+      .setDesc(t('Choose between fixed position or cursor following mode'))
+      .addDropdown((dropdown) => {
+        let positions: Record<string, string> = {};
+        POSITION_STYLES.map((position) => (positions[position] = position));
+        dropdown
+          .addOptions(positions)
+          .setValue(this.plugin.settings.positionStyle)
+          .onChange((value) => {
+            this.plugin.settings.positionStyle = value;
+            if(value == "top") this.plugin.settings.aestheticStyle = "glass";
+            if(value == "fixed") this.plugin.settings.aestheticStyle = "default";
+            if(value == "following") this.plugin.settings.aestheticStyle = "tiny";
+            this.plugin.saveSettings();
+            this.triggerRefresh();
+          });
+      });
+      if (this.plugin.settings.positionStyle == "top") {
+        
+        new Setting(containerEl)
+          .setName(t('Editing Toolbar Auto-hide')
+          )
+          .setDesc(
+            t('The toolbar is displayed when the mouse moves over it, otherwise it is automatically hidden')
+          )
+          .addToggle(toggle => toggle.setValue(this.plugin.settings?.autohide)
+            .onChange((value) => {
+              this.plugin.settings.autohide = value;
+              this.plugin.saveSettings();
+              this.triggerRefresh();
+            }));
+      }
+      if (this.plugin.settings.positionStyle == "fixed") {
+        new Setting(containerEl)
+          .setName(t('Editing Toolbar columns')
+          )
+          .setDesc(
+            t('Choose the number of columns per row to display on Editing Toolbar. To see the change, hit the refresh button below, or in the status bar menu.')
+          )
+          .addSlider((slider) => {
+            slider
+              .setLimits(1, 32, 1)
+              .setValue(this.plugin.settings.cMenuNumRows)
+              .onChange(
+                debounce(
+                  async (value: number) => {
+                    this.plugin.settings.cMenuNumRows = value;
+                    await this.plugin.saveSettings();
+                  },
+                  100,
+                  true
+                )
+              )
+              .setDynamicTooltip();
+          });
+      }
+    // Color settings
+    this.createColorSettings(containerEl);
+  }
 
+  private displayCommandSettings(containerEl: HTMLElement): void {
+    new Setting(containerEl)
+      .setName(t('Editing Toolbar commands'))
+      .setDesc(t("Add a command onto Editing Toolbar from Obsidian's commands library. To reorder the commands, drag and drop the command items. To delete them, use the delete buttom to the right of the command item. Editing Toolbar will not automaticaly refresh after reordering commands. Use the refresh button above."))
+      .addButton((addButton) => {
+        addButton
+          .setIcon("plus")
+          .setTooltip(t("Add"))
+          .onClick(() => {
+            new CommandPicker(this.plugin).open();
+            this.triggerRefresh();
+          });
+      });
 
+    // 现有的命令列表代码
+    this.createCommandList(containerEl);
+  }
+
+  // 工具方法
+  private triggerRefresh(): void {
+    setTimeout(() => {
+      dispatchEvent(new Event("editingToolbar-NewCommand"));
+    }, 100);
+  }
+
+  private createHeader(containerEl: HTMLElement): void {
+    const headerContainer = containerEl.createEl("div", {
+      cls: "editing-toolbar-header"
+    });
+    
+    // 创建左侧标题容器
+    const titleContainer = headerContainer.createEl("div", {
+      cls: "editing-toolbar-title-container"
+    });
+    
+    titleContainer.createEl("h1", { 
+      text: "Obsidian Editing Toolbar:"+this.plugin.manifest.version,
+      cls: "editing-toolbar-title" 
+    });
+    
+    // 创建右侧信息容器
+    const infoContainer = headerContainer.createEl("div", {
+      cls: "editing-toolbar-info"
+    });
+    
+    infoContainer.createEl("span", { text: "作者：" }).createEl("a", {
+      text: "Cuman ✨",
+      href: "https://github.com/cumany",
+    });
+    infoContainer.createEl("span", { text: "  教程：" }).createEl("a", {
+      text: "pkmer.cn",
+      href: "https://pkmer.cn/show/20230329145815",
+    });
+    
+    // 添加修复按钮
+    new Setting(infoContainer)
+      .setClass("editing-toolbar-fix-button")
+      .addButton((fixButton) => {
+        fixButton
+          .setIcon("wrench")
+          .setTooltip(t("Fix"))
+          .onClick(() => {
+            new UpdateNoticeModal(this.app, this.plugin).open();
+          });
+      });
+  }
+
+  private createColorSettings(containerEl: HTMLElement): void {
     new Setting(containerEl)
       .setName(t('🎨 Set custom background'))
       .setDesc(t('Click on the picker to adjust the colour'))
@@ -295,26 +395,9 @@ export class editingToolbarSettingTab extends PluginSettingTab {
           this.pickrs.push(pickr);
         }
       });
+  }
 
-    new Setting(containerEl)
-      .setName(t('Editing Toolbar commands')
-      )
-      .setDesc(
-        t("Add a command onto Editing Toolbar from Obsidian's commands library. To reorder the commands, drag and drop the command items. To delete them, use the delete buttom to the right of the command item. Editing Toolbar will not automaticaly refresh after reordering commands. Use the refresh button above.")
-      )
-      .addButton((addButton) => {
-        addButton
-          .setIcon("editingToolbarAdd")
-          .setTooltip(t("Add"))
-          .setClass("editingToolbarSettingsButton")
-          .setClass("editingToolbarSettingsButtonAdd")
-          .onClick(() => {
-            new CommandPicker(this.plugin).open();
-            setTimeout(() => {
-              dispatchEvent(new Event("editingToolbar-NewCommand"));
-            }, 100);
-          });
-      });
+  private createCommandList(containerEl: HTMLElement): void {
     const editingToolbarCommandsContainer = containerEl.createEl("div", {
       cls: "editingToolbarSettingsTabsContainer",
     });
@@ -332,6 +415,17 @@ export class editingToolbarSettingTab extends PluginSettingTab {
       swapThreshold: 0.7,
       fallbackClass: "sortable-fallback",
       easing: "cubic-bezier(1, 0, 0, 1)",
+      delay: 300,
+      delayOnTouchOnly: true,
+      touchStartThreshold: 5,
+      onChoose: function (evt) {
+        const item = evt.item;
+        item.classList.add('sortable-chosen-feedback');
+      },
+      onUnchoose: function (evt) {
+        const item = evt.item;
+        item.classList.remove('sortable-chosen-feedback');
+      },
       onSort: (command) => {
         if (command.from.className === command.to.className) {
           const arrayResult = this.plugin.settings.menuCommands;
@@ -346,7 +440,6 @@ export class editingToolbarSettingTab extends PluginSettingTab {
       onStart: function (evt) {
         dragele = evt.item.className;
       },
-
     });
 
 
@@ -611,10 +704,6 @@ export class editingToolbarSettingTab extends PluginSettingTab {
       }
       //    setting.nameEl;
     });
-
-
-
-
   }
 
   private setupPickrEvents(pickr: Pickr, settingKey: string) {

@@ -32,7 +32,7 @@ import { t } from "src/translations/helper";
 
 
 import { ViewUtils } from 'src/util/viewUtils';
-
+import { UpdateNoticeModal } from "src/modals/updateModal";
 
 
 let activeDocument: Document;
@@ -97,11 +97,6 @@ export default class editingToolbarPlugin extends Plugin {
       icon: "lucide-sigma-square",
     },
     {
-      id: "editor:toggle-inline-math",
-      name: "Inline math",
-      icon: "lucide-sigma",
-    },
-    {
       id: "editor:insert-table",
       name: "Insert Table",
       icon: "lucide-table",
@@ -142,7 +137,9 @@ export default class editingToolbarPlugin extends Plugin {
   Leaf_Width: number;
 
   async onload(): Promise<void> {
-    console.log("editingToolbar v" + this.manifest.version + " loaded");
+    const currentVersion = this.manifest.version; // 设置当前版本号
+    console.log("editingToolbar v" + currentVersion + " loaded");
+
 
     requireApiVersion("0.15.0") ? activeDocument = activeWindow.document : activeDocument = window.document;
     await this.loadSettings();
@@ -162,7 +159,16 @@ export default class editingToolbarPlugin extends Plugin {
           this.init_evt(leaf.doc);
         });
       }
-
+      const lastVersion = this.settings?.lastVersion || '0.0.0';
+      if (lastVersion !== currentVersion) {
+          // 显示更新提示
+          new UpdateNoticeModal(this.app, this).open();
+          
+          // 更新版本号
+          this.settings.lastVersion = currentVersion;
+          await this.saveSettings();
+      }
+      
       const isThinoEnabled = app.plugins.enabledPlugins.has("obsidian-memos");
       if(isThinoEnabled) {
         // @ts-ignore - 自定义事件
@@ -412,6 +418,19 @@ export default class editingToolbarPlugin extends Plugin {
         return editor?.toggleMarkdownFormatting("strikethrough");
       }),
       icon: "strikethrough-glyph"
+
+    });
+    this.addCommand({
+      id: 'toggle-inline-math',
+      name: 'Inline math',
+      callback: () => executeCommandWithoutBlur(() => {
+        //const activeLeaf = this.app.workspace.getActiveViewOfType(MarkdownView);
+        //const view = activeLeaf;
+        const editor = app.workspace.activeLeaf.view?.editor;
+        // @ts-ignore - 使用扩展类型
+        return editor?.toggleMarkdownFormatting("math");
+      }),
+      icon: "lucide-sigma"
 
     });
     this.addCommand({

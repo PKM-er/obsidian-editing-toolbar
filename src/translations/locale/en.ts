@@ -41,5 +41,15 @@ export default {
 'Mobile enabled or not':'Mobile enabled or not',
 'Whether to enable the plugin for the mobile client, the default is enabled.':'Whether to enable the plugin for the mobile client, the default is enabled.',
 'Whether to enable on mobile devices with device width less than 768px, the default is disable.':  'Whether to enable on mobile devices with device width less than 768px, the default is disable.',
-'Reset':'Reset'
+'Reset':'Reset',
+'Fix':'Fix',
+'Fix Editing Toolbar':'Fix Editing Toolbar',
+'General':'General',
+'Appearance':'Appearance',
+'Commands':'Commands',
+'Choose between fixed position or cursor following mode':'Choose between fixed position , cursor following  or Top mode .',
+'Add and manage commands':'Add and manage commands',
+'Choose where Editing Toolbar will append upon regeneration.':'Choose where Editing Toolbar will append upon regeneration.',
+'Whether to enable on mobile devices with device width less than 768px':'Whether to enable on mobile devices with device width less than 768px',
+'Choose between a glass morphism, tiny and default style':'Choose between a glass morphism, tiny and default style',
 };

@@ -41,5 +41,15 @@ export default {
   'Click on the picker to adjust the colour':'点击选取器来调整颜色',
   'Mobile enabled or not': '是否在移动端启用',
   'Whether to enable on mobile devices with device width less than 768px, the default is disable.':'是否在设备宽度小于768的移动设备启用。默认不启用',
-  'Reset':'重置'
-};
+  'Reset':'重置',
+  'Fix':'修复',
+  'Fix Editing Toolbar':'修复工具栏',
+  'General':'常规',
+  'Appearance':'外观',
+  'Commands':'命令',
+  'Choose between fixed position or cursor following mode':'选择固定位置或者光标跟随模式',
+  'Add and manage commands':'添加和管理命令',
+  'Choose where Editing Toolbar will append upon regeneration.':'选择工具栏在Obsidian中的追加的位置。',
+  'Whether to enable on mobile devices with device width less than 768px':'是否在移动设备中启用。默认不启用',
+  'Choose between a glass morphism, tiny and default style':'选择毛玻璃,简约和默认风格',
+  };
