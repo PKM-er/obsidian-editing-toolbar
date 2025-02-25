@@ -2,7 +2,7 @@ import type editingToolbarPlugin from "src/plugin/main";
 import { appIcons } from "src/icons/appIcons";
 import { Notice, Command, setIcon, FuzzyMatch, FuzzySuggestModal, Modal, SliderComponent, TextAreaComponent, TextComponent, debounce, App } from "obsidian";
 import { findmenuID } from "src/util/util";
-import { setBottomValue } from "src/util/statusBarConstants";
+import { setBottomValue, setHorizontalValue } from "src/util/statusBarConstants";
 import { t } from "src/translations/helper";
 
 export class ChooseFromIconList extends FuzzySuggestModal<string> {
@@ -227,79 +227,104 @@ export class ChangeCmdname extends Modal {
 
 export class openSlider extends Modal {
   plugin: editingToolbarPlugin;
+  private needSave: boolean = false;
+
   constructor(app: App, plugin: editingToolbarPlugin) {
     super(plugin.app);
     this.plugin = plugin;
     this.containerEl.addClass("editingToolbar-Modal");
   }
+
   onOpen() {
     const { contentEl } = this;
     contentEl.createEl("p", { text: t("Drag the slider to move the position") });
-    
+
     // 创建一个容器来放置滑动条和按钮
     const containerEl = contentEl.createDiv({ cls: "slider-container" });
-    
-    if (this.plugin.settings.positionStyle == "top") {
-      let topem = (this.plugin.settings.cMenuBottomValue - 4.25)*5;
-      const slider = new SliderComponent(containerEl)
-        .setLimits(-40, 80, 0.5)
-        .setValue(topem)
-        .onChange(debounce(async (value) => {
-          console.log(`%c${value}px`, "color: Violet");
-          this.plugin.settings.cMenuBottomValue = value/5 + 4.25;
-          setBottomValue(this.plugin.settings);
-          await this.plugin.saveSettings();
-          setTimeout(() => {
-            dispatchEvent(new Event("editingToolbar-NewCommand"));
-          }, 100);
-        }, 100, true))
-        .setDynamicTooltip();
 
-      // 添加复位按钮
-      containerEl.createEl("button", {
-        text: t("Reset"),
-        cls: "reset-button"
-      }).addEventListener("click", async () => {
-        slider.setValue(0);
-        this.plugin.settings.cMenuBottomValue = 4.25;
+    // 创建垂直位置控制区域
+    const verticalContainer = containerEl.createDiv({ cls: "vertical-slider-container" });
+    verticalContainer.createEl("p", { text: t("Vertical Position") });
+
+    // 创建水平位置控制区域
+    const horizontalContainer = containerEl.createDiv({ cls: "horizontal-slider-container" });
+    horizontalContainer.createEl("p", { text: t("Horizontal Position") });
+      // 添加列数控制区域
+      const columnsContainer = containerEl.createDiv({ cls: "columns-slider-container" });
+      columnsContainer.createEl("p", { text: t("Editing Toolbar columns") });
+    // 获取body容器的高度和宽度
+    const bodyHeight = document.body.clientHeight;
+    const bodyWidth = document.body.clientWidth;
+
+    // 根据容器尺寸计算滑块范围
+    const verticalMax = Math.floor(bodyHeight / 3);
+    const verticalMin = -Math.floor(bodyHeight);
+    const horizontalMax = Math.floor(bodyWidth / 2);
+    const horizontalMin = -Math.floor(bodyWidth / 2);
+    // let topem = (this.plugin.settings.cMenuBottomValue - 4.25)*5;
+    const verticalSlider = new SliderComponent(verticalContainer)
+      .setLimits(verticalMin, verticalMax, 5)
+      .setValue(this.plugin.settings.verticalPosition || 0)
+      .onChange(debounce((value) => {
+        this.needSave = true;
+        this.plugin.settings.verticalPosition = value;
         setBottomValue(this.plugin.settings);
+      }, 100, true))
+      .setDynamicTooltip();
+
+    // 添加水平滑动条
+    const horizontalSlider = new SliderComponent(horizontalContainer)
+      .setLimits(horizontalMin, horizontalMax, 10)
+      .setValue(this.plugin.settings.horizontalPosition || 0)
+      .onChange(debounce((value) => {
+        this.needSave = true;
+        this.plugin.settings.horizontalPosition = value;
+        setHorizontalValue(this.plugin.settings);
+      }, 100, true))
+      .setDynamicTooltip();
+    // 添加列数滑动条
+    const columnsSlider = new SliderComponent(columnsContainer)
+      .setLimits(1, 32, 1)
+      .setValue(this.plugin.settings.cMenuNumRows || 12)
+      .onChange(debounce(async (value) => {
+        this.needSave = true;
+        this.plugin.settings.cMenuNumRows = value;
         await this.plugin.saveSettings();
         setTimeout(() => {
           dispatchEvent(new Event("editingToolbar-NewCommand"));
         }, 100);
-      });
-    } else {
-      const slider = new SliderComponent(containerEl)
-        .setLimits(-12, 40, 0.25)
-        .setValue(this.plugin.settings.cMenuBottomValue)
-        .onChange(debounce(async (value) => {
-          console.log(`%c${value}em`, "color: Violet");
-          this.plugin.settings.cMenuBottomValue = value;
-          setBottomValue(this.plugin.settings);
-          await this.plugin.saveSettings();
-          setTimeout(() => {
-            dispatchEvent(new Event("editingToolbar-NewCommand"));
-          }, 100);
-        }, 100, true))
-        .setDynamicTooltip();
+      }, 100, true))
+      .setDynamicTooltip();
 
-      // 添加复位按钮
-      containerEl.createEl("button", {
-        text: t("Reset"),
-        cls: "reset-button"
-      }).addEventListener("click", async () => {
-        slider.setValue(4);
-        this.plugin.settings.cMenuBottomValue = 4;
-        setBottomValue(this.plugin.settings);
-        await this.plugin.saveSettings();
-        setTimeout(() => {
-          dispatchEvent(new Event("editingToolbar-NewCommand"));
-        }, 100);
-      });
-    }
+
+    // 添加复位按钮容器
+    const resetContainer = containerEl.createDiv({ cls: "reset-container" });
+
+    // 复位按钮
+    resetContainer.createEl("button", {
+      text: t("Reset"),
+      cls: "reset-button"
+    }).addEventListener("click", () => {
+      this.needSave = true;
+      verticalSlider.setValue(0);
+      horizontalSlider.setValue(0);
+      columnsSlider.setValue(12);
+      this.plugin.settings.verticalPosition = 0;
+      this.plugin.settings.horizontalPosition = 0;
+      this.plugin.settings.cMenuNumRows = 12;
+      setBottomValue(this.plugin.settings);
+      setHorizontalValue(this.plugin.settings);
+
+    });
   }
-  onClose() {
+
+  async onClose() {
     const { contentEl } = this;
     contentEl.empty();
+
+    // 只有在有修改时才保存设置
+    if (this.needSave) {
+      await this.plugin.saveSettings();
+    }
   }
 };

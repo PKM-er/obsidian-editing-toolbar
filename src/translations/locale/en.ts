@@ -52,4 +52,13 @@ export default {
 'Choose where Editing Toolbar will append upon regeneration.':'Choose where Editing Toolbar will append upon regeneration.',
 'Whether to enable on mobile devices with device width less than 768px':'Whether to enable on mobile devices with device width less than 768px',
 'Choose between a glass morphism, tiny and default style':'Choose between a glass morphism, tiny and default style',
+'Refresh Toolbar':'Refresh Toolbar',
+'Add Command':'Add Command',
+'Settings':'Settings',
+'Position Style':'Position Style',
+'Columns':'Columns',
+'Drag to Adjust Position':'Drag to Adjust Position',
+'Vertical Position':'Vertical Position',
+'Horizontal Position':'Horizontal Position',
+'Toolbar Position':'Toolbar Position',
 };

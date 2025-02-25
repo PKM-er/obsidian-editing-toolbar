@@ -35,6 +35,8 @@ export interface editingToolbarSettings {
   custom_fc4:string;
   custom_fc5:string;
   isLoadOnMobile:boolean;
+  horizontalPosition: number;
+  verticalPosition: number;
 }
 
 export const DEFAULT_SETTINGS: editingToolbarSettings = {
@@ -340,4 +342,6 @@ export const DEFAULT_SETTINGS: editingToolbarSettings = {
     "custom_fc4": "#6425D0",
     "custom_fc5": "#646A73",
     "isLoadOnMobile": false,
+    horizontalPosition: 0,
+    verticalPosition: 0,
   }

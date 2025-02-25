@@ -33,6 +33,7 @@ import { t } from "src/translations/helper";
 
 import { ViewUtils } from 'src/util/viewUtils';
 import { UpdateNoticeModal } from "src/modals/updateModal";
+import { StatusBar } from "src/components/StatusBar";
 
 
 let activeDocument: Document;
@@ -42,6 +43,7 @@ export default class editingToolbarPlugin extends Plugin {
   app: App;
   settings: editingToolbarSettings;
   statusBarIcon: HTMLElement;
+  statusBar: StatusBar;
  
 
   modCommands: Command[] = [
@@ -149,9 +151,8 @@ export default class editingToolbarPlugin extends Plugin {
     // addRemixIcconsole.log();ons(appIcons);
     this.generateCommands();
     this.app.workspace.onLayoutReady(() => {
-      setTimeout(() => {
-        this.setupStatusBar();
-      });
+      this.statusBar = new StatusBar(this);
+      this.statusBar.init();
     });
       this.init_evt(activeDocument);
       if (requireApiVersion("0.15.0")) {
@@ -184,7 +185,7 @@ export default class editingToolbarPlugin extends Plugin {
         }, 100)
       }
 
-  
+   
   }
 
   isLoadMobile() {
@@ -213,7 +214,6 @@ export default class editingToolbarPlugin extends Plugin {
 
       if (!this.isView()) return;
 
-      // @ts-ignore - 使用 obsidian-ex.d.ts 中的扩展类型
       let cmEditor = app.workspace.activeLeaf.view?.editor;
       if (cmEditor?.hasFocus()) {
         let editingToolbarModalBar = isExistoolbar(this.app, this.settings);
@@ -732,91 +732,6 @@ export default class editingToolbarPlugin extends Plugin {
     });
   }
 
-  setupStatusBar() {
-    addIcons();
-    this.statusBarIcon = this.addStatusBarItem();
-    this.statusBarIcon.addClass("editingToolbar-statusbar-button");
-    setIcon(this.statusBarIcon, "editingToolbar");
-
-    this.registerDomEvent(this.statusBarIcon, "click", () => {
-      const statusBarRect =
-        this.statusBarIcon.parentElement.getBoundingClientRect();
-      const statusBarIconRect = this.statusBarIcon.getBoundingClientRect();
-
-      const menu = new Menu().addItem((item) => {
-        item.setTitle(t("Hide & Show"));
-        requireApiVersion("0.15.0") ? item.setSection("settings") : true;
-        const itemDom = (item as any).dom as HTMLElement;
-        const toggleComponent = new ToggleComponent(itemDom)
-          .setValue(this.settings.cMenuVisibility)
-          .setDisabled(true);
-
-        const toggle = async () => {
-          this.settings.cMenuVisibility = !this.settings.cMenuVisibility;
-          toggleComponent.setValue(this.settings.cMenuVisibility);
-          this.settings.cMenuVisibility == true
-            ? setTimeout(() => {
-              dispatchEvent(new Event("editingToolbar-NewCommand"));
-            }, 100)
-            : setMenuVisibility(this.settings.cMenuVisibility);
-          selfDestruct();
-          await this.saveSettings();
-        };
-
-        item.onClick((e) => {
-          e.preventDefault();
-          e.stopImmediatePropagation();
-          toggle();
-        });
-      });
-
-      const menuDom = (menu as any).dom as HTMLElement;
-      menuDom.addClass("editingToolbar-statusbar-menu");
-
-
-      menu.addItem((item) => {
-
-        item.setIcon("editingToolbarAdd");
-        requireApiVersion("0.15.0") ? item.setSection("ButtonAdd") : true;
-        item.onClick(() => {
-          new CommandPicker(this).open();
-        });
-      });
-
-
-      menu.addItem((item) => {
-
-        item.setIcon("editingToolbarReload");
-        requireApiVersion("0.15.0") ? item.setSection("ButtonAdd") : true;
-
-        item.onClick(() => {
-          setTimeout(() => {
-            dispatchEvent(new Event("editingToolbar-NewCommand"));
-          }, 100);
-          console.log(`%ceditingToolbar refreshed`, "color: Violet");
-        });
-      });
-
-
-      menu.addItem((item) => {
-
-        item.setIcon("sliders")
-        requireApiVersion("0.15.0") ? item.setSection("ButtonAdd") : true;
-        item.onClick(() => {
-
-          new openSlider(this.app, this).open();
-        });
-      });
-
-
-
-      menu.showAtPosition({
-        x: statusBarIconRect.right + 5,
-        y: statusBarRect.top - 5,
-      });
-    });
-  }
-
   onunload(): void {
     selfDestruct();
     console.log("editingToolbar unloaded");
@@ -837,6 +752,7 @@ export default class editingToolbarPlugin extends Plugin {
   handleeditingToolbar = () => {
     if (this.settings.cMenuVisibility == true) {
       const view = this.app.workspace.getActiveViewOfType(ItemView);
+ 
       let toolbar = isExistoolbar(this.app, this.settings);
 
       if (toolbar) {

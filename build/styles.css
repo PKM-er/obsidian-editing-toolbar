@@ -336,12 +336,12 @@ div.modal-container.editingToolbar-Modal:not(.changename) .modal-bg {
 
 .modal-container.editingToolbar-Modal:not(.changename) .modal {
   padding: 10px 30px;
-  min-width: 130px;
+  min-width: 80px;
   position: absolute;
   bottom: 2em;
   right: 0.5em;
-  background-color: rgb(var(--mono-rgb-0), 0.8);
-  backdrop-filter: blur(4px);
+  background-color: rgb(var(--mono-rgb-0), 0.6);
+  backdrop-filter: blur(2px);
 }
 
 .modal-container.editingToolbar-Modal .modal-title {

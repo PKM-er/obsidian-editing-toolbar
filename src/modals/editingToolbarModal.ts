@@ -1,11 +1,10 @@
 import type editingToolbarPlugin from "src/plugin/main";
 import { App, Notice, requireApiVersion, ItemView,MarkdownView, ButtonComponent, WorkspaceParent, WorkspaceWindow, WorkspaceParentExt } from "obsidian";
-import { setBottomValue } from "src/util/statusBarConstants";
 import { backcolorpicker, colorpicker } from "src/util/util";
 import { t } from "src/translations/helper";
 import { editingToolbarSettings } from "src/settings/settingsData";
 import { ViewUtils } from 'src/util/viewUtils';
-
+import { setBottomValue, setHorizontalValue } from "src/util/statusBarConstants";
 let activeDocument: Document;
 
 export function getRootSplits(): WorkspaceParentExt[] {
@@ -293,7 +292,7 @@ export function setBackgroundcolor(app: App, color: string) {
     }
     editor.replaceSelection(selectText);
     editor.exec("goRight");
-    //@ts-ignore
+    
     app.commands.executeCommandById("editor:focus");
 
 }
@@ -433,7 +432,7 @@ export function setFormateraser(app: App, plugin: editingToolbarPlugin) {
 
       // selectText = selectText.replace(/(\r*\n)+/mg, "\r\n");
       editor.replaceSelection(selectText);
-      //@ts-ignore
+      
       app.commands.executeCommandById("editor:focus");
 
     }
@@ -506,24 +505,17 @@ export function editingToolbarPopover(app: App, plugin: editingToolbarPlugin): v
       let editingToolbar = createEl("div");
       if (editingToolbar) {
         if (settings.positionStyle == "top") {
-          let topem = (settings.cMenuBottomValue - 4.25) * 5;
           editingToolbar.setAttribute(
             "style",
-            `position: relative; grid-template-columns: repeat(auto-fit, minmax(28px, 1fr));top: ${topem
-            }px;`
+            `position: relative; grid-template-columns: repeat(auto-fit, minmax(28px, 1fr));`
           );
           editingToolbar.className += " top";
           if (settings.autohide)
           {
             editingToolbar.className += " autohide";
           }
-        } else {
-          editingToolbar.setAttribute(
-            "style",
-            `left: calc(50% - calc(${editingToolbar.offsetWidth
-            }px / 2)); bottom: ${settings.cMenuBottomValue
-            }em; grid-template-columns: ${"1fr ".repeat(settings.cMenuNumRows)}`
-          );
+        } else if (settings.positionStyle == "following") {
+          editingToolbar.style.visibility = "hidden" 
         }
       }
       editingToolbar.setAttribute("id", "editingToolbarModalBar");
@@ -629,7 +621,7 @@ export function editingToolbarPopover(app: App, plugin: editingToolbarPlugin): v
                   .setTooltip(tip)
                   .setClass("menu-item")
                   .onClick(() => {
-                    //@ts-ignore
+                    
                     app.commands.executeCommandById(subitem.id);
 
                     if (settings.cMenuVisibility == false)
@@ -662,7 +654,7 @@ export function editingToolbarPopover(app: App, plugin: editingToolbarPlugin): v
               .setClass("editingToolbarCommandsubItem-font-color")
               .setTooltip(t("Font Colors"))
               .onClick(() => {
-                //@ts-ignore
+                
                 app.commands.executeCommandById(item.id);
                 if (settings.cMenuVisibility == false)
                   editingToolbar.style.visibility = "hidden";
@@ -714,8 +706,19 @@ export function editingToolbarPopover(app: App, plugin: editingToolbarPlugin): v
                     app.setting.open();
                     app.setting.openTabById("editing-toolbar");
                     setTimeout(() => {
-                      let settingEI = app.setting.activeTab.containerEl.querySelector(".custom_font")
-                      if (settingEI) { settingEI.addClass?.("toolbar-cta"); }
+                      // 获取标签页容器
+                      const tabsContainer = app.setting.activeTab.containerEl.querySelector(".editing-toolbar-tabs");
+                      if (tabsContainer) {
+                        // 获取第二个标签页按钮(appearance)并触发点击
+                        const appearanceTab = tabsContainer.children[1] as HTMLElement;
+                        appearanceTab?.click();
+                        
+                        // 等待标签页切换完成后定位到颜色设置
+                        setTimeout(() => {
+                          let settingEI = app.setting.activeTab.containerEl.querySelector(".custom_font");
+                          if (settingEI) { settingEI.addClass?.("toolbar-cta"); }
+                        }, 100);
+                      }
                     }, 200);
 
                   });
@@ -726,7 +729,7 @@ export function editingToolbarPopover(app: App, plugin: editingToolbarPlugin): v
               .setClass("editingToolbarCommandsubItem-font-color")
               .setTooltip(t("Background color"))
               .onClick(() => {
-                //@ts-ignore
+                
                 app.commands.executeCommandById(item.id);
                 if (settings.cMenuVisibility == false)
                   editingToolbar.style.visibility = "hidden";
@@ -778,8 +781,19 @@ export function editingToolbarPopover(app: App, plugin: editingToolbarPlugin): v
                     app.setting.open();
                     app.setting.openTabById("editing-toolbar");
                     setTimeout(() => {
-                      let settingEI = app.setting.activeTab.containerEl.querySelector(".custom_bg")
-                      if (settingEI) { settingEI.addClass?.("toolbar-cta"); }
+                      // 获取标签页容器
+                      const tabsContainer = app.setting.activeTab.containerEl.querySelector(".editing-toolbar-tabs");
+                      if (tabsContainer) {
+                        // 获取第二个标签页按钮(appearance)并触发点击
+                        const appearanceTab = tabsContainer.children[1] as HTMLElement;
+                        appearanceTab?.click();
+                        
+                        // 等待标签页切换完成后定位到颜色设置
+                        setTimeout(() => {
+                          let settingEI = app.setting.activeTab.containerEl.querySelector(".custom_bg");
+                          if (settingEI) { settingEI.addClass?.("toolbar-cta"); }
+                        }, 100);
+                      }
                     }, 200);
 
                   });
@@ -796,7 +810,6 @@ export function editingToolbarPopover(app: App, plugin: editingToolbarPlugin): v
             let hotkey = getHotkey(app, item.id);
             hotkey == "–" ? tip = item.name : tip = item.name + "(" + hotkey + ")";
             button.setTooltip(tip).onClick(() => {
-              //@ts-ignore
               app.commands.executeCommandById(item.id);
               if (settings.cMenuVisibility == false)
                 editingToolbar.style.visibility = "hidden";
@@ -852,8 +865,8 @@ export function editingToolbarPopover(app: App, plugin: editingToolbarPlugin): v
 
       generateMenu();
 
-      setBottomValue(settings);
-
+      setHorizontalValue(plugin.settings);
+      setBottomValue(plugin.settings);
       setsvgColor(settings.cMenuFontColor, settings.cMenuBackgroundColor)
 
     } else {

@@ -257,6 +257,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
               )
               .setDynamicTooltip();
           });
+          
       }
     // Color settings
     this.createColorSettings(containerEl);
@@ -415,7 +416,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
       swapThreshold: 0.7,
       fallbackClass: "sortable-fallback",
       easing: "cubic-bezier(1, 0, 0, 1)",
-      delay: 300,
+      delay: 800,
       delayOnTouchOnly: true,
       touchStartThreshold: 5,
       onChoose: function (evt) {
@@ -433,9 +434,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
           arrayResult.splice(command.newIndex, 0, removed);
           this.plugin.saveSettings();
         }
-        setTimeout(() => {
-          dispatchEvent(new Event("editingToolbar-NewCommand"));
-        }, 300);
+        this.triggerRefresh();
       },
       onStart: function (evt) {
         dragele = evt.item.className;
@@ -471,9 +470,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
                 this.plugin.settings.menuCommands.remove(newCommand);
                 await this.plugin.saveSettings();
                 this.display();
-                setTimeout(() => {
-                  dispatchEvent(new Event("editingToolbar-NewCommand"));
-                }, 100);
+                this.triggerRefresh();
                 console.log(`%cCommand '${newCommand.name}' was removed from editingToolbar`, "color: #989cab");
               });
           });
@@ -565,10 +562,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
                 console.error('Subresult is undefined.');
               }
             }
-            setTimeout(() => {
-              dispatchEvent(new Event("editingToolbar-NewCommand"));
-            }, 300);
-
+            this.triggerRefresh();
           },
 
         });
@@ -609,9 +603,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
                   newCommand.SubmenuCommands.remove(subCommand);
                   await this.plugin.saveSettings();
                   this.display();
-                  setTimeout(() => {
-                    dispatchEvent(new Event("editingToolbar-NewCommand"));
-                  }, 100);
+                  this.triggerRefresh();
                   console.log(`%cCommand '${newCommand.name}' was removed from editingToolbar`, "color: #989cab");
                 });
             });
@@ -659,9 +651,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
                 this.plugin.settings.menuCommands.splice(index + 1, 0, submenuCommand);
                 await this.plugin.saveSettings();
                 this.display();
-                setTimeout(() => {
-                  dispatchEvent(new Event("editingToolbar-NewCommand"));
-                }, 100);
+                this.triggerRefresh();
                 console.log(`%cCommand '${submenuCommand.id}' add `, "color: #989cab");
               });
           })
@@ -677,9 +667,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
                 this.plugin.settings.menuCommands.splice(index + 1, 0, dividermenu);
                 await this.plugin.saveSettings();
                 this.display();
-                setTimeout(() => {
-                  dispatchEvent(new Event("editingToolbar-NewCommand"));
-                }, 100);
+                this.triggerRefresh();
 
               });
           })
@@ -693,9 +681,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
                 this.plugin.settings.menuCommands.remove(newCommand);
                 await this.plugin.saveSettings();
                 this.display();
-                setTimeout(() => {
-                  dispatchEvent(new Event("editingToolbar-NewCommand"));
-                }, 100);
+                this.triggerRefresh();
                 console.log(`%cCommand '${newCommand.name}' was removed from editingToolbar`, "color: #989cab");
               });
           });
@@ -735,9 +721,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
 
   hide(): void {
     this.destroyPickrs();
-    setTimeout(() => {
-      dispatchEvent(new Event("editingToolbar-NewCommand"));
-    }, 100);
+    this.triggerRefresh();
   }
 }
 
