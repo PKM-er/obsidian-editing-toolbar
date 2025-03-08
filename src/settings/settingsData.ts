@@ -37,6 +37,9 @@ export interface editingToolbarSettings {
   isLoadOnMobile:boolean;
   horizontalPosition: number;
   verticalPosition: number;
+  formatBrushes: {
+    [key: string]: boolean;
+  };
 }
 
 export const DEFAULT_SETTINGS: editingToolbarSettings = {
@@ -56,7 +59,7 @@ export const DEFAULT_SETTINGS: editingToolbarSettings = {
       },
       {
         "id": "editing-toolbar:format-eraser",
-        "name": "Clear text formatting",
+        "name": "Clear text formatting brush",
         "icon": "<svg width=\"18\" height=\"18\" focusable=\"false\" fill=\"currentColor\"  viewBox=\"0 0 1024 1024\"><g transform=\"scale(1, -1) translate(0, -896) scale(0.9, 0.9) \"><path class=\"path\" d=\"M889 512 l-211 211 q-26 27 -61 36 q-35 9 -70 0 q-35 -9 -61 -36 l-351 -350 q-26 -27 -35.5 -62 q-9.5 -35 0 -70 q9.5 -35 35.5 -61 l170 -170 q12 -12 29 -12 l215 0 q17 0 29 12 l311 310 q26 26 35.5 61 q9.5 35 0 70 q-9.5 35 -35.5 61 ZM831 453 q15 -15 15.5 -36.5 q0.5 -21.5 -14.5 -37.5 l-300 -298 l-181 0 l-158 158 q-15 15 -15 37 q0 22 15 38 l351 351 q16 16 38 16 q22 0 37 -16 l212 -212 ZM686 217 l-59 -59 l-317 315 l58 59 l318 -315 ZM883 81 q18 0 30.5 -12 q12.5 -12 12.5 -29 q0 -17 -12.5 -29 q-12.5 -12 -29.5 -13 l-456 0 q-17 0 -29.5 12 q-12.5 12 -12.5 29 q0 17 12 29 q12 12 29 13 l456 0 Z\"></path></g></svg>"
       },
       {
@@ -344,4 +347,5 @@ export const DEFAULT_SETTINGS: editingToolbarSettings = {
     "isLoadOnMobile": false,
     horizontalPosition: 0,
     verticalPosition: 0,
+    formatBrushes: {},
   }

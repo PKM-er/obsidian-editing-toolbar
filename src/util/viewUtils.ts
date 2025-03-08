@@ -13,7 +13,7 @@ export class ViewUtils {
     const viewType = view.getViewType();
     // 特殊处理 markdown 视图类型
     if (viewType === 'markdown') {
-      return true;
+      return true; 
     }
     return types.includes(view.getViewType());
   }
