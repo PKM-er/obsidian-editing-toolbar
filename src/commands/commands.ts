@@ -540,51 +540,6 @@ export class CommandsManager {
             default: return 2;
         }
     }
-
-    public registerCommand(id: string, name: string, icon: string, callback: () => void) {
-        this.plugin.addCommand({
-            id,
-            name,
-            icon,
-            callback: () => {
-                // 检查是否已激活格式刷
-                if (this.plugin.isFormatBrushActive(id)) {
-                    // 关闭格式刷
-                    this.plugin.setFormatBrush(id, false);
-                    new Notice("格式刷已关闭");
-                } else {
-                    // 执行命令
-                    callback();
-                    
-                    // 支持格式刷的命令可以在这里启用格式刷
-                    if (this.isFormatBrushSupported(id)) {
-                        this.plugin.setFormatBrush(id, true);
-                        new Notice("格式刷已启用，点击文本应用格式");
-                    }
-                }
-            }
-        });
-    }
-
-    private isFormatBrushSupported(commandId: string): boolean {
-        // 定义支持格式刷的命令列表
-        const supportedCommands = [
-            'background-color',
-            'font-color',
-            'eraser',
-            'bold',
-            'italic',
-            'strike',
-            'underline',
-            'superscript',
-            'subscript',
-            'code',
-            'highlight'
-            // 可以添加更多支持的命令
-        ];
-        
-        return supportedCommands.includes(commandId);
-    }
 }
 
 type CommandPlot = {

@@ -46,12 +46,12 @@ export default class editingToolbarPlugin extends Plugin {
   
   // 添加缺失的属性定义
   IS_MORE_Button: boolean;
+  EN_BG_Format_Brush: boolean;
+  EN_FontColor_Format_Brush: boolean;
+  EN_Text_Format_Brush: boolean;
   Temp_Notice: Notice;
   Leaf_Width: number;
   private commandsManager: CommandsManager;
-
-  // 添加新的格式刷管理属性
-  private activeFormatBrush: string | null = null;
 
   async onload(): Promise<void> {
     const currentVersion = this.manifest.version; // 设置当前版本号
@@ -117,123 +117,57 @@ export default class editingToolbarPlugin extends Plugin {
     }
     return true;
   }
-  init_evt(container: Document, editor: Editor) {
-    // 重置格式刷状态
-    this.resetFormatBrushStates();
+  init_evt(container: Document,editor:Editor) {
+    this.EN_FontColor_Format_Brush = false;
+    this.EN_BG_Format_Brush = false;
+    this.EN_Text_Format_Brush = false;
 
-    // 注册鼠标事件
     this.registerDomEvent(container, "mouseup", async (e: { button: any; }) => {
-      // 右键点击时处理格式刷状态
-      if (e.button && this.isAnyFormatBrushActive()) {
-        this.deactivateAllFormatBrushes();
+      if (e.button) {
+        if (this.EN_FontColor_Format_Brush || this.EN_BG_Format_Brush || this.EN_Text_Format_Brush) {
+          quiteFormatbrushes(this);
+        }
       }
 
       if (!this.isView()) return;
 
-      let cmEditor = editor;
-      if (cmEditor) {
-        this.handleEditorSelection(cmEditor);
-      } else if (this.isAnyFormatBrushActive()) {
-        this.deactivateAllFormatBrushes();
+      let cmEditor = this.commandsManager.getActiveEditor();
+      if (cmEditor?.hasFocus()) {
+        let editingToolbarModalBar = isExistoolbar(this.app, this.settings);
+
+        if (cmEditor.getSelection() == null || cmEditor.getSelection() == "") {
+          if (editingToolbarModalBar && this.settings.positionStyle == "following")
+            editingToolbarModalBar.style.visibility = "hidden";
+          return
+        } else {
+          //   console.log(this.EN_FontColor_Format_Brush,'EN_FontColor_Format_Brush')
+          if (this.EN_FontColor_Format_Brush) {
+            setFontcolor(this.settings.cMenuFontColor, cmEditor);
+          } else if (this.EN_BG_Format_Brush) {
+            setBackgroundcolor(this.settings.cMenuBackgroundColor, cmEditor);
+          } else if (this.EN_Text_Format_Brush) {
+ 
+            setFormateraser(this,cmEditor);
+          } else if (this.settings.positionStyle == "following") {
+            createFollowingbar(this.app, this.settings,cmEditor);
+          }
+        }
+      } else if (this.EN_FontColor_Format_Brush || this.EN_BG_Format_Brush || this.EN_Text_Format_Brush) {
+        quiteFormatbrushes(this);
       }
     });
 
-    // 注册键盘事件
     this.registerDomEvent(activeDocument, "keydown", (e) => {
-      this.handleKeyDown(e);
+      if (this.settings.positionStyle !== "following") return;
+      const editingToolbarModalBar = isExistoolbar(this.app, this.settings);
+      if (!e.shiftKey && editingToolbarModalBar) editingToolbarModalBar.style.visibility = "hidden";
     });
 
-    // 注册滚轮事件
     this.registerDomEvent(activeDocument, "wheel", () => {
-      this.handleWheel();
+      if (this.settings.positionStyle !== "following") return;
+      const editingToolbarModalBar = isExistoolbar(this.app, this.settings);
+      if (editingToolbarModalBar) editingToolbarModalBar.style.visibility = "hidden";
     });
-  }
-
-  // 修改重置格式刷状态方法
-  private resetFormatBrushStates(): void {
-    this.activeFormatBrush = null;
-    this.settings.formatBrushes = {};
-    this.saveSettings();
-  }
-
-  // 修改检查格式刷激活状态方法
-  private isAnyFormatBrushActive(): boolean {
-    return this.activeFormatBrush !== null;
-  }
-
-  // 添加新的格式刷控制方法
-  public setFormatBrush(commandId: string, active: boolean): void {
-    if (active) {
-      this.activeFormatBrush = commandId;
-      this.settings.formatBrushes[commandId] = true;
-    } else {
-      if (this.activeFormatBrush === commandId) {
-        this.activeFormatBrush = null;
-      }
-      this.settings.formatBrushes[commandId] = false;
-    }
-    this.saveSettings();
-  }
-
-  public isFormatBrushActive(commandId: string): boolean {
-    return this.settings.formatBrushes[commandId] ?? false;
-  }
-
-  // 修改处理编辑器选择的方法
-  private handleEditorSelection(cmEditor: Editor): void {
-    let editingToolbarModalBar = isExistoolbar(this.app, this.settings);
-    
-    // 没有选中文本
-    if (!cmEditor.getSelection()) {
-      if (editingToolbarModalBar && this.settings.positionStyle === "following") {
-        editingToolbarModalBar.style.visibility = "hidden";
-      }
-      return;
-    }
-    
-    // 处理激活的格式刷
-    if (this.activeFormatBrush) {
-      this.applyFormatBrush(this.activeFormatBrush, cmEditor);
-    } else if (this.settings.positionStyle === "following") {
-      createFollowingbar(this.app, this.settings, cmEditor);
-    }
-  }
-
-  // 添加新的格式刷应用方法
-  private applyFormatBrush(commandId: string, editor: Editor): void {
-    switch (commandId) {
-      case 'background-color':
-        setBackgroundcolor(this.settings.cMenuBackgroundColor, editor);
-        break;
-      case 'font-color':
-        setFontcolor(this.settings.cMenuFontColor, editor);
-        break;
-      case 'eraser':
-        setFormateraser(this, editor);
-        break;
-      // 可以在这里添加更多命令的处理
-      default:
-        // 对于其他命令，直接执行命令
-        this.app.commands.executeCommandById(commandId);
-    }
-  }
-
-  private handleKeyDown(e: KeyboardEvent): void {
-    if (this.settings.positionStyle !== "following") return;
-    
-    const editingToolbarModalBar = isExistoolbar(this.app, this.settings);
-    if (!e.shiftKey && editingToolbarModalBar) {
-      editingToolbarModalBar.style.visibility = "hidden";
-    }
-  }
-
-  private handleWheel(): void {
-    if (this.settings.positionStyle !== "following") return;
-    
-    const editingToolbarModalBar = isExistoolbar(this.app, this.settings);
-    if (editingToolbarModalBar) {
-      editingToolbarModalBar.style.visibility = "hidden";
-    }
   }
 
   onunload(): void {
@@ -332,6 +266,15 @@ export default class editingToolbarPlugin extends Plugin {
 
   setIS_MORE_Button(status: boolean): void {
     this.IS_MORE_Button = status
+  }
+  setEN_BG_Format_Brush(status: boolean): void {
+    this.EN_BG_Format_Brush = status
+  }
+  setEN_FontColor_Format_Brush(status: boolean): void {
+    this.EN_FontColor_Format_Brush = status
+  }
+  setEN_Text_Format_Brush(status: boolean): void {
+    this.EN_Text_Format_Brush = status;
   }
   setTemp_Notice(content: Notice): void {
     this.Temp_Notice = content;

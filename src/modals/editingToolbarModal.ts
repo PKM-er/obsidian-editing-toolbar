@@ -5,6 +5,9 @@ import { t } from "src/translations/helper";
 import { editingToolbarSettings } from "src/settings/settingsData";
 import { ViewUtils } from 'src/util/viewUtils';
 import { setBottomValue, setHorizontalValue } from "src/util/statusBarConstants";
+import { Editor } from "obsidian";
+import { setFontcolor, setBackgroundcolor } from "src/util/util";
+
 let activeDocument: Document;
 
 export function getRootSplits(): WorkspaceParentExt[] {
@@ -167,8 +170,31 @@ export function createDiv(selector: string) {
   return div;
 }
 
+
 export function createTablecell(app: App, plugin: editingToolbarPlugin, el: string) {
   requireApiVersion("0.15.0") ? activeDocument = activeWindow.document : activeDocument = window.document;
+  function getActiveEditor(): any {
+    // 首先尝试获取常规的 Markdown 视图
+    const markdownView = plugin.app.workspace.getActiveViewOfType(MarkdownView);
+    if (markdownView) {
+      return markdownView.editor;
+    }
+    
+   // @ts-ignore
+    const activeEditor = plugin.app.workspace?.activeEditor;
+    if (activeEditor && activeEditor.editor) {
+      return activeEditor.editor;
+    }
+    
+    // 最后尝试从活跃叶子获取编辑器
+    const activeLeafEditor = plugin.app.workspace.activeLeaf?.view?.editor;
+    if (activeLeafEditor) {
+      return activeLeafEditor;
+    }
+    
+    return null;
+  };
+  const editor = getActiveEditor();
   let container = isExistoolbar(app, plugin.settings) as HTMLElement;
   let tab = container?.querySelector('#' + el);
   if (tab) {
@@ -187,7 +213,7 @@ export function createTablecell(app: App, plugin: editingToolbarPlugin, el: stri
           // console.log(backcolor,'backcolor')
             if (el == "x-color-picker-table") {
               plugin.settings.cMenuFontColor = backcolor;
-              setFontcolor(app, backcolor);
+              setFontcolor(backcolor,editor);
               let font_colour_dom = activeDocument.querySelectorAll("#change-font-color-icon")
               font_colour_dom.forEach(element => {
                 let ele = element as HTMLElement
@@ -197,7 +223,7 @@ export function createTablecell(app: App, plugin: editingToolbarPlugin, el: stri
             } else if (el == "x-backgroundcolor-picker-table") {
                 plugin.settings.cMenuBackgroundColor = backcolor;
                 //console.log("333")
-                setBackgroundcolor(app, backcolor);
+                setBackgroundcolor(backcolor,editor);
                 let background_colour_dom = activeDocument.querySelectorAll("#change-background-color-icon")
                 background_colour_dom.forEach(element => {
                   let ele = element as HTMLElement
@@ -216,86 +242,6 @@ export function createTablecell(app: App, plugin: editingToolbarPlugin, el: stri
   }
 }
 
-export function setFontcolor(app: App, color: string) {
-  //from https://github.com/obsidian-canzi/Enhanced-editing
-    const editor = app.workspace.activeLeaf.view?.editor;
-    let selectText = editor.getSelection();
-    // if (selectText == null || selectText.trim() == "") {
-    //   //如果没有选中内容激活格式刷
-    //   quiteFormatbrushes(plugin);
-    //   plugin.setEN_FontColor_Format_Brush(true);
-    //   plugin.setTemp_Notice(new Notice(t("Font-Color formatting brush ON!"), 0));
-    //   return;
-    // }
-
-    let _html0 = /\<font color=[0-9a-zA-Z#]+[^\<\>]*\>[^\<\>]+\<\/font\>/g;
-    let _html1 = /^\<font color=[0-9a-zA-Z#]+[^\<\>]*\>([^\<\>]+)\<\/font\>$/;
-    let _html2 = '<font color="' + color + '">$1</font>';
-    let _html3 = /\<font color=[^\<]*$|^[^\>]*font\>/g; //是否只包含一侧的<>
-
-    if (_html3.test(selectText)) {
-      return;
-    } else if (_html0.test(selectText)) {
-      
-      if (_html1.test(selectText)) {
-        selectText = selectText.replace(/<font color="[^"]+">|<\/font>/g, ''); //应用新颜色之前先清空旧颜色
-        selectText = selectText.replace(_html1, _html2);
-      } else {
-        selectText = selectText.replace(
-          /\<font color=[0-9a-zA-Z#]+[^\<\>]*?\>|\<\/font\>/g,
-          ""
-        );
-      }
-    } else {
-      selectText = selectText.replace(/<font color=["'#0-9a-zA-Z]+>[^<]+<\/font>/g, ''); //应用新颜色之前先清空旧颜色
-      selectText = selectText.replace(/^(.+)$/gm, _html2);
-    }
-    editor.replaceSelection(selectText);
-    editor.exec("goRight");
-    // @ts-ignore
-    app.commands.executeCommandById("editor:focus");
-
-}
-
-export function setBackgroundcolor(app: App, color: string) {
-  //from https://github.com/obsidian-canzi/Enhanced-editing
-    const editor = app.workspace.activeLeaf.view?.editor;
-    let selectText = editor.getSelection();
-  //  console.log(selectText,'selectText')
-    // if (selectText == null || selectText.trim() == "") {
-    //   //如果没有选中内容激活格式刷
-    //   quiteFormatbrushes(plugin);
-    //   plugin.setEN_BG_Format_Brush(true);
-    //   plugin.setTemp_Notice(new Notice(t("Background-color formatting brush ON!"), 0));
-    //   return;
-    // }
-    let _html0 =
-      /\<span style=[\"'][^\<\>]+:[0-9a-zA-Z#]+[\"'][^\<\>]*\>[^\<\>]+\<\/span\>/g;
-    let _html1 =
-      /^\<span style=[\"'][^\<\>]+:[0-9a-zA-Z#]+[\"'][^\<\>]*\>([^\<\>]+)\<\/span\>$/;
-    let _html2 = '<span style="background:' + color + '">$1</span>';
-    let _html3 = /\<span style=[^\<]*$|^[^\>]*span\>/g; //是否只包含一侧的<>
-    if (_html3.test(selectText)) {
-      return;
-    } else if (_html0.test(selectText)) {
-      if (_html1.test(selectText)) {
-        selectText = selectText.replace(_html1, _html2);
-      } else {
-        selectText = selectText.replace(
-          /\<span style=[\"'][^\<\>]+:[0-9a-zA-Z#]+[\"'][^\<\>]*\>|\<\/span\>/g,
-          ""
-        );
-
-      }
-    } else {
-      selectText = selectText.replace(/^(.+)$/gm, _html2);
-    }
-    editor.replaceSelection(selectText);
-    editor.exec("goRight");
-    
-    app.commands.executeCommandById("editor:focus");
-
-}
 
 export const setcolorHex = function (color: string) {
   let that = color;
@@ -373,49 +319,15 @@ export function quiteFormatbrushes(plugin:editingToolbarPlugin) {
   // globalThis.EN_Text_Format_Brush = false;
 }
 
-export function setHeader(_str: string) {
-  //from https://github.com/obsidian-canzi/Enhanced-editing
-    const editor = app.workspace.activeLeaf.view?.editor;
-    let linetext = editor.getLine(editor.getCursor().line);
-    let newstr, linend = "";
-    const regex = /^(\>*(\[[!\w]+\])?\s*)#+\s/;
-    let matchstr
-    const match = linetext.match(regex);
-    if (match) matchstr = match[0].trim();
-    if (_str == matchstr)   //转换的跟原来的一致就取消标题
-    {
-      newstr = linetext.replace(regex, "$1");
-    } else {
-      if (_str == "") {   //若为标题，转为普通文本
-        newstr = linetext.replace(regex, "$1");
-      } else {  //列表、引用，先转为普通文本，再转为标题
-        newstr = linetext.replace(/^\s*(#*|\>|\-|\d+\.)\s*/m, "");
-        newstr = _str + " " + newstr;
-      }
-    }
 
-    if (newstr != "") {
-      linend = editor.getRange(editor.getCursor(), { line: editor.getCursor().line, ch: linetext.length });
-    } else {
-      linend = editor.getRange(editor.getCursor(), { line: editor.getCursor().line, ch: 0 });
-    };
-    editor.setLine(editor.getCursor().line, newstr);
-    editor.setCursor({ line: editor.getCursor().line, ch: Number(newstr.length - linend.length) });
-
-}
-export function setFormateraser(app: App, plugin: editingToolbarPlugin) {
-    const editor = app.workspace.activeLeaf.view?.editor;
+export function setFormateraser( plugin: editingToolbarPlugin,editor:Editor) {
+   // const editor = app.workspace.activeLeaf.view?.editor;
 
     let selectText = editor.getSelection();
     if (selectText == null || selectText == "") {
       quiteFormatbrushes(plugin);
       plugin.setEN_Text_Format_Brush(true);
-      // globalThis.EN_Text_Format_Brush = true;
-      if (plugin.Temp_Notice) {
-        if (plugin.Temp_Notice.noticeEl.innerText != t("Clear formatting brush ON!\nClick the  mouse middle or right key to close the formatting-brush"))
-          plugin.Temp_Notice = new Notice(t("Clear formatting brush ON!\nClick the  mouse middle or right key to close the formatting-brush"), 0);
-      }
-      else plugin.Temp_Notice = new Notice(t("Clear formatting brush ON!\nClick the  mouse middle or right key to close the formatting-brush"), 0);
+      plugin.Temp_Notice = new Notice(t("Clear formatting brush ON!\nClick the  mouse middle or right key to close the formatting-brush"), 0);
 
     } else {
       let mdText = /(^#+\s|^#(?=\s)|^\>|^\- \[( |x)\]|^\+ |\<[^\<\>]+?\>|^1\. |^\s*\- |^\-+$|^\*+$)/mg;
@@ -433,12 +345,12 @@ export function setFormateraser(app: App, plugin: editingToolbarPlugin) {
       // selectText = selectText.replace(/(\r*\n)+/mg, "\r\n");
       editor.replaceSelection(selectText);
       
-      app.commands.executeCommandById("editor:focus");
+     // app.commands.executeCommandById("editor:clear-formatting");
 
     }
 }
 
-export function createFollowingbar(app: App, settings: editingToolbarSettings) {
+export function createFollowingbar(app: App, settings: editingToolbarSettings,editor:Editor) {
   let editingToolbarModalBar = isExistoolbar(app, settings);
 
   const view = app.workspace.getActiveViewOfType(ItemView);
@@ -451,7 +363,7 @@ export function createFollowingbar(app: App, settings: editingToolbarSettings) {
 
   if (ViewUtils.isSourceMode(view)) {
     if (editingToolbarModalBar) {
-      const editor = app.workspace.activeLeaf.view?.editor;
+     // const editor = app.workspace.activeLeaf.view?.editor;
 
       editingToolbarModalBar.style.visibility = editor.somethingSelected() ? "visible" : "hidden";
       editingToolbarModalBar.style.height = (settings.aestheticStyle === "tiny") ? 30 + "px" : 40 + "px";
@@ -459,7 +371,7 @@ export function createFollowingbar(app: App, settings: editingToolbarSettings) {
       editingToolbarModalBar.removeClass("editingToolbarGrid");
 
       if (editingToolbarModalBar.style.visibility === "visible") {
-        // @ts-ignore
+    
         const editorRect = editor.containerEl.getBoundingClientRect();
         const toolbarWidth = editingToolbarModalBar.offsetWidth;
         const toolbarHeight = editingToolbarModalBar.offsetHeight;
@@ -547,22 +459,27 @@ export function editingToolbarPopover(app: App, plugin: editingToolbarPlugin): v
 
       if (settings.positionStyle == "top") {
         let currentleaf = app.workspace.activeLeaf.view.containerEl;
-
-        if (!currentleaf?.querySelector("#editingToolbarPopoverBar"))
-        {
-          const markdownDom =currentleaf?.querySelector(".markdown-source-view");
-          if(markdownDom)
-          markdownDom.insertAdjacentElement("afterbegin", PopoverMenu);
-          else return;
+        
+       // 尝试获取 markdown 视图或 canvas 视图，并指定为 HTMLElement 类型
+       const markdownDom = currentleaf?.querySelector<HTMLElement>(".markdown-source-view");
+       const canvasDom = currentleaf?.querySelector<HTMLElement>(".canvas-wrapper");
+       
+        
+        // 确定要插入工具栏的目标元素
+        const targetDom = markdownDom || canvasDom;
+        
+        if (!targetDom) return;
+        
+        // 只有在没有工具栏时才添加 PopoverMenu
+        if (!currentleaf?.querySelector("#editingToolbarPopoverBar")) {
+          targetDom.insertAdjacentElement("afterbegin", PopoverMenu);
         }
-        const markdownDom2 =currentleaf?.querySelector(".markdown-source-view");
-        if(markdownDom2)
-        markdownDom2.insertAdjacentElement("afterbegin", editingToolbar);
-        else return;
-
-        leafwidth = currentleaf?.querySelector<HTMLElement>(
-          ".markdown-source-view"
-        ).offsetWidth;
+        
+        // 添加编辑工具栏
+        targetDom.insertAdjacentElement("afterbegin", editingToolbar);
+        
+        // 获取宽度
+        leafwidth = targetDom?.offsetWidth;
 
       } else if (settings.appendMethod == "body") {
         activeDocument.body.appendChild(editingToolbar);
