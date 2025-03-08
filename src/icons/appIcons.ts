@@ -19,6 +19,7 @@ export const appIcons: string[] = [
   "header-6",
   "header-n",
   "obsidian",
+  "obsidian-new",
   "accessibility",
   "activity",
   "air-vent",
