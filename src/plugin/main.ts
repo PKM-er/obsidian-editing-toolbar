@@ -14,8 +14,7 @@ import {
   WorkspaceLeaf,
   View
 } from "obsidian";
-import { wait } from "src/util/util";
-import { CommandPicker, openSlider } from "src/modals/suggesterModals";
+
 import { editingToolbarSettingTab } from '../settings/settingsTab';
 import { selfDestruct, editingToolbarPopover, quiteFormatbrushes, createFollowingbar, setFormateraser, isExistoolbar, resetToolbar } from "src/modals/editingToolbarModal";
 import { editingToolbarSettings, DEFAULT_SETTINGS } from "src/settings/settingsData";
@@ -33,6 +32,7 @@ import { ViewUtils } from 'src/util/viewUtils';
 import { UpdateNoticeModal } from "src/modals/updateModal";
 import { StatusBar } from "src/components/StatusBar";
 import { CommandsManager } from "src/commands/commands";
+import { t } from 'src/translations/helper';
 
 
 let activeDocument: Document;
@@ -44,6 +44,9 @@ export default class editingToolbarPlugin extends Plugin {
   statusBarIcon: HTMLElement;
   statusBar: StatusBar;
   
+  // 修改为公共属性
+  commandsManager: CommandsManager;
+  
   // 添加缺失的属性定义
   IS_MORE_Button: boolean;
   EN_BG_Format_Brush: boolean;
@@ -51,7 +54,6 @@ export default class editingToolbarPlugin extends Plugin {
   EN_Text_Format_Brush: boolean;
   Temp_Notice: Notice;
   Leaf_Width: number;
-  private commandsManager: CommandsManager;
   
   // 添加格式刷相关属性
   lastExecutedCommand: string | null = null;
@@ -61,6 +63,9 @@ export default class editingToolbarPlugin extends Plugin {
   // 添加一个属性来存储上一个命令的可读名称
   lastExecutedCommandName: string | null = null;
 
+  // 添加设置标签页引用
+  settingTab: editingToolbarSettingTab;
+  
   async onload(): Promise<void> {
     const currentVersion = this.manifest.version; // 设置当前版本号
     console.log("editingToolbar v" + currentVersion + " loaded");
@@ -68,9 +73,10 @@ export default class editingToolbarPlugin extends Plugin {
 
     requireApiVersion("0.15.0") ? activeDocument = activeWindow.document : activeDocument = window.document;
     await this.loadSettings();
-    this.addSettingTab(new editingToolbarSettingTab(this.app, this));
+    this.settingTab = new editingToolbarSettingTab(this.app, this);
+    this.addSettingTab(this.settingTab);
 
-    addIcons();
+    //addIcons();
     // addRemixIcconsole.log();ons(appIcons);
     this.commandsManager = new CommandsManager(this);
     this.commandsManager.registerCommands();
@@ -110,7 +116,8 @@ export default class editingToolbarPlugin extends Plugin {
         }, 100)
       }
 
-   
+    // 初始化图标
+    addIcons();
   }
 
   isLoadMobile() {
@@ -317,7 +324,7 @@ export default class editingToolbarPlugin extends Plugin {
   // 修改 toggleFormatBrush 方法，在通知中显示具体命令
   toggleFormatBrush(): void {
     if (!this.lastExecutedCommand) {
-      new Notice("请先执行一个格式命令，然后再启用格式刷");
+      new Notice(t("Please execute a editingToolbar format command first, then enable the format brush"));
       return;
     }
 
@@ -331,7 +338,7 @@ export default class editingToolbarPlugin extends Plugin {
       
       // 显示通知，包含具体命令名称
       if (this.formatBrushNotice) this.formatBrushNotice.hide();
-      this.formatBrushNotice = new Notice(`格式刷已启用: 选择文本应用【${this.lastExecutedCommandName}】格式`, 0);
+      this.formatBrushNotice = new Notice(t("Format brush ON! Select text to apply【")+this.lastExecutedCommandName+t("】format"), 0);
     } else {
       // 关闭通知
       if (this.formatBrushNotice) {
@@ -369,5 +376,14 @@ export default class editingToolbarPlugin extends Plugin {
       this.Temp_Notice.hide();
       this.Temp_Notice = null;
     }
+  }
+
+  // 添加公共方法来访问 commandsManager
+  public getCommandsManager(): CommandsManager {
+    return this.commandsManager;
+  }
+  
+  public reloadCustomCommands(): void {
+    this.commandsManager.reloadCustomCommands();
   }
 }

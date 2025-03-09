@@ -316,12 +316,16 @@ export function setFormateraser( plugin: editingToolbarPlugin,editor:Editor) {
    // const editor = app.workspace.activeLeaf.view?.editor;
 
     let selectText = editor.getSelection();
-    if (selectText == null || selectText == "") {
-      quiteFormatbrushes(plugin);
-      plugin.setEN_Text_Format_Brush(true);
-      plugin.Temp_Notice = new Notice(t("Clear formatting brush ON!\nClick the  mouse middle or right key to close the formatting-brush"), 0);
+    if (!selectText || selectText.trim() === "") {
+      return;
+    }
 
-    } else {
+    // if (selectText == null || selectText == "") {
+    //   quiteFormatbrushes(plugin);
+    //   plugin.setEN_Text_Format_Brush(true);
+    //   plugin.Temp_Notice = new Notice(t("Clear formatting brush ON!\nClick the  mouse middle or right key to close the formatting-brush"), 0);
+
+    // } else {
       let mdText = /(^#+\s|^#(?=\s)|^\>|^\- \[( |x)\]|^\+ |\<[^\<\>]+?\>|^1\. |^\s*\- |^\-+$|^\*+$)/mg;
       selectText = selectText.replace(mdText, "");
       selectText = selectText.replace(/^[ ]+|[ ]+$/mg, "");
@@ -339,7 +343,7 @@ export function setFormateraser( plugin: editingToolbarPlugin,editor:Editor) {
       
      // app.commands.executeCommandById("editor:clear-formatting");
 
-    }
+    
 }
 
 export function createFollowingbar(app: App, settings: editingToolbarSettings,editor:Editor) {

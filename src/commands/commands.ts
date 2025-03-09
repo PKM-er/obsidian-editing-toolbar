@@ -1,5 +1,5 @@
 import { Editor, Command, Notice, MarkdownView } from "obsidian";
-import { editingToolbarSettings } from "src/settings/settingsData";
+
 import { setMenuVisibility } from "src/util/statusBarConstants";
 import { selfDestruct, setFormateraser, quiteFormatbrushes } from "src/modals/editingToolbarModal";
 import { setHeader,setFontcolor, setBackgroundcolor } from "src/util/util";
@@ -24,14 +24,14 @@ export class CommandsManager {
 
             editor.focus();
 
-            if (selection) {
-                editor.setSelection(cursor);
-            }
+            // if (selection) {
+            //     editor.setSelection(cursor);
+            // }
         }
     };
 
     // 命令配置类型定义
-    private commandsMap: Record<string, CommandPlot> = {
+    private _commandsMap: Record<string, CommandPlot> = {
         hrline: {
             char: 5,
             line: 1,
@@ -182,7 +182,7 @@ export class CommandsManager {
     ];
 
     // 应用格式化命令的辅助函数
-    private applyCommand = (command: CommandPlot, editor: Editor) => {
+    public applyCommand = (command: CommandPlot, editor: Editor) => {
         const selectedText = editor.getSelection();
         const curserStart = editor.getCursor("from");
         const curserEnd = editor.getCursor("to");
@@ -269,7 +269,7 @@ export class CommandsManager {
                 editor&&this.executeCommandWithoutBlur(editor, () => setFormateraser(this.plugin,editor));
 
             },
-            icon: `<svg>...</svg>`
+            icon: `eraser`
         });
 
         // 添加格式刷相关命令
@@ -493,7 +493,7 @@ export class CommandsManager {
         }
 
         // 添加HTML格式化命令
-        Object.keys(this.commandsMap).forEach((type) => {
+        Object.keys(this._commandsMap).forEach((type) => {
             this.plugin.addCommand({
                 id: `${type}`,
                 name: `Toggle ${type}`,
@@ -501,7 +501,7 @@ export class CommandsManager {
                 callback: () => {
                     const editor = this.getActiveEditor();
                     editor&&this.executeCommandWithoutBlur(editor, () => {
-                        this.applyCommand(this.commandsMap[type], editor);
+                        this.applyCommand(this._commandsMap[type], editor);
                     });
                 },
             });
@@ -528,23 +528,28 @@ export class CommandsManager {
         // 添加格式刷命令
         this.plugin.addCommand({
             id: 'toggle-format-brush',
-            name: '切换格式刷',
+            name: 'Toggle Format Brush',
             icon: 'paintbrush',
             editorCallback: (editor: Editor) => {
                 this.plugin.toggleFormatBrush();
             }
         });
 
-        // 修改所有需要支持格式刷的命令
+        // 注册自定义命令
+        this.registerCustomCommands();
+
+        // 修改格式刷相关代码，确保包含自定义命令
         const formatCommands = [
             'toggle-bold', 'toggle-italics', 'toggle-strikethrough', 
             'toggle-highlight', 'toggle-code', 'toggle-blockquote',
             'header0-text', 'header1-text', 'header2-text', 'header3-text', 
             'header4-text', 'header5-text', 'header6-text',
-            'underline', 'superscript', 'subscript', 'codeblock',
-            'justify', 'left', 'right', 'center',
-            'change-font-color', 'change-background-color'
-            // 可以添加其他需要支持格式刷的命令
+     
+            'format-eraser',
+            'change-font-color', 'change-background-color',
+            // 添加所有自定义命令
+            ...this.plugin.settings.customCommands.map(cmd => `custom-${cmd.id}`),
+            ...Object.keys(this._commandsMap)
         ];
 
         formatCommands.forEach(cmdId => {
@@ -572,6 +577,60 @@ export class CommandsManager {
             case "editor:insert-callout": return 11;
             default: return 2;
         }
+    }
+
+    // 添加重新加载自定义命令的方法
+    public reloadCustomCommands() {
+        // 移除旧的自定义命令
+        this.plugin.settings.customCommands.forEach(command => {
+            const commandId = `custom-${command.id}`;
+            if (this.plugin.app.commands.commands[`editing-toolbar:${commandId}`]) {
+                // 从命令注册表中移除命令
+                delete this.plugin.app.commands.commands[`editing-toolbar:${commandId}`];
+            }
+        });
+
+        // 注册新的自定义命令
+        this.registerCustomCommands();
+    }
+
+    // 注册自定义命令
+    private registerCustomCommands() {
+        this.plugin.settings.customCommands.forEach(command => {
+            const commandId = `custom-${command.id}`;
+            
+            // 创建命令配置
+            const commandConfig: CommandPlot = {
+                char: command.char,
+                line: command.line,
+                prefix: command.prefix,
+                suffix: command.suffix,
+                islinehead: command.islinehead
+            };
+            
+            // 添加到 commandsMap
+            this._commandsMap[command.id] = commandConfig;
+            
+            // 注册命令
+            this.plugin.addCommand({
+                id: commandId,
+                name: command.name,
+                icon: command.icon || 'text-glyph',
+                callback: () => {
+                    const editor = this.getActiveEditor();
+                    editor && this.executeCommandWithoutBlur(editor, () => {
+                        this.applyCommand(commandConfig, editor);
+                        // 记录为最后执行的命令，以支持格式刷
+                        this.plugin.setLastExecutedCommand(`editing-toolbar:${commandId}`);
+                    });
+                }
+            });
+        });
+    }
+
+    // 添加 commandsMap 的访问器
+    public get commandsMap(): Record<string, CommandPlot> {
+        return this._commandsMap;
     }
 }
 

@@ -5,17 +5,26 @@ import { findmenuID } from "src/util/util";
 import { setBottomValue, setHorizontalValue } from "src/util/statusBarConstants";
 import { t } from "src/translations/helper";
 
+// 通用的图标选择回调类型
+export type IconSelectCallback = (iconId: string) => void;
+
 export class ChooseFromIconList extends FuzzySuggestModal<string> {
   plugin: editingToolbarPlugin;
-  command: Command;
+  command: any;
   issub: boolean;
-
-  constructor(plugin: editingToolbarPlugin, command: Command, issub: boolean = false) {
+  customCallback: IconSelectCallback | null = null;
+  constructor(
+    plugin: editingToolbarPlugin, 
+    command: any, 
+    issub: boolean = false,
+    callback?: IconSelectCallback
+  ) {
     super(plugin.app);
     this.plugin = plugin;
     this.command = command;
     this.issub = issub;
-    this.setPlaceholder("Choose an icon");
+    this.customCallback = callback || null;
+    this.setPlaceholder(t("Choose an icon"));
   }
 
   private capitalJoin(string: string): string {
@@ -52,30 +61,141 @@ export class ChooseFromIconList extends FuzzySuggestModal<string> {
   }
 
   async onChooseItem(item: string): Promise<void> {
+    // 处理自定义图标选项
     if (item === "Custom") {
-      new CustomIcon(this.app, this.plugin, this.command, this.issub).open();
-    } else {
-      if (this.command.icon) //存在就修改不存在新增
-      {
-        let menuID = findmenuID(this.plugin, this.command, this.issub)
-        // console.log(menuID);
-        this.issub ? this.plugin.settings.menuCommands[menuID['index']].SubmenuCommands[menuID['subindex']].icon = item : this.plugin.settings.menuCommands[menuID['index']].icon = item;
+      // 如果有自定义回调，打开自定义图标输入框并将结果传递给回调
+      if (this.customCallback) {
+        new CustomIcon(
+          this.app, 
+          this.plugin, 
+          { id: this.command.id, name: this.command.name, icon: "" }, 
+          this.issub, 
+          (customIconValue) => {
+            // 当自定义图标输入完成后，将值传递给原始回调
+            this.customCallback(customIconValue);
+          }
+        ).open();
+        return;
       } else {
-        this.command.icon = item;
-        this.plugin.settings.menuCommands.push(this.command);
+        // 没有自定义回调，使用默认逻辑打开自定义图标输入框
+        new CustomIcon(this.app, this.plugin, this.command, this.issub).open();
+        return;
+      }
+    }
+    
+    // 处理普通图标选项
+    if (this.customCallback) {
+      // 如果有自定义回调，直接调用回调并传递选中的图标
+      this.customCallback(item);
+      return;
+    }
+    
+    // 没有自定义回调，使用默认的命令图标设置逻辑
+    if (this.command.icon) { // 存在就修改不存在新增
+      let menuID = findmenuID(this.plugin, this.command, this.issub);
+      this.issub 
+        ? this.plugin.settings.menuCommands[menuID['index']].SubmenuCommands[menuID['subindex']].icon = item 
+        : this.plugin.settings.menuCommands[menuID['index']].icon = item;
+    } else {
+      this.command.icon = item;
+      this.plugin.settings.menuCommands.push(this.command);
+    }
+
+    await this.plugin.saveSettings();
+    setTimeout(() => {
+      dispatchEvent(new Event("editingToolbar-NewCommand"));
+    }, 100);
+    console.log(
+      `%c命令 '${this.command.name}' 已添加到编辑工具栏`,
+      "color: Violet"
+    );
+  }
+}
+
+// 自定义图标输入模态框
+export class CustomIcon extends Modal {
+  plugin: editingToolbarPlugin;
+  item: Command;
+  issub: boolean;
+  submitEnterCallback: (this: HTMLTextAreaElement, ev: KeyboardEvent) => any;
+  customCallback: IconSelectCallback | null = null;
+
+  constructor(
+    app: App, 
+    plugin: editingToolbarPlugin, 
+    item: Command, 
+    issub: boolean,
+    callback?: IconSelectCallback
+  ) {
+    super(app);
+    this.plugin = plugin;
+    this.item = item;
+    this.issub = issub;
+    this.customCallback = callback || null;
+    this.containerEl.addClass("editingToolbar-Modal");
+    this.containerEl.addClass("customicon");
+  }
+
+  onOpen() {
+    const { contentEl } = this;
+    contentEl.createEl("b", { text: t("Enter the icon code, format as <svg>.... </svg>") });
+    
+    const textComponent = document.createElement("textarea");
+    textComponent.className = "wideInputPromptInputEl";
+    textComponent.placeholder = "";
+    textComponent.value = this.item.icon || '';
+    textComponent.style.width = "100%";
+    textComponent.style.height = "200px";
+    contentEl.appendChild(textComponent);
+    
+    textComponent.addEventListener("input", async () => {
+      const value = textComponent.value;
+      
+      // 如果有自定义回调，则使用自定义回调
+      if (this.customCallback) {
+        this.item.icon = value;
+        return;
       }
 
+      // 否则使用默认的命令图标设置逻辑
+      this.item.icon = value;
+      const menuID = findmenuID(this.plugin, this.item, this.issub);
+      
+      if (!this.issub) { // 不是子项
+        let index = menuID['index'];
+        index === -1 
+          ? this.plugin.settings.menuCommands.push(this.item) 
+          : (this.plugin.settings.menuCommands[index].icon = this.item.icon);
+      } else {
+        let subindex = menuID['subindex'];
+        subindex === -1 
+          ? this.plugin.settings.menuCommands[menuID["index"]].SubmenuCommands.push(this.item) 
+          : this.plugin.settings.menuCommands[menuID['index']].SubmenuCommands[subindex].icon = value;
+      }
+      
       await this.plugin.saveSettings();
+    });
+    
+    if (this.submitEnterCallback) {
+      textComponent.addEventListener('keydown', this.submitEnterCallback);
+    }
+  }
+  
+  onClose() {
+    const { contentEl } = this;
+    contentEl.empty();
+    
+    // 如果有自定义回调，则在关闭时调用
+    if (this.customCallback) {
+      this.customCallback(this.item.icon || '');
+    } else {
       setTimeout(() => {
         dispatchEvent(new Event("editingToolbar-NewCommand"));
       }, 100);
-      console.log(
-        `%cCommand '${this.command.name}' was added to editingToolbar`,
-        "color: Violet"
-      );
     }
   }
 }
+
 
 export class CommandPicker extends FuzzySuggestModal<Command> {
   command: Command;
@@ -83,7 +203,7 @@ export class CommandPicker extends FuzzySuggestModal<Command> {
   constructor(private plugin: editingToolbarPlugin) {
     super(plugin.app);
     this.app;
-    this.setPlaceholder("Choose a command");
+    this.setPlaceholder(t("Choose a command"));
   }
 
   getItems(): Command[] {
@@ -97,12 +217,10 @@ export class CommandPicker extends FuzzySuggestModal<Command> {
 
   async onChooseItem(item: Command): Promise<void> {
     let index = this.plugin.settings.menuCommands.findIndex((v) => v.id == item.id);
-    //  console.log(index)
 
-    if (index > -1) //存在
+    if (index > -1) // 命令已存在
     {
-      new Notice("The command" + item.name + "already exists", 3000);
-      //  console.log(`%cCommand '${item.name}' already exists `, "color: Violet");
+      new Notice(t("The command") + item.name + t("already exists"), 3000);
       return;
     } else {
       if (item.icon) {
@@ -112,66 +230,18 @@ export class CommandPicker extends FuzzySuggestModal<Command> {
           dispatchEvent(new Event("editingToolbar-NewCommand"));
         }, 100);
         console.log(
-          `%cCommand '${item.name}' was added to editingToolbar`,
+          `%c命令 '${item.name}' 已添加到编辑工具栏`,
           "color: Violet"
         );
       } else {
+        // 使用统一的图标选择器
         new ChooseFromIconList(this.plugin, item, false).open();
       }
     }
   }
 }
 
-export class CustomIcon extends Modal {
-  plugin: editingToolbarPlugin;
-  item: Command;
-  issub: boolean;
-  submitEnterCallback: (this: HTMLTextAreaElement, ev: KeyboardEvent) => any;
-
-  constructor(app: App, plugin: editingToolbarPlugin, item: Command, issub: boolean) {
-    super(plugin.app);
-    this.plugin = plugin;
-    this.item = item;
-    this.issub = issub;
-    this.containerEl.addClass("editingToolbar-Modal");
-    this.containerEl.addClass("customicon");
-  }
-  onOpen() {
-
-    const { contentEl } = this;
-    contentEl.createEl("b", { text: t("Enter the icon code, it looks like <svg>.... </svg> format") });
-    const textComponent = new TextAreaComponent(contentEl);
-    textComponent.inputEl.classList.add('wideInputPromptInputEl');
-    textComponent.setPlaceholder("")
-      .setValue(this.item.icon ?? '')
-      .onChange(debounce(async (value: string) => {
-
-        this.item.icon = value;
-        let menuID = findmenuID(this.plugin, this.item, this.issub)
-        if (!this.issub) //不是子项
-        {
-          let index = menuID['index']
-          index === -1 ? this.plugin.settings.menuCommands.push(this.item) :
-            (this.plugin.settings.menuCommands[index].icon = this.item.icon);
-
-        } else {
-          let subindex = menuID['subindex']
-          subindex === -1 ? this.plugin.settings.menuCommands[menuID["index"]].SubmenuCommands.push(this.item) : this.plugin.settings.menuCommands[menuID['index']].SubmenuCommands[subindex].icon = value
-
-        }
-        await this.plugin.saveSettings();
-      }, 100, true)
-      )
-      .inputEl.addEventListener('keydown', this.submitEnterCallback);
-  }
-  onClose() {
-    const { contentEl } = this;
-    contentEl.empty();
-    setTimeout(() => {
-      dispatchEvent(new Event("editingToolbar-NewCommand"));
-    }, 100);
-  }
-};
+ 
 
 
 export class ChangeCmdname extends Modal {

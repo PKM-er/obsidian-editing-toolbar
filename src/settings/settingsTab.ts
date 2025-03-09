@@ -11,6 +11,7 @@ import { ToolbarCommand } from './ToolbarSettings';
 import { UpdateNoticeModal } from "src/modals/updateModal";
 import Pickr from "@simonwep/pickr";
 import '@simonwep/pickr/dist/themes/nano.min.css';
+import { CustomCommandModal } from "src/modals/CustomCommandModal";
 
 // 添加类型定义
 interface SubmenuCommand {
@@ -39,10 +40,16 @@ const SETTING_TABS: SettingTab[] = [
     icon: 'brush'
   },
   {
+    id: 'customcommands',
+    name: t('Custom Commands'),
+    icon: 'custom-command'
+  },
+  {
     id: 'commands',
-    name: t('Commands'),
+    name: t('Toolbar Commands'),
     icon: 'command'
-  }
+  },
+
 ];
 
 export function getPickrSettings(opts: {
@@ -147,9 +154,12 @@ export class editingToolbarSettingTab extends PluginSettingTab {
       case 'appearance':
         this.displayAppearanceSettings(contentContainer);
         break;
-      case 'commands':
-        this.displayCommandSettings(contentContainer);
+      case 'customcommands':
+        this.displayCustomCommandSettings(contentContainer);
         break;
+      case 'commands':
+          this.displayCommandSettings(contentContainer);
+          break;
     }
   }
 
@@ -277,10 +287,60 @@ export class editingToolbarSettingTab extends PluginSettingTab {
           });
       });
 
-    // 现有的命令列表代码
-    this.createCommandList(containerEl);
-  }
+ 
 
+
+  
+       // 现有的命令列表代码
+       this.createCommandList(containerEl);
+  }
+  private displayCustomCommandSettings(containerEl: HTMLElement): void {
+    
+    // 添加自定义命令设置部分
+    new Setting(containerEl)
+      .setName(t('Custom Format Commands'))
+      .setDesc(t('Add, edit or delete custom format commands'))
+      .addButton(button => button
+        .setIcon("plus")
+        .setTooltip(t("Add"))
+        .onClick(() => {
+          // 打开添加命令的模态框
+          new CustomCommandModal(this.app, this.plugin, null).open();
+        })
+      );
+     // 显示现有的自定义命令
+     const customCommandsContainer = containerEl.createDiv('custom-commands-container');
+     this.plugin.settings.customCommands.forEach((command, index) => {
+       const commandSetting = new Setting(customCommandsContainer)
+         .setName(command.name)
+         .setDesc(`${t('ID')}: ${command.id}, ${t('Prefix')}: ${command.prefix}, ${t('Suffix')}: ${command.suffix}`)
+         .addButton((addicon) => {
+           addicon
+             .setClass("editingToolbarSettingsIcon")
+           checkHtml(command.icon) ? addicon.buttonEl.innerHTML = command.icon : addicon.setIcon(command.icon)
+         })
+         .addButton(button => button
+           .setIcon('pencil')
+           .setTooltip(t('Edit'))
+           .onClick(() => {
+             // 打开编辑命令的模态框
+             new CustomCommandModal(this.app, this.plugin, index).open();
+           })
+         )
+         .addButton(button => button
+           .setIcon('editingToolbarDelete')
+           .setTooltip(t('Delete'))
+           .onClick(async () => {
+             this.plugin.settings.customCommands.splice(index, 1);
+             await this.plugin.saveSettings();
+             // 使用公共方法
+             this.plugin.reloadCustomCommands();
+             // 刷新设置界面
+             this.display();
+           })
+         );
+     });
+  }
   // 工具方法
   private triggerRefresh(): void {
     setTimeout(() => {
