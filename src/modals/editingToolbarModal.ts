@@ -307,16 +307,8 @@ export function createMoremenu(app: App, plugin: editingToolbarPlugin, selector:
   return cMoreMenu;
 }
 
-export function quiteFormatbrushes(plugin:editingToolbarPlugin) {
-  //from https://github.com/obsidian-canzi/Enhanced-editing
-  //关闭所有格式刷变量
-  if (plugin.Temp_Notice) plugin.Temp_Notice.hide();
-  plugin.setEN_BG_Format_Brush(false);
-  plugin.setEN_FontColor_Format_Brush(false);
-  plugin.setEN_Text_Format_Brush(false);
-  // globalThis.EN_BG_Format_Brush = false; //多彩背景刷
-  // globalThis.EN_FontColor_Format_Brush = false; //多彩文字刷
-  // globalThis.EN_Text_Format_Brush = false;
+export function quiteFormatbrushes(plugin: editingToolbarPlugin) {
+  plugin.quiteAllFormatBrushes();
 }
 
 

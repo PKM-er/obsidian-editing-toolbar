@@ -524,6 +524,39 @@ export class CommandsManager {
                 }
             });
         });
+
+        // 添加格式刷命令
+        this.plugin.addCommand({
+            id: 'toggle-format-brush',
+            name: '切换格式刷',
+            icon: 'paintbrush',
+            editorCallback: (editor: Editor) => {
+                this.plugin.toggleFormatBrush();
+            }
+        });
+
+        // 修改所有需要支持格式刷的命令
+        const formatCommands = [
+            'toggle-bold', 'toggle-italics', 'toggle-strikethrough', 
+            'toggle-highlight', 'toggle-code', 'toggle-blockquote',
+            'header0-text', 'header1-text', 'header2-text', 'header3-text', 
+            'header4-text', 'header5-text', 'header6-text',
+            'underline', 'superscript', 'subscript', 'codeblock',
+            'justify', 'left', 'right', 'center',
+            'change-font-color', 'change-background-color'
+            // 可以添加其他需要支持格式刷的命令
+        ];
+
+        formatCommands.forEach(cmdId => {
+            const originalCommand = this.plugin.app.commands.commands[`editing-toolbar:${cmdId}`];
+            if (originalCommand && originalCommand.callback) {
+                const originalCallback = originalCommand.callback;
+                originalCommand.callback = () => {
+                    originalCallback();
+                    this.plugin.setLastExecutedCommand(`editing-toolbar:${cmdId}`);
+                };
+            }
+        });
     }
 
     private getCharacterOffset(commandId: string): number {

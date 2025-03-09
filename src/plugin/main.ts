@@ -52,6 +52,14 @@ export default class editingToolbarPlugin extends Plugin {
   Temp_Notice: Notice;
   Leaf_Width: number;
   private commandsManager: CommandsManager;
+  
+  // 添加格式刷相关属性
+  lastExecutedCommand: string | null = null;
+  formatBrushActive: boolean = false;
+  formatBrushNotice: Notice | null = null;
+
+  // 添加一个属性来存储上一个命令的可读名称
+  lastExecutedCommandName: string | null = null;
 
   async onload(): Promise<void> {
     const currentVersion = this.manifest.version; // 设置当前版本号
@@ -121,10 +129,11 @@ export default class editingToolbarPlugin extends Plugin {
     this.EN_FontColor_Format_Brush = false;
     this.EN_BG_Format_Brush = false;
     this.EN_Text_Format_Brush = false;
+    this.formatBrushActive = false;
 
     this.registerDomEvent(container, "mouseup", async (e: { button: any; }) => {
       if (e.button) {
-        if (this.EN_FontColor_Format_Brush || this.EN_BG_Format_Brush || this.EN_Text_Format_Brush) {
+        if (this.EN_FontColor_Format_Brush || this.EN_BG_Format_Brush || this.EN_Text_Format_Brush || this.formatBrushActive) {
           quiteFormatbrushes(this);
         }
       }
@@ -146,13 +155,15 @@ export default class editingToolbarPlugin extends Plugin {
           } else if (this.EN_BG_Format_Brush) {
             setBackgroundcolor(this.settings.cMenuBackgroundColor, cmEditor);
           } else if (this.EN_Text_Format_Brush) {
- 
             setFormateraser(this,cmEditor);
+          } else if (this.formatBrushActive && this.lastExecutedCommand) {
+            // 应用最后执行的命令
+            this.applyFormatBrush(cmEditor);
           } else if (this.settings.positionStyle == "following") {
             createFollowingbar(this.app, this.settings,cmEditor);
           }
         }
-      } else if (this.EN_FontColor_Format_Brush || this.EN_BG_Format_Brush || this.EN_Text_Format_Brush) {
+      } else if (this.EN_FontColor_Format_Brush || this.EN_BG_Format_Brush || this.EN_Text_Format_Brush || this.formatBrushActive) {
         quiteFormatbrushes(this);
       }
     });
@@ -286,5 +297,77 @@ export default class editingToolbarPlugin extends Plugin {
 
   async saveSettings() {
     await this.saveData(this.settings);
+  }
+
+  // 修改 setLastExecutedCommand 方法，同时保存命令名称
+  setLastExecutedCommand(commandId: string): void {
+    this.lastExecutedCommand = commandId;
+    
+    // 获取命令的可读名称
+    const command = this.app.commands.commands[commandId];
+    if (command && command.name) {
+      this.lastExecutedCommandName = command.name;
+    } else {
+      // 如果找不到命令名称，使用命令ID的最后部分
+      const parts = commandId.split(':');
+      this.lastExecutedCommandName = parts[parts.length - 1].replace(/-/g, ' ');
+    }
+  }
+
+  // 修改 toggleFormatBrush 方法，在通知中显示具体命令
+  toggleFormatBrush(): void {
+    if (!this.lastExecutedCommand) {
+      new Notice("请先执行一个格式命令，然后再启用格式刷");
+      return;
+    }
+
+    this.formatBrushActive = !this.formatBrushActive;
+    
+    if (this.formatBrushActive) {
+      // 关闭其他格式刷
+      this.EN_FontColor_Format_Brush = false;
+      this.EN_BG_Format_Brush = false;
+      this.EN_Text_Format_Brush = false;
+      
+      // 显示通知，包含具体命令名称
+      if (this.formatBrushNotice) this.formatBrushNotice.hide();
+      this.formatBrushNotice = new Notice(`格式刷已启用: 选择文本应用【${this.lastExecutedCommandName}】格式`, 0);
+    } else {
+      // 关闭通知
+      if (this.formatBrushNotice) {
+        this.formatBrushNotice.hide();
+        this.formatBrushNotice = null;
+      }
+    }
+  }
+
+  applyFormatBrush(editor: Editor): void {
+    if (!this.lastExecutedCommand || !this.formatBrushActive) return;
+    
+    // 执行保存的命令
+    const command = this.app.commands.commands[this.lastExecutedCommand];
+    if (command && command.callback) {
+      command.callback();
+    }
+  }
+
+  // 扩展现有方法以支持格式刷
+  quiteAllFormatBrushes(): void {
+    this.EN_FontColor_Format_Brush = false;
+    this.EN_BG_Format_Brush = false;
+    this.EN_Text_Format_Brush = false;
+    
+    if (this.formatBrushActive) {
+      this.formatBrushActive = false;
+      if (this.formatBrushNotice) {
+        this.formatBrushNotice.hide();
+        this.formatBrushNotice = null;
+      }
+    }
+    
+    if (this.Temp_Notice) {
+      this.Temp_Notice.hide();
+      this.Temp_Notice = null;
+    }
   }
 }
