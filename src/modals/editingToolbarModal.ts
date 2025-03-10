@@ -1,5 +1,5 @@
 import type editingToolbarPlugin from "src/plugin/main";
-import { App, Notice, requireApiVersion, ItemView,MarkdownView, ButtonComponent, WorkspaceParent, WorkspaceWindow, WorkspaceParentExt } from "obsidian";
+import { App, Notice, requireApiVersion, ItemView, MarkdownView, ButtonComponent, WorkspaceParent, WorkspaceWindow, WorkspaceParentExt } from "obsidian";
 import { backcolorpicker, colorpicker } from "src/util/util";
 import { t } from "src/translations/helper";
 import { editingToolbarSettings } from "src/settings/settingsData";
@@ -61,8 +61,8 @@ export function resetToolbar() {
 
 export function selfDestruct() {
   requireApiVersion("0.15.0") ? activeDocument = activeWindow.document : activeDocument = window.document;
-  const toolBarElement =activeDocument.getElementById("editingToolbarModalBar");
-  if(toolBarElement) toolBarElement.remove();
+  const toolBarElement = activeDocument.getElementById("editingToolbarModalBar");
+  if (toolBarElement) toolBarElement.remove();
   const rootSplits = getRootSplits();
   const clearToolbar = (leaf: HTMLElement) => {
 
@@ -104,9 +104,9 @@ export function selfDestruct() {
 
 export function isExistoolbar(app: App, settings: editingToolbarSettings): HTMLElement {
   requireApiVersion("0.15.0") ? activeDocument = activeWindow.document : activeDocument = window.document;
-  let container = settings.positionStyle == "top" ?  app.workspace.activeLeaf?.view.containerEl?.querySelector("#editingToolbarModalBar")
-      : activeDocument.getElementById("editingToolbarModalBar");
-   return (container) ? container as HTMLElement : null;
+  let container = settings.positionStyle == "top" ? app.workspace.activeLeaf?.view.containerEl?.querySelector("#editingToolbarModalBar")
+    : activeDocument.getElementById("editingToolbarModalBar");
+  return (container) ? container as HTMLElement : null;
 }
 
 
@@ -179,19 +179,19 @@ export function createTablecell(app: App, plugin: editingToolbarPlugin, el: stri
     if (markdownView) {
       return markdownView.editor;
     }
-    
-   // @ts-ignore
+
+    // @ts-ignore
     const activeEditor = plugin.app.workspace?.activeEditor;
     if (activeEditor && activeEditor.editor) {
       return activeEditor.editor;
     }
-    
+
     // 最后尝试从活跃叶子获取编辑器
     const activeLeafEditor = plugin.app.workspace.activeLeaf?.view?.editor;
     if (activeLeafEditor) {
       return activeLeafEditor;
     }
-    
+
     return null;
   };
   const editor = getActiveEditor();
@@ -210,10 +210,10 @@ export function createTablecell(app: App, plugin: editingToolbarPlugin, el: stri
           let backcolor = this.style.backgroundColor;
           if (backcolor != "") {
             backcolor = setcolorHex(backcolor);
-          // console.log(backcolor,'backcolor')
+            // console.log(backcolor,'backcolor')
             if (el == "x-color-picker-table") {
               plugin.settings.cMenuFontColor = backcolor;
-              setFontcolor(backcolor,editor);
+              setFontcolor(backcolor, editor);
               let font_colour_dom = activeDocument.querySelectorAll("#change-font-color-icon")
               font_colour_dom.forEach(element => {
                 let ele = element as HTMLElement
@@ -221,14 +221,14 @@ export function createTablecell(app: App, plugin: editingToolbarPlugin, el: stri
               });
 
             } else if (el == "x-backgroundcolor-picker-table") {
-                plugin.settings.cMenuBackgroundColor = backcolor;
-                //console.log("333")
-                setBackgroundcolor(backcolor,editor);
-                let background_colour_dom = activeDocument.querySelectorAll("#change-background-color-icon")
-                background_colour_dom.forEach(element => {
-                  let ele = element as HTMLElement
-                  ele.style.fill = backcolor;
-                });
+              plugin.settings.cMenuBackgroundColor = backcolor;
+              //console.log("333")
+              setBackgroundcolor(backcolor, editor);
+              let background_colour_dom = activeDocument.querySelectorAll("#change-background-color-icon")
+              background_colour_dom.forEach(element => {
+                let ele = element as HTMLElement
+                ele.style.fill = backcolor;
+              });
 
 
               //  background_colour_dom.style.fill = plugin.settings.cMenuBackgroundColor;
@@ -255,9 +255,8 @@ export const setcolorHex = function (color: string) {
       if (hex === "0") {
         hex += hex;
       }
-      if(hex.length==1)
-      {
-        hex= '0'+hex;
+      if (hex.length == 1) {
+        hex = '0' + hex;
       }
       strHex += hex;
     }
@@ -283,7 +282,7 @@ export const setcolorHex = function (color: string) {
 
 export function createMoremenu(app: App, plugin: editingToolbarPlugin, selector: HTMLDivElement) {
   const view = app.workspace.getActiveViewOfType(ItemView);
-  if(!ViewUtils.isAllowedViewType(view)) return;
+  if (!ViewUtils.isAllowedViewType(view)) return;
 
   let Morecontainer = view.containerEl.querySelector("#editingToolbarPopoverBar") as HTMLElement
   if (!plugin.IS_MORE_Button) return;
@@ -312,46 +311,104 @@ export function quiteFormatbrushes(plugin: editingToolbarPlugin) {
 }
 
 
-export function setFormateraser( plugin: editingToolbarPlugin,editor:Editor) {
-   // const editor = app.workspace.activeLeaf.view?.editor;
+export function setFormateraser(plugin: editingToolbarPlugin, editor: Editor) {
+  // const editor = app.workspace.activeLeaf.view?.editor;
 
-    let selectText = editor.getSelection();
-    if (!selectText || selectText.trim() === "") {
-      return;
-    }
+  let selectText = editor.getSelection();
+  if (!selectText || selectText.trim() === "") {
+    return;
+  }
+  //const cursor = editor.getCursor();
+  // if (selectText == null || selectText == "") {
+  //   quiteFormatbrushes(plugin);
+  //   plugin.setEN_Text_Format_Brush(true);
+  //   plugin.Temp_Notice = new Notice(t("Clear formatting brush ON!\nClick the  mouse middle or right key to close the formatting-brush"), 0);
 
-    // if (selectText == null || selectText == "") {
-    //   quiteFormatbrushes(plugin);
-    //   plugin.setEN_Text_Format_Brush(true);
-    //   plugin.Temp_Notice = new Notice(t("Clear formatting brush ON!\nClick the  mouse middle or right key to close the formatting-brush"), 0);
-
-    // } else {
-      let mdText = /(^#+\s|^#(?=\s)|^\>|^\- \[( |x)\]|^\+ |\<[^\<\>]+?\>|^1\. |^\s*\- |^\-+$|^\*+$)/mg;
-      selectText = selectText.replace(mdText, "");
-      selectText = selectText.replace(/^[ ]+|[ ]+$/mg, "");
-      selectText = selectText.replace(/\!?\[\[([^\[\]\|]*\|)*([^\(\)\[\]]+)\]\]/g, "$2");
-      selectText = selectText.replace(/\!?\[+([^\[\]\(\)]+)\]+\(([^\(\)]+)\)/g, "$1");
-      selectText = selectText.replace(/`([^`]+)`/g, "$1");
-      selectText = selectText.replace(/_([^_]+)_/g, "$1");
-      selectText = selectText.replace(/==([^=]+)==/g, "$1");
-      selectText = selectText.replace(/\*\*\*([^\*]+)\*\*\*/g, "$1");
-      selectText = selectText.replace(/\*\*?([^\*]+)\*\*?/g, "$1");
-      selectText = selectText.replace(/~~([^~]+)~~/g, "$1");
-
-      // selectText = selectText.replace(/(\r*\n)+/mg, "\r\n");
-      editor.replaceSelection(selectText);
-      
-     // app.commands.executeCommandById("editor:clear-formatting");
-
+  // } else {
+  // 处理 callout 格式
+  // 处理最外层的 callout 格式，每次只脱一层壳
+   // 检查是否是 callout 格式
+   if (selectText.match(/^>\s*\[\![\w\s]*\]/m)) {
+    // 处理 callout 格式
+    let lines = selectText.split('\n');
+    let result = [];
+    let inCallout = false;
+    let calloutLevel = 0;
+    let foundFirstCallout = false;
     
+    for (let i = 0; i < lines.length; i++) {
+        let line = lines[i];
+        
+        // 检测 callout 开始
+        let calloutMatch = line.match(/^(>+)\s*\[\!([\w\s]*)\]\s*(.*?)$/);
+        if (calloutMatch && !foundFirstCallout) {
+            // 找到第一个 callout，记录其级别
+            calloutLevel = calloutMatch[1].length;
+            foundFirstCallout = true;
+            
+            // 如果有标题，保留标题
+            if (calloutMatch[3].trim()) {
+                result.push(calloutMatch[3].trim());
+            }
+            
+            inCallout = true;
+            continue;
+        }
+        
+        // 处理 callout 内容
+        if (inCallout) {
+            let linePrefix = line.match(/^(>+)\s*/);
+            if (linePrefix && linePrefix[1].length >= calloutLevel) {
+                // 这行是当前 callout 的一部分
+                // 去除与当前 callout 级别相同的前缀
+                let newLine = line.replace(new RegExp(`^>{${calloutLevel}}\\s*`), '');
+                
+                // 如果有更深层次的 >，保留它们
+                result.push(newLine);
+            } else {
+                // 这行不是当前 callout 的一部分
+                inCallout = false;
+                result.push(line);
+            }
+        } else {
+            result.push(line);
+        }
+    }
+    
+    editor.replaceSelection(result.join('\n'));
+    return;
 }
 
-export function createFollowingbar(app: App, settings: editingToolbarSettings,editor:Editor) {
+  let mdText = /(^#+\s|^#(?=\s)|^\>|^\- \[( |x)\]|^\+ |\<[^\<\>]+?\>|^1\. |^\s*\- |^\-+$|^\*+$)/mg;
+  selectText = selectText.replace(mdText, "");
+  selectText = selectText.replace(/^[ ]+|[ ]+$/mg, "");
+  selectText = selectText.replace(/\!?\[\[([^\[\]\|]*\|)*([^\(\)\[\]]+)\]\]/g, "$2");
+  selectText = selectText.replace(/\!?\[+([^\[\]\(\)]+)\]+\(([^\(\)]+)\)/g, "$1");
+  selectText = selectText.replace(/`([^`]+)`/g, "$1");
+  selectText = selectText.replace(/_([^_]+)_/g, "$1");
+  selectText = selectText.replace(/==([^=]+)==/g, "$1");
+  selectText = selectText.replace(/\*\*\*([^\*]+)\*\*\*/g, "$1");
+  selectText = selectText.replace(/\*\*?([^\*]+)\*\*?/g, "$1");
+  selectText = selectText.replace(/~~([^~]+)~~/g, "$1");
+
+  // selectText = selectText.replace(/(\r*\n)+/mg, "\r\n");
+  editor.replaceSelection(selectText);
+
+  //editor.setSelection(cursor);
+
+
+ 
+  //app.commands.executeCommandById("editor:clear-formatting");
+
+
+}
+
+export function createFollowingbar(app: App, settings: editingToolbarSettings, editor: Editor) {
   let editingToolbarModalBar = isExistoolbar(app, settings);
 
   const view = app.workspace.getActiveViewOfType(ItemView);
   if (!ViewUtils.isAllowedViewType(view)) {
-    if(editingToolbarModalBar) {
+    if (editingToolbarModalBar) {
       editingToolbarModalBar.style.visibility = "hidden";
     }
     return;
@@ -359,7 +416,7 @@ export function createFollowingbar(app: App, settings: editingToolbarSettings,ed
 
   if (ViewUtils.isSourceMode(view)) {
     if (editingToolbarModalBar) {
-     // const editor = app.workspace.activeLeaf.view?.editor;
+      // const editor = app.workspace.activeLeaf.view?.editor;
 
       editingToolbarModalBar.style.visibility = editor.somethingSelected() ? "visible" : "hidden";
       editingToolbarModalBar.style.height = (settings.aestheticStyle === "tiny") ? 30 + "px" : 40 + "px";
@@ -367,7 +424,7 @@ export function createFollowingbar(app: App, settings: editingToolbarSettings,ed
       editingToolbarModalBar.removeClass("editingToolbarGrid");
 
       if (editingToolbarModalBar.style.visibility === "visible") {
-    
+
         const editorRect = editor.containerEl.getBoundingClientRect();
         const toolbarWidth = editingToolbarModalBar.offsetWidth;
         const toolbarHeight = editingToolbarModalBar.offsetHeight;
@@ -405,7 +462,7 @@ export function createFollowingbar(app: App, settings: editingToolbarSettings,ed
 export function editingToolbarPopover(app: App, plugin: editingToolbarPlugin): void {
   let settings = plugin.settings;
   requireApiVersion("0.15.0") ? activeDocument = activeWindow.document : activeDocument = window.document;
-  
+
   function createMenu() {
     const generateMenu = () => {
       let btnwidth = 0;
@@ -418,12 +475,11 @@ export function editingToolbarPopover(app: App, plugin: editingToolbarPlugin): v
             `position: relative; grid-template-columns: repeat(auto-fit, minmax(28px, 1fr));`
           );
           editingToolbar.className += " top";
-          if (settings.autohide)
-          {
+          if (settings.autohide) {
             editingToolbar.className += " autohide";
           }
         } else if (settings.positionStyle == "following") {
-          editingToolbar.style.visibility = "hidden" 
+          editingToolbar.style.visibility = "hidden"
         }
       }
       editingToolbar.setAttribute("id", "editingToolbarModalBar");
@@ -455,25 +511,25 @@ export function editingToolbarPopover(app: App, plugin: editingToolbarPlugin): v
 
       if (settings.positionStyle == "top") {
         let currentleaf = app.workspace.activeLeaf.view.containerEl;
-        
-       // 尝试获取 markdown 视图或 canvas 视图，并指定为 HTMLElement 类型
-       const markdownDom = currentleaf?.querySelector<HTMLElement>(".markdown-source-view");
-       const canvasDom = currentleaf?.querySelector<HTMLElement>(".canvas-wrapper");
-       
-        
+
+        // 尝试获取 markdown 视图或 canvas 视图，并指定为 HTMLElement 类型
+        const markdownDom = currentleaf?.querySelector<HTMLElement>(".markdown-source-view");
+        const canvasDom = currentleaf?.querySelector<HTMLElement>(".canvas-wrapper");
+
+
         // 确定要插入工具栏的目标元素
         const targetDom = markdownDom || canvasDom;
-        
+
         if (!targetDom) return;
-        
+
         // 只有在没有工具栏时才添加 PopoverMenu
         if (!currentleaf?.querySelector("#editingToolbarPopoverBar")) {
           targetDom.insertAdjacentElement("afterbegin", PopoverMenu);
         }
-        
+
         // 添加编辑工具栏
         targetDom.insertAdjacentElement("afterbegin", editingToolbar);
-        
+
         // 获取宽度
         leafwidth = targetDom?.offsetWidth;
 
@@ -503,15 +559,13 @@ export function editingToolbarPopover(app: App, plugin: editingToolbarPlugin): v
           } else _btn = new ButtonComponent(editingToolbar);
 
           _btn.setClass("editingToolbarCommandsubItem" + index);
-          if(index >= settings.cMenuNumRows)
-          {
+          if (index >= settings.cMenuNumRows) {
             _btn.setClass("editingToolbarSecond");
           }
-          else
-            {
-              if(settings.positionStyle != "top")
-              _btn.buttonEl.setAttribute('aria-label-position','top')
-            }
+          else {
+            if (settings.positionStyle != "top")
+              _btn.buttonEl.setAttribute('aria-label-position', 'top')
+          }
 
           checkHtml(item.icon)
             ? (_btn.buttonEl.innerHTML = item.icon)
@@ -534,7 +588,7 @@ export function editingToolbarPopover(app: App, plugin: editingToolbarPlugin): v
                   .setTooltip(tip)
                   .setClass("menu-item")
                   .onClick(() => {
-                    
+
                     app.commands.executeCommandById(subitem.id);
 
                     if (settings.cMenuVisibility == false)
@@ -545,12 +599,11 @@ export function editingToolbarPopover(app: App, plugin: editingToolbarPlugin): v
                       } else editingToolbar.style.visibility = "visible";
                     }
                   });
-                  if(index < settings.cMenuNumRows)
-                  {
-                    if(settings.positionStyle != "top")
-                    sub_btn.buttonEl.setAttribute('aria-label-position','top')
-                  }
-                  if (subitem.id == "editingToolbar-Divider-Line")
+                if (index < settings.cMenuNumRows) {
+                  if (settings.positionStyle != "top")
+                    sub_btn.buttonEl.setAttribute('aria-label-position', 'top')
+                }
+                if (subitem.id == "editingToolbar-Divider-Line")
                   sub_btn.setClass("editingToolbar-Divider-Line");
                 checkHtml(subitem.icon)
                   ? (sub_btn.buttonEl.innerHTML = subitem.icon)
@@ -567,7 +620,7 @@ export function editingToolbarPopover(app: App, plugin: editingToolbarPlugin): v
               .setClass("editingToolbarCommandsubItem-font-color")
               .setTooltip(t("Font Colors"))
               .onClick(() => {
-                
+
                 app.commands.executeCommandById(item.id);
                 if (settings.cMenuVisibility == false)
                   editingToolbar.style.visibility = "hidden";
@@ -611,30 +664,30 @@ export function editingToolbarPopover(app: App, plugin: editingToolbarPlugin): v
                   );
 
                 });
-                let button4 = new ButtonComponent(el);
-                button4
-                  .setIcon("palette")
-                  .setTooltip(t("Custom Font Color"))
-                  .onClick(() => {
-                    app.setting.open();
-                    app.setting.openTabById("editing-toolbar");
-                    setTimeout(() => {
-                      // 获取标签页容器
-                      const tabsContainer = app.setting.activeTab.containerEl.querySelector(".editing-toolbar-tabs");
-                      if (tabsContainer) {
-                        // 获取第二个标签页按钮(appearance)并触发点击
-                        const appearanceTab = tabsContainer.children[1] as HTMLElement;
-                        appearanceTab?.click();
-                        
-                        // 等待标签页切换完成后定位到颜色设置
-                        setTimeout(() => {
-                          let settingEI = app.setting.activeTab.containerEl.querySelector(".custom_font");
-                          if (settingEI) { settingEI.addClass?.("toolbar-cta"); }
-                        }, 100);
-                      }
-                    }, 200);
+              let button4 = new ButtonComponent(el);
+              button4
+                .setIcon("palette")
+                .setTooltip(t("Custom Font Color"))
+                .onClick(() => {
+                  app.setting.open();
+                  app.setting.openTabById("editing-toolbar");
+                  setTimeout(() => {
+                    // 获取标签页容器
+                    const tabsContainer = app.setting.activeTab.containerEl.querySelector(".editing-toolbar-tabs");
+                    if (tabsContainer) {
+                      // 获取第二个标签页按钮(appearance)并触发点击
+                      const appearanceTab = tabsContainer.children[1] as HTMLElement;
+                      appearanceTab?.click();
 
-                  });
+                      // 等待标签页切换完成后定位到颜色设置
+                      setTimeout(() => {
+                        let settingEI = app.setting.activeTab.containerEl.querySelector(".custom_font");
+                        if (settingEI) { settingEI.addClass?.("toolbar-cta"); }
+                      }, 100);
+                    }
+                  }, 200);
+
+                });
             }
           } else if (item.id == "editing-toolbar:change-background-color") {
             let button2 = new ButtonComponent(editingToolbar);
@@ -642,7 +695,7 @@ export function editingToolbarPopover(app: App, plugin: editingToolbarPlugin): v
               .setClass("editingToolbarCommandsubItem-font-color")
               .setTooltip(t("Background color"))
               .onClick(() => {
-                
+
                 app.commands.executeCommandById(item.id);
                 if (settings.cMenuVisibility == false)
                   editingToolbar.style.visibility = "hidden";
@@ -686,30 +739,30 @@ export function editingToolbarPopover(app: App, plugin: editingToolbarPlugin): v
                   );
 
                 });
-                let button4 = new ButtonComponent(el);
-                button4
-                  .setIcon("palette")
-                  .setTooltip(t("Custom Backgroud Color"))
-                  .onClick(() => {
-                    app.setting.open();
-                    app.setting.openTabById("editing-toolbar");
-                    setTimeout(() => {
-                      // 获取标签页容器
-                      const tabsContainer = app.setting.activeTab.containerEl.querySelector(".editing-toolbar-tabs");
-                      if (tabsContainer) {
-                        // 获取第二个标签页按钮(appearance)并触发点击
-                        const appearanceTab = tabsContainer.children[1] as HTMLElement;
-                        appearanceTab?.click();
-                        
-                        // 等待标签页切换完成后定位到颜色设置
-                        setTimeout(() => {
-                          let settingEI = app.setting.activeTab.containerEl.querySelector(".custom_bg");
-                          if (settingEI) { settingEI.addClass?.("toolbar-cta"); }
-                        }, 100);
-                      }
-                    }, 200);
+              let button4 = new ButtonComponent(el);
+              button4
+                .setIcon("palette")
+                .setTooltip(t("Custom Backgroud Color"))
+                .onClick(() => {
+                  app.setting.open();
+                  app.setting.openTabById("editing-toolbar");
+                  setTimeout(() => {
+                    // 获取标签页容器
+                    const tabsContainer = app.setting.activeTab.containerEl.querySelector(".editing-toolbar-tabs");
+                    if (tabsContainer) {
+                      // 获取第二个标签页按钮(appearance)并触发点击
+                      const appearanceTab = tabsContainer.children[1] as HTMLElement;
+                      appearanceTab?.click();
 
-                  });
+                      // 等待标签页切换完成后定位到颜色设置
+                      setTimeout(() => {
+                        let settingEI = app.setting.activeTab.containerEl.querySelector(".custom_bg");
+                        if (settingEI) { settingEI.addClass?.("toolbar-cta"); }
+                      }, 100);
+                    }
+                  }, 200);
+
+                });
 
             }
           } else {
@@ -734,14 +787,12 @@ export function editingToolbarPopover(app: App, plugin: editingToolbarPlugin): v
             });
 
             button.setClass("editingToolbarCommandItem");
-            if(index >= settings.cMenuNumRows)
-            {
+            if (index >= settings.cMenuNumRows) {
 
               button.setClass("editingToolbarSecond");
-            }else
-            {
-              if(settings.positionStyle != "top")
-              button.buttonEl.setAttribute('aria-label-position','top')
+            } else {
+              if (settings.positionStyle != "top")
+                button.buttonEl.setAttribute('aria-label-position', 'top')
             }
             if (item.id == "editingToolbar-Divider-Line")
               button.setClass("editingToolbar-Divider-Line");
@@ -768,12 +819,11 @@ export function editingToolbarPopover(app: App, plugin: editingToolbarPlugin): v
         }, 100);
       }
     };
-    if(!plugin.isLoadMobile()) return ;
+    if (!plugin.isLoadMobile()) return;
     const view = app.workspace.getActiveViewOfType(ItemView);
-    if(ViewUtils.isAllowedViewType(view))  
-      {
-  //  let Markdown = app.workspace.getActiveViewOfType(MarkdownView);
-   // if (Markdown) {
+    if (ViewUtils.isAllowedViewType(view)) {
+      //  let Markdown = app.workspace.getActiveViewOfType(MarkdownView);
+      // if (Markdown) {
       if (isExistoolbar(app, plugin.settings)) return;
 
       generateMenu();

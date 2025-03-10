@@ -137,7 +137,7 @@ export const DEFAULT_SETTINGS: editingToolbarSettings = {
         "icon": "underline-glyph"
       },
       {
-        "id": "toggle-highlight",
+        "id": "editing-toolbar:toggle-highlight",
         "name": "==Highlight==",
         "icon": "highlight-glyph"
       },
