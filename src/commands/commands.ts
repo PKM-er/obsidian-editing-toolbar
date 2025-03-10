@@ -24,6 +24,7 @@ export class CommandsManager {
 
             editor.focus();
 
+            // 取消选中
             // if (selection) {
             //     editor.setSelection(cursor);
             // }

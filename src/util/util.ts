@@ -235,49 +235,86 @@ export function setHeader(_str: string, editor?: Editor) {
 
 }
 
+
 export function setFontcolor(color: string, editor?: Editor) {
-  //from https://github.com/obsidian-canzi/Enhanced-editing
- 
-    let selectText = editor?.getSelection();
-    console.log(selectText,'selectText');
-    // if (selectText == null || selectText.trim() == "") {
-    //   //如果没有选中内容激活格式刷
-    //   quiteFormatbrushes(plugin);
-    //   plugin.setEN_FontColor_Format_Brush(true);
-    //   plugin.setTemp_Notice(new Notice(t("Font-Color formatting brush ON!"), 0));
-    //   return;
-    // }
-    if (!selectText || selectText.trim() === "") {
-      return;
-    }
+  if (!editor) return;
 
-    let _html0 = /\<font color=[0-9a-zA-Z#]+[^\<\>]*\>[^\<\>]+\<\/font\>/g;
-    let _html1 = /^\<font color=[0-9a-zA-Z#]+[^\<\>]*\>([^\<\>]+)\<\/font\>$/;
-    let _html2 = '<font color="' + color + '">$1</font>';
-    let _html3 = /\<font color=[^\<]*$|^[^\>]*font\>/g; //是否只包含一侧的<>
+  const selectText = editor.getSelection();
 
-    if (_html3.test(selectText)) {
-      return;
-    } else if (_html0.test(selectText)) {
-      
-      if (_html1.test(selectText)) {
-        selectText = selectText.replace(/<font color="[^"]+">|<\/font>/g, ''); //应用新颜色之前先清空旧颜色
-        selectText = selectText.replace(_html1, _html2);
-      } else {
-        selectText = selectText.replace(
-          /\<font color=[0-9a-zA-Z#]+[^\<\>]*?\>|\<\/font\>/g,
-          ""
-        );
-      }
+  if (!selectText || selectText.trim() === "") {
+    return;
+  }
+
+  // Regex to match font color tags, with multiline support
+  const fontColorRegex = /<font\s+color=["']?[^"'>]+["']?>(.*?)<\/font>/gms;
+  const hasColorTag = fontColorRegex.test(selectText);
+  // Function to check if the text is already wrapped in the same color
+  const isAlreadyInSameColor = (text: string, targetColor: string): boolean => {
+    const cleanColorRegex = new RegExp(`^<font\\s+color=["']?${targetColor}["']?>(.+)<\\/font>$`, 'ms');
+    return cleanColorRegex.test(text.trim());
+  };
+
+  // If the text is already in the same color, do nothing
+  if (isAlreadyInSameColor(selectText, color)) {
+    return;
+  }
+
+  // Function to replace color while preserving text content and line breaks
+  const replaceColor = (match: string, text: string) => {
+    return text.split('\n').map(line => 
+      line.trim() ? `<font color="${color}">${line}</font>` : line
+    ).join('\n');
+  };
+
+  // Replace existing font color tags or wrap text in new color tag
+  const newText = selectText.replace(fontColorRegex, replaceColor);
+
+  // If no color tags existed, wrap each non-empty line in a new color tag
+  const finalText = newText === selectText 
+    ? selectText.split('\n').map(line => 
+        line.trim() ? `<font color="${color}">${line}</font>` : line
+      ).join('\n')
+    : newText;
+
+  // Store the current selection
+  const currentSelection = editor.listSelections();
+  const adjustedSelections = currentSelection.map(sel => {
+    const tagLength = hasColorTag ? 0:`<font color="${color}"></font>`.length ;
+    const isForward = sel.anchor.line < sel.head.line || 
+                      (sel.anchor.line === sel.head.line && sel.anchor.ch < sel.head.ch);
+
+    if (isForward) {
+      // 从前到后选择
+      return {
+        anchor: {
+          line: sel.anchor.line,
+          ch: sel.anchor.ch
+        },
+        head: {
+          line: sel.head.line,
+          ch: sel.head.ch + tagLength
+        }
+      };
     } else {
-      selectText = selectText.replace(/<font color=["'#0-9a-zA-Z]+>[^<]+<\/font>/g, ''); //应用新颜色之前先清空旧颜色
-      selectText = selectText.replace(/^(.+)$/gm, _html2);
+      // 从后到前选择
+      return {
+        anchor: {
+          line: sel.anchor.line,
+          ch: sel.anchor.ch + tagLength
+        },
+        head: {
+          line: sel.head.line,
+          ch: sel.head.ch
+        }
+      };
     }
-    editor.replaceSelection(selectText);
-    editor.exec("goRight");
-    // @ts-ignore
-   // app.commands.executeCommandById("editor:focus");
+  });
 
+  // Replace the selection
+  editor.replaceSelection(finalText);
+
+  // Restore the original selection
+  editor.setSelections(adjustedSelections);
 }
 
 export function setBackgroundcolor(color: string, editor?: Editor) {
@@ -317,7 +354,7 @@ export function setBackgroundcolor(color: string, editor?: Editor) {
       selectText = selectText.replace(/^(.+)$/gm, _html2);
     }
     editor.replaceSelection(selectText);
-    editor.exec("goRight");
+    //editor.exec("goRight");
     
     // app.commands.executeCommandById("editor:focus");
 
