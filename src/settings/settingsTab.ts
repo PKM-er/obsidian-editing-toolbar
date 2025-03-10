@@ -1,6 +1,6 @@
 import type editingToolbarPlugin from "src/plugin/main";
 import { CommandPicker, ChooseFromIconList, ChangeCmdname } from "src/modals/suggesterModals";
-import { App, Setting, PluginSettingTab, Command } from "obsidian";
+import { App, Setting, PluginSettingTab, Command, Notice } from "obsidian";
 import { APPEND_METHODS, AESTHETIC_STYLES, POSITION_STYLES } from "src/settings/settingsData";
 import { selfDestruct, editingToolbarPopover, checkHtml } from "src/modals/editingToolbarModal";
 import Sortable from "sortablejs";
@@ -117,10 +117,10 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     this.destroyPickrs();
     const { containerEl } = this;
     containerEl.empty();
-    
+
     // 保持现有的头部代码
     this.createHeader(containerEl);
-    
+
     // 创建标签页容器
     const tabContainer = containerEl.createEl('div', {
       cls: 'editing-toolbar-tabs'
@@ -131,10 +131,10 @@ export class editingToolbarSettingTab extends PluginSettingTab {
       const tabButton = tabContainer.createEl('div', {
         cls: `editing-toolbar-tab ${this.activeTab === tab.id ? 'active' : ''}`
       });
-      
+
       tabButton.createEl('span', { cls: `setting-editor-icon ${tab.icon}` });
       tabButton.createEl('span', { text: tab.name });
-      
+
       tabButton.addEventListener('click', () => {
         this.activeTab = tab.id;
         this.display();
@@ -147,7 +147,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     });
 
     // 根据当前激活的标签页显示对应设置
-    switch(this.activeTab) {
+    switch (this.activeTab) {
       case 'general':
         this.displayGeneralSettings(contentContainer);
         break;
@@ -158,8 +158,8 @@ export class editingToolbarSettingTab extends PluginSettingTab {
         this.displayCustomCommandSettings(contentContainer);
         break;
       case 'commands':
-          this.displayCommandSettings(contentContainer);
-          break;
+        this.displayCommandSettings(contentContainer);
+        break;
     }
   }
 
@@ -222,53 +222,53 @@ export class editingToolbarSettingTab extends PluginSettingTab {
           .setValue(this.plugin.settings.positionStyle)
           .onChange((value) => {
             this.plugin.settings.positionStyle = value;
-            if(value == "top") this.plugin.settings.aestheticStyle = "glass";
-            if(value == "fixed") this.plugin.settings.aestheticStyle = "default";
-            if(value == "following") this.plugin.settings.aestheticStyle = "tiny";
+            if (value == "top") this.plugin.settings.aestheticStyle = "glass";
+            if (value == "fixed") this.plugin.settings.aestheticStyle = "default";
+            if (value == "following") this.plugin.settings.aestheticStyle = "tiny";
             this.plugin.saveSettings();
             this.triggerRefresh();
           });
       });
-      if (this.plugin.settings.positionStyle == "top") {
-        
-        new Setting(containerEl)
-          .setName(t('Editing Toolbar Auto-hide')
-          )
-          .setDesc(
-            t('The toolbar is displayed when the mouse moves over it, otherwise it is automatically hidden')
-          )
-          .addToggle(toggle => toggle.setValue(this.plugin.settings?.autohide)
-            .onChange((value) => {
-              this.plugin.settings.autohide = value;
-              this.plugin.saveSettings();
-              this.triggerRefresh();
-            }));
-      }
-      if (this.plugin.settings.positionStyle == "fixed") {
-        new Setting(containerEl)
-          .setName(t('Editing Toolbar columns')
-          )
-          .setDesc(
-            t('Choose the number of columns per row to display on Editing Toolbar. To see the change, hit the refresh button below, or in the status bar menu.')
-          )
-          .addSlider((slider) => {
-            slider
-              .setLimits(1, 32, 1)
-              .setValue(this.plugin.settings.cMenuNumRows)
-              .onChange(
-                debounce(
-                  async (value: number) => {
-                    this.plugin.settings.cMenuNumRows = value;
-                    await this.plugin.saveSettings();
-                  },
-                  100,
-                  true
-                )
+    if (this.plugin.settings.positionStyle == "top") {
+
+      new Setting(containerEl)
+        .setName(t('Editing Toolbar Auto-hide')
+        )
+        .setDesc(
+          t('The toolbar is displayed when the mouse moves over it, otherwise it is automatically hidden')
+        )
+        .addToggle(toggle => toggle.setValue(this.plugin.settings?.autohide)
+          .onChange((value) => {
+            this.plugin.settings.autohide = value;
+            this.plugin.saveSettings();
+            this.triggerRefresh();
+          }));
+    }
+    if (this.plugin.settings.positionStyle == "fixed") {
+      new Setting(containerEl)
+        .setName(t('Editing Toolbar columns')
+        )
+        .setDesc(
+          t('Choose the number of columns per row to display on Editing Toolbar. To see the change, hit the refresh button below, or in the status bar menu.')
+        )
+        .addSlider((slider) => {
+          slider
+            .setLimits(1, 32, 1)
+            .setValue(this.plugin.settings.cMenuNumRows)
+            .onChange(
+              debounce(
+                async (value: number) => {
+                  this.plugin.settings.cMenuNumRows = value;
+                  await this.plugin.saveSettings();
+                },
+                100,
+                true
               )
-              .setDynamicTooltip();
-          });
-          
-      }
+            )
+            .setDynamicTooltip();
+        });
+
+    }
     // Color settings
     this.createColorSettings(containerEl);
   }
@@ -287,15 +287,15 @@ export class editingToolbarSettingTab extends PluginSettingTab {
           });
       });
 
- 
 
 
-  
-       // 现有的命令列表代码
-       this.createCommandList(containerEl);
+
+
+    // 现有的命令列表代码
+    this.createCommandList(containerEl);
   }
   private displayCustomCommandSettings(containerEl: HTMLElement): void {
-    
+
     // 添加自定义命令设置部分
     new Setting(containerEl)
       .setName(t('Custom Format Commands'))
@@ -308,38 +308,73 @@ export class editingToolbarSettingTab extends PluginSettingTab {
           new CustomCommandModal(this.app, this.plugin, null).open();
         })
       );
-     // 显示现有的自定义命令
-     const customCommandsContainer = containerEl.createDiv('custom-commands-container');
-     this.plugin.settings.customCommands.forEach((command, index) => {
-       const commandSetting = new Setting(customCommandsContainer)
-         .setName(command.name)
-         .setDesc(`${t('ID')}: ${command.id}, ${t('Prefix')}: ${command.prefix}, ${t('Suffix')}: ${command.suffix}`)
-         .addButton((addicon) => {
-           addicon
-             .setClass("editingToolbarSettingsIcon")
-           checkHtml(command.icon) ? addicon.buttonEl.innerHTML = command.icon : addicon.setIcon(command.icon)
-         })
-         .addButton(button => button
-           .setIcon('pencil')
-           .setTooltip(t('Edit'))
-           .onClick(() => {
-             // 打开编辑命令的模态框
-             new CustomCommandModal(this.app, this.plugin, index).open();
-           })
-         )
-         .addButton(button => button
-           .setIcon('editingToolbarDelete')
-           .setTooltip(t('Delete'))
-           .onClick(async () => {
-             this.plugin.settings.customCommands.splice(index, 1);
-             await this.plugin.saveSettings();
-             // 使用公共方法
-             this.plugin.reloadCustomCommands();
-             // 刷新设置界面
-             this.display();
-           })
-         );
-     });
+    // 显示现有的自定义命令
+    const customCommandsContainer = containerEl.createDiv('custom-commands-container');
+    this.plugin.settings.customCommands.forEach((command, index) => {
+      const commandSetting = new Setting(customCommandsContainer)
+        .setName(command.name)
+        .setDesc(`${t('ID')}: ${command.id}, ${t('Prefix')}: ${command.prefix}, ${t('Suffix')}: ${command.suffix}`)
+        .addButton((addicon) => {
+          addicon
+            .setClass("editingToolbarSettingsIcon")
+          checkHtml(command.icon) ? addicon.buttonEl.innerHTML = command.icon : addicon.setIcon(command.icon)
+        })
+        // 添加到工具栏按钮
+        .addButton(button => button
+          .setButtonText(t('Add to Toolbar'))
+          .setTooltip(t('Add this command to the toolbar'))
+          .onClick(() => {
+            // 检查命令是否已在工具栏中
+            const isInToolbar = this.plugin.settings.menuCommands.some(cmd => cmd.id === `editing-toolbar:custom-${command.id}`);
+
+            if (isInToolbar) {
+              new Notice(t('This command is already in the toolbar'));
+              return;
+            }
+
+            // 创建工具栏命令对象
+            const toolbarCommand = {
+              id: `editing-toolbar:custom-${command.id}`,
+              name: command.name,
+              icon: command.icon || 'text'
+            };
+
+            // 添加到工具栏命令列表
+            this.plugin.settings.menuCommands.push(toolbarCommand);
+
+            // 保存设置
+            this.plugin.saveSettings().then(() => {
+              new Notice(t('Command added to toolbar'));
+              // 触发工具栏更新
+              dispatchEvent(new Event("editingToolbar-NewCommand"));
+              this.plugin.reloadCustomCommands();
+            });
+          })
+        )
+        .addButton(button => button
+          .setIcon('pencil')
+          .setTooltip(t('Edit'))
+          .onClick(() => {
+            // 打开编辑命令的模态框
+            new CustomCommandModal(this.app, this.plugin, index).open();
+          })
+        )
+        .addButton(button => button
+          .setIcon('editingToolbarDelete')
+          .setTooltip(t('Delete'))
+          .onClick(async () => {
+            this.plugin.settings.customCommands.splice(index, 1);
+            await this.plugin.saveSettings();
+            // 使用公共方法
+            this.plugin.reloadCustomCommands();
+            // 刷新设置界面
+            this.display();
+          })
+        );
+
+    });
+
+
   }
   // 工具方法
   private triggerRefresh(): void {
@@ -352,22 +387,22 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     const headerContainer = containerEl.createEl("div", {
       cls: "editing-toolbar-header"
     });
-    
+
     // 创建左侧标题容器
     const titleContainer = headerContainer.createEl("div", {
       cls: "editing-toolbar-title-container"
     });
-    
-    titleContainer.createEl("h1", { 
-      text: "Obsidian Editing Toolbar:"+this.plugin.manifest.version,
-      cls: "editing-toolbar-title" 
+
+    titleContainer.createEl("h1", {
+      text: "Obsidian Editing Toolbar:" + this.plugin.manifest.version,
+      cls: "editing-toolbar-title"
     });
-    
+
     // 创建右侧信息容器
     const infoContainer = headerContainer.createEl("div", {
       cls: "editing-toolbar-info"
     });
-    
+
     infoContainer.createEl("span", { text: "作者：" }).createEl("a", {
       text: "Cuman ✨",
       href: "https://github.com/cumany",
@@ -376,7 +411,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
       text: "pkmer.cn",
       href: "https://pkmer.cn/show/20230329145815",
     });
-    
+
     // 添加修复按钮
     new Setting(infoContainer)
       .setClass("editing-toolbar-fix-button")
@@ -397,10 +432,10 @@ export class editingToolbarSettingTab extends PluginSettingTab {
       .setClass('custom_bg')
       .then((setting) => {
         const pickerContainer = setting.controlEl.createDiv({ cls: "pickr-container" });
-        
+
         for (let i = 0; i < 5; i++) {
           const pickerEl = pickerContainer.createDiv({ cls: "picker" });
-          
+
           const pickr = Pickr.create(
             getPickrSettings({
               isView: false,
@@ -408,7 +443,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
               containerEl: pickerContainer,
               swatches: [
                 '#FFB78B8C',
-                '#CDF4698C', 
+                '#CDF4698C',
                 '#A0CCF68C',
                 '#F0A7D88C',
                 '#ADEFEF8C',
@@ -431,10 +466,10 @@ export class editingToolbarSettingTab extends PluginSettingTab {
       .setClass('custom_font')
       .then((setting) => {
         const pickerContainer = setting.controlEl.createDiv({ cls: "pickr-container" });
-        
+
         for (let i = 0; i < 5; i++) {
           const pickerEl = pickerContainer.createDiv({ cls: "picker" });
-          
+
           const pickr = Pickr.create(
             getPickrSettings({
               isView: false,
@@ -442,7 +477,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
               containerEl: pickerContainer,
               swatches: [
                 '#D83931',
-                '#DE7802', 
+                '#DE7802',
                 '#245BDB',
                 '#6425D0',
                 '#646A73',

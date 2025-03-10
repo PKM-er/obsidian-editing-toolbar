@@ -88,7 +88,7 @@ export default {
   'Add content after selected text':'在选中的文本后添加内容',
   'Character offset of cursor after formatting':'格式化后光标的字符偏移量',
   'Line offset of cursor after formatting':'格式化后光标的行偏移量',
-  'Whether it is a line head format (such as title, quote block, etc.)':'是否为行首格式（如标题、引用块等）',
+  'Whether to insert at the beginning of the next line':'是否在下一行首插入',
   'Command icon (click to select)':'命令图标（点击选择）',
   'Choose Icon':'选择图标',
   'Save':'保存',
@@ -126,4 +126,8 @@ export default {
   'Please execute a editingToolbar format command first, then enable the format brush':'请先执行一个格式命令，然后再启用格式刷',
   'Format brush ON! Select text to apply【':'格式刷已开启\n选中文本应用【',
   '】format':'】格式\n点击鼠标中键或者右键关闭格式刷',
+  'Add to Toolbar':'添加到工具栏',
+  'This command is already in the toolbar':'该命令已存在于工具栏中',
+  'Command added to toolbar':'命令已添加到工具栏',
+  'Add this command to the toolbar':'添加该命令到工具栏',
 };

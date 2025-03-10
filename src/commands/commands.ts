@@ -192,7 +192,7 @@ export class CommandsManager {
             prefix = '\n' + prefix;
         }
 
-        const suffix = command.suffix || prefix;
+        const suffix = command.suffix;
 
         const preStart = {
             line: curserStart.line - command.line,

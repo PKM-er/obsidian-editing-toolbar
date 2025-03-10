@@ -87,7 +87,7 @@ export default {
 'Add content after selected text':'Add content after selected text',
 'Character offset of cursor after formatting':'Character offset of cursor after formatting',
 'Line offset of cursor after formatting':'Line offset of cursor after formatting',
-'Whether it is a line head format (such as title, quote block, etc.)':'Whether it is a line head format (such as title, quote block, etc.)',
+'Whether to insert at the beginning of the next line':'Whether to insert at the beginning of the next line',
 'Command icon (click to select)':'Command icon (click to select)',
 'Choose Icon':'Choose Icon',
 'Save':'Save',
@@ -125,4 +125,8 @@ export default {
 'Please execute a editingToolbar format command first, then enable the format brush':'Please execute a editingToolbar format command first, then enable the format brush',
 'Format brush ON! Select text to apply【':'Format brush ON! Select text to apply【',
 '】format':'】format\nClick the mouse middle or right key to close the formatting-brush',
+'Add to Toolbar':'Add to Toolbar',
+'This command is already in the toolbar':'This command is already in the toolbar',
+'Command added to toolbar':'Command added to toolbar',
+'Add this command to the toolbar':'Add this command to the toolbar',
 };

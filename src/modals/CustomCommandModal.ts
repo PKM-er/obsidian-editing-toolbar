@@ -137,7 +137,7 @@ export class CustomCommandModal extends Modal {
 
     new Setting(contentEl)
       .setName(t('Line Head Format'))
-      .setDesc(t('Whether it is a line head format (such as title, quote block, etc.)'))
+      .setDesc(t('Whether to insert at the beginning of the next line'))
       .addToggle(toggle => toggle
         .setValue(this.islinehead)
         .onChange(value => this.islinehead = value)
