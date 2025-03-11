@@ -173,28 +173,8 @@ export function createDiv(selector: string) {
 
 export function createTablecell(app: App, plugin: editingToolbarPlugin, el: string) {
   requireApiVersion("0.15.0") ? activeDocument = activeWindow.document : activeDocument = window.document;
-  function getActiveEditor(): any {
-    // 首先尝试获取常规的 Markdown 视图
-    const markdownView = plugin.app.workspace.getActiveViewOfType(MarkdownView);
-    if (markdownView) {
-      return markdownView.editor;
-    }
 
-    // @ts-ignore
-    const activeEditor = plugin.app.workspace?.activeEditor;
-    if (activeEditor && activeEditor.editor) {
-      return activeEditor.editor;
-    }
-
-    // 最后尝试从活跃叶子获取编辑器
-    const activeLeafEditor = plugin.app.workspace.activeLeaf?.view?.editor;
-    if (activeLeafEditor) {
-      return activeLeafEditor;
-    }
-
-    return null;
-  };
-  const editor = getActiveEditor();
+  const editor = plugin.commandsManager.getActiveEditor();
   let container = isExistoolbar(app, plugin.settings) as HTMLElement;
   let tab = container?.querySelector('#' + el);
   if (tab) {

@@ -199,7 +199,7 @@ export const DEFAULT_SETTINGS: editingToolbarSettings = {
             "icon": "lucide-text-quote"
           },
           {
-            "id": "editing-toolbar:editor:insert-callout",
+            "id": "editing-toolbar:insert-callout",
             "name": "Insert Callout ",
             "icon": "lucide-quote"
           }

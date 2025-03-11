@@ -5,6 +5,7 @@ import { selfDestruct, setFormateraser, quiteFormatbrushes } from "src/modals/ed
 import { setHeader,setFontcolor, setBackgroundcolor } from "src/util/util";
 import { fullscreenMode, workplacefullscreenMode } from "src/util/fullscreen";
 import editingToolbarPlugin from "src/plugin/main";
+import { InsertCalloutModal } from "src/modals/insertCalloutModal";
 
 export class CommandsManager {
     private plugin: editingToolbarPlugin;
@@ -140,6 +141,7 @@ export class CommandsManager {
             name: "Comment",
             icon: "percent-sign-glyph",
         },
+      
         {
             id: "editor:insert-callout",
             name: "Insert Callout",
@@ -466,6 +468,16 @@ export class CommandsManager {
             icon: "lucide-scissors"
 
         });
+       
+        this.plugin.addCommand({
+            id: "insert-callout",
+            name: "Insert Callout(Modal)",
+            icon: "lucide-quote",
+            callback: () => {
+                const modal = new InsertCalloutModal(this.plugin);
+                modal.open();
+            }
+        })
         this.plugin.addCommand({
             id: "fullscreen-focus",
             name: "Fullscreen focus mode",
@@ -572,14 +584,9 @@ export class CommandsManager {
 
     private getCharacterOffset(commandId: string): number {
         switch (commandId) {
-            case "editor:insert-embed": return 3;
-            case "editor:insert-link": return 0;
+      
             case "editor:insert-tag": return 1;
-            case "editor:insert-wikilink": return 2;
-            case "editor:toggle-code": return 0;
-            case "editor:toggle-blockquote": return 2;
-            case "editor:toggle-checklist-status": return 4;
-            case "editor:toggle-comments": return 2;
+      
             case "editor:insert-callout": return 11;
             default: return 0;
         }
