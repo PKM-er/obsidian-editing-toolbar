@@ -99,7 +99,16 @@ export class UpdateNoticeModal extends Modal {
             new Notice(t("Error repairing command IDs, please check the console for details"));
         }
     }
-
+	async reloadPlugin(pluginName: string): Promise<void> {
+		// @ts-ignore
+		const { plugins } = this.app;
+		try {
+			await plugins.disablePlugin(pluginName);
+			await plugins.enablePlugin(pluginName);
+		} catch (e) {
+			console.error(e)
+		}
+	}
     async restoreDefaultSettings() {
         try {
 
@@ -183,5 +192,6 @@ export class UpdateNoticeModal extends Modal {
     onClose() {
         const { contentEl } = this;
         contentEl.empty();
+        this.reloadPlugin(this.plugin.manifest.id);
     }
 } 

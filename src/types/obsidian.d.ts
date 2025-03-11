@@ -30,7 +30,7 @@ declare module "obsidian" {
 		plugins: Record<string, Plugin_2>;
 		enabledPlugins: any;
 		enablePlugin(pluginId: string): Promise<boolean>;
-		disblePlugin(pluginId: string): Promise<void>;
+		disablePlugin(pluginId: string): Promise<void>;
 	}
 
 	interface Commands {
