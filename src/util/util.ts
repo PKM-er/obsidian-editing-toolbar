@@ -318,44 +318,80 @@ export function setFontcolor(color: string, editor?: Editor) {
 }
 
 export function setBackgroundcolor(color: string, editor?: Editor) {
-  //from https://github.com/obsidian-canzi/Enhanced-editing
-    let selectText = editor?.getSelection();
-  //  console.log(selectText,'selectText')
-    // if (selectText == null || selectText.trim() == "") {
-    //   //如果没有选中内容激活格式刷
-    //   quiteFormatbrushes(plugin);
-    //   plugin.setEN_BG_Format_Brush(true);
-    //   plugin.setTemp_Notice(new Notice(t("Background-color formatting brush ON!"), 0));
-    //   return;
-    // }
-    if (!selectText || selectText.trim() === "") {
-      return;
-    }
+  if (!editor) return;
 
-    let _html0 =
-      /\<span style=[\"'][^\<\>]+:[0-9a-zA-Z#]+[\"'][^\<\>]*\>[^\<\>]+\<\/span\>/g;
-    let _html1 =
-      /^\<span style=[\"'][^\<\>]+:[0-9a-zA-Z#]+[\"'][^\<\>]*\>([^\<\>]+)\<\/span\>$/;
-    let _html2 = '<span style="background:' + color + '">$1</span>';
-    let _html3 = /\<span style=[^\<]*$|^[^\>]*span\>/g; //是否只包含一侧的<>
-    if (_html3.test(selectText)) {
-      return;
-    } else if (_html0.test(selectText)) {
-      if (_html1.test(selectText)) {
-        selectText = selectText.replace(_html1, _html2);
-      } else {
-        selectText = selectText.replace(
-          /\<span style=[\"'][^\<\>]+:[0-9a-zA-Z#]+[\"'][^\<\>]*\>|\<\/span\>/g,
-          ""
-        );
+  const selectText = editor.getSelection();
 
-      }
+  if (!selectText || selectText.trim() === "") {
+    return;
+  }
+
+  // Regex to match background color tags, with multiline support
+  const bgColorRegex = /<span\s+style=["']?background:(?:#[0-9a-fA-F]{3,6}|rgba?\([^)]+\))["']?>([\s\S]*?)<\/span>/g;
+  const hasColorTag = bgColorRegex.test(selectText);
+
+  // Function to check if the text is already wrapped in the same background color
+  const isAlreadyInSameColor = (text: string, targetColor: string): boolean => {
+    // 转义正则表达式中的特殊字符，特别是对于rgba格式
+    const escapedColor = targetColor.replace(/([()[{*+.$^\\|?])/g, '\\$1');
+    const cleanColorRegex = new RegExp(`^<span\\s+style=["']?background:${escapedColor}["']?>([\s\S]+)<\\/span>$`);
+    return cleanColorRegex.test(text.trim());
+  };
+
+  // If the text is already in the same color, do nothing
+  if (isAlreadyInSameColor(selectText, color)) {
+    return;
+  }
+
+  let finalText;
+  
+  if (hasColorTag) {
+    // 如果已经有背景色标签，只替换颜色值
+    finalText = selectText.replace(/(background:)(?:#[0-9a-fA-F]{3,6}|rgba?\([^)]+\))/gi, `$1${color}`);
+  } else {
+    // 如果没有背景色标签，为每行添加背景色
+    finalText = selectText.split('\n').map(line => 
+      line.trim() ? `<span style="background:${color}">${line}</span>` : line
+    ).join('\n');
+  }
+
+  // Store the current selection
+  const currentSelection = editor.listSelections();
+  const adjustedSelections = currentSelection.map(sel => {
+    const tagLength = hasColorTag ? 0 : `<span style="background:${color}"></span>`.length;
+    const isForward = sel.anchor.line < sel.head.line || 
+                      (sel.anchor.line === sel.head.line && sel.anchor.ch < sel.head.ch);
+
+    if (isForward) {
+      // 从前到后选择
+      return {
+        anchor: {
+          line: sel.anchor.line,
+          ch: sel.anchor.ch
+        },
+        head: {
+          line: sel.head.line,
+          ch: sel.head.ch + tagLength
+        }
+      };
     } else {
-      selectText = selectText.replace(/^(.+)$/gm, _html2);
+      // 从后到前选择
+      return {
+        anchor: {
+          line: sel.anchor.line,
+          ch: sel.anchor.ch + tagLength
+        },
+        head: {
+          line: sel.head.line,
+          ch: sel.head.ch
+        }
+      };
     }
-    editor.replaceSelection(selectText);
-    //editor.exec("goRight");
-    
-    // app.commands.executeCommandById("editor:focus");
+  });
 
+  // Replace the selection
+  editor.replaceSelection(finalText);
+
+  // Restore the original selection
+  editor.setSelections(adjustedSelections);
 }

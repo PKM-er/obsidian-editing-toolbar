@@ -109,6 +109,8 @@ export default class editingToolbarPlugin extends Plugin {
       this.registerEvent(this.app.workspace.on("active-leaf-change", this.handleeditingToolbar));
       this.registerEvent(this.app.workspace.on("layout-change", this.handleeditingToolbar_layout));
       this.registerEvent(this.app.workspace.on("resize", this.handleeditingToolbar_resize));
+    //  this.registerEvent(this.app.workspace.on("editor-change", this.handleeditingToolbar));
+
       // this.app.workspace.onLayoutReady(this.handleeditingToolbar_editor.bind(this));
       if (this.settings.cMenuVisibility == true) {
         setTimeout(() => {
@@ -195,7 +197,7 @@ export default class editingToolbarPlugin extends Plugin {
     this.app.workspace.off("active-leaf-change", this.handleeditingToolbar);
     this.app.workspace.off("layout-change", this.handleeditingToolbar_layout);
     this.app.workspace.off("resize", this.handleeditingToolbar_resize);
-
+    
 
 
   }
@@ -206,6 +208,7 @@ export default class editingToolbarPlugin extends Plugin {
   }
 
   handleeditingToolbar = () => {
+   
     if (this.settings.cMenuVisibility == true) {
       const view = this.app.workspace.getActiveViewOfType(ItemView);
  

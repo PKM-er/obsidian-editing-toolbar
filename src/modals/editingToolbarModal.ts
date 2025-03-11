@@ -515,10 +515,10 @@ export function editingToolbarPopover(app: App, plugin: editingToolbarPlugin): v
         // 尝试获取 markdown 视图或 canvas 视图，并指定为 HTMLElement 类型
         const markdownDom = currentleaf?.querySelector<HTMLElement>(".markdown-source-view");
         const canvasDom = currentleaf?.querySelector<HTMLElement>(".canvas-wrapper");
-
+        const excalidrawDom = currentleaf?.querySelector<HTMLElement>(".excalidraw-wrapper");
 
         // 确定要插入工具栏的目标元素
-        const targetDom = markdownDom || canvasDom;
+        const targetDom = markdownDom || canvasDom || excalidrawDom;
 
         if (!targetDom) return;
 

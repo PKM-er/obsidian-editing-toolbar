@@ -174,12 +174,8 @@ export class CommandsManager {
             id: "editor:clear-formatting",
             name: "Clear formatting",
             icon: "lucide-eraser",
-        },
-        {
-            id: "editor:cycle-list-checklist",
-            name: "Cycle list checklist",
-            icon: "lucide-check-square",
         }
+     
     ];
 
     // 应用格式化命令的辅助函数
@@ -387,6 +383,15 @@ export class CommandsManager {
             },
             icon: "lucide-sigma"
 
+        });
+        this.plugin.addCommand({
+            id: "editor:cycle-list-checklist",
+            name: "Cycle list checklist",
+            icon: "lucide-check-square",
+            callback: () => {
+                const editor = this.getActiveEditor();
+                editor&&this.executeCommandWithoutBlur(editor, () => editor?.toggleCheckList(true));
+            },
         });
         this.plugin.addCommand({
             id: 'editor-undo',
