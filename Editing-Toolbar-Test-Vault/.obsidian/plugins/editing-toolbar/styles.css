@@ -1,3 +1,9 @@
+:root {
+  --toolbar-horizontal-offset: 0px;
+  --toolbar-vertical-offset: 0px;
+}
+
+
 #editingToolbarModalBar {
   width: auto;
   height: auto;
@@ -11,11 +17,12 @@
   min-width: fit-content;
   justify-content: space-around;
   z-index: var(--layer-modal);
-
+  transform: translate(var(--toolbar-horizontal-offset), var(--toolbar-vertical-offset));
 }
 
 #editingToolbarModalBar.editingToolbarFlex {
   display: flex;
+  transform:none;
 }
 
 #editingToolbarModalBar.editingToolbarFlex :is(.editingToolbarCommandItem, button[class^=editingToolbarCommandsubItem]) {
@@ -53,20 +60,9 @@
 editingToolbar SETTINGS BUTTONS
 ----------------------------------------------------------------*/
 
-.modal.mod-settings button:not(.mod-cta):not(.mod-warning).editingToolbarSettingsButton.editingToolbarSettingsButtonAdd,
-button:not(.mod-cta):not(.mod-warning).editingToolbarSettingsButton.editingToolbarSettingsButtonAdd {
-  background-color: var(--interactive-accent);
-}
+ 
 
-.modal.mod-settings button:not(.mod-cta):not(.mod-warning).editingToolbarSettingsButton.editingToolbarSettingsButtonDelete,
-button:not(.mod-cta):not(.mod-warning).editingToolbarSettingsButton.editingToolbarSettingsButtonDelete {
-  background-color: #989cab;
-}
-
-.modal.mod-settings button:not(.mod-cta):not(.mod-warning).editingToolbarSettingsButton.editingToolbarSettingsButtonRefresh,
-button:not(.mod-cta):not(.mod-warning).editingToolbarSettingsButton.editingToolbarSettingsButtonRefresh {
-  background-color: var(--text-accent);
-}
+ 
 
 button.editingToolbarSettingsButton {
   padding: 4px 14px;
@@ -79,12 +75,12 @@ button.editingToolbarSettingsButton {
 editingToolbar SETTING ITEMS
 ----------------------------------------------------------------*/
 .setting-item.editingToolbarCommandItem:first-child {
-  padding-top: 18px;
+  padding-top: 12px;
 }
 
 .editingToolbarCommandItem {
   cursor: grab;
-  padding: 18px 0 18px 0;
+  padding: 10px 0 10px 0;
 }
 
 .editingToolbarSettingsTabsContainer .sortable-fallback {
@@ -103,7 +99,7 @@ editingToolbar SETTING ITEMS
 
 .editingToolbarSettingsTabsContainer .sortable-chosen {
   cursor: grabbing;
-  padding: 18px 0 18px 18px;
+  padding: 10px 0 10px 10px;
   background-color: var(--color-base-10, --background-primary);
 }
 
@@ -185,116 +181,15 @@ editingToolbar ICONS
   height: 17px;
 }
 
-/*----------------------------------------------------------------
-editingToolbar STATUS BAR MENU
-----------------------------------------------------------------*/
+ 
+ 
 
-.editingToolbar-statusbar-menu {
-  text-align: center;
-  width: 200px;
-}
-
-
-.editingToolbar-statusbar-menu .menu-item {
-  display: flex;
-  align-items: center;
-  flex-direction: row;
-}
-
-.editingToolbar-statusbar-menu .menu-item.settings-item {
-  font-size: 12px;
-  text-align: center;
-  line-height: 1;
-  border-radius: var(--radius-m);
-  height: auto;
-  padding: 8px 5px 0px 5px;
-  margin: 0 auto;
-  width: fit-content;
-  color: var(--text-faint);
-}
-
-.editingToolbar-statusbar-menu .menu-item.settings-item .menu-item-title {
-  text-align: center;
-}
-
-.editingToolbar-statusbar-menu .menu-item:hover,
-.editingToolbar-statusbar-menu .menu-item .selected:hover,
-.editingToolbar-statusbar-menu .menu-item.selected:not(.is-disabled):not(.is-label) {
-  background-color: transparent;
-}
-
-.editingToolbar-statusbar-menu .menu-item-title {
-  margin-right: 10px;
-}
-
-.editingToolbar-statusbar-menu .slider {
-  width: 100%;
-}
-
-.editingToolbar-statusbar-menu .menu-item.buttonitem {
-  padding-top: 10px;
-  padding-bottom: 4px;
-  height: fit-content;
-}
-
-.editingToolbar-statusbar-menu .menu-item.buttonitem button.editingToolbarSettingsButton {
-  margin: 0;
-}
-
-.editingToolbar-statusbar-menu .menu-item-icon svg path {
-  fill: var(--text-muted);
-}
-
-.editingToolbar-statusbar-menu .menu-item-icon svg {
-  stroke: var(--text-muted);
-}
-
-.editingToolbar-statusbar-menu>.menu-item:is([data-section="ButtonAdd"]) {
-  display: inline-flex;
-  padding: 0px 0px 5px 5px;
-  align-items: center;
-}
-
-.editingToolbar-statusbar-menu>.menu-item {
-  display: inline-flex;
-  padding: 0px 0px 5px 5px;
-  align-items: center;
-}
-
-.editingToolbar-statusbar-menu>.menu-item:is([data-section="ButtonAdd"]) .menu-item-icon {
-  text-align: center;
-}
-
-
-/*----------------------------------------------------------------
-editingToolbar STATUS BAR BUTTONS
-----------------------------------------------------------------*/
-
-.editingToolbar-statusbar-button {
-  cursor: default;
-  display: flex;
-  align-items: center;
-  line-height: 1;
-}
-
-.editingToolbar-statusbar-button svg {
-  display: flex;
-  width: 1.3em;
-  height: 1.3em;
-}
+ 
 
 /*----------------------------------------------------------------
 editingToolbar SUPPORT
 ---------------------------------------------`-------------------*/
-
-.cDonationSection {
-  width: 60%;
-  height: 50vh;
-  margin: 0 auto;
-  text-align: center;
-  color: var(--text-normal);
-}
-
+ 
 
 #editingToolbarModalBar {
   align-items: center;
@@ -303,10 +198,7 @@ editingToolbar SUPPORT
   backdrop-filter: none;
 }
 
-#editingToolbarModalBar.editingToolbarGlassAesthetic .editingToolbarCommandItem {
-
-  background-color: #ffffff00;
-}
+ 
 
 #editingToolbarModalBar.editingToolbarGlassAesthetic [class^=editingToolbarCommandsubItem] {
 
@@ -328,20 +220,20 @@ editingToolbar SUPPORT
 
 
 
-div.modal-container.editingToolbar-Modal:not(.changename) .modal-bg {
+div.modal-container.editingToolbar-Modal:not(:is(.changename,.customicon)) .modal-bg {
   background-color: transparent !important;
   backdrop-filter: none !important;
   position: relative;
 }
 
-.modal-container.editingToolbar-Modal:not(.changename) .modal {
-  padding: 10px 30px;
-  min-width: 130px;
+.modal-container.editingToolbar-Modal:not(:is(.changename,.customicon)) .modal {
+  padding: 10px 20px;
+  width: 220px;
   position: absolute;
   bottom: 2em;
   right: 0.5em;
-  background-color: rgb(var(--mono-rgb-0), 0.8);
-  backdrop-filter: blur(4px);
+  background-color: rgb(var(--mono-rgb-0), 0.65);
+  backdrop-filter: blur(2px);
 }
 
 .modal-container.editingToolbar-Modal .modal-title {
@@ -375,14 +267,11 @@ body.theme-dark .modal-container.editingToolbar-Modal .modal input[type='range']
   margin-right: 0px;
   position: relative;
   background-color: transparent;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
 
 }
 
 #editingToolbarModalBar .editingToolbarCommandItem {
   margin: auto;
-
   padding: 0px;
   box-shadow: none;
 
@@ -588,9 +477,10 @@ button[class^=editingToolbarCommandsubItem]::after {
   -webkit-transform: translateX(-30%);
 }
 
-.setting-item button.editingToolbarSettingsIcon:empty::before {
+.setting-item .editingToolbarSettingsIcon:empty::before {
   content: "❗";
 }
+
 
 .setting-item button.editingToolbarSettingsIcon svg {
   max-width: 1.5em;
@@ -703,9 +593,21 @@ button[class^=editingToolbarCommandsubItem]::after {
   align-items: center;
   transition: all 0.2s linear;
   -webkit-transition: all 0.2s linear;
+  transform: none;
 
 }
-
+#editingToolbarModalBar ~.excalidraw .FixedSideContainer_side_top
+{
+  top: 38px!important;
+}
+.excalidraw-wrapper #editingToolbarModalBar.top
+{
+  top: 38px;
+}
+.excalidraw-wrapper #editingToolbarPopoverBar
+{
+  top: 76px;
+}
 #editingToolbarModalBar.top.autohide {
   opacity: 0;
   transition: all 0.5s linear;
@@ -745,6 +647,10 @@ button[class^=editingToolbarCommandsubItem]::after {
 
 }
 
+#editingToolbarModalBar ~.canvas-controls{
+  top: calc(var(--size-4-2) + 50px);
+}
+ 
 /* #editingToolbarModalBar.top button.editingToolbarCommandItem:hover {
   background-color: var(--interactive-hover);
 } */
@@ -766,9 +672,13 @@ button[class^=editingToolbarCommandsubItem]::after {
   margin-right: 25px;
   transition: all 0.1s linear;
   -webkit-transition: all 0.1s linear;
-  margin-top: 32px;
+ 
   position: absolute;
   right: 0;
+}
+
+.markdown-source-view.mod-cm6 #editingToolbarPopoverBar {
+  margin-top: 38px;
 }
 
 #editingToolbarPopoverBar :is(.editingToolbarCommandItem, button[class^=editingToolbarCommandsubItem]) {
@@ -801,7 +711,6 @@ button[class^=editingToolbarCommandsubItem]::after {
   align-items: center;
   box-shadow: none;
   margin-left: 4px;
-  border-left: 1px inset var(--background-modifier-form-field);
   height: 24px;
   opacity: 0.8;
 }
@@ -849,7 +758,10 @@ button[class^=editingToolbarCommandsubItem]::after {
   content: url("data:image/svg+xml,%3Csvg width='16' height='16' viewBox='0 0 1024 1024' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M511.674077 66.707284c-246.52265 0-446.347744 199.835328-446.347744 446.347744s199.825095 446.356954 446.347744 446.356954c246.50423 0 446.348768-199.844537 446.348768-446.356954S758.177284 66.707284 511.674077 66.707284zM744.967424 667.159826c21.8701 21.8701 21.8701 57.310264 0 79.199807-21.8701 21.851681-57.30924 21.851681-79.198783-0.019443L511.674077 592.264045 357.56007 746.359632c-21.8701 21.8701-57.30924 21.851681-79.17934-0.019443s-21.8701-57.290821 0-79.160921L432.493713 513.065262 278.379707 358.950232c-21.8701-21.86089-21.8701-57.328683 0-79.18855 21.8701-21.87931 57.30924-21.87931 79.17934 0l154.114007 154.104797 154.095587-154.104797c21.889543-21.87931 57.32766-21.87931 79.198783-0.010233 21.8701 21.8701 21.8701 57.348126 0 79.207993L590.89128 513.065262 744.967424 667.159826z' fill='%23666666'/%3E%3C/svg%3E");
 }
 
-
+:is(#editingToolbarModalBar:not(.top), #editingToolbarPopoverBar) button.editingToolbar-Divider-Line
+{
+  display: none;
+}
 :is(#editingToolbarModalBar, #editingToolbarPopoverBar) button.editingToolbar-Divider-Line
 {
   min-width: unset;
@@ -980,3 +892,141 @@ body.auto-hide-header .workspace-tab-header-container + .workspace-tab-container
   width: 32px;
   height: 32px;
 }
+
+@media screen and (max-width: 1024px) {
+  .editing-toolbar-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+}
+/* 头部容器样式 */
+.editing-toolbar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1em;
+  padding: 0.5em 0;
+}
+
+/* 标题容器样式 */
+.editing-toolbar-title-container {
+  flex-shrink: 0;
+}
+
+.editing-toolbar-title {
+  margin: 0;
+}
+
+/* 信息容器样式 */
+.editing-toolbar-info {
+  display: flex;
+  align-items: center;
+  gap: 1em;
+  flex-wrap: nowrap;
+}
+
+/* 修复按钮容器样式 */
+.editing-toolbar-fix-button {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.editing-toolbar-fix-button .setting-item-control {
+  padding: 0;
+}
+
+/* 链接样式 */
+.editing-toolbar-info a {
+  color: var(--text-accent);
+  text-decoration: none;
+}
+
+.editing-toolbar-info a:hover {
+  text-decoration: underline;
+}
+
+.editing-toolbar-tabs {
+  display: flex;
+  border-bottom: 2px solid var(--background-modifier-border);
+  margin-bottom: 24px;
+  padding: 0 8px;
+}
+
+.editing-toolbar-tab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  color: var(--text-muted);
+}
+
+.editing-toolbar-tab:hover {
+  color: var(--text-normal);
+  background-color: var(--background-modifier-hover);
+}
+
+.editing-toolbar-tab.active {
+  color: var(--text-accent);
+  border-bottom-color: var(--text-accent);
+}
+
+.editing-toolbar-content {
+  padding: 0 8px;
+}
+
+.editing-toolbar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding: 0 8px;
+}
+
+/* 添加到你的 styles.css 文件中 */
+@keyframes sortable-feedback {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(0.98);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.sortable-chosen-feedback {
+  animation: sortable-feedback 0.3s ease-in-out;
+  position: relative;
+}
+
+.sortable-chosen-feedback::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--background-modifier-hover);
+  opacity: 0;
+  animation: toolbar-fade-in 0.3s ease-in-out forwards;
+  pointer-events: none;
+  border-radius: 4px;
+}
+
+@keyframes toolbar-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 0.3;
+  }
+}
+
+ 
