@@ -6,7 +6,7 @@ import { setHeader,setFontcolor, setBackgroundcolor } from "src/util/util";
 import { fullscreenMode, workplacefullscreenMode } from "src/util/fullscreen";
 import editingToolbarPlugin from "src/plugin/main";
 import { InsertCalloutModal } from "src/modals/insertCalloutModal";
-
+import { InsertLinkModal } from "src/modals/insertLinkModal";
 export class CommandsManager {
     private plugin: editingToolbarPlugin;
 
@@ -475,6 +475,15 @@ export class CommandsManager {
             icon: "lucide-quote",
             callback: () => {
                 const modal = new InsertCalloutModal(this.plugin);
+                modal.open();
+            }
+        })
+        this.plugin.addCommand({
+            id: "insert-link",
+            name: "Insert Link(Modal)",
+            icon: "lucide-link",
+            callback: () => {
+                const modal = new InsertLinkModal(this.plugin);
                 modal.open();
             }
         })

@@ -28,7 +28,8 @@ export class UpdateNoticeModal extends Modal {
                 'editing-toolbar:editor:toggle-italics': 'editing-toolbar:toggle-italics',
                 'editing-toolbar:editor:toggle-strikethrough': 'editing-toolbar:toggle-strikethrough',
                 'editing-toolbar:editor:toggle-inline-math': 'editing-toolbar:toggle-inline-math',
-                'editing-toolbar:editor:insert-callout': 'editing-toolbar:insert-callout'
+                'editing-toolbar:editor:insert-callout': 'editing-toolbar:insert-callout',
+                'editing-toolbar:editor:insert-link': 'editing-toolbar:insert-link'
             };
 
             let hasChanges = false;
