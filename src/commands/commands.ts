@@ -581,7 +581,7 @@ export class CommandsManager {
             case "editor:toggle-checklist-status": return 4;
             case "editor:toggle-comments": return 2;
             case "editor:insert-callout": return 11;
-            default: return 2;
+            default: return 0;
         }
     }
 
