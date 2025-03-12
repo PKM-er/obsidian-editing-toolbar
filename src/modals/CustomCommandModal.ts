@@ -92,7 +92,7 @@ export class CustomCommandModal extends Modal {
             this.suffix = mirrorText;
             
             // 更新后缀输入框的值
-            const suffixInput = contentEl.querySelector('.setting-item:nth-child(5) input');
+            const suffixInput =contentEl.querySelector('.setting-item:nth-child(5) input');
             if (suffixInput instanceof HTMLInputElement) {
               suffixInput.value = mirrorText;
               this.suffix = mirrorText;
@@ -100,14 +100,14 @@ export class CustomCommandModal extends Modal {
           }
           
           // 设置光标位置偏移为前缀的字符长度
-          this.char = value.length;
+          // this.char = value.length;
           
-          // 更新光标位置输入框的值
-          const charInput = contentEl.querySelector('.setting-item:nth-child(6) input');
-          if (charInput instanceof HTMLInputElement) {
-            charInput.value = value.length.toString();
-            this.char = value.length;
-          }
+          // // 更新光标位置输入框的值
+          // const charInput = contentEl.querySelector('.setting-item:nth-child(6) input');
+          // if (charInput instanceof HTMLInputElement) {
+          //   charInput.value = value.length.toString();
+          //   this.char = value.length;
+          // }
         })
       );
 
@@ -121,7 +121,7 @@ export class CustomCommandModal extends Modal {
 
     const charSetting = new Setting(contentEl)
       .setName(t('Cursor Position Offset'))
-      .setDesc(t('Character offset of cursor after formatting'))
+      .setDesc(t('Default 0, format will keep the text selected'))
       .addText(text => text
         .setValue(this.char.toString())
         .onChange(value => this.char = parseInt(value) || 0)

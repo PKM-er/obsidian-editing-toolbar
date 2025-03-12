@@ -2,7 +2,7 @@ import { Editor, Command, Notice, MarkdownView } from "obsidian";
 
 import { setMenuVisibility } from "src/util/statusBarConstants";
 import { selfDestruct, setFormateraser, quiteFormatbrushes } from "src/modals/editingToolbarModal";
-import { setHeader,setFontcolor, setBackgroundcolor } from "src/util/util";
+import { setHeader, setFontcolor, setBackgroundcolor } from "src/util/util";
 import { fullscreenMode, workplacefullscreenMode } from "src/util/fullscreen";
 import editingToolbarPlugin from "src/plugin/main";
 import { InsertCalloutModal } from "src/modals/insertCalloutModal";
@@ -42,49 +42,49 @@ export class CommandsManager {
             islinehead: true
         },
         justify: {
-            char: 17,
+            char: 0,
             line: 0,
             prefix: "<p align=\"justify\">",
             suffix: "</p>",
             islinehead: false,
         },
         left: {
-            char: 15,
+            char: 0,
             line: 0,
             prefix: "<p align=\"left\">",
             suffix: "</p>",
             islinehead: false,
         },
         right: {
-            char: 16,
+            char: 0,
             line: 0,
             prefix: "<p align=\"right\">",
             suffix: "</p>",
             islinehead: false,
         },
         center: {
-            char: 8,
+            char: 0,
             line: 0,
             prefix: "<center>",
             suffix: "</center>",
             islinehead: false,
         },
         underline: {
-            char: 3,
+            char: 0,
             line: 0,
             prefix: "<u>",
             suffix: "</u>",
             islinehead: false,
         },
         superscript: {
-            char: 5,
+            char: 0,
             line: 0,
             prefix: "<sup>",
             suffix: "</sup>",
             islinehead: false,
         },
         subscript: {
-            char: 5,
+            char: 0,
             line: 0,
             prefix: "<sub>",
             suffix: "</sub>",
@@ -141,7 +141,7 @@ export class CommandsManager {
             name: "Comment",
             icon: "percent-sign-glyph",
         },
-      
+
         {
             id: "editor:insert-callout",
             name: "Insert Callout",
@@ -177,7 +177,7 @@ export class CommandsManager {
             name: "Clear formatting",
             icon: "lucide-eraser",
         }
-     
+
     ];
 
     // 应用格式化命令的辅助函数
@@ -199,47 +199,76 @@ export class CommandsManager {
         };
         const pre = editor.getRange(preStart, curserStart);
 
-        if (pre == prefix.trimStart()) {
+        if (pre == prefix) {
             const sufEnd = {
                 line: curserStart.line + command.line,
                 ch: curserEnd.ch + suffix.length,
             };
             const suf = editor.getRange(curserEnd, sufEnd);
-            if (suf == suffix.trimEnd()) {
+            if (suf == suffix) {
                 editor.replaceRange(selectedText, preStart, sufEnd);
-                editor.setCursor(curserStart.line - command.line, curserStart.ch - command.char);
+                editor.setCursor(curserStart.line - command.line, curserStart.ch);
+                const newSelectionStart = {
+                    line: curserStart.line,
+                    ch: curserStart.ch - prefix.length
+                };
+                const newSelectionEnd = {
+                    line: curserStart.line,
+                    ch: newSelectionStart.ch + selectedText.length
+                };
+                editor.setSelection(newSelectionStart, newSelectionEnd);
                 return;
             }
         }
         editor.replaceSelection(`${prefix}${selectedText}${suffix}`);
-        editor.setCursor(curserStart.line + command.line, curserStart.ch + command.char);
+        //  editor.setCursor(curserStart.line + command.line, curserStart.ch + command.char + selectedText.length);
+        if (command.char > 0) {
+            editor.setCursor(curserStart.line + command.line, curserStart.ch + command.char + selectedText.length);
+        } else {
+
+            // 记录原始选中范围的起始位置
+            const originalSelectionStart = curserStart;
+
+            // 计算新的选中范围
+            const newSelectionStart = {
+                line: originalSelectionStart.line,
+                ch: originalSelectionStart.ch + prefix.length
+            };
+            const newSelectionEnd = {
+                line: originalSelectionStart.line,
+                ch: newSelectionStart.ch + selectedText.length
+            };
+
+            // 重新设置选中状态
+            editor.setSelection(newSelectionStart, newSelectionEnd);
+        }
     };
 
-  
+
     public getActiveEditor(): any {
         // 首先尝试获取常规的 Markdown 视图
         const markdownView = this.plugin.app.workspace.getActiveViewOfType(MarkdownView);
         if (markdownView) {
-          return markdownView.editor;
+            return markdownView.editor;
         }
-        
-       // @ts-ignore
+
+        // @ts-ignore
         const activeEditor = this.plugin.app.workspace?.activeEditor;
         if (activeEditor && activeEditor.editor) {
-          return activeEditor.editor;
+            return activeEditor.editor;
         }
-        
+
         // 最后尝试从活跃叶子获取编辑器
         const activeLeafEditor = this.plugin.app.workspace.activeLeaf?.view?.editor;
         if (activeLeafEditor) {
-          return activeLeafEditor;
+            return activeLeafEditor;
         }
-        
+
         return null;
-      };
+    };
 
     public registerCommands() {
-    
+
         // 隐藏/显示菜单命令
         this.plugin.addCommand({
             id: "hide-show-menu",
@@ -265,7 +294,7 @@ export class CommandsManager {
             name: 'Format Eraser',
             callback: () => {
                 const editor = this.getActiveEditor();
-                editor&&this.executeCommandWithoutBlur(editor, () => setFormateraser(this.plugin,editor));
+                editor && this.executeCommandWithoutBlur(editor, () => setFormateraser(this.plugin, editor));
 
             },
             icon: `eraser`
@@ -277,7 +306,7 @@ export class CommandsManager {
             name: 'Change font color[html]',
             callback: () => {
                 const editor = this.getActiveEditor();
-                editor&&this.executeCommandWithoutBlur(editor, () => setFontcolor(this.plugin.settings.cMenuFontColor ?? "#2DC26B",editor));
+                editor && this.executeCommandWithoutBlur(editor, () => setFontcolor(this.plugin.settings.cMenuFontColor ?? "#2DC26B", editor));
             },
             icon: `<svg width="24" height="24" focusable="false" fill="currentColor"><g fill-rule="evenodd"><path id="change-font-color-icon" d="M3 18h18v3H3z" style="fill:#2DC26B"></path><path d="M8.7 16h-.8a.5.5 0 01-.5-.6l2.7-9c.1-.3.3-.4.5-.4h2.8c.2 0 .4.1.5.4l2.7 9a.5.5 0 01-.5.6h-.8a.5.5 0 01-.4-.4l-.7-2.2c0-.3-.3-.4-.5-.4h-3.4c-.2 0-.4.1-.5.4l-.7 2.2c0 .3-.2.4-.4.4zm2.6-7.6l-.6 2a.5.5 0 00.5.6h1.6a.5.5 0 00.5-.6l-.6-2c0-.3-.3-.4-.5-.4h-.4c-.2 0-.4.1-.5.4z"></path></g></svg>`
         });
@@ -287,7 +316,7 @@ export class CommandsManager {
             name: 'Change Backgroundcolor[html]',
             callback: () => {
                 const editor = this.getActiveEditor();
-                editor&&this.executeCommandWithoutBlur(editor, () => setBackgroundcolor(this.plugin.settings.cMenuBackgroundColor ?? "#FA541C",editor));
+                editor && this.executeCommandWithoutBlur(editor, () => setBackgroundcolor(this.plugin.settings.cMenuBackgroundColor ?? "#FA541C", editor));
             },
             icon: `<svg width="18" height="24" viewBox="0 0 256 256" version="1.1" xmlns="http://www.w3.org/2000/svg"><g   stroke="none" stroke-width="1" fill="currentColor" fill-rule="evenodd"><g  ><g fill="currentColor"><g transform="translate(119.502295, 137.878331) rotate(-135.000000) translate(-119.502295, -137.878331) translate(48.002295, 31.757731)" ><path d="M100.946943,60.8084699 L43.7469427,60.8084699 C37.2852111,60.8084699 32.0469427,66.0467383 32.0469427,72.5084699 L32.0469427,118.70847 C32.0469427,125.170201 37.2852111,130.40847 43.7469427,130.40847 L100.946943,130.40847 C107.408674,130.40847 112.646943,125.170201 112.646943,118.70847 L112.646943,72.5084699 C112.646943,66.0467383 107.408674,60.8084699 100.946943,60.8084699 Z M93.646,79.808 L93.646,111.408 L51.046,111.408 L51.046,79.808 L93.646,79.808 Z" fill-rule="nonzero"></path><path d="M87.9366521,16.90916 L87.9194966,68.2000001 C87.9183543,69.4147389 86.9334998,70.399264 85.7187607,70.4 L56.9423078,70.4 C55.7272813,70.4 54.7423078,69.4150264 54.7423078,68.2 L54.7423078,39.4621057 C54.7423078,37.2523513 55.5736632,35.1234748 57.0711706,33.4985176 L76.4832996,12.4342613 C78.9534987,9.75382857 83.1289108,9.5834005 85.8093436,12.0535996 C87.1658473,13.303709 87.9372691,15.0644715 87.9366521,16.90916 Z" fill-rule="evenodd"></path><path d="M131.3,111.241199 L11.7,111.241199 C5.23826843,111.241199 0,116.479467 0,122.941199 L0,200.541199 C0,207.002931 5.23826843,212.241199 11.7,212.241199 L131.3,212.241199 C137.761732,212.241199 143,207.002931 143,200.541199 L143,122.941199 C143,116.479467 137.761732,111.241199 131.3,111.241199 Z M124,130.241 L124,193.241 L19,193.241 L19,130.241 L124,130.241 Z" fill-rule="nonzero"></path></g></g><path d="M51,218 L205,218 C211.075132,218 216,222.924868 216,229 C216,235.075132 211.075132,240 205,240 L51,240 C44.9248678,240 40,235.075132 40,229 C40,222.924868 44.9248678,218 51,218 Z" id="change-background-color-icon" style="fill:#FA541C"></path></g></g></svg>`
 
@@ -297,7 +326,7 @@ export class CommandsManager {
             name: 'Indent list',
             callback: () => {
                 const editor = this.getActiveEditor();
-                editor&&this.executeCommandWithoutBlur(editor, () => editor?.indentList());
+                editor && this.executeCommandWithoutBlur(editor, () => editor?.indentList());
             },
             icon: "indent-glyph"
 
@@ -307,7 +336,7 @@ export class CommandsManager {
             name: 'Unindent list',
             callback: () => {
                 const editor = this.getActiveEditor();
-                editor&&this.executeCommandWithoutBlur(editor, () => editor?.unindentList());
+                editor && this.executeCommandWithoutBlur(editor, () => editor?.unindentList());
             },
             icon: "unindent-glyph"
 
@@ -317,7 +346,7 @@ export class CommandsManager {
             name: 'Numbered list',
             callback: () => {
                 const editor = this.getActiveEditor();
-                editor&&this.executeCommandWithoutBlur(editor, () => editor?.toggleNumberList());
+                editor && this.executeCommandWithoutBlur(editor, () => editor?.toggleNumberList());
             },
             icon: "number-list-glyph"
 
@@ -327,7 +356,7 @@ export class CommandsManager {
             name: 'bullet list',
             callback: () => {
                 const editor = this.getActiveEditor();
-                editor&&this.executeCommandWithoutBlur(editor, () => editor?.toggleBulletList());
+                editor && this.executeCommandWithoutBlur(editor, () => editor?.toggleBulletList());
             },
             icon: "bullet-list-glyph"
 
@@ -337,7 +366,7 @@ export class CommandsManager {
             name: 'highlight',
             callback: () => {
                 const editor = this.getActiveEditor();
-                editor&&this.executeCommandWithoutBlur(editor, () => editor?.toggleMarkdownFormatting("highlight"));
+                editor && this.executeCommandWithoutBlur(editor, () => editor?.toggleMarkdownFormatting("highlight"));
             },
             icon: "highlight-glyph"
 
@@ -346,22 +375,22 @@ export class CommandsManager {
             id: 'toggle-bold',
             name: 'Bold',
             callback: () => {
-              const editor = this.getActiveEditor();
-              if (editor) {
-                this.executeCommandWithoutBlur(editor, () => {
-                  // 执行编辑器操作
-                  editor.toggleMarkdownFormatting("bold");
-                });
-              } 
+                const editor = this.getActiveEditor();
+                if (editor) {
+                    this.executeCommandWithoutBlur(editor, () => {
+                        // 执行编辑器操作
+                        editor.toggleMarkdownFormatting("bold");
+                    });
+                }
             },
             icon: "bold-glyph"
-          });
+        });
         this.plugin.addCommand({
             id: 'toggle-italics',
             name: 'Italics',
             callback: () => {
                 const editor = this.getActiveEditor();
-                editor&&this.executeCommandWithoutBlur(editor, () => editor?.toggleMarkdownFormatting("italic"));
+                editor && this.executeCommandWithoutBlur(editor, () => editor?.toggleMarkdownFormatting("italic"));
             },
             icon: "italic-glyph"
 
@@ -371,7 +400,7 @@ export class CommandsManager {
             name: 'Strikethrough',
             callback: () => {
                 const editor = this.getActiveEditor();
-                editor&&this.executeCommandWithoutBlur(editor, () => editor?.toggleMarkdownFormatting("strikethrough"));
+                editor && this.executeCommandWithoutBlur(editor, () => editor?.toggleMarkdownFormatting("strikethrough"));
             },
             icon: "strikethrough-glyph"
 
@@ -381,7 +410,7 @@ export class CommandsManager {
             name: 'Inline math',
             callback: () => {
                 const editor = this.getActiveEditor();
-                editor&&this.executeCommandWithoutBlur(editor, () => editor?.toggleMarkdownFormatting("math"));
+                editor && this.executeCommandWithoutBlur(editor, () => editor?.toggleMarkdownFormatting("math"));
             },
             icon: "lucide-sigma"
 
@@ -392,7 +421,7 @@ export class CommandsManager {
             icon: "lucide-check-square",
             callback: () => {
                 const editor = this.getActiveEditor();
-                editor&&this.executeCommandWithoutBlur(editor, () => editor?.toggleCheckList(true));
+                editor && this.executeCommandWithoutBlur(editor, () => editor?.toggleCheckList(true));
             },
         });
         this.plugin.addCommand({
@@ -400,7 +429,7 @@ export class CommandsManager {
             name: 'Undo editor',
             callback: () => {
                 const editor = this.getActiveEditor();
-                editor&&this.executeCommandWithoutBlur(editor, () => editor?.undo());
+                editor && this.executeCommandWithoutBlur(editor, () => editor?.undo());
             },
             icon: "undo-glyph"
 
@@ -410,7 +439,7 @@ export class CommandsManager {
             name: 'Redo editor',
             callback: () => {
                 const editor = this.getActiveEditor();
-                editor&&this.executeCommandWithoutBlur(editor, () => editor?.redo());
+                editor && this.executeCommandWithoutBlur(editor, () => editor?.redo());
             },
             icon: "redo-glyph"
 
@@ -420,7 +449,7 @@ export class CommandsManager {
             name: 'Copy editor',
             callback: () => {
                 const editor = this.getActiveEditor();
-                editor&&this.executeCommandWithoutBlur(editor, async () => {
+                editor && this.executeCommandWithoutBlur(editor, async () => {
                     try {
                         await window.navigator.clipboard.writeText(editor.getSelection());
                         this.plugin.app.commands.executeCommandById("editor:focus");
@@ -437,7 +466,7 @@ export class CommandsManager {
             name: 'Paste editor',
             callback: () => {
                 const editor = this.getActiveEditor();
-                editor&&this.executeCommandWithoutBlur(editor, async () => {
+                editor && this.executeCommandWithoutBlur(editor, async () => {
                     try {
                         const text = await window.navigator.clipboard.readText();
                         if (text) editor.replaceSelection(text);
@@ -455,7 +484,7 @@ export class CommandsManager {
             name: 'Cut editor',
             callback: () => {
                 const editor = this.getActiveEditor();
-                editor&&this.executeCommandWithoutBlur(editor, async () => {
+                editor && this.executeCommandWithoutBlur(editor, async () => {
                     try {
                         await window.navigator.clipboard.writeText(editor.getSelection());
                         editor.replaceSelection("");
@@ -468,7 +497,7 @@ export class CommandsManager {
             icon: "lucide-scissors"
 
         });
-       
+
         this.plugin.addCommand({
             id: "insert-callout",
             name: "Insert Callout(Modal)",
@@ -513,7 +542,7 @@ export class CommandsManager {
                 name: i === 0 ? 'Remove header level' : `Header ${i}`,
                 callback: () => {
                     const editor = this.getActiveEditor();
-                    editor&&this.executeCommandWithoutBlur(editor, () => setHeader("#".repeat(i), editor));
+                    editor && this.executeCommandWithoutBlur(editor, () => setHeader("#".repeat(i), editor));
                 },
                 icon: i === 0 ? "heading-glyph" : `header-${i}`
             });
@@ -527,7 +556,7 @@ export class CommandsManager {
                 icon: `${type}-glyph`,
                 callback: () => {
                     const editor = this.getActiveEditor();
-                    editor&&this.executeCommandWithoutBlur(editor, () => {
+                    editor && this.executeCommandWithoutBlur(editor, () => {
                         this.applyCommand(this._commandsMap[type], editor);
                     });
                 },
@@ -542,7 +571,7 @@ export class CommandsManager {
                 icon: `${type["icon"]}`,
                 callback: () => {
                     const editor = this.getActiveEditor();
-                    editor&&this.executeCommandWithoutBlur(editor, async () => {
+                    editor && this.executeCommandWithoutBlur(editor, async () => {
                         const curserEnd = editor.getCursor("to");
                         let char = this.getCharacterOffset(type["id"]);
                         await this.plugin.app.commands.executeCommandById(`${type["id"]}`);
@@ -567,11 +596,11 @@ export class CommandsManager {
 
         // 修改格式刷相关代码，确保包含自定义命令
         const formatCommands = [
-            'toggle-bold', 'toggle-italics', 'toggle-strikethrough', 
+            'toggle-bold', 'toggle-italics', 'toggle-strikethrough',
             'toggle-highlight', 'toggle-code', 'toggle-blockquote',
-            'header0-text', 'header1-text', 'header2-text', 'header3-text', 
+            'header0-text', 'header1-text', 'header2-text', 'header3-text',
             'header4-text', 'header5-text', 'header6-text',
-     
+
             'format-eraser',
             'change-font-color', 'change-background-color',
             // 添加所有自定义命令
@@ -593,9 +622,9 @@ export class CommandsManager {
 
     private getCharacterOffset(commandId: string): number {
         switch (commandId) {
-      
+
             case "editor:insert-tag": return 1;
-      
+
             case "editor:insert-callout": return 11;
             default: return 0;
         }
@@ -620,7 +649,7 @@ export class CommandsManager {
     private registerCustomCommands() {
         this.plugin.settings.customCommands.forEach(command => {
             const commandId = `custom-${command.id}`;
-            
+
             // 创建命令配置
             const commandConfig: CommandPlot = {
                 char: command.char,
@@ -629,10 +658,10 @@ export class CommandsManager {
                 suffix: command.suffix,
                 islinehead: command.islinehead
             };
-            
+
             // 添加到 commandsMap
             this._commandsMap[command.id] = commandConfig;
-            
+
             // 注册命令
             this.plugin.addCommand({
                 id: commandId,

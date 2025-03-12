@@ -156,4 +156,6 @@ export default {
   'Link Alias(optional)':'链接别名(可选)',
   'Alias':'别名',
   'Optional':'可选',
+  'Default 0, format will keep the text selected':'默认0，格式化将保持文本选中',
+ 
 };

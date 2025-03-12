@@ -155,4 +155,6 @@ export default {
 'Link Alias(optional)':'Link Alias(optional)',
 'Alias':'Alias',
 'Optional':'Optional',
+'Default 0, format will keep the text selected':'Default 0, format will keep the text selected',
+
 };
