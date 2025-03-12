@@ -49,6 +49,7 @@ export class InsertLinkModal extends Modal {
         }
 
         this.updateHeader();
+     
     }
 
     // 解析选中的文本
@@ -91,7 +92,11 @@ export class InsertLinkModal extends Modal {
             this.suffixText = suffixText;
         } else {
             // 如果没有找到链接格式，将整个文本作为链接文本
-            this.linkText = text;
+            const parsed = this.parseMixedContent(text);
+            if (parsed) {
+                this.linkText = parsed.title;
+                this.linkUrl = parsed.url;
+            }
         }
     }
 
@@ -127,7 +132,7 @@ export class InsertLinkModal extends Modal {
         }
 
         // 尝试匹配标题+URL格式
-        if ((match = content.match(titleUrlPattern))) {
+        if ((match = content.match(titleUrlPattern)) && match[1].trim()) {
             return {
                 title: match[1].trim(),
                 url: match[2].trim()
@@ -142,7 +147,10 @@ export class InsertLinkModal extends Modal {
             };
         }
 
-        return null;
+        return {
+            title: content.trim(),
+            url: ""
+        };
     }
 
     // 从 URL 提取标题
@@ -156,9 +164,6 @@ export class InsertLinkModal extends Modal {
             const lastSegment = segments[segments.length - 1];
             if (lastSegment) {
                 return decodeURIComponent(lastSegment)
-                    .replace(/\.[^/.]+$/, '') // 移除扩展名
-                    .replace(/[-_]/g, ' ')    // 替换连字符和下划线
-                    .replace(/^\d+\s*/, '')   // 移除开头的数字
                     .trim();
             }
             // 如果无法提取有效的标题，返回协议名称
@@ -355,7 +360,7 @@ export class InsertLinkModal extends Modal {
             }
 
             this.updateUI();
-            
+
         } catch (e) {
             console.error("Failed to read clipboard:", e);
         }
@@ -443,7 +448,7 @@ export class InsertLinkModal extends Modal {
     private getPreviewText(): string {
         // 拼接链接标题
         // 构建链接文本
-        let linkText = this.linkText || this.linkUrl;
+        const linkText = this.linkText || "";
         const linkUrl = this.linkUrl;
         let markdownLink = this.isEmbed ? "!" : "";
         markdownLink += `[${linkText}`;
@@ -639,17 +644,17 @@ export class InsertLinkModal extends Modal {
         if (!this.validateUrl(this.linkUrl)) {
             return;
         }
-    
+
         const editor = this.plugin.commandsManager.getActiveEditor();
         if (!editor) return;
-    
+
         let linkText = this.linkText || this.linkUrl;
         const linkUrl = this.linkUrl;
-    
+
         // 构建链接文本
         let markdownLink = this.isEmbed ? "!" : "";
         markdownLink += `[${linkText}`;
-    
+
         // 添加图片尺寸参数或链接别名
         if (this.isEmbed && (this.imageWidth || this.imageHeight)) {
             markdownLink += "|";
@@ -663,15 +668,15 @@ export class InsertLinkModal extends Modal {
         } else if (!this.isEmbed && this.linkAlias) {
             markdownLink += `|${this.linkAlias}`;
         }
-    
+
         markdownLink += `](${linkUrl})`;
-    
+
         const selection = editor.getSelection();
         if (selection) {
             // 如果有选中文本
             const selectionStart = editor.getCursor('from');
             const selectionEnd = editor.getCursor('to');
-    
+
             if (this.insertNewLine) {
                 // 在选中文本下一行插入链接
                 editor.replaceRange('\n' + markdownLink, { line: selectionEnd.line, ch: editor.getLine(selectionEnd.line).length });
@@ -679,8 +684,8 @@ export class InsertLinkModal extends Modal {
             } else {
                 // 替换选中的文本为链接
                 editor.replaceRange(
-                    this.prefixText + markdownLink + this.suffixText, 
-                    { line: selectionStart.line, ch: 0 }, 
+                    this.prefixText + markdownLink + this.suffixText,
+                    { line: selectionStart.line, ch: 0 },
                     selectionEnd
                 );
             }
@@ -688,7 +693,7 @@ export class InsertLinkModal extends Modal {
             // 没有选中文本的处理逻辑保持不变
             const cursor = editor.getCursor();
             const line = editor.getLine(cursor.line);
-    
+
             if (this.insertNewLine) {
                 // 在下一行插入并移动光标
                 const nextLineNum = cursor.line + 1;
