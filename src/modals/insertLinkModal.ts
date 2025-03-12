@@ -15,53 +15,68 @@ export class InsertLinkModal extends Modal {
     private imageWidth: string = "";
     private imageHeight: string = "";
     private prefixText: string = "";
+    private suffixText: string = "";
     private selectedText: string = "";
     private linkTextInput: TextComponent;
     private linkUrlInput: TextComponent;
     private linkAliasInput: TextComponent;
     private embedToggle: ToggleComponent;
     private urlErrorMsg: HTMLElement;
+    private previewSetting: Setting;
     // URL 验证正则表达式
-    private urlRegex = /^(?:(?:(?:https?|ftp|):)?\/\/)(?:\S+(?::\S*)?@)?(?:(?!(?:10|127)(?:\.\d{1,3}){3})(?!(?:169\.254|192\.168)(?:\.\d{1,3}){2})(?!172\.(?:1[6-9]|2\d|3[0-1])(?:\.\d{1,3}){2})(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])(?:\.(?:1?\d{1,2}|2[0-4]\d|25[0-5])){2}(?:\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4]))|(?:(?:[a-z\u00a1-\uffff0-9]-*)*[a-z\u00a1-\uffff0-9]+)(?:\.(?:[a-z\u00a1-\uffff0-9]-*)*[a-z\u00a1-\uffff0-9]+)*(?:\.(?:[a-z\u00a1-\uffff]{2,})))(?::\d{2,5})?(?:[/?#]\S*)?$/i;
 
     constructor(private plugin: editingToolbarPlugin) {
         super(plugin.app);
-        
+
         // 如果有选中的文本，用作链接文本
         const editor = this.plugin.commandsManager.getActiveEditor();
         if (editor) {
-            const selectedText = editor.getSelection();
+            const selectedText = editor.getSelection() || "";
+
+            // 优先处理选中文本
             if (selectedText) {
+                this.selectedText = selectedText;
                 this.parseSelectedText(selectedText);
             }
+            // 如果没有选中文本，则尝试解析剪贴板
+            else {
+                this.parseClipboard();
+            }
+        }
+        // 如果没有编辑器，尝试解析剪贴板
+        else {
+            this.parseClipboard();
         }
 
-        // 初始化时尝试解析剪贴板
-        this.parseClipboard();
+        this.updateHeader();
     }
 
     // 解析选中的文本
     private parseSelectedText(text: string) {
-         // 解析图片链接
-         const imglinkMatch = text.match(/!\[.*?\]\(.*?\)/);
-         const prefixText = text.substring(0, imglinkMatch.index); // 获取链接前的文本
-         const imageMatch = this.parseMarkdownImageLink(text);
-         if (imageMatch) {
-             this.linkText = imageMatch.title;
-             this.linkUrl = imageMatch.url;
-             this.imageWidth = imageMatch.width || '';
-             this.imageHeight = imageMatch.height || '';
-             this.isEmbed = true;
-             this.prefixText = prefixText;
-             return;
-         }
+        // 解析图片链接
+        const imglinkMatch = text.match(/!\[.*?\]\(.*?\)/);
+        if (imglinkMatch) {
+            const prefixText = text.substring(0, imglinkMatch.index); // 获取链接前的文本
+            const suffixText = text.substring(imglinkMatch.index + imglinkMatch[0].length); // 获取链接后的文本
+            const imageMatch = this.parseMarkdownImageLink(text);
+            if (imageMatch) {
+                this.linkText = imageMatch.title;
+                this.linkUrl = imageMatch.url;
+                this.imageWidth = imageMatch.width || '';
+                this.imageHeight = imageMatch.height || '';
+                this.isEmbed = true;
+                this.prefixText = prefixText;
+                this.suffixText = suffixText;
+                return;
+            }
+        }
         // 查找链接的起始位置
         const linkMatch = text.match(/\[.*?\]\(.*?\)/);
-        
         if (linkMatch) {
             const linkPart = linkMatch[0];
             const prefixText = text.substring(0, linkMatch.index); // 获取链接前的文本
-          
+            const suffixText = text.substring(linkMatch.index + linkPart.length); // 获取链接后的文本
+
             // 解析链接部分
             const parsedLink = this.parseMarkdownLink(linkPart);
             if (parsedLink) {
@@ -71,8 +86,9 @@ export class InsertLinkModal extends Modal {
                 this.isEmbed = false; // 默认非嵌入模式
             }
 
-            // 保存前缀文本
+            // 保存前缀和后缀文本
             this.prefixText = prefixText;
+            this.suffixText = suffixText;
         } else {
             // 如果没有找到链接格式，将整个文本作为链接文本
             this.linkText = text;
@@ -82,13 +98,13 @@ export class InsertLinkModal extends Modal {
     // 解析混合内容（标题和URL）
     private parseMixedContent(content: string): { title: string; url: string } | null {
         // 尝试匹配常见的浏览器复制格式
-        
+
         // 格式1: 标题 https://url
         const titleUrlPattern = /^(.*?)\s*((?:https?:\/\/|www\.)\S+)$/i;
-        
+
         // 格式2: [标题](url)
         const markdownPattern = /^\[(.*?)\]\((.*?)\)$/;
-        
+
         // 格式3: <a href="url">标题</a>
         const htmlPattern = /<a[^>]+href=["']([^"']+)["'][^>]*>([^<]+)<\/a>/i;
 
@@ -101,7 +117,7 @@ export class InsertLinkModal extends Modal {
                 url: match[2].trim()
             };
         }
-        
+
         // 尝试匹配 HTML 格式
         if ((match = content.match(htmlPattern))) {
             return {
@@ -109,7 +125,7 @@ export class InsertLinkModal extends Modal {
                 url: match[1].trim()
             };
         }
-        
+
         // 尝试匹配标题+URL格式
         if ((match = content.match(titleUrlPattern))) {
             return {
@@ -211,9 +227,9 @@ export class InsertLinkModal extends Modal {
             return true;
         }
 
-         
+
         try {
-           
+
             new URL(url);
             return true;
         } catch (e) {
@@ -224,8 +240,8 @@ export class InsertLinkModal extends Modal {
     }
 
     // 解析 Markdown 图片链接格式
-    private parseMarkdownImageLink(markdown: string): { 
-        title: string; 
+    private parseMarkdownImageLink(markdown: string): {
+        title: string;
         url: string;
         width?: string;
         height?: string;
@@ -234,7 +250,7 @@ export class InsertLinkModal extends Modal {
         // ![title|widthxheight](url) 或 ![title|width](url)
         const imageRegex = /!\[(.*?)(?:\|(\d+)(?:x(\d+))?)?\]\(([^)]+)\)(?:!.*)?$/;
         const match = markdown.match(imageRegex);
-        
+
         if (match) {
             const [, title, width, height, url] = match;
             // 设置为嵌入模式
@@ -248,7 +264,7 @@ export class InsertLinkModal extends Modal {
                     (imageSizeEl as HTMLElement).style.display = 'block';
                 }
             }
-            
+
             return {
                 title: title.trim(),
                 url: url.trim(),
@@ -260,15 +276,15 @@ export class InsertLinkModal extends Modal {
     }
 
     // 解析 Markdown 链接格式
-    private parseMarkdownLink(markdown: string): { 
-        title: string; 
+    private parseMarkdownLink(markdown: string): {
+        title: string;
         url: string;
         alias?: string;
     } | null {
         // 匹配带别名的链接格式 [title|alias](url)
         const linkRegex = /\[(.*?)(?:\|(.*?))?\]\(([^)]+)\)/;
         const match = markdown.match(linkRegex);
-        
+
         if (match) {
             const [, title, alias, url] = match;
             return {
@@ -284,11 +300,12 @@ export class InsertLinkModal extends Modal {
     private async parseClipboard() {
         try {
             const clipboardItems = await this.readClipboard();
-            
+
             // 首先尝试解析为 Markdown 图片格式
             const plainText = clipboardItems['text/plain'];
             if (plainText) {
                 const imageMatch = this.parseMarkdownImageLink(plainText);
+
                 if (imageMatch) {
                     this.linkText = imageMatch.title;
                     this.linkUrl = imageMatch.url;
@@ -338,6 +355,7 @@ export class InsertLinkModal extends Modal {
             }
 
             this.updateUI();
+            
         } catch (e) {
             console.error("Failed to read clipboard:", e);
         }
@@ -346,15 +364,15 @@ export class InsertLinkModal extends Modal {
     // 读取剪贴板多种格式
     private async readClipboard(): Promise<ClipboardItems> {
         const items: ClipboardItems = {};
-        
+
         try {
             // 尝试读取剪贴板项目
             const clipboardItems = await navigator.clipboard.read();
-            
+
             for (const clipboardItem of clipboardItems) {
                 // 获取所有可用的类型
                 const types = clipboardItem.types;
-                
+
                 for (const type of types) {
                     if (type === 'text/html' || type === 'text/plain' || type === 'text/markdown') {
                         const blob = await clipboardItem.getType(type);
@@ -371,7 +389,7 @@ export class InsertLinkModal extends Modal {
                 console.error("Failed to read clipboard:", e);
             }
         }
-        
+
         return items;
     }
 
@@ -379,7 +397,7 @@ export class InsertLinkModal extends Modal {
     private parseHtmlContent(html: string): { title: string; url: string } | null {
         const parser = new DOMParser();
         const doc = parser.parseFromString(html, 'text/html');
-        
+
         // 尝试找到链接元素
         const linkElement = doc.querySelector('a');
         if (linkElement) {
@@ -399,7 +417,7 @@ export class InsertLinkModal extends Modal {
         // 匹配 Markdown 链接格式 [title](url)
         const markdownLinkRegex = /\[([^\]]+)\]\(([^)]+)\)/;
         const match = markdown.match(markdownLinkRegex);
-        
+
         if (match) {
             return {
                 title: match[1].trim(),
@@ -414,58 +432,95 @@ export class InsertLinkModal extends Modal {
     onOpen() {
         this.display();
     }
+    private updateHeader() {
+
+
+        const previewText = this.getPreviewText();
+        if (this.previewSetting) {
+            this.previewSetting.controlEl.querySelector('input').value = previewText;
+        }
+    }
+    private getPreviewText(): string {
+        // 拼接链接标题
+        // 构建链接文本
+        let linkText = this.linkText || this.linkUrl;
+        const linkUrl = this.linkUrl;
+        let markdownLink = this.isEmbed ? "!" : "";
+        markdownLink += `[${linkText}`;
+
+        // 添加图片尺寸参数或链接别名
+        if (this.isEmbed && (this.imageWidth || this.imageHeight)) {
+            markdownLink += "|";
+            if (this.imageWidth && this.imageHeight) {
+                markdownLink += `${this.imageWidth}x${this.imageHeight}`;
+            } else if (this.imageWidth) {
+                markdownLink += this.imageWidth;
+            } else if (this.imageHeight) {
+                markdownLink += `x${this.imageHeight}`;
+            }
+        } else if (!this.isEmbed && this.linkAlias) {
+            markdownLink += `|${this.linkAlias}`;
+        }
+
+        markdownLink += `](${linkUrl})`;
+        return markdownLink;
+    }
 
     private async display() {
         const { contentEl } = this;
+
         contentEl.empty();
         contentEl.addClass("insert-link-modal");
-
+        this.titleEl.textContent = "";
+        this.titleEl.addClass("insert-link-modal-title");
         // 链接文本输入
-        new Setting(contentEl)
-            .setName("链接文本")
-            .setDesc("显示的文本")
+        const linkTextSetting = new Setting(contentEl)
+            .setName(t("Link Text"))
             .addText((text) => {
                 this.linkTextInput = text;
-                text.setPlaceholder("输入链接显示的文本")
+                text.setPlaceholder(t("Link Text"))
                     .setValue(this.linkText)
                     .onChange((value) => {
                         this.linkText = value;
+                        this.updateHeader();
                     });
                 text.inputEl.focus();
             });
 
         // 链接别名输入（非图片模式时显示）
-        const aliasSetting = new Setting(contentEl)
-            .setName("链接别名")
-            .setDesc("可选，设置链接的别名")
+        const aliasSetting = new Setting(linkTextSetting.controlEl)
+            .setName(t("Alias"))
             .addText((text) => {
                 this.linkAliasInput = text;
-                text.setPlaceholder("输入链接别名")
+                text.setPlaceholder(t("Link Alias(optional)"))
                     .setValue(this.linkAlias)
                     .onChange((value) => {
                         this.linkAlias = value;
+                        this.updateHeader();
                     });
             });
 
         // 链接地址输入
         const urlSetting = new Setting(contentEl)
-            .setName("链接地址")
-            .setDesc("URL 或文件路径")
+            .setName(t("Link URL"))
+            .setClass("link-url-setting")
             .addText((text) => {
                 this.linkUrlInput = text;
-                text.setPlaceholder("输入链接地址")
+                text.setPlaceholder(t("Link URL"))
                     .setValue(this.linkUrl)
                     .onChange((value) => {
                         this.linkUrl = value.trim();
                         this.validateUrl(this.linkUrl);
+                        this.updateHeader();
                     });
             })
             .addButton((btn) => {
                 btn
                     .setIcon("lucide-clipboard")
-                    .setTooltip("从剪贴板粘贴并解析")
+                    .setTooltip(t("Paste and Parse"))
                     .onClick(async () => {
                         await this.parseClipboard();
+                        this.updateHeader();
                     });
             });
 
@@ -476,8 +531,8 @@ export class InsertLinkModal extends Modal {
 
         // 嵌入选项
         const embedSetting = new Setting(contentEl)
-            .setName("嵌入内容")
-            .setDesc("将链接作为嵌入内容显示");
+            .setName(t("Embed Content"))
+            .setDesc(t("If it is an image, turn on"));
 
         this.embedToggle = new ToggleComponent(embedSetting.controlEl);
         this.embedToggle
@@ -493,29 +548,31 @@ export class InsertLinkModal extends Modal {
                 if (aliasSettingEl) {
                     aliasSettingEl.style.display = value ? 'none' : 'flex';
                 }
+                this.updateHeader();
             });
 
         // 图片尺寸设置
         const imageSizeSetting = new Setting(contentEl)
             .setClass('image-size-setting')
-            .setName("图片尺寸")
-            .setDesc("设置图片显示尺寸（可选）")
+            .setName(t("Image Size"))
             .addText((text) => {
                 text.inputEl.addClass('image-width-input');
-                text.setPlaceholder("宽度")
+                text.setPlaceholder(t("Image Width"))
                     .setValue(this.imageWidth)
                     .onChange((value) => {
                         this.imageWidth = value.replace(/[^\d]/g, '');
                         text.setValue(this.imageWidth);
+                        this.updateHeader();
                     });
             })
             .addText((text) => {
                 text.inputEl.addClass('image-height-input');
-                text.setPlaceholder("高度")
+                text.setPlaceholder(t("Image Height"))
                     .setValue(this.imageHeight)
                     .onChange((value) => {
                         this.imageHeight = value.replace(/[^\d]/g, '');
                         text.setValue(this.imageHeight);
+                        this.updateHeader();
                     });
             });
 
@@ -524,20 +581,28 @@ export class InsertLinkModal extends Modal {
 
         // 新行插入选项
         new Setting(contentEl)
-            .setName("在新行插入")
-            .setDesc("在下一行插入链接")
+            .setName(t("Insert New Line"))
+            .setDesc(t("Insert a link on the next line"))
             .addToggle((toggle) => {
                 toggle.setValue(this.insertNewLine)
                     .onChange((value) => {
                         this.insertNewLine = value;
+                        this.updateHeader();
                     });
             });
+        // 预览设置
+        this.previewSetting = new Setting(contentEl)
+            .setClass("preview-setting")
+            .addText((text) => {
+                text.setValue(this.getPreviewText())
+                    .inputEl.setAttribute("readonly", "true"); // 只读
+            })
 
         // 按钮
         new Setting(contentEl)
             .addButton((btn) =>
                 btn
-                    .setButtonText("插入")
+                    .setButtonText(t("Insert"))
                     .setCta()
                     .onClick(() => {
                         this.insertLink();
@@ -546,7 +611,7 @@ export class InsertLinkModal extends Modal {
             )
             .addButton((btn) =>
                 btn
-                    .setButtonText("取消")
+                    .setButtonText(t("Cancel"))
                     .setCta()
                     .onClick(() => {
                         this.close();
@@ -561,7 +626,7 @@ export class InsertLinkModal extends Modal {
         }
 
         if (!this.isValidUrl(url)) {
-            this.urlErrorMsg.textContent = "URL 格式可能不正确，请检查";
+            this.urlErrorMsg.textContent = t("URL Format Error");
             this.urlErrorMsg.style.display = "block";
             return false;
         }
@@ -574,17 +639,17 @@ export class InsertLinkModal extends Modal {
         if (!this.validateUrl(this.linkUrl)) {
             return;
         }
-
+    
         const editor = this.plugin.commandsManager.getActiveEditor();
         if (!editor) return;
-
+    
         let linkText = this.linkText || this.linkUrl;
         const linkUrl = this.linkUrl;
-
+    
         // 构建链接文本
         let markdownLink = this.isEmbed ? "!" : "";
         markdownLink += `[${linkText}`;
-        
+    
         // 添加图片尺寸参数或链接别名
         if (this.isEmbed && (this.imageWidth || this.imageHeight)) {
             markdownLink += "|";
@@ -598,24 +663,32 @@ export class InsertLinkModal extends Modal {
         } else if (!this.isEmbed && this.linkAlias) {
             markdownLink += `|${this.linkAlias}`;
         }
-        
+    
         markdownLink += `](${linkUrl})`;
-
-        if (editor.getSelection()) {
-            // 获取选中的文本范围
+    
+        const selection = editor.getSelection();
+        if (selection) {
+            // 如果有选中文本
             const selectionStart = editor.getCursor('from');
             const selectionEnd = editor.getCursor('to');
-
-            // 计算链接的起始位置
-            const linkStartIndex = selectionStart.ch + this.prefixText.length;
-            const linkEndIndex = linkStartIndex + markdownLink.length;
-
-            // 替换选中的链接部分，保留前缀文本
-            editor.replaceRange(markdownLink, { line: selectionStart.line, ch: linkStartIndex }, selectionEnd);
+    
+            if (this.insertNewLine) {
+                // 在选中文本下一行插入链接
+                editor.replaceRange('\n' + markdownLink, { line: selectionEnd.line, ch: editor.getLine(selectionEnd.line).length });
+                editor.setCursor({ line: selectionEnd.line + 1, ch: markdownLink.length });
+            } else {
+                // 替换选中的文本为链接
+                editor.replaceRange(
+                    this.prefixText + markdownLink + this.suffixText, 
+                    { line: selectionStart.line, ch: 0 }, 
+                    selectionEnd
+                );
+            }
         } else {
+            // 没有选中文本的处理逻辑保持不变
             const cursor = editor.getCursor();
             const line = editor.getLine(cursor.line);
-            
+    
             if (this.insertNewLine) {
                 // 在下一行插入并移动光标
                 const nextLineNum = cursor.line + 1;
@@ -653,8 +726,9 @@ export class InsertLinkModal extends Modal {
         // 更新别名设置的显示状态
         const aliasSettingEl = this.contentEl.querySelector('.setting-item:nth-child(2)');
         if (aliasSettingEl) {
-            (aliasSettingEl as HTMLElement).style.display = this.isEmbed ? 'none' : 'block';
+            (aliasSettingEl as HTMLElement).style.display = this.isEmbed ? 'none' : 'flex';
         }
+        this.updateHeader();
     }
 }
 
