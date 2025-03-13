@@ -8,6 +8,7 @@ on:
             - "*" # Push events to matching any tag format, i.e. 1.0, 20.15.10
 env:
     PLUGIN_NAME: editing-toolbar
+    OUTPUT_DIR: ./Editing-Toolbar-Test-Vault/.obsidian/plugins/editing-toolbar
 
 jobs:
     build:
@@ -26,18 +27,20 @@ jobs:
                   # 更新根目录下的manifest.json中的version为标签版本
                   jq '.version = "${{ steps.get_version.outputs.version }}"' manifest.json > manifest.json.tmp
                   mv manifest.json.tmp manifest.json
+                  # 确保输出目录存在
+                  mkdir -p ${{ env.OUTPUT_DIR }}
+                  # 复制更新后的manifest.json到输出目录
+                  cp manifest.json ${{ env.OUTPUT_DIR }}/
             - name: Build
               id: build
               run: |
                   # 使用 --legacy-peer-deps 参数解决依赖冲突
                   npm install --legacy-peer-deps
                   npm run build
-                  # 将构建文件复制到rollup.config.js中指定的输出目录
-                  mkdir -p ./Editing-Toolbar-Test-Vault/.obsidian/plugins/editing-toolbar
-                  cp ./build/main.js ./build/styles.css ./manifest.json ./Editing-Toolbar-Test-Vault/.obsidian/plugins/editing-toolbar/
                   # 为发布准备文件
                   mkdir ${{ env.PLUGIN_NAME }}
-                  cp ./build/main.js ./manifest.json ./build/styles.css ${{ env.PLUGIN_NAME }}
+                  # 从实际构建输出目录复制文件
+                  cp ${{ env.OUTPUT_DIR }}/main.js ${{ env.OUTPUT_DIR }}/styles.css ./manifest.json ${{ env.PLUGIN_NAME }}/
                   zip -r ${{ env.PLUGIN_NAME }}.zip ${{ env.PLUGIN_NAME }}
                   ls
                   echo "::set-output name=tag_name::${{ steps.get_version.outputs.version }}"
@@ -70,7 +73,7 @@ jobs:
                   GITHUB_TOKEN: ${{ secrets.PKMER_TOKEN }}
               with:
                   upload_url: ${{ steps.create_release.outputs.upload_url }}
-                  asset_path: ./build/main.js
+                  asset_path: ${{ env.OUTPUT_DIR }}/main.js
                   asset_name: main.js
                   asset_content_type: text/javascript
 
@@ -92,6 +95,6 @@ jobs:
                   GITHUB_TOKEN: ${{ secrets.PKMER_TOKEN }}
               with:
                   upload_url: ${{ steps.create_release.outputs.upload_url }}
-                  asset_path: ./build/styles.css
+                  asset_path: ${{ env.OUTPUT_DIR }}/styles.css
                   asset_name: styles.css
                   asset_content_type: text/css
