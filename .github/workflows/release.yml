@@ -29,7 +29,8 @@ jobs:
             - name: Build
               id: build
               run: |
-                  npm install
+                  # 使用 --legacy-peer-deps 参数解决依赖冲突
+                  npm install --legacy-peer-deps
                   npm run build
                   # 将构建文件复制到rollup.config.js中指定的输出目录
                   mkdir -p ./Editing-Toolbar-Test-Vault/.obsidian/plugins/editing-toolbar
