@@ -18,16 +18,28 @@ jobs:
               uses: actions/setup-node@v3
               with:
                   node-version: 16
+            - name: Get tag version
+              id: get_version
+              run: echo "::set-output name=version::${GITHUB_REF#refs/tags/}"
+            - name: Update version in manifest.json
+              run: |
+                  # 更新根目录下的manifest.json中的version为标签版本
+                  jq '.version = "${{ steps.get_version.outputs.version }}"' manifest.json > manifest.json.tmp
+                  mv manifest.json.tmp manifest.json
             - name: Build
               id: build
               run: |
                   npm install
                   npm run build
+                  # 将构建文件复制到rollup.config.js中指定的输出目录
+                  mkdir -p ./Editing-Toolbar-Test-Vault/.obsidian/plugins/editing-toolbar
+                  cp ./build/main.js ./build/styles.css ./manifest.json ./Editing-Toolbar-Test-Vault/.obsidian/plugins/editing-toolbar/
+                  # 为发布准备文件
                   mkdir ${{ env.PLUGIN_NAME }}
-                  cp ./build/main.js ./build/manifest.json ./build/styles.css ${{ env.PLUGIN_NAME }}
+                  cp ./build/main.js ./manifest.json ./build/styles.css ${{ env.PLUGIN_NAME }}
                   zip -r ${{ env.PLUGIN_NAME }}.zip ${{ env.PLUGIN_NAME }}
                   ls
-                  echo "::set-output name=tag_name::$(git tag --sort version:refname | tail -n 1)"
+                  echo "::set-output name=tag_name::${{ steps.get_version.outputs.version }}"
             - name: Create Release
               id: create_release
               uses: actions/create-release@v1
@@ -68,7 +80,7 @@ jobs:
                   GITHUB_TOKEN: ${{ secrets.PKMER_TOKEN }}
               with:
                   upload_url: ${{ steps.create_release.outputs.upload_url }}
-                  asset_path: ./build/manifest.json
+                  asset_path: ./manifest.json
                   asset_name: manifest.json
                   asset_content_type: application/json
 
