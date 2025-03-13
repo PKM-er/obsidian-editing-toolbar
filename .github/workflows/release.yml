@@ -104,8 +104,6 @@ jobs:
                   mkdir ${{ env.PLUGIN_NAME }}
                   # 从实际构建输出目录复制文件
                   cp ${{ env.OUTPUT_DIR }}/main.js ${{ env.OUTPUT_DIR }}/styles.css ./manifest.json ${{ env.PLUGIN_NAME }}/
-                  # 复制 CHANGELOG.md 到插件目录
-                  cp CHANGELOG.md ${{ env.PLUGIN_NAME }}/
                   zip -r ${{ env.PLUGIN_NAME }}.zip ${{ env.PLUGIN_NAME }}
                   ls
             
@@ -124,7 +122,6 @@ jobs:
                     ${{ env.OUTPUT_DIR }}/main.js
                     ./manifest.json
                     ${{ env.OUTPUT_DIR }}/styles.css
-                    CHANGELOG.md
                   token: ${{ secrets.GITHUB_TOKEN }}
             
             - name: Commit updated files
