@@ -157,4 +157,9 @@ export default {
 'Optional':'Optional',
 'Default 0, format will keep the text selected':'Default 0, format will keep the text selected',
 'to insert':'to insert',
+'Latest Changes':'Latest Changes',
+'📋View full changelog':'📋View full changelog',
+'Open changelog':'Open changelog',
+'Loading changelog...':'Loading changelog...',
+'Open the complete changelog in your browser':'Open the complete changelog in your browser',
 };

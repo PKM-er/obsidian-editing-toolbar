@@ -158,4 +158,9 @@ export default {
   'Optional':'可选',
   'Default 0, format will keep the text selected':'默认0，格式化将保持文本选中',
   'to insert':'插入',
+  'Latest Changes':'最新更新',
+  '📋View full changelog':'📋查看完整更新日志',
+  'Open changelog':'打开更新日志',
+  'Loading changelog...':'加载更新日志...',
+  'Open the complete changelog in your browser':'在浏览器中打开完整更新日志',
 };
