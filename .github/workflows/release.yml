@@ -2,6 +2,11 @@ name: Release Obsidian plugin
 
 on:
     workflow_dispatch:
+        inputs:
+            release_notes:
+                description: '发布说明'
+                required: false
+                default: '✨'
     push:
         # Sequence of patterns matched against refs/tags
         tags:
@@ -15,13 +20,68 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v3
+              with:
+                fetch-depth: 0  # 获取完整的提交历史，用于生成 changelog
             - name: Use Node.js
               uses: actions/setup-node@v3
               with:
                   node-version: 16
             - name: Get tag version
               id: get_version
-              run: echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+              # 提取纯标签名称，去掉 refs/tags/ 前缀
+              run: |
+                  TAG_NAME=${GITHUB_REF#refs/tags/}
+                  echo "version=$TAG_NAME" >> $GITHUB_OUTPUT
+                  echo "Tag version: $TAG_NAME"
+            
+            - name: Generate Changelog
+              id: changelog
+              run: |
+                if [ "${{ github.event_name }}" == "push" ]; then
+                  # 获取上一个标签
+                  PREVIOUS_TAG=$(git describe --tags --abbrev=0 ${{ steps.get_version.outputs.version }}^ 2>/dev/null || echo "")
+                  
+                  if [ -z "$PREVIOUS_TAG" ]; then
+                    # 如果没有上一个标签，获取所有提交
+                    echo "## 更新内容" > CHANGELOG.md
+                    git log --pretty=format:"- %s (%h)" >> CHANGELOG.md
+                  else
+                    # 获取从上一个标签到当前标签的提交
+                    echo "## 更新内容 ($PREVIOUS_TAG -> ${{ steps.get_version.outputs.version }})" > CHANGELOG.md
+                    git log --pretty=format:"- %s (%h)" $PREVIOUS_TAG..${{ steps.get_version.outputs.version }} >> CHANGELOG.md
+                  fi
+                  
+                  # 将 changelog 内容保存到输出变量
+                  CHANGELOG=$(cat CHANGELOG.md)
+                  echo "changelog<<EOF" >> $GITHUB_OUTPUT
+                  echo "$CHANGELOG" >> $GITHUB_OUTPUT
+                  echo "EOF" >> $GITHUB_OUTPUT
+                  
+                  # 更新项目中的 CHANGELOG.md 文件
+                  if [ -f "CHANGELOG.md" ]; then
+                    # 如果文件已存在，将新内容添加到顶部
+                    mv CHANGELOG.md CHANGELOG.md.tmp
+                    echo "# Changelog" > CHANGELOG.md
+                    echo "" >> CHANGELOG.md
+                    echo "## ${{ steps.get_version.outputs.version }} ($(date +%Y-%m-%d))" >> CHANGELOG.md
+                    cat CHANGELOG.md.tmp | tail -n +3 >> CHANGELOG.md
+                    rm CHANGELOG.md.tmp
+                  else
+                    # 如果文件不存在，创建新文件
+                    echo "# Changelog" > CHANGELOG.md
+                    echo "" >> CHANGELOG.md
+                    echo "## ${{ steps.get_version.outputs.version }} ($(date +%Y-%m-%d))" >> CHANGELOG.md
+                    cat CHANGELOG.md.tmp >> CHANGELOG.md
+                    rm CHANGELOG.md.tmp
+                  fi
+                else
+                  # 如果是手动触发，使用输入的发布说明
+                  echo "${{ github.event.inputs.release_notes }}" > CHANGELOG.md
+                  echo "changelog<<EOF" >> $GITHUB_OUTPUT
+                  echo "${{ github.event.inputs.release_notes }}" >> $GITHUB_OUTPUT
+                  echo "EOF" >> $GITHUB_OUTPUT
+                fi
+            
             - name: Update version in manifest.json
               run: |
                   # 更新根目录下的manifest.json中的version为标签版本
@@ -31,6 +91,9 @@ jobs:
                   mkdir -p ${{ env.OUTPUT_DIR }}
                   # 复制更新后的manifest.json到输出目录
                   cp manifest.json ${{ env.OUTPUT_DIR }}/
+                  # 显示更新后的版本号，用于调试
+                  echo "Updated manifest.json version to: $(jq -r '.version' manifest.json)"
+            
             - name: Build
               id: build
               run: |
@@ -41,15 +104,19 @@ jobs:
                   mkdir ${{ env.PLUGIN_NAME }}
                   # 从实际构建输出目录复制文件
                   cp ${{ env.OUTPUT_DIR }}/main.js ${{ env.OUTPUT_DIR }}/styles.css ./manifest.json ${{ env.PLUGIN_NAME }}/
+                  # 复制 CHANGELOG.md 到插件目录
+                  cp CHANGELOG.md ${{ env.PLUGIN_NAME }}/
                   zip -r ${{ env.PLUGIN_NAME }}.zip ${{ env.PLUGIN_NAME }}
                   ls
-                  echo "tag_name=${{ steps.get_version.outputs.version }}" >> $GITHUB_OUTPUT
+            
             - name: Create Release
               id: create_release
               uses: softprops/action-gh-release@v1
               with:
+                  # 使用纯标签名称，不包含 refs/tags/ 前缀
                   tag_name: ${{ steps.get_version.outputs.version }}
-                  name: ${{ steps.get_version.outputs.version }}
+                  name: Release ${{ steps.get_version.outputs.version }}
+                  body: ${{ steps.changelog.outputs.changelog }}
                   draft: false
                   prerelease: false
                   files: |
@@ -57,4 +124,14 @@ jobs:
                     ${{ env.OUTPUT_DIR }}/main.js
                     ./manifest.json
                     ${{ env.OUTPUT_DIR }}/styles.css
+                    CHANGELOG.md
                   token: ${{ secrets.GITHUB_TOKEN }}
+            
+            - name: Commit updated files
+              if: github.event_name == 'push'
+              run: |
+                git config --local user.email "action@github.com"
+                git config --local user.name "GitHub Action"
+                git add manifest.json CHANGELOG.md
+                git commit -m "Update manifest.json and CHANGELOG.md for version ${{ steps.get_version.outputs.version }}" || echo "No changes to commit"
+                git push origin HEAD:master
