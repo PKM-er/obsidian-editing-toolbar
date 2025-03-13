@@ -1,4 +1,4 @@
-import { App, Modal, Setting, setIcon, DropdownComponent } from "obsidian";
+import { App, Modal, Setting, setIcon, DropdownComponent, Platform } from "obsidian";
 import editingToolbarPlugin from "src/plugin/main";
 import { t } from "src/translations/helper";
 
@@ -7,6 +7,8 @@ export class InsertCalloutModal extends Modal {
     public title: string = "";
     public content: string = "";
     public collapse: "none" | "open" | "closed" = "none";
+    private insertButton: HTMLElement;
+    private contentTextArea: HTMLTextAreaElement;
 
     // 定义 callout 类型及其对应的图标
     private readonly calloutTypes: Array<{
@@ -137,9 +139,19 @@ export class InsertCalloutModal extends Modal {
         const { contentEl } = this;
         contentEl.empty();
 
+        // 添加键盘事件监听器到整个模态框
+        contentEl.addEventListener('keydown', (event) => {
+            // 检测 Ctrl+Enter 或 Command+Enter
+            if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
+                event.preventDefault();
+                if (this.insertButton) {
+                    this.insertButton.click();
+                }
+            }
+        });
+
         // Callout 类型选择
         const typeContainer = contentEl.createDiv("callout-type-container");
-
 
         const typeSetting = new Setting(typeContainer)
             .setName(t("Callout Type"))
@@ -200,30 +212,44 @@ export class InsertCalloutModal extends Modal {
                     });
                 text.inputEl.rows = 5;
                 text.inputEl.cols = 40;
+                this.contentTextArea = text.inputEl;
             });
+
+        // 添加快捷键提示
+        const shortcutHint = contentEl.createDiv("shortcut-hint");
+        shortcutHint.setText(`${Platform.isMacOS ? "⌘" : "Ctrl"} + Enter ${t("to insert")}`);
+        shortcutHint.style.textAlign = "right";
+        shortcutHint.style.fontSize = "0.8em";
+        shortcutHint.style.opacity = "0.7";
+        shortcutHint.style.marginTop = "5px";
 
         // 按钮
         new Setting(contentEl)
-            .addButton((btn) =>
+            .addButton((btn) => {
                 btn
                     .setButtonText(t("Insert"))
                     .setCta()
                     .onClick(() => {
                         this.insertCallout();
                         this.close();
-                    })
-            )
+                    });
+                this.insertButton = btn.buttonEl;
+                return btn;
+            })
             .addButton((btn) => {
                 btn.setButtonText(t("Cancel"))
                     .setTooltip(t("Cancel"))
                     .onClick(() => this.close());
+                return btn;
             });
+
+        // 自动聚焦到内容文本框
+        setTimeout(() => {
+            if (this.contentTextArea) {
+                this.contentTextArea.focus();
+            }
+        }, 10);
     }
-
-
-
-
-
 
     private updateIconAndColor(iconContainer: HTMLElement, type: string) {
         // 查找类型定义，包括检查别名
@@ -238,7 +264,6 @@ export class InsertCalloutModal extends Modal {
             iconContainer.style.setProperty("--callout-color", typeInfo.color);
         }
     }
-
 
     private insertCallout() {
         const editor = this.plugin.commandsManager.getActiveEditor();
@@ -255,8 +280,6 @@ export class InsertCalloutModal extends Modal {
             calloutText += ` ${this.title}`;
         }
 
-
-
         // 添加内容
         calloutText += `\n> ${this.content.replace(/\n/g, '\n> ')}`;
 
@@ -265,12 +288,22 @@ export class InsertCalloutModal extends Modal {
         const line = editor.getLine(cursor.line);
         const isLineStart = cursor.ch === 0;
 
+        let newCursorPos: { line: number, ch: number };
+
         if (editor.getSelection()) {
             // 如果有选中文本，直接替换
             if (!isLineStart && line.trim().length > 0) {
                 calloutText = '\n' + calloutText;
             }
+            const selectionStart = editor.getCursor('from');
             editor.replaceSelection(calloutText);
+            
+            // 计算新的光标位置（callout 下方）
+            const calloutLines = calloutText.split('\n').length;
+            newCursorPos = {
+                line: selectionStart.line + calloutLines,
+                ch: 0
+            };
         } else {
             // 如果光标不在行首且当前行不为空，需要在下一行插入
             if (!isLineStart && line.trim().length > 0) {
@@ -279,6 +312,26 @@ export class InsertCalloutModal extends Modal {
 
             // 在光标位置插入
             editor.replaceRange(calloutText, cursor);
+            
+            // 计算新的光标位置（callout 下方）
+            const calloutLines = calloutText.split('\n').length;
+            newCursorPos = {
+                line: cursor.line + calloutLines,
+                ch: 0
+            };
         }
+
+        // 在下一个事件循环中设置光标位置，确保编辑器已更新
+        setTimeout(() => {
+            // 在 callout 下方插入一个空行
+            editor.replaceRange('\n', newCursorPos);
+            // 将光标移动到空行
+            editor.setCursor({
+                line: newCursorPos.line + 1,
+                ch: 0
+            });
+            // 确保编辑器获得焦点
+            editor.focus();
+        }, 0);
     }
 }

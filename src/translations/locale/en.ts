@@ -156,5 +156,5 @@ export default {
 'Alias':'Alias',
 'Optional':'Optional',
 'Default 0, format will keep the text selected':'Default 0, format will keep the text selected',
-
+'to insert':'to insert',
 };

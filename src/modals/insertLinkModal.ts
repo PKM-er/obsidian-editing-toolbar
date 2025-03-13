@@ -1,4 +1,4 @@
-import { App, Modal, Setting, TextComponent, ToggleComponent } from "obsidian";
+import { App, Modal, Setting, TextComponent, ToggleComponent, Platform } from "obsidian";
 import editingToolbarPlugin from "src/plugin/main";
 import { t } from "src/translations/helper";
 
@@ -24,6 +24,7 @@ export class InsertLinkModal extends Modal {
     private urlErrorMsg: HTMLElement;
     private previewSetting: Setting;
     // URL 验证正则表达式
+    private insertButton: HTMLElement;
 
     constructor(private plugin: editingToolbarPlugin) {
         super(plugin.app);
@@ -49,7 +50,7 @@ export class InsertLinkModal extends Modal {
         }
 
         this.updateHeader();
-     
+
     }
 
     // 解析选中的文本
@@ -478,6 +479,18 @@ export class InsertLinkModal extends Modal {
         contentEl.addClass("insert-link-modal");
         this.titleEl.textContent = "";
         this.titleEl.addClass("insert-link-modal-title");
+
+        // 添加键盘事件监听器到整个模态框
+
+        contentEl.addEventListener('keydown', (event) => {
+            // 检测 Ctrl+Enter 或 Command+Enter
+            if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
+                event.preventDefault();
+                if (this.insertButton) {
+                    this.insertButton.click();
+                }
+            }
+        });
         // 链接文本输入
         const linkTextSetting = new Setting(contentEl)
             .setName(t("Link Text"))
@@ -489,7 +502,6 @@ export class InsertLinkModal extends Modal {
                         this.linkText = value;
                         this.updateHeader();
                     });
-                text.inputEl.focus();
             });
 
         // 链接别名输入（非图片模式时显示）
@@ -602,18 +614,24 @@ export class InsertLinkModal extends Modal {
                 text.setValue(this.getPreviewText())
                     .inputEl.setAttribute("readonly", "true"); // 只读
             })
-
+        const shortcutHint = contentEl.createDiv("shortcut-hint");
+        shortcutHint.setText(`${Platform.isMacOS ? "⌘" : "Ctrl"} + Enter ${t("to insert")}`);
+        shortcutHint.style.textAlign = "right";
+        shortcutHint.style.fontSize = "0.8em";
+        shortcutHint.style.opacity = "0.7";
+        shortcutHint.style.marginTop = "5px";
         // 按钮
-        new Setting(contentEl)
-            .addButton((btn) =>
+        const buttonSetting = new Setting(contentEl)
+            .addButton((btn) => {
                 btn
                     .setButtonText(t("Insert"))
                     .setCta()
                     .onClick(() => {
                         this.insertLink();
                         this.close();
-                    })
-            )
+                    });
+                this.insertButton = btn.buttonEl;
+            })
             .addButton((btn) =>
                 btn
                     .setButtonText(t("Cancel"))
@@ -621,7 +639,27 @@ export class InsertLinkModal extends Modal {
                     .onClick(() => {
                         this.close();
                     })
-            )
+            );
+
+        // 设置光标聚焦逻辑
+        setTimeout(() => {
+            // 如果链接文本和URL都为空，聚焦到链接文本
+            if (!this.linkText && !this.linkUrl) {
+                this.linkTextInput.inputEl.focus();
+            }
+            // 如果链接文本为空但URL不为空，聚焦到链接文本
+            else if (!this.linkText && this.linkUrl) {
+                this.linkTextInput.inputEl.focus();
+            }
+            // 如果链接文本不为空但URL为空，聚焦到URL
+            else if (this.linkText && !this.linkUrl) {
+                this.linkUrlInput.inputEl.focus();
+            }
+            // 如果两者都不为空，默认聚焦到链接文本
+            else {
+                this.linkAliasInput.inputEl.focus();
+            }
+        }, 10);
     }
 
     private validateUrl(url: string) {
@@ -671,6 +709,9 @@ export class InsertLinkModal extends Modal {
 
         markdownLink += `](${linkUrl})`;
 
+        // 用于存储新光标位置
+        let newCursorPos: { line: number, ch: number };
+
         const selection = editor.getSelection();
         if (selection) {
             // 如果有选中文本
@@ -680,17 +721,24 @@ export class InsertLinkModal extends Modal {
             if (this.insertNewLine) {
                 // 在选中文本下一行插入链接
                 editor.replaceRange('\n' + markdownLink, { line: selectionEnd.line, ch: editor.getLine(selectionEnd.line).length });
-                editor.setCursor({ line: selectionEnd.line + 1, ch: markdownLink.length });
+                // 设置新光标位置在链接后面
+                newCursorPos = { line: selectionEnd.line + 1, ch: markdownLink.length };
             } else {
                 // 替换选中的文本为链接
+                const fullText = this.prefixText + markdownLink + this.suffixText;
                 editor.replaceRange(
-                    this.prefixText + markdownLink + this.suffixText,
-                    { line: selectionStart.line, ch: 0 },
+                    fullText, 
+                    { line: selectionStart.line, ch: 0 }, 
                     selectionEnd
                 );
+                // 设置新光标位置在链接后面
+                newCursorPos = { 
+                    line: selectionStart.line, 
+                    ch: this.prefixText.length + markdownLink.length 
+                };
             }
         } else {
-            // 没有选中文本的处理逻辑保持不变
+            // 没有选中文本的处理逻辑
             const cursor = editor.getCursor();
             const line = editor.getLine(cursor.line);
 
@@ -700,11 +748,28 @@ export class InsertLinkModal extends Modal {
                 editor.replaceRange('\n', { line: cursor.line, ch: line.length });
                 editor.setCursor({ line: nextLineNum, ch: 0 });
                 editor.replaceRange(markdownLink, { line: nextLineNum, ch: 0 });
+                // 设置新光标位置在链接后面
+                newCursorPos = { line: nextLineNum, ch: markdownLink.length };
             } else {
                 // 在当前位置插入
                 editor.replaceRange(markdownLink, cursor);
+                // 设置新光标位置在链接后面
+                newCursorPos = { 
+                    line: cursor.line, 
+                    ch: cursor.ch + markdownLink.length 
+                };
             }
         }
+
+        // 在下一个事件循环中设置光标位置，确保编辑器已更新
+        setTimeout(() => {
+            // 将光标移动到链接后面
+            if (newCursorPos) {
+                editor.setCursor(newCursorPos);
+            }
+            // 确保编辑器获得焦点
+            editor.focus();
+        }, 0);
     }
 
     // 更新 UI 显示

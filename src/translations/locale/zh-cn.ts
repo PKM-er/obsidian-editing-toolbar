@@ -157,5 +157,5 @@ export default {
   'Alias':'别名',
   'Optional':'可选',
   'Default 0, format will keep the text selected':'默认0，格式化将保持文本选中',
- 
+  'to insert':'插入',
 };
