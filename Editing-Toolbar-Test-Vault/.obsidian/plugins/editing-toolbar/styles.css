@@ -967,7 +967,7 @@ body.auto-hide-header .workspace-tab-header-container + .workspace-tab-container
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 16px;
+  padding: 8px 12px;
   cursor: pointer;
   border-bottom: 2px solid transparent;
   margin-bottom: -2px;
@@ -1106,3 +1106,8 @@ body.auto-hide-header .workspace-tab-header-container + .workspace-tab-container
   background-color: rgba(var(--color-yellow-rgb), 0.8);
  }
  
+ @media screen and (max-width: 1024px) {
+  .editing-toolbar-tabs .editing-toolbar-tab:not(.active)>span {
+    display: none;
+  }
+ }

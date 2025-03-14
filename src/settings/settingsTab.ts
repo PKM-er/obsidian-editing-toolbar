@@ -1,6 +1,6 @@
 import type editingToolbarPlugin from "src/plugin/main";
 import { CommandPicker, ChooseFromIconList, ChangeCmdname } from "src/modals/suggesterModals";
-import { App, Setting, PluginSettingTab, Command, Notice } from "obsidian";
+import { App, Setting, PluginSettingTab, Command, Notice,setIcon} from "obsidian";
 import { APPEND_METHODS, AESTHETIC_STYLES, POSITION_STYLES } from "src/settings/settingsData";
 import { selfDestruct, editingToolbarPopover, checkHtml } from "src/modals/editingToolbarModal";
 import Sortable from "sortablejs";
@@ -13,6 +13,7 @@ import Pickr from "@simonwep/pickr";
 import '@simonwep/pickr/dist/themes/nano.min.css';
 import { CustomCommandModal } from "src/modals/CustomCommandModal";
 import { DeployCommandModal } from "src/modals/DeployCommand";
+import { ImportExportModal } from "src/modals/ImportExportModal";
 
 // 添加类型定义
 interface SubmenuCommand {
@@ -43,14 +44,18 @@ const SETTING_TABS: SettingTab[] = [
   {
     id: 'customcommands',
     name: t('Custom Commands'),
-    icon: 'custom-command'
+    icon: 'lucide-rectangle-ellipsis'
   },
   {
     id: 'commands',
     name: t('Toolbar Commands'),
-    icon: 'command'
+    icon: 'lucide-command'
   },
-
+  {
+    id: 'importexport',
+    name: t('Import/Export'),
+    icon: 'lucide-import'
+  },
 ];
 
 export function getPickrSettings(opts: {
@@ -137,7 +142,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
         cls: `editing-toolbar-tab ${this.activeTab === tab.id ? 'active' : ''}`
       });
 
-      tabButton.createEl('span', { cls: `setting-editor-icon ${tab.icon}` });
+      setIcon(tabButton, tab.icon);
       tabButton.createEl('span', { text: tab.name });
 
       tabButton.addEventListener('click', () => {
@@ -164,6 +169,9 @@ export class editingToolbarSettingTab extends PluginSettingTab {
         break;
       case 'commands':
         this.displayCommandSettings(contentContainer);
+        break;
+      case 'importexport':
+        this.displayImportExportSettings(contentContainer);
         break;
     }
   }
@@ -1001,6 +1009,73 @@ export class editingToolbarSettingTab extends PluginSettingTab {
         // }
       }
     }
+  }
+
+  // 添加导入导出设置显示方法
+  private displayImportExportSettings(containerEl: HTMLElement): void {
+    // 添加样式
+    const importExportContainer = containerEl.createDiv('import-export-container');
+    importExportContainer.style.padding = '16px';
+    importExportContainer.style.borderRadius = '8px';
+    importExportContainer.style.backgroundColor = 'var(--background-secondary)';
+    importExportContainer.style.marginBottom = '20px';
+    
+    // 导出设置
+    new Setting(importExportContainer)
+      .setName(t('Export Configuration'))
+      .setDesc(t('Export your toolbar configuration to share with others'))
+      .addButton(button => button
+        .setButtonText(t('Export'))
+        .setCta()
+        .onClick(() => {
+          new ImportExportModal(this.app, this.plugin, 'export').open();
+        })
+      );
+    
+    // 导入设置
+    new Setting(importExportContainer)
+      .setName(t('Import Configuration'))
+      .setDesc(t('Import toolbar configuration from JSON'))
+      .addButton(button => button
+        .setButtonText(t('Import'))
+        .setCta()
+        .onClick(() => {
+          new ImportExportModal(this.app, this.plugin, 'import').open();
+        })
+      );
+      
+    // 添加说明
+    const infoDiv = containerEl.createDiv('import-export-info');
+    infoDiv.style.marginTop = '20px';
+    infoDiv.style.padding = '16px';
+    infoDiv.style.borderRadius = '8px';
+    infoDiv.style.backgroundColor = 'var(--background-secondary)';
+    
+    infoDiv.createEl('h3', { 
+      text: t('Usage Instructions'),
+      cls: 'import-export-heading'
+    }).style.marginTop = '0';
+    
+    const ul = infoDiv.createEl('ul');
+    ul.style.paddingLeft = '20px';
+    
+    ul.createEl('li', { text: t('Export: Generate a JSON configuration that you can save or share') });
+    ul.createEl('li', { text: t('Import: Paste a previously exported JSON configuration') });
+    ul.createEl('li', { text: t('You can choose to export all settings, only toolbar commands, or only custom commands') });
+    ul.createEl('li', { text: t('When importing, the plugin will only update the settings included in the import data') });
+    
+    // 添加警告
+    const warningDiv = containerEl.createDiv('import-export-warning');
+    warningDiv.style.marginTop = '20px';
+    warningDiv.style.padding = '16px';
+    warningDiv.style.borderRadius = '8px';
+    warningDiv.style.backgroundColor = 'rgba(var(--color-red-rgb), 0.1)';
+    warningDiv.style.border = '1px solid rgba(var(--color-red-rgb), 0.3)';
+    
+    warningDiv.createEl('p', { 
+      text: t('Warning: Importing configuration will overwrite your current settings. Consider exporting your current configuration first as a backup.'),
+      cls: 'warning-text'
+    }).style.margin = '0';
   }
 }
 

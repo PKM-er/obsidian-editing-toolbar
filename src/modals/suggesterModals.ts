@@ -95,8 +95,6 @@ export class ChooseFromIconList extends FuzzySuggestModal<string> {
     
     // 获取当前命令配置
     const currentCommands = this.plugin.getCurrentCommands(this.currentEditingConfig);
-    console.log(this.issub,"issub");
-    console.log(currentCommands,"currentCommands")
     // 没有自定义回调，使用默认的命令图标设置逻辑
     if (this.command.icon) { // 存在就修改不存在新增
       let menuID = findmenuID(this.plugin, this.command, this.issub,currentCommands);

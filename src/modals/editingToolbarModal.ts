@@ -190,7 +190,6 @@ export function createTablecell(app: App, plugin: editingToolbarPlugin, el: stri
           let backcolor = this.style.backgroundColor;
           if (backcolor != "") {
             backcolor = setcolorHex(backcolor);
-            // console.log(backcolor,'backcolor')
             if (el == "x-color-picker-table") {
               plugin.settings.cMenuFontColor = backcolor;
               setFontcolor(backcolor, editor);
@@ -202,7 +201,6 @@ export function createTablecell(app: App, plugin: editingToolbarPlugin, el: stri
 
             } else if (el == "x-backgroundcolor-picker-table") {
               plugin.settings.cMenuBackgroundColor = backcolor;
-              //console.log("333")
               setBackgroundcolor(backcolor, editor);
               let background_colour_dom = activeDocument.querySelectorAll("#change-background-color-icon")
               background_colour_dom.forEach(element => {
@@ -694,7 +692,6 @@ export function editingToolbarPopover(app: App, plugin: editingToolbarPlugin): v
             //  let Selection = createDiv("triangle-icon");
             let submenu2 = createEl("div");
             submenu2.addClass("subitem");
-            //   console.log(btnwidth,item.name)
             if (submenu2) {
               submenu2.innerHTML = backcolorpicker(plugin);
 
