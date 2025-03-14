@@ -1,5 +1,26 @@
 # Changelog
 
+## 3.1.1 (2025-03-14)
+## 更新内容 (3.1.0 -> 3.1.1)
+### 添加了导入导出功能
+
+添加了导入导出功能
+
+- 支持三种导出类型：所有设置、仅工具栏命令、仅自定义命令
+- 支持导入功能，覆盖导入（完全清空已有设置）和更新导入（更新已有设置和新增）。
+
+
+### update changelog
+
+update changelog
+
+
+### Update manifest.json and CHANGELOG.md for version 3.1.0
+
+Update manifest.json and CHANGELOG.md for version 3.1.0
+
+
+
 ## 3.1.0 (2025-03-14)
 ### 功能亮点
 ### 1. 支持自定义命令添加到不同配置文件
