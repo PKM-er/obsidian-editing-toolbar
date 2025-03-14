@@ -1,5 +1,5 @@
 # Changelog
 
-## 3.0.9 (2025-03-13)
-- 增加更新说明 (8341694)
-- Update manifest.json and CHANGELOG.md for version 3.0.8 (56cf078)
+## 3.1.0 (2025-03-14)
+- Update .gitignore (700af55)
+- Update manifest.json and CHANGELOG.md for version 3.0.9 (4d52223)
