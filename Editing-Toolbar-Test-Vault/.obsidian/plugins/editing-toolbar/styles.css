@@ -480,8 +480,16 @@ button[class^=editingToolbarCommandsubItem]::after {
 .setting-item .editingToolbarSettingsIcon:empty::before {
   content: "❗";
 }
-
-
+.modal.mod-settings .custom-commands-container .editingToolbarSettingsIcon{
+  box-shadow: none!important;
+}
+.modal.mod-settings .custom-commands-container .editingToolbarSettingsIcon:hover{
+  background-color: transparent!important;
+  color: var(--text-normal)!important;
+}
+.modal .setting-item-control>input.id-is-disabled{
+  background-color: var(--background-modifier-border);
+}
 .setting-item button.editingToolbarSettingsIcon svg {
   max-width: 1.5em;
   max-height: 1.5em;
@@ -1085,6 +1093,7 @@ body.auto-hide-header .workspace-tab-header-container + .workspace-tab-container
   font-weight: bold;
   position: sticky;
   color: white;
+  background-color: rgba(var(--color-purple-rgb), 0.8);
   top: 0;
  }
  .position-style-info.following{
@@ -1096,3 +1105,4 @@ body.auto-hide-header .workspace-tab-header-container + .workspace-tab-container
  .position-style-info.top{
   background-color: rgba(var(--color-yellow-rgb), 0.8);
  }
+ 

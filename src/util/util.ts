@@ -1,4 +1,4 @@
-import { Editor } from "obsidian";
+import { Editor,Command } from "obsidian";
 export async function wait(delay: number) {
   return new Promise((resolve) => setTimeout(resolve, delay));
 }
@@ -8,10 +8,10 @@ export function GenNonDuplicateID(randomLength: number) {
   idStr += Math.random().toString(36).substr(3, randomLength)
   return idStr
 }
-export function findmenuID(plugin: { settings: { menuCommands: any; }; }, command: { id: any; }, issub: any) {
+export function findmenuID(plugin: { settings: { menuCommands: any; }; }, command: Command, issub: boolean,currentCommands:any[]) {
   let index;
   let res = { "index": -1, "subindex": -1 };
-  let menucmd = plugin.settings.menuCommands
+  let menucmd = currentCommands
   if (issub) {
     menucmd.forEach((item: { SubmenuCommands: any[]; }, idx: any) => {
       if ("SubmenuCommands" in item) {

@@ -43,10 +43,10 @@ export default class editingToolbarPlugin extends Plugin {
   settings: editingToolbarSettings;
   statusBarIcon: HTMLElement;
   statusBar: StatusBar;
-  
+
   // 修改为公共属性
   commandsManager: CommandsManager;
-  
+
   // 添加缺失的属性定义
   IS_MORE_Button: boolean;
   EN_BG_Format_Brush: boolean;
@@ -54,7 +54,7 @@ export default class editingToolbarPlugin extends Plugin {
   EN_Text_Format_Brush: boolean;
   Temp_Notice: Notice;
   Leaf_Width: number;
-  
+
   // 添加格式刷相关属性
   lastExecutedCommand: string | null = null;
   formatBrushActive: boolean = false;
@@ -65,7 +65,7 @@ export default class editingToolbarPlugin extends Plugin {
 
   // 添加设置标签页引用
   settingTab: editingToolbarSettingTab;
-  
+
   async onload(): Promise<void> {
     const currentVersion = this.manifest.version; // 设置当前版本号
     console.log("editingToolbar v" + currentVersion + " loaded");
@@ -85,38 +85,38 @@ export default class editingToolbarPlugin extends Plugin {
       this.statusBar = new StatusBar(this);
       this.statusBar.init();
     });
-      this.init_evt(activeDocument,editor);
-      if (requireApiVersion("0.15.0")) {
-        this.app.workspace.on('window-open', (leaf) => {
-          this.init_evt(leaf.doc,editor);
-        });
-      }
-      const lastVersion = this.settings?.lastVersion || '0.0.0';
-      if (lastVersion !== currentVersion) {
-          // 显示更新提示
-          new UpdateNoticeModal(this.app, this).open();
-          
-          // 更新版本号
-          this.settings.lastVersion = currentVersion;
-          await this.saveSettings();
-      }
-      
-      const isThinoEnabled = app.plugins.enabledPlugins.has("obsidian-memos");
-      if(isThinoEnabled) {
-        // @ts-ignore - 自定义事件
-        this.registerEvent(this.app.workspace.on("thino-editor-created", this.handleeditingToolbar));
-      }
-      this.registerEvent(this.app.workspace.on("active-leaf-change", this.handleeditingToolbar));
-      this.registerEvent(this.app.workspace.on("layout-change", this.handleeditingToolbar_layout));
-      this.registerEvent(this.app.workspace.on("resize", this.handleeditingToolbar_resize));
+    this.init_evt(activeDocument, editor);
+    if (requireApiVersion("0.15.0")) {
+      this.app.workspace.on('window-open', (leaf) => {
+        this.init_evt(leaf.doc, editor);
+      });
+    }
+    const lastVersion = this.settings?.lastVersion || '0.0.0';
+    if (lastVersion !== currentVersion) {
+      // 显示更新提示
+      new UpdateNoticeModal(this.app, this).open();
+
+      // 更新版本号
+      this.settings.lastVersion = currentVersion;
+      await this.saveSettings();
+    }
+
+    const isThinoEnabled = app.plugins.enabledPlugins.has("obsidian-memos");
+    if (isThinoEnabled) {
+      // @ts-ignore - 自定义事件
+      this.registerEvent(this.app.workspace.on("thino-editor-created", this.handleeditingToolbar));
+    }
+    this.registerEvent(this.app.workspace.on("active-leaf-change", this.handleeditingToolbar));
+    this.registerEvent(this.app.workspace.on("layout-change", this.handleeditingToolbar_layout));
+    this.registerEvent(this.app.workspace.on("resize", this.handleeditingToolbar_resize));
     //  this.registerEvent(this.app.workspace.on("editor-change", this.handleeditingToolbar));
 
-      // this.app.workspace.onLayoutReady(this.handleeditingToolbar_editor.bind(this));
-      if (this.settings.cMenuVisibility == true) {
-        setTimeout(() => {
-          dispatchEvent(new Event("editingToolbar-NewCommand"));
-        }, 100)
-      }
+    // this.app.workspace.onLayoutReady(this.handleeditingToolbar_editor.bind(this));
+    if (this.settings.cMenuVisibility == true) {
+      setTimeout(() => {
+        dispatchEvent(new Event("editingToolbar-NewCommand"));
+      }, 100)
+    }
 
     // 初始化图标
     addIcons();
@@ -134,7 +134,7 @@ export default class editingToolbarPlugin extends Plugin {
     }
     return true;
   }
-  init_evt(container: Document,editor:Editor) {
+  init_evt(container: Document, editor: Editor) {
     this.EN_FontColor_Format_Brush = false;
     this.EN_BG_Format_Brush = false;
     this.EN_Text_Format_Brush = false;
@@ -164,12 +164,12 @@ export default class editingToolbarPlugin extends Plugin {
           } else if (this.EN_BG_Format_Brush) {
             setBackgroundcolor(this.settings.cMenuBackgroundColor, cmEditor);
           } else if (this.EN_Text_Format_Brush) {
-            setFormateraser(this,cmEditor);
+            setFormateraser(this, cmEditor);
           } else if (this.formatBrushActive && this.lastExecutedCommand) {
             // 应用最后执行的命令
             this.applyFormatBrush(cmEditor);
           } else if (this.settings.positionStyle == "following") {
-            createFollowingbar(this.app, this.settings,cmEditor);
+            createFollowingbar(this.app, this.settings, cmEditor);
           }
         }
       } else if (this.EN_FontColor_Format_Brush || this.EN_BG_Format_Brush || this.EN_Text_Format_Brush || this.formatBrushActive) {
@@ -197,7 +197,7 @@ export default class editingToolbarPlugin extends Plugin {
     this.app.workspace.off("active-leaf-change", this.handleeditingToolbar);
     this.app.workspace.off("layout-change", this.handleeditingToolbar_layout);
     this.app.workspace.off("resize", this.handleeditingToolbar_resize);
-    
+
 
 
   }
@@ -208,10 +208,10 @@ export default class editingToolbarPlugin extends Plugin {
   }
 
   handleeditingToolbar = () => {
-   
+
     if (this.settings.cMenuVisibility == true) {
       const view = this.app.workspace.getActiveViewOfType(ItemView);
- 
+
       let toolbar = isExistoolbar(this.app, this.settings);
 
       if (toolbar) {
@@ -219,7 +219,7 @@ export default class editingToolbarPlugin extends Plugin {
           toolbar.style.visibility = "hidden";
           return;
         }
-        
+
         if (this.settings.positionStyle != "following") {
           toolbar.style.visibility = "visible";
         } else {
@@ -247,7 +247,7 @@ export default class editingToolbarPlugin extends Plugin {
     }
 
     if (editingToolbarModalBar) {
-      editingToolbarModalBar.style.visibility = 
+      editingToolbarModalBar.style.visibility =
         this.settings.positionStyle == "following" ? "hidden" : "visible";
     } else {
       setTimeout(() => {
@@ -263,21 +263,21 @@ export default class editingToolbarPlugin extends Plugin {
     if (this.settings.cMenuVisibility == true && this.settings.positionStyle == "top") {
       const view = app.workspace.getActiveViewOfType(ItemView);
       if (ViewUtils.isSourceMode(view)) {
-          let leafwidth = this.app.workspace.activeLeaf.view.leaf.width ?? 0
-          //let leafwidth = view.containerEl?.querySelector<HTMLElement>(".markdown-source-view").offsetWidth ?? 0
-          if (this.Leaf_Width == leafwidth) return false;
-          if (leafwidth > 0) {
-            this.Leaf_Width = leafwidth
-            if (this.settings.cMenuWidth && leafwidth) {
-              if ((leafwidth - this.settings.cMenuWidth) < 78 && (leafwidth > this.settings.cMenuWidth))
-                return;
-              else {
-                setTimeout(() => {
-                  resetToolbar(), editingToolbarPopover(app, this);
-                }, 200)
-              }
+        let leafwidth = this.app.workspace.activeLeaf.view.leaf.width ?? 0
+        //let leafwidth = view.containerEl?.querySelector<HTMLElement>(".markdown-source-view").offsetWidth ?? 0
+        if (this.Leaf_Width == leafwidth) return false;
+        if (leafwidth > 0) {
+          this.Leaf_Width = leafwidth
+          if (this.settings.cMenuWidth && leafwidth) {
+            if ((leafwidth - this.settings.cMenuWidth) < 78 && (leafwidth > this.settings.cMenuWidth))
+              return;
+            else {
+              setTimeout(() => {
+                resetToolbar(), editingToolbarPopover(app, this);
+              }, 200)
             }
           }
+        }
 
       }
     } else {
@@ -303,6 +303,62 @@ export default class editingToolbarPlugin extends Plugin {
 
   async loadSettings() {
     this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+
+    // 初始化多配置
+    // 如果是新安装或升级，初始化各个位置样式的命令配置
+     
+  }
+
+  // 获取当前位置样式对应的命令配置
+  getCurrentCommands(style?: string): any[] {
+
+    if (!this.settings.enableMultipleConfig) {
+      return this.settings.menuCommands;
+    }
+    let currentstyle = style || this.settings.positionStyle;
+    // 如果移动端模式开启且在移动设备上
+    if (this.settings.isLoadOnMobile && Platform.isMobileApp) {
+      return this.settings.mobileCommands;
+    }
+ console.log(currentstyle,"currentstyle")
+    switch (currentstyle) {
+      case 'following':
+        return this.settings.followingCommands;
+      case 'top':
+        return this.settings.topCommands;
+      case 'fixed':
+        return this.settings.fixedCommands;
+      default:
+        return this.settings.menuCommands;
+    }
+  }
+
+  // 更新当前位置样式对应的命令配置
+  updateCurrentCommands(commands: any[]): void {
+    if (!this.settings.enableMultipleConfig) {
+      this.settings.menuCommands = commands;
+      return;
+    }
+
+    // 如果移动端模式开启且在移动设备上
+    if (this.settings.isLoadOnMobile && Platform.isMobileApp) {
+      this.settings.mobileCommands = commands;
+      return;
+    }
+
+    switch (this.settings.positionStyle) {
+      case 'following':
+        this.settings.followingCommands = commands;
+        break;
+      case 'top':
+        this.settings.topCommands = commands;
+        break;
+      case 'fixed':
+        this.settings.fixedCommands = commands;
+        break;
+      default:
+        this.settings.menuCommands = commands;
+    }
   }
 
   async saveSettings() {
@@ -312,7 +368,7 @@ export default class editingToolbarPlugin extends Plugin {
   // 修改 setLastExecutedCommand 方法，同时保存命令名称
   setLastExecutedCommand(commandId: string): void {
     this.lastExecutedCommand = commandId;
-    
+
     // 获取命令的可读名称
     const command = this.app.commands.commands[commandId];
     if (command && command.name) {
@@ -332,16 +388,16 @@ export default class editingToolbarPlugin extends Plugin {
     }
 
     this.formatBrushActive = !this.formatBrushActive;
-    
+
     if (this.formatBrushActive) {
       // 关闭其他格式刷
       this.EN_FontColor_Format_Brush = false;
       this.EN_BG_Format_Brush = false;
       this.EN_Text_Format_Brush = false;
-      
+
       // 显示通知，包含具体命令名称
       if (this.formatBrushNotice) this.formatBrushNotice.hide();
-      this.formatBrushNotice = new Notice(t("Format brush ON! Select text to apply【")+this.lastExecutedCommandName+t("】format"), 0);
+      this.formatBrushNotice = new Notice(t("Format brush ON! Select text to apply【") + this.lastExecutedCommandName + t("】format"), 0);
     } else {
       // 关闭通知
       if (this.formatBrushNotice) {
@@ -353,7 +409,7 @@ export default class editingToolbarPlugin extends Plugin {
 
   applyFormatBrush(editor: Editor): void {
     if (!this.lastExecutedCommand || !this.formatBrushActive) return;
-    
+
     // 执行保存的命令
     const command = this.app.commands.commands[this.lastExecutedCommand];
     if (command && command.callback) {
@@ -366,7 +422,7 @@ export default class editingToolbarPlugin extends Plugin {
     this.EN_FontColor_Format_Brush = false;
     this.EN_BG_Format_Brush = false;
     this.EN_Text_Format_Brush = false;
-    
+
     if (this.formatBrushActive) {
       this.formatBrushActive = false;
       if (this.formatBrushNotice) {
@@ -374,7 +430,7 @@ export default class editingToolbarPlugin extends Plugin {
         this.formatBrushNotice = null;
       }
     }
-    
+
     if (this.Temp_Notice) {
       this.Temp_Notice.hide();
       this.Temp_Notice = null;
@@ -385,7 +441,7 @@ export default class editingToolbarPlugin extends Plugin {
   public getCommandsManager(): CommandsManager {
     return this.commandsManager;
   }
-  
+
   public reloadCustomCommands(): void {
     this.commandsManager.reloadCustomCommands();
   }

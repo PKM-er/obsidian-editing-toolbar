@@ -12,12 +12,14 @@ export class ChooseFromIconList extends FuzzySuggestModal<string> {
   plugin: editingToolbarPlugin;
   command: any;
   issub: boolean;
+  currentEditingConfig:string;
   customCallback: IconSelectCallback | null = null;
   constructor(
     plugin: editingToolbarPlugin, 
     command: any, 
     issub: boolean = false,
-    callback?: IconSelectCallback
+    callback?: IconSelectCallback,
+    currentEditingConfig?:string
   ) {
     super(plugin.app);
     this.plugin = plugin;
@@ -25,6 +27,7 @@ export class ChooseFromIconList extends FuzzySuggestModal<string> {
     this.issub = issub;
     this.customCallback = callback || null;
     this.setPlaceholder(t("Choose an icon"));
+    this.currentEditingConfig = currentEditingConfig || "";
   }
 
   private capitalJoin(string: string): string {
@@ -78,7 +81,7 @@ export class ChooseFromIconList extends FuzzySuggestModal<string> {
         return;
       } else {
         // 没有自定义回调，使用默认逻辑打开自定义图标输入框
-        new CustomIcon(this.app, this.plugin, this.command, this.issub).open();
+        new CustomIcon(this.app, this.plugin, this.command, this.issub,null,this.currentEditingConfig).open();
         return;
       }
     }
@@ -90,15 +93,25 @@ export class ChooseFromIconList extends FuzzySuggestModal<string> {
       return;
     }
     
+    // 获取当前命令配置
+    const currentCommands = this.plugin.getCurrentCommands(this.currentEditingConfig);
+    console.log(this.issub,"issub");
+    console.log(currentCommands,"currentCommands")
     // 没有自定义回调，使用默认的命令图标设置逻辑
     if (this.command.icon) { // 存在就修改不存在新增
-      let menuID = findmenuID(this.plugin, this.command, this.issub);
-      this.issub 
-        ? this.plugin.settings.menuCommands[menuID['index']].SubmenuCommands[menuID['subindex']].icon = item 
-        : this.plugin.settings.menuCommands[menuID['index']].icon = item;
+      let menuID = findmenuID(this.plugin, this.command, this.issub,currentCommands);
+      if (this.issub) {
+        currentCommands[menuID['index']].SubmenuCommands[menuID['subindex']].icon = item;
+      } else {
+        currentCommands[menuID['index']].icon = item;
+      }
+      // 更新当前配置
+      this.plugin.updateCurrentCommands(currentCommands);
     } else {
       this.command.icon = item;
-      this.plugin.settings.menuCommands.push(this.command);
+      currentCommands.push(this.command);
+      // 更新当前配置
+      this.plugin.updateCurrentCommands(currentCommands);
     }
 
     await this.plugin.saveSettings();
@@ -117,6 +130,7 @@ export class CustomIcon extends Modal {
   plugin: editingToolbarPlugin;
   item: Command;
   issub: boolean;
+  currentEditingConfig:string;
   submitEnterCallback: (this: HTMLTextAreaElement, ev: KeyboardEvent) => any;
   customCallback: IconSelectCallback | null = null;
 
@@ -125,13 +139,15 @@ export class CustomIcon extends Modal {
     plugin: editingToolbarPlugin, 
     item: Command, 
     issub: boolean,
-    callback?: IconSelectCallback
+    callback?: IconSelectCallback,
+    currentEditingConfig?:string
   ) {
     super(app);
     this.plugin = plugin;
     this.item = item;
     this.issub = issub;
     this.customCallback = callback || null;
+    this.currentEditingConfig = currentEditingConfig || "";
     this.containerEl.addClass("editingToolbar-Modal");
     this.containerEl.addClass("customicon");
   }
@@ -159,7 +175,8 @@ export class CustomIcon extends Modal {
 
       // 否则使用默认的命令图标设置逻辑
       this.item.icon = value;
-      const menuID = findmenuID(this.plugin, this.item, this.issub);
+      const currentCommands = this.plugin.getCurrentCommands(this.currentEditingConfig);
+      const menuID = findmenuID(this.plugin, this.item, this.issub,currentCommands);
       
       if (!this.issub) { // 不是子项
         let index = menuID['index'];
@@ -199,11 +216,12 @@ export class CustomIcon extends Modal {
 
 export class CommandPicker extends FuzzySuggestModal<Command> {
   command: Command;
-
-  constructor(private plugin: editingToolbarPlugin) {
+  currentEditingConfig:string;
+  constructor(private plugin: editingToolbarPlugin,currentEditingConfig?:string) {
     super(plugin.app);
     this.app;
     this.setPlaceholder(t("Choose a command"));
+    this.currentEditingConfig = currentEditingConfig || "";
   }
 
   getItems(): Command[] {
@@ -216,7 +234,11 @@ export class CommandPicker extends FuzzySuggestModal<Command> {
   }
 
   async onChooseItem(item: Command): Promise<void> {
-    let index = this.plugin.settings.menuCommands.findIndex((v) => v.id == item.id);
+    // 获取当前命令配置
+    
+    const currentCommands = this.plugin.getCurrentCommands(this.currentEditingConfig);
+
+    let index = currentCommands.findIndex((v) => v.id == item.id);
 
     if (index > -1) // 命令已存在
     {
@@ -224,7 +246,10 @@ export class CommandPicker extends FuzzySuggestModal<Command> {
       return;
     } else {
       if (item.icon) {
-        this.plugin.settings.menuCommands.push(item);
+        // 添加命令到当前配置
+        currentCommands.push(item);
+        // 更新当前配置
+        this.plugin.updateCurrentCommands(currentCommands);
         await this.plugin.saveSettings();
         setTimeout(() => {
           dispatchEvent(new Event("editingToolbar-NewCommand"));
@@ -248,17 +273,18 @@ export class ChangeCmdname extends Modal {
   plugin: editingToolbarPlugin;
   item: Command;
   issub: boolean;
+  currentEditingConfig:string;
   submitEnterCallback: (this: HTMLInputElement, ev: KeyboardEvent) => any;
-  constructor(app: App, plugin: editingToolbarPlugin, item: Command, issub: boolean) {
+  constructor(app: App, plugin: editingToolbarPlugin, item: Command, issub: boolean,currentEditingConfig?:string) {
     super(plugin.app);
     this.plugin = plugin;
     this.item = item;
     this.issub = issub;
+    this.currentEditingConfig = currentEditingConfig || "";
     this.containerEl.addClass("editingToolbar-Modal");
     this.containerEl.addClass("changename");
   }
   onOpen() {
-
     const { contentEl } = this;
     contentEl.createEl("b", { text: t("Please enter a new name：") });
 
@@ -267,21 +293,31 @@ export class ChangeCmdname extends Modal {
     textComponent.setPlaceholder("")
       .setValue(this.item.name ?? '')
       .onChange(debounce(async (value) => {
-
-        let menuID = findmenuID(this.plugin, this.item, this.issub)
+        // 获取当前命令配置
+        const currentCommands = this.plugin.getCurrentCommands(this.currentEditingConfig);
+        
+        let menuID = findmenuID(this.plugin, this.item, this.issub,currentCommands)
         this.item.name = value;
         if (!this.issub) //不是子项
         {
           let index = menuID['index']
           //  console.log(index,"index")
-          index === -1 ? this.plugin.settings.menuCommands.push(this.item) :
-            (this.plugin.settings.menuCommands[index].name = this.item.name);
-
+          if (index === -1) {
+            currentCommands.push(this.item);
+          } else {
+            currentCommands[index].name = this.item.name;
+          }
         } else {
           let subindex = menuID['subindex']
-          subindex === -1 ? this.plugin.settings.menuCommands[menuID["index"]].SubmenuCommands.push(this.item) : this.plugin.settings.menuCommands[menuID['index']].SubmenuCommands[subindex].name = value
-
+          if (subindex === -1) {
+            currentCommands[menuID["index"]].SubmenuCommands.push(this.item);
+          } else {
+            currentCommands[menuID['index']].SubmenuCommands[subindex].name = value;
+          }
         }
+        
+        // 更新当前配置
+        this.plugin.updateCurrentCommands(currentCommands);
         await this.plugin.saveSettings();
       }, 100, true))
       .inputEl.addEventListener('keydown', this.submitEnterCallback);

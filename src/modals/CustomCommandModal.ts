@@ -48,25 +48,30 @@ export class CustomCommandModal extends Modal {
     const { contentEl } = this;
     contentEl.empty();
 
-    contentEl.createEl('h2', { text: this.commandIndex !== null ? 'Edit Custom Command' : 'Add Custom Command' });
+    contentEl.createEl('h2', { text: this.commandIndex !== null ? t('Edit Custom Command') : t('Add Custom Command') });
 
     const commandIdSetting = new Setting(contentEl)
       .setName(t('Command ID'))
       .setDesc(t('Unique identifier, no spaces, e.g.: "my-custom-format"'))
-      .addText(text => text
-        .setValue(this.commandId)
-        .onChange(value => {
-          this.commandId = value;
-          // 更新命令ID输入框的值
-          const commandNameInput = contentEl.querySelector('.setting-item:nth-child(3) input');
-          if (commandNameInput instanceof HTMLInputElement) {
-            commandNameInput.value = value;
-            this.commandName = value;
-          }
-        })
-       
-       
-      );
+      .addText(text => {
+        text.setValue(this.commandId);
+        // 如果是编辑模式，设置为只读
+        if (this.commandIndex !== null) {
+          text.setDisabled(true);
+          text.inputEl.addClass('id-is-disabled');
+        } else {
+          text.onChange(value => {
+            this.commandId = value;
+            // 更新命令ID输入框的值
+            const commandNameInput = contentEl.querySelector('.setting-item:nth-child(3) input');
+            if (commandNameInput instanceof HTMLInputElement) {
+              commandNameInput.value = value;
+              this.commandName = value;
+            }
+          });
+        }
+        return text;
+      });
 
     const commandNameSetting = new Setting(contentEl)
       .setName(t('Command Name'))
@@ -192,7 +197,6 @@ export class CustomCommandModal extends Modal {
             }
           }
         ).open();
-       
       })
     );
 
@@ -239,9 +243,31 @@ export class CustomCommandModal extends Modal {
             icon: this.icon
           };
 
-          // 保存命令
+          // 如果是编辑现有命令且图标发生变化
           if (this.commandIndex !== null) {
-            // 更新现有命令
+            const oldCommand = this.plugin.settings.customCommands[this.commandIndex];
+            const oldIcon = oldCommand.icon;
+            
+            if (oldIcon !== this.icon) {
+              // 更新所有配置中的相关命令图标
+              const customCommandId = `editing-toolbar:custom-${this.commandId}`;
+              
+              // 更新 menuCommands
+              this.updateCommandIcon(this.plugin.settings.menuCommands, customCommandId);
+              
+              // 如果启用了多配置，更新其他配置
+              if (this.plugin.settings.enableMultipleConfig) {
+                this.updateCommandIcon(this.plugin.settings.followingCommands, customCommandId);
+                this.updateCommandIcon(this.plugin.settings.topCommands, customCommandId);
+                this.updateCommandIcon(this.plugin.settings.fixedCommands, customCommandId);
+                
+                if (this.plugin.settings.isLoadOnMobile) {
+                  this.updateCommandIcon(this.plugin.settings.mobileCommands, customCommandId);
+                }
+              }
+            }
+            
+            // 更新自定义命令
             this.plugin.settings.customCommands[this.commandIndex] = command;
           } else {
             // 添加新命令
@@ -251,10 +277,8 @@ export class CustomCommandModal extends Modal {
           // 保存设置并关闭模态框
           this.plugin.saveSettings().then(() => {
             this.close();
-            // 触发更新事件
             setTimeout(() => {
               dispatchEvent(new Event("editingToolbar-NewCommand"));
-
               this.plugin.reloadCustomCommands();
             }, 100);
           });
@@ -266,7 +290,20 @@ export class CustomCommandModal extends Modal {
       );
   }
 
-  
+  // 添加更新命令图标的辅助方法
+  private updateCommandIcon(commands: any[], commandId: string) {
+    if (!commands) return;
+    
+    commands.forEach(cmd => {
+      if (cmd.id === commandId) {
+        cmd.icon = this.icon;
+      }
+      // 检查子菜单
+      if (cmd.SubmenuCommands) {
+        this.updateCommandIcon(cmd.SubmenuCommands, commandId);
+      }
+    });
+  }
 
   onClose() {
     const { contentEl } = this;

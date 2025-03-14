@@ -12,6 +12,7 @@ import { UpdateNoticeModal } from "src/modals/updateModal";
 import Pickr from "@simonwep/pickr";
 import '@simonwep/pickr/dist/themes/nano.min.css';
 import { CustomCommandModal } from "src/modals/CustomCommandModal";
+import { DeployCommandModal } from "src/modals/DeployCommand";
 
 // 添加类型定义
 interface SubmenuCommand {
@@ -103,9 +104,14 @@ export class editingToolbarSettingTab extends PluginSettingTab {
   appendMethod: string;
   pickrs: Pickr[] = [];
   activeTab: string = 'general';
+  // 添加一个属性来跟踪当前正在编辑的配置
+  private currentEditingConfig: string;
   constructor(app: App, plugin: editingToolbarPlugin) {
     super(app, plugin);
     this.plugin = plugin;
+    // 初始化 currentEditingConfig
+    this.currentEditingConfig = this.plugin.settings.positionStyle;
+
     addEventListener("editingToolbar-NewCommand", () => {
       selfDestruct();
       editingToolbarPopover(app, this.plugin);
@@ -117,7 +123,6 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     this.destroyPickrs();
     const { containerEl } = this;
     containerEl.empty();
-
     // 保持现有的头部代码
     this.createHeader(containerEl);
 
@@ -162,7 +167,49 @@ export class editingToolbarSettingTab extends PluginSettingTab {
         break;
     }
   }
+  // 创建删除按钮
+  private createDeleteButton(
+    button: any,
+    deleteAction: () => Promise<void>,
+    tooltip: string = t('Delete')
+  ) {
+    let isConfirming = false;
+    let confirmTimeout: NodeJS.Timeout;
 
+    button
+      .setIcon('editingToolbarDelete')
+      .setTooltip(tooltip)
+      .onClick(async () => {
+        if (isConfirming) {
+          // 清除确认状态和超时
+          clearTimeout(confirmTimeout);
+          button
+            .setIcon('editingToolbarDelete')
+            .setTooltip(tooltip);
+          button.buttonEl.removeClass('mod-warning');
+          isConfirming = false;
+
+          // 执行删除操作
+          await deleteAction();
+        } else {
+          // 进入确认状态
+          isConfirming = true;
+          button
+            .setTooltip(t('Confirm delete?'))
+            .setButtonText(t('Confirm delete?'));
+          button.buttonEl.addClass('mod-warning');
+
+          // 5秒后重置按钮状态
+          confirmTimeout = setTimeout(() => {
+            button
+              .setIcon('editingToolbarDelete')
+              .setTooltip(tooltip);
+            button.buttonEl.removeClass('mod-warning');
+            isConfirming = false;
+          }, 3500);
+        }
+      });
+  }
   // 拆分设置项到不同方法
   private displayGeneralSettings(containerEl: HTMLElement): void {
     new Setting(containerEl)
@@ -179,6 +226,36 @@ export class editingToolbarSettingTab extends PluginSettingTab {
             this.plugin.saveSettings();
           });
       });
+
+    // 添加多配置切换选项
+    new Setting(containerEl)
+      .setName(t('Enable multiple configurations'))
+      .setDesc(t('Enable different command configurations for each position style (following, top, fixed)'))
+      .addToggle(toggle => toggle
+        .setValue(this.plugin.settings.enableMultipleConfig || false)
+        .onChange(async (value) => {
+          this.plugin.settings.enableMultipleConfig = value;
+
+          // 如果启用多配置，确保每个位置样式都有对应的命令配置
+          if (value) {
+            // 初始化各个位置样式的命令配置
+            if (!this.plugin.settings.followingCommands || this.plugin.settings.followingCommands.length === 0) {
+              this.plugin.settings.followingCommands = [...this.plugin.settings.menuCommands];
+            }
+
+            if (!this.plugin.settings.topCommands || this.plugin.settings.topCommands.length === 0) {
+              this.plugin.settings.topCommands = [...this.plugin.settings.menuCommands];
+            }
+
+            if (!this.plugin.settings.fixedCommands || this.plugin.settings.fixedCommands.length === 0) {
+              this.plugin.settings.fixedCommands = [...this.plugin.settings.menuCommands];
+            }
+          }
+
+          await this.plugin.saveSettings();
+          this.display();
+        })
+      );
 
     // Mobile setting
     new Setting(containerEl)
@@ -274,6 +351,40 @@ export class editingToolbarSettingTab extends PluginSettingTab {
   }
 
   private displayCommandSettings(containerEl: HTMLElement): void {
+    if (this.plugin.settings.enableMultipleConfig) {
+      const configSwitcher = new Setting(containerEl)
+        .setName(t('Current Configuration'))
+        .setDesc(t('Switch between different command configurations'))
+        .addDropdown(dropdown => {
+          // 添加基本配置选项
+          dropdown.addOption('top', t('Top Style'));
+          dropdown.addOption('fixed', t('Fixed Style'));
+          dropdown.addOption('following', t('Following Style'));
+
+          // 如果移动端模式开启，添加移动端配置选项
+          if (this.plugin.settings.isLoadOnMobile) {
+            dropdown.addOption('mobile', t('Mobile Style'));
+          }
+
+          // 使用类属性来跟踪当前配置
+          dropdown.setValue(this.currentEditingConfig);
+
+          // 监听变更
+          dropdown.onChange(async (value) => {
+            this.currentEditingConfig = value;
+            this.display();
+          });
+        });
+    }
+
+    // 添加当前正在编辑的配置提示
+    if (this.plugin.settings.enableMultipleConfig) {
+      const positionStyleInfo = containerEl.createEl('div', {
+        cls: `position-style-info ${this.currentEditingConfig}`,
+        text: t(`Currently editing commands for`) + ` "${this.currentEditingConfig} Style" ` + t(`configuration`)
+      });
+    }
+
     new Setting(containerEl)
       .setName(t('Editing Toolbar commands'))
       .setDesc(t("Add a command onto Editing Toolbar from Obsidian's commands library. To reorder the commands, drag and drop the command items. To delete them, use the delete buttom to the right of the command item. Editing Toolbar will not automaticaly refresh after reordering commands. Use the refresh button above."))
@@ -282,14 +393,10 @@ export class editingToolbarSettingTab extends PluginSettingTab {
           .setIcon("plus")
           .setTooltip(t("Add"))
           .onClick(() => {
-            new CommandPicker(this.plugin).open();
+            new CommandPicker(this.plugin, this.currentEditingConfig).open();
             this.triggerRefresh();
           });
       });
-
-
-
-
 
     // 现有的命令列表代码
     this.createCommandList(containerEl);
@@ -324,31 +431,33 @@ export class editingToolbarSettingTab extends PluginSettingTab {
           .setButtonText(t('Add to Toolbar'))
           .setTooltip(t('Add this command to the toolbar'))
           .onClick(() => {
-            // 检查命令是否已在工具栏中
-            const isInToolbar = this.plugin.settings.menuCommands.some(cmd => cmd.id === `editing-toolbar:custom-${command.id}`);
+            if (this.plugin.settings.enableMultipleConfig) {
+              // 如果启用了多配置，打开部署模态框
+              new DeployCommandModal(this.app, this.plugin, command).open();
+            } else {
+              // 原有的单配置逻辑
+              const isInToolbar = this.plugin.settings.menuCommands.some(
+                cmd => cmd.id === `editing-toolbar:custom-${command.id}`
+              );
 
-            if (isInToolbar) {
-              new Notice(t('This command is already in the toolbar'));
-              return;
+              if (isInToolbar) {
+                new Notice(t('This command is already in the toolbar'));
+                return;
+              }
+
+              const toolbarCommand = {
+                id: `editing-toolbar:custom-${command.id}`,
+                name: command.name,
+                icon: command.icon || 'obsidian-new'
+              };
+
+              this.plugin.settings.menuCommands.push(toolbarCommand);
+              this.plugin.saveSettings().then(() => {
+                new Notice(t('Command added to toolbar'));
+                dispatchEvent(new Event("editingToolbar-NewCommand"));
+                this.plugin.reloadCustomCommands();
+              });
             }
-
-            // 创建工具栏命令对象
-            const toolbarCommand = {
-              id: `editing-toolbar:custom-${command.id}`,
-              name: command.name,
-              icon: command.icon || 'text'
-            };
-
-            // 添加到工具栏命令列表
-            this.plugin.settings.menuCommands.push(toolbarCommand);
-
-            // 保存设置
-            this.plugin.saveSettings().then(() => {
-              new Notice(t('Command added to toolbar'));
-              // 触发工具栏更新
-              dispatchEvent(new Event("editingToolbar-NewCommand"));
-              this.plugin.reloadCustomCommands();
-            });
           })
         )
         .addButton(button => button
@@ -359,18 +468,28 @@ export class editingToolbarSettingTab extends PluginSettingTab {
             new CustomCommandModal(this.app, this.plugin, index).open();
           })
         )
-        .addButton(button => button
-          .setIcon('editingToolbarDelete')
-          .setTooltip(t('Delete'))
-          .onClick(async () => {
-            this.plugin.settings.customCommands.splice(index, 1);
-            await this.plugin.saveSettings();
-            // 使用公共方法
-            this.plugin.reloadCustomCommands();
-            // 刷新设置界面
-            this.display();
-          })
-        );
+        .addButton(button => this.createDeleteButton(button, async () => {
+          const customCommandId = `editing-toolbar:custom-${this.plugin.settings.customCommands[index].id}`;
+
+          // 从所有配置中删除该命令
+          this.removeCommandFromConfig(this.plugin.settings.menuCommands, customCommandId);
+
+          if (this.plugin.settings.enableMultipleConfig) {
+            this.removeCommandFromConfig(this.plugin.settings.followingCommands, customCommandId);
+            this.removeCommandFromConfig(this.plugin.settings.topCommands, customCommandId);
+            this.removeCommandFromConfig(this.plugin.settings.fixedCommands, customCommandId);
+
+            if (this.plugin.settings.isLoadOnMobile) {
+              this.removeCommandFromConfig(this.plugin.settings.mobileCommands, customCommandId);
+            }
+          }
+
+          this.plugin.settings.customCommands.splice(index, 1);
+          await this.plugin.saveSettings();
+          this.plugin.reloadCustomCommands();
+          this.display();
+          new Notice(t('Command deleted'));
+        }))
 
     });
 
@@ -494,6 +613,29 @@ export class editingToolbarSettingTab extends PluginSettingTab {
   }
 
   private createCommandList(containerEl: HTMLElement): void {
+    // 根据编辑的配置获取对应的命令列表
+    let commandsToEdit: Command[] = [];
+    if(this.plugin.settings.enableMultipleConfig){
+      switch (this.currentEditingConfig) {
+        case 'mobile':
+        commandsToEdit = this.plugin.settings.mobileCommands;
+        break;
+      case 'following':
+        commandsToEdit = this.plugin.settings.followingCommands;
+        break;
+      case 'top':
+        commandsToEdit = this.plugin.settings.topCommands;
+        break;
+      case 'fixed':
+        commandsToEdit = this.plugin.settings.fixedCommands;
+        break;
+        default:
+          commandsToEdit = this.plugin.settings.menuCommands;
+      }
+    } else {
+      commandsToEdit = this.plugin.settings.menuCommands;
+    }
+
     const editingToolbarCommandsContainer = containerEl.createEl("div", {
       cls: "editingToolbarSettingsTabsContainer",
     });
@@ -524,9 +666,29 @@ export class editingToolbarSettingTab extends PluginSettingTab {
       },
       onSort: (command) => {
         if (command.from.className === command.to.className) {
-          const arrayResult = this.plugin.settings.menuCommands;
+          const arrayResult = commandsToEdit;
           const [removed] = arrayResult.splice(command.oldIndex, 1)
           arrayResult.splice(command.newIndex, 0, removed);
+
+          // 根据当前编辑的配置更新对应的命令列表
+          if (this.plugin.settings.enableMultipleConfig) {
+            switch (this.currentEditingConfig) {
+              case 'mobile':
+                this.plugin.settings.mobileCommands = arrayResult;
+                break;
+              case 'following':
+                this.plugin.settings.followingCommands = arrayResult;
+                break;
+              case 'top':
+                this.plugin.settings.topCommands = arrayResult;
+                break;
+              case 'fixed':
+                this.plugin.settings.fixedCommands = arrayResult;
+                break;
+            }
+          } else {
+            this.plugin.settings.menuCommands = arrayResult;
+          }
           this.plugin.saveSettings();
         }
         this.triggerRefresh();
@@ -536,8 +698,9 @@ export class editingToolbarSettingTab extends PluginSettingTab {
       },
     });
 
-
-    this.plugin.settings.menuCommands.forEach((newCommand: Command, index: number) => {
+    // 使用getCurrentCommands获取当前命令配置
+    const currentCommands = commandsToEdit;
+    currentCommands.forEach((newCommand: Command, index: number) => {
       const setting = new Setting(editingToolbarCommandsContainer)
 
       if ("SubmenuCommands" in newCommand) {
@@ -551,24 +714,19 @@ export class editingToolbarSettingTab extends PluginSettingTab {
             addicon
               .setClass("editingToolbarSettingsIcon")
               .onClick(async () => {
-                new ChooseFromIconList(this.plugin, newCommand, false).open();
+                new ChooseFromIconList(this.plugin, newCommand, false, null, this.currentEditingConfig).open();
               });
             checkHtml(newCommand.icon) ? addicon.buttonEl.innerHTML = newCommand.icon : addicon.setIcon(newCommand.icon)
           })
-          .addButton((deleteButton) => {
-            deleteButton
-              .setIcon("editingToolbarDelete")
-              .setTooltip(t("Delete"))
-              .setClass("editingToolbarSettingsButton")
-              .setClass("editingToolbarSettingsButtonDelete")
-              .onClick(async () => {
-                this.plugin.settings.menuCommands.remove(newCommand);
-                await this.plugin.saveSettings();
-                this.display();
-                this.triggerRefresh();
-                console.log(`%cCommand '${newCommand.name}' was removed from editingToolbar`, "color: #989cab");
-              });
-          });
+          .addButton((deleteButton) => this.createDeleteButton(deleteButton, async () => {
+            currentCommands.remove(newCommand);
+            this.plugin.updateCurrentCommands(currentCommands);
+            await this.plugin.saveSettings();
+            this.display();
+            this.triggerRefresh();
+            console.log(`%cCommand '${newCommand.name}' was removed from editingToolbar`, "color: #989cab");
+          }))
+
 
 
         if (newCommand.id == "editingToolbar-plugin:change-font-color") return;  //修改字体颜色指令单独处理
@@ -604,8 +762,8 @@ export class editingToolbarSettingTab extends PluginSettingTab {
 
 
             if (command.from.className === command.to.className) {
-
-              const arrayResult = this.plugin.settings.menuCommands;
+              // 使用getCurrentCommands获取当前命令配置
+              const arrayResult = commandsToEdit;
               const subresult = arrayResult[index]?.SubmenuCommands;
 
 
@@ -613,11 +771,14 @@ export class editingToolbarSettingTab extends PluginSettingTab {
 
                 const [removed] = subresult.splice(command.oldIndex, 1);
                 subresult.splice(command.newIndex, 0, removed);
+                // 使用updateCurrentCommands更新当前命令配置
+                this.plugin.updateCurrentCommands(arrayResult);
                 this.plugin.saveSettings();
               }
             } else if (command.to.className === "editingToolbarSettingsTabsContainer") {
               // 从子菜单拖动到父菜单的逻辑
-              const arrayResult = this.plugin.settings.menuCommands;
+              // 使用getCurrentCommands获取当前命令配置
+              const arrayResult = commandsToEdit;
 
               let cmdindex = getComandindex(command.target.parentElement.dataset["id"], arrayResult);
 
@@ -627,6 +788,8 @@ export class editingToolbarSettingTab extends PluginSettingTab {
 
                 const [removed] = subresult.splice(command.oldIndex, 1);
                 arrayResult.splice(command.newIndex, 0, removed);
+                // 使用updateCurrentCommands更新当前命令配置
+                this.plugin.updateCurrentCommands(arrayResult);
                 this.plugin.saveSettings();
 
               } else {
@@ -634,7 +797,8 @@ export class editingToolbarSettingTab extends PluginSettingTab {
               }
             } else if (command.from.className === "editingToolbarSettingsTabsContainer") {
               // 从父菜单拖动到子菜单的逻辑
-              const arrayResult = this.plugin.settings.menuCommands;
+              // 使用getCurrentCommands获取当前命令配置
+              const arrayResult = commandsToEdit;
               const fromDatasetId = command.target.parentElement.dataset["id"];
 
 
@@ -651,6 +815,8 @@ export class editingToolbarSettingTab extends PluginSettingTab {
 
                 const [removed] = arrayResult.splice(command.oldIndex, 1);
                 subresult.splice(command.newIndex, 0, removed);
+                // 使用updateCurrentCommands更新当前命令配置
+                this.plugin.updateCurrentCommands(arrayResult);
                 this.plugin.saveSettings();
 
               } else {
@@ -673,7 +839,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
               addicon
                 .setClass("editingToolbarSettingsIcon")
                 .onClick(async () => {
-                  new ChooseFromIconList(this.plugin, subCommand, true).open();
+                  new ChooseFromIconList(this.plugin, subCommand, true, null, this.currentEditingConfig).open();
                 });
 
               checkHtml(subCommand?.icon) ? addicon.buttonEl.innerHTML = subCommand.icon : addicon.setIcon(subCommand.icon)
@@ -685,23 +851,16 @@ export class editingToolbarSettingTab extends PluginSettingTab {
                 .setTooltip(t("Change Command name"))
                 .setClass("editingToolbarSettingsButton")
                 .onClick(async () => {
-                  new ChangeCmdname(this.app, this.plugin, subCommand, true).open();
+                  new ChangeCmdname(this.app, this.plugin, subCommand, true, this.currentEditingConfig).open();
                 });
             })
-            .addButton((deleteButton) => {
-              deleteButton
-                .setIcon("editingToolbarDelete")
-                .setTooltip(t("Delete"))
-                .setClass("editingToolbarSettingsButton")
-                .setClass("editingToolbarSettingsButtonDelete")
-                .onClick(async () => {
-                  newCommand.SubmenuCommands.remove(subCommand);
-                  await this.plugin.saveSettings();
-                  this.display();
-                  this.triggerRefresh();
-                  console.log(`%cCommand '${newCommand.name}' was removed from editingToolbar`, "color: #989cab");
-                });
-            });
+            .addButton((deleteButton) => this.createDeleteButton(deleteButton, async () => {
+              newCommand.SubmenuCommands.remove(subCommand);
+              await this.plugin.saveSettings();
+              this.display();
+              this.triggerRefresh();
+              console.log(`%cCommand '${newCommand.name}' was removed from editingToolbar`, "color: #989cab");
+            }))
           subsetting.nameEl;
 
         });
@@ -712,7 +871,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
               //    .setIcon(newCommand.icon)
               .setClass("editingToolbarSettingsIcon")
               .onClick(async () => {
-                new ChooseFromIconList(this.plugin, newCommand, false).open();
+                new ChooseFromIconList(this.plugin, newCommand, false, null, this.currentEditingConfig).open();
               });
             checkHtml(newCommand.icon) ? addicon.buttonEl.innerHTML = newCommand.icon : addicon.setIcon(newCommand.icon)
           })
@@ -727,7 +886,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
               .setTooltip(t("Change Command name"))
               .setClass("editingToolbarSettingsButton")
               .onClick(async () => {
-                new ChangeCmdname(this.app, this.plugin, newCommand, false).open();
+                new ChangeCmdname(this.app, this.plugin, newCommand, false, this.currentEditingConfig).open();
               });
           })
           .addButton((addsubButton) => {
@@ -743,7 +902,11 @@ export class editingToolbarSettingTab extends PluginSettingTab {
                   icon: "remix-Filter3Line",
                   SubmenuCommands: []
                 };
-                this.plugin.settings.menuCommands.splice(index + 1, 0, submenuCommand);
+                // 使用getCurrentCommands获取当前命令配置
+                const currentCommands = commandsToEdit;
+                currentCommands.splice(index + 1, 0, submenuCommand);
+                // 使用updateCurrentCommands更新当前命令配置
+                this.plugin.updateCurrentCommands(currentCommands);
                 await this.plugin.saveSettings();
                 this.display();
                 this.triggerRefresh();
@@ -759,27 +922,25 @@ export class editingToolbarSettingTab extends PluginSettingTab {
               .onClick(async () => {
                 const dividermenu =
                   { id: "editingToolbar-Divider-Line", name: "HR", icon: "vertical-split" };
-                this.plugin.settings.menuCommands.splice(index + 1, 0, dividermenu);
+                // 使用getCurrentCommands获取当前命令配置
+                const currentCommands = commandsToEdit;
+                currentCommands.splice(index + 1, 0, dividermenu);
+                // 使用updateCurrentCommands更新当前命令配置
+                this.plugin.updateCurrentCommands(currentCommands);
                 await this.plugin.saveSettings();
                 this.display();
                 this.triggerRefresh();
 
               });
           })
-          .addButton((deleteButton) => {
-            deleteButton
-              .setIcon("editingToolbarDelete")
-              .setTooltip(t("Delete"))
-              .setClass("editingToolbarSettingsButton")
-              .setClass("editingToolbarSettingsButtonDelete")
-              .onClick(async () => {
-                this.plugin.settings.menuCommands.remove(newCommand);
-                await this.plugin.saveSettings();
-                this.display();
-                this.triggerRefresh();
-                console.log(`%cCommand '${newCommand.name}' was removed from editingToolbar`, "color: #989cab");
-              });
-          });
+          .addButton((deleteButton) => this.createDeleteButton(deleteButton, async () => {
+            currentCommands.remove(newCommand);
+            this.plugin.updateCurrentCommands(currentCommands);
+            await this.plugin.saveSettings();
+            this.display();
+            this.triggerRefresh();
+            console.log(`%cCommand '${newCommand.name}' was removed from editingToolbar`, "color: #989cab");
+          }))
 
 
       }
@@ -818,8 +979,30 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     this.destroyPickrs();
     this.triggerRefresh();
   }
-}
 
+  // 添加一个辅助方法用于从配置中删除命令
+  private removeCommandFromConfig(commands: any[], commandId: string) {
+    if (!commands) return;
+
+    // 删除主菜单中的命令
+    for (let i = commands.length - 1; i >= 0; i--) {
+      if (commands[i].id === commandId) {
+        commands.splice(i, 1);
+        continue;
+      }
+
+      // 检查并删除子菜单中的命令
+      if (commands[i].SubmenuCommands) {
+        this.removeCommandFromConfig(commands[i].SubmenuCommands, commandId);
+
+        // 如果子菜单为空，可以选择是否删除子菜单本身
+        // if (commands[i].SubmenuCommands.length === 0) {
+        //   commands.splice(i, 1);
+        // }
+      }
+    }
+  }
+}
 
 
 

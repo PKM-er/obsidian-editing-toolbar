@@ -29,6 +29,11 @@ export interface editingToolbarSettings {
   aestheticStyle: string;
   positionStyle: string;
   menuCommands: Command[];
+  followingCommands: Command[];
+  topCommands: Command[];
+  fixedCommands: Command[];
+  mobileCommands: Command[];
+  enableMultipleConfig: boolean;
   appendMethod: string;
   shouldShowMenuOnSelect: boolean;
   cMenuVisibility: boolean;
@@ -241,7 +246,7 @@ export const DEFAULT_SETTINGS: editingToolbarSettings = {
             "icon": "note-glyph"
           },
           {
-            "id": "editing-toolbar:editor:insert-link",
+            "id": "editing-toolbar:insert-link",
             "name": "Insert link []()",
             "icon": "link-glyph"
           },
@@ -251,7 +256,7 @@ export const DEFAULT_SETTINGS: editingToolbarSettings = {
             "icon": "<svg width=\"18\" height=\"18\" focusable=\"false\" fill=\"currentColor\"  viewBox=\"0 0 1024 1024\"><g transform=\"scale(1, -1) translate(0, -896) scale(0.9, 0.9) \"><path class=\"path\" d=\"M912 424 l0 -80 q0 -3 -2.5 -5.5 q-2.5 -2.5 -5.5 -2.5 l-784 0 q-3 0 -5.5 2.5 q-2.5 2.5 -2.5 5.5 l0 80 q0 3 2.5 5.5 q2.5 2.5 5.5 2.5 l784 0 q3 0 5.5 -2.5 q2.5 -2.5 2.5 -5.5 Z\"></path></g></svg>"
           },
           {
-            "id": "editing-toolbar:editor:toggle-inline-math",
+            "id": "editing-toolbar:toggle-inline-math",
             "name": "Inline math",
             "icon": "lucide-sigma"
           },
@@ -342,6 +347,11 @@ export const DEFAULT_SETTINGS: editingToolbarSettings = {
         "icon": "exit-fullscreen"
       }
     ],
+    "followingCommands": [],
+    "topCommands": [],
+    "fixedCommands": [],
+    "mobileCommands": [],
+    "enableMultipleConfig": false,
     "appendMethod": "workspace",
     "shouldShowMenuOnSelect": false,
     "cMenuVisibility": true,

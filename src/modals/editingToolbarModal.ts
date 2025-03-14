@@ -521,12 +521,13 @@ export function editingToolbarPopover(app: App, plugin: editingToolbarPlugin): v
           .insertAdjacentElement("afterbegin", editingToolbar);
       }
 
-
-
-
       let editingToolbarPopoverBar = app.workspace.activeLeaf.view.containerEl
         ?.querySelector("#editingToolbarPopoverBar") as HTMLElement;
-      settings.menuCommands.forEach((item, index) => {
+      
+      // 使用plugin.getCurrentCommands()获取当前位置样式对应的命令配置
+      const currentCommands = plugin.getCurrentCommands();
+      
+      currentCommands.forEach((item, index) => {
         let tip;
         if ("SubmenuCommands" in item) {
           let _btn: any;

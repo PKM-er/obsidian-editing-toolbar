@@ -92,7 +92,7 @@ export class UpdateNoticeModal extends Modal {
                 'editing-toolbar:editor:toggle-strikethrough': 'editing-toolbar:toggle-strikethrough',
                 'editing-toolbar:editor:toggle-inline-math': 'editing-toolbar:toggle-inline-math',
                 'editing-toolbar:editor:insert-callout': 'editing-toolbar:insert-callout',
-                'editing-toolbar:editor:insert-link': 'editing-toolbar:insert-link'
+                'editing-toolbar:editor:insert-link': 'editing-toolbar:insert-link',
             };
 
             let hasChanges = false;
@@ -155,6 +155,8 @@ export class UpdateNoticeModal extends Modal {
             if (hasChanges) {
                 await this.plugin.saveSettings();
                 new Notice(t("Command IDs have been successfully repaired!"));
+                // 重新加载插件
+                dispatchEvent(new Event("editingToolbar-NewCommand"));
             } else {
                 new Notice(t("No command IDs need to be repaired"));
             }
@@ -177,19 +179,25 @@ export class UpdateNoticeModal extends Modal {
     
     async restoreDefaultSettings() {
         try {
-            // 保留当前版本号
+            // 保留当前版本号和自定义命令
             const currentVersion = this.plugin.settings.lastVersion;
+            const customCommands = this.plugin.settings.customCommands;
 
-            // 使用默认设置替换当前设置，但保留版本号
+            // 使用默认设置替换当前设置，但保留版本号和自定义命令
             this.plugin.settings = {
                 ...DEFAULT_SETTINGS,
-                lastVersion: currentVersion
+                lastVersion: currentVersion,
+                customCommands: customCommands
             };
 
             // 保存设置
             await this.plugin.saveSettings();
 
-            new Notice(t("Successfully restored default settings!"));
+            new Notice(t("Successfully restored default settings! (Custom commands preserved)"));
+            
+            // 重新加载插件
+            this.reloadPlugin(this.plugin.manifest.id);
+            this.close();
         } catch (error) {
             console.error("恢复默认设置时出错:", error);
             new Notice(t("Error restoring default settings, please check the console for details"));
@@ -207,14 +215,9 @@ export class UpdateNoticeModal extends Modal {
         });
 
         const ul = contentEl.createEl("ul");
+    
         ul.createEl("li", {
-            text: t("This update rebuilds the entire code, reducing resource consumption")
-        });
-        ul.createEl("li", {
-            text: t("Optimized mobile usage, added canvas support, and added custom commands")
-        });
-        ul.createEl("li", {
-            text: t("⚠️This update is not compatible with some old version command ids, please click [Repair command] to be compatible")
+            text: t("⚠️This update is not compatible with 2.x version command ids, please click [Repair command] to be compatible")
         });
         ul.createEl("li", {
             text: t("⚠️If you want to restore the default settings, please click [Restore default settings]")
@@ -246,12 +249,12 @@ export class UpdateNoticeModal extends Modal {
         // 恢复默认设置按钮
         new Setting(contentEl)
             .setName(t("🔄Restore default settings"))
-            .setDesc(t("This will reset all your custom configurations"))
+            .setDesc(t("This will reset all your custom configurations, but custom commands will be preserved"))
             .addButton(button => button
                 .setButtonText(t("Restore default"))
                 .onClick(async () => {
                     // 添加确认对话框
-                    if (confirm(t("Are you sure you want to restore all settings to default? This will lose all your custom configurations."))) {
+                    if (confirm(t("Are you sure you want to restore all settings to default? But custom commands will be preserved."))) {
                         await this.restoreDefaultSettings();
                     }
                 }));

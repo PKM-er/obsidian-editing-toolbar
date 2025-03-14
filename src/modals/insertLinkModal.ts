@@ -635,7 +635,6 @@ export class InsertLinkModal extends Modal {
             .addButton((btn) =>
                 btn
                     .setButtonText(t("Cancel"))
-                    .setCta()
                     .onClick(() => {
                         this.close();
                     })

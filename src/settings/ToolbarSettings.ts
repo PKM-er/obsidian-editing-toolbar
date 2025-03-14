@@ -10,6 +10,11 @@ export interface ToolbarSettings {
   autohide: boolean;
   isLoadOnMobile: boolean;
   menuCommands: ToolbarCommand[];
+  followingCommands: ToolbarCommand[];
+  topCommands: ToolbarCommand[];
+  fixedCommands: ToolbarCommand[];
+  mobileCommands: ToolbarCommand[];
+  enableMultipleConfig: boolean;
   custom_bg1: string;
   custom_bg2: string;
   custom_bg3: string;
