@@ -44,13 +44,30 @@ jobs:
                   if [ -z "$PREVIOUS_TAG" ]; then
                     # 如果没有上一个标签，获取所有提交
                     echo "## 更新内容" > CHANGELOG.tmp
-                    # 使用 %B 获取完整提交信息，包括标题和详细内容
-                    git log --pretty=format:"### %s%n%n%B%n" >> CHANGELOG.tmp
                   else
                     # 获取从上一个标签到当前标签的提交
                     echo "## 更新内容 ($PREVIOUS_TAG -> ${{ steps.get_version.outputs.version }})" > CHANGELOG.tmp
-                    git log --pretty=format:"### %s%n%n%B%n" $PREVIOUS_TAG..${{ steps.get_version.outputs.version }} >> CHANGELOG.tmp
                   fi
+                  
+                  # 使用 git log 获取提交信息，但过滤掉不需要的内容
+                  git log --pretty=format:"%s%n%b" $PREVIOUS_TAG..${{ steps.get_version.outputs.version }} | grep -v "^update changelog" | grep -v "^Update manifest.json and CHANGELOG.md for version" | grep -v "^$" > COMMITS.tmp
+                  
+                  # 处理提交信息，去除重复标题
+                  PREV_TITLE=""
+                  while IFS= read -r line; do
+                    # 如果行以 ### 开头，它是一个标题
+                    if [[ $line == "### "* ]]; then
+                      TITLE=${line:4}  # 去掉 "### " 前缀
+                      # 如果标题与正文相同，跳过标题
+                      NEXT_LINE=$(head -n 1 COMMITS.tmp)
+                      if [[ "$TITLE" != "$NEXT_LINE" ]]; then
+                        echo "$line" >> CHANGELOG.tmp
+                      fi
+                    else
+                      # 如果不是标题，直接添加
+                      echo "$line" >> CHANGELOG.tmp
+                    fi
+                  done < COMMITS.tmp
                   
                   # 将 changelog 内容保存到输出变量
                   CHANGELOG=$(cat CHANGELOG.tmp)
@@ -70,14 +87,14 @@ jobs:
                     tail -n +2 CHANGELOG.md >> CHANGELOG.new
                     # 替换原有文件
                     mv CHANGELOG.new CHANGELOG.md
-                    rm CHANGELOG.tmp
+                    rm CHANGELOG.tmp COMMITS.tmp
                   else
                     # 如果文件不存在，创建新文件
                     echo "# Changelog" > CHANGELOG.md
                     echo "" >> CHANGELOG.md
                     echo "## ${{ steps.get_version.outputs.version }} ($(date +%Y-%m-%d))" >> CHANGELOG.md
                     cat CHANGELOG.tmp >> CHANGELOG.md
-                    rm CHANGELOG.tmp
+                    rm CHANGELOG.tmp COMMITS.tmp
                   fi
                 else
                   # 如果是手动触发，使用输入的发布说明
