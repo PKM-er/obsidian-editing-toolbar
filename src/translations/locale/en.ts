@@ -293,5 +293,11 @@ export default {
 'Overwrite Import': 'Overwrite Import',
 'Update Import': 'Update Import',
 'Importing configuration...': 'Importing configuration...',
+'Following Style Only': 'Following Style Only',
+'Top Style Only': 'Top Style Only',
+'Fixed Style Only': 'Fixed Style Only',
+'Mobile Style Only': 'Mobile Style Only',
+'Unknown import type': 'Unknown import type',
+'All Toolbar Commands': 'All Toolbar Commands',
 };
 

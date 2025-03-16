@@ -6,7 +6,7 @@ import { t } from 'src/translations/helper';
 export class ImportExportModal extends Modal {
   plugin: editingToolbarPlugin;
   mode: 'import' | 'export';
-  exportType: 'all' | 'commands' | 'custom';
+  exportType: 'all' | 'commands' | 'custom' | 'following' | 'top' | 'fixed' | 'mobile';
   importMode: 'overwrite' | 'update';
   textArea: TextAreaComponent;
   importButton: ButtonComponent;
@@ -39,11 +39,19 @@ export class ImportExportModal extends Modal {
         .addDropdown(dropdown => {
           dropdown
             .addOption('all', t('All Settings'))
-            .addOption('commands', t('Toolbar Commands Only'))
+            .addOption('commands', t('All Toolbar Commands'))
             .addOption('custom', t('Custom Commands Only'))
-            .setValue('all')
+          if(this.plugin.settings.enableMultipleConfig){
+            dropdown
+              .addOption('following', t('Following Style Only'))
+              .addOption('top', t('Top Style Only'))
+              .addOption('fixed', t('Fixed Style Only'))
+              .addOption('mobile', t('Mobile Style Only'))
+            }
+            
+            dropdown.setValue(this.exportType)
             .onChange(value => {
-              this.exportType = value as 'all' | 'commands' | 'custom';
+              this.exportType = value as 'all' | 'commands' | 'custom' | 'following' | 'top' | 'fixed' | 'mobile';
               this.updateExportContent();
             });
         });
@@ -230,6 +238,30 @@ export class ImportExportModal extends Modal {
           customCommands: this.plugin.settings.customCommands || []
         };
         break;
+      case 'following':
+        exportContent = {
+          ...exportContent,
+          followingCommands: this.plugin.settings.followingCommands || []
+        };
+        break;
+      case 'top':
+        exportContent = {
+          ...exportContent,
+          topCommands: this.plugin.settings.topCommands || []
+        };
+        break;
+      case 'fixed':
+        exportContent = {
+          ...exportContent,
+          fixedCommands: this.plugin.settings.fixedCommands || []
+        };
+        break;
+      case 'mobile':
+        exportContent = {
+          ...exportContent,
+          mobileCommands: this.plugin.settings.mobileCommands || []
+        };
+        break;
     }
 
     // 验证导出内容
@@ -287,15 +319,41 @@ export class ImportExportModal extends Modal {
 
       // 检查是否包含元数据
       if (importData._exportInfo) {
-
-        
         // 显示导入信息
         const exportInfo = importData._exportInfo;
         const exportTime = new Date(exportInfo.exportTime).toLocaleString();
         const exportType = exportInfo.exportType;
         const exportVersion = exportInfo.version;
         
-        new Notice(t('Importing configuration...'));
+        // 根据导出类型显示不同的提示信息
+        let importTypeMessage = '';
+        switch (exportType) {
+          case 'all':
+            importTypeMessage = t('All Settings');
+            break;
+          case 'commands':
+            importTypeMessage = t('Toolbar Commands Only');
+            break;
+          case 'custom':
+            importTypeMessage = t('Custom Commands Only');
+            break;
+          case 'following':
+            importTypeMessage = t('Following Style');
+            break;
+          case 'top':
+            importTypeMessage = t('Top Style');
+            break;
+          case 'fixed':
+            importTypeMessage = t('Fixed Style');
+            break;
+          case 'mobile':
+            importTypeMessage = t('Mobile Style');
+            break;
+          default:
+            importTypeMessage = exportType;
+        }
+        
+        new Notice(t('Import Configuration') + ': ' + importTypeMessage + ' (' + exportVersion + ')');
         
         // 移除元数据，避免干扰导入
         delete importData._exportInfo;
@@ -415,410 +473,284 @@ export class ImportExportModal extends Modal {
     }
   }
 
-  // 覆盖导入 - 完全替换现有设置
-  async overwriteImport(importData: any) {
-    let hasUpdates = false;
+  // 恢复备份
+  restoreBackup(backup: any) {
+    this.plugin.settings.positionStyle = backup.positionStyle;
+    this.plugin.settings.menuCommands = backup.menuCommands;
+    this.plugin.settings.customCommands = backup.customCommands;
+    this.plugin.settings.followingCommands = backup.followingCommands;
+    this.plugin.settings.topCommands = backup.topCommands;
+    this.plugin.settings.fixedCommands = backup.fixedCommands;
+    this.plugin.settings.mobileCommands = backup.mobileCommands;
+  }
 
-    // 处理兼容性：检查本地和导入配置的多配置模式状态
-    const localMultiConfigEnabled = this.plugin.settings.enableMultipleConfig === true;
-    const importMultiConfigEnabled = importData.enableMultipleConfig === true;
-    const importMultiConfigUndefined = importData.enableMultipleConfig === undefined;
-    
-    // 清空当前所有设置前先备份
-    const backupSettings = JSON.parse(JSON.stringify(this.plugin.settings));
+  // 覆盖导入
+  overwriteImport(importData: any) {
+    try {
+      // 创建备份
+      const backup = {
+        positionStyle: this.plugin.settings.positionStyle,
+        menuCommands: [...this.plugin.settings.menuCommands],
+        customCommands: [...this.plugin.settings.customCommands],
+        followingCommands: [...this.plugin.settings.followingCommands],
+        topCommands: [...this.plugin.settings.topCommands],
+        fixedCommands: [...this.plugin.settings.fixedCommands],
+        mobileCommands: [...this.plugin.settings.mobileCommands]
+      };
 
-    // 检测导入的是什么类型的配置
-    const isFullConfig = 'positionStyle' in importData; // 全部配置包含positionStyle
-    const hasCommands = 'menuCommands' in importData || 'followingCommands' in importData || 'topCommands' in importData || 'fixedCommands' in importData;
-    const hasCustomCommands = 'customCommands' in importData;
-    
-
-    // 导入自定义命令
-    if (importData.customCommands) {
-      // 转换老版本的命令ID
-      this.plugin.settings.customCommands = this.convertLegacyCommandIds(importData.customCommands);
-      hasUpdates = true;
-    }
-
-    // 处理工具栏命令配置 - 考虑多配置兼容性
-    if (localMultiConfigEnabled && (importMultiConfigUndefined || !importMultiConfigEnabled)) {
-      // 本地启用了多配置，但导入文件是老版本或未启用多配置
-      // 根据positionStyle决定将menuCommands导入到哪个配置中
-      if (importData.menuCommands) {
-        // 转换老版本的命令ID
-        const convertedMenuCommands = this.convertLegacyCommandIds(importData.menuCommands);
-        
-        const positionStyle = importData.positionStyle || 'top';
-        this.plugin.settings.menuCommands = convertedMenuCommands;
-        
-        // 根据positionStyle将命令导入到相应的配置中
-        switch (positionStyle) {
-          case 'following':
-            this.plugin.settings.followingCommands = convertedMenuCommands;
-            break;
-          case 'top':
-            this.plugin.settings.topCommands = convertedMenuCommands;
-            break;
-          case 'fixed':
-            this.plugin.settings.fixedCommands = convertedMenuCommands;
-            break;
-          default:
-            
-            this.plugin.settings.topCommands = convertedMenuCommands;
-        }
-        
-        // 如果导入配置启用了移动设备支持，也导入到移动设备配置
-        if (importData.isLoadOnMobile === true) {
-          this.plugin.settings.mobileCommands = convertedMenuCommands;
-        }
-        
-        hasUpdates = true;
-      }
-    } else if (!localMultiConfigEnabled && importMultiConfigEnabled) {
-      // 本地未启用多配置，但导入文件启用了多配置
-      // 启用多配置并导入所有配置
-      this.plugin.settings.enableMultipleConfig = true;
+      // 检测导入的是什么类型的配置
+      const isFullConfig = 'positionStyle' in importData; // 全部配置包含positionStyle
+      const hasCommands = 'menuCommands' in importData;
+      const hasCustomCommands = 'customCommands' in importData;
+      const hasFollowingCommands = 'followingCommands' in importData;
+      const hasTopCommands = 'topCommands' in importData;
+      const hasFixedCommands = 'fixedCommands' in importData;
+      const hasMobileCommands = 'mobileCommands' in importData;
       
-      if (importData.followingCommands) {
-        this.plugin.settings.followingCommands = this.convertLegacyCommandIds(importData.followingCommands);
-        hasUpdates = true;
+      // 确定导入的具体类型
+      let importType = 'unknown';
+      if (isFullConfig) {
+        importType = 'all';
+      } else if (hasCustomCommands && !hasCommands && !hasFollowingCommands && !hasTopCommands && !hasFixedCommands && !hasMobileCommands) {
+        importType = 'custom';
+      } else if (hasCommands && !hasCustomCommands && !hasFollowingCommands && !hasTopCommands && !hasFixedCommands && !hasMobileCommands) {
+        importType = 'commands';
+      } else if (hasFollowingCommands && !hasCommands && !hasCustomCommands && !hasTopCommands && !hasFixedCommands && !hasMobileCommands) {
+        importType = 'following';
+      } else if (hasTopCommands && !hasCommands && !hasCustomCommands && !hasFollowingCommands && !hasFixedCommands && !hasMobileCommands) {
+        importType = 'top';
+      } else if (hasFixedCommands && !hasCommands && !hasCustomCommands && !hasFollowingCommands && !hasTopCommands && !hasMobileCommands) {
+        importType = 'fixed';
+      } else if (hasMobileCommands && !hasCommands && !hasCustomCommands && !hasFollowingCommands && !hasTopCommands && !hasFixedCommands) {
+        importType = 'mobile';
+      } else if (hasCommands || hasFollowingCommands || hasTopCommands || hasFixedCommands || hasMobileCommands) {
+        importType = 'commands';
       }
       
-      if (importData.topCommands) {
-        this.plugin.settings.topCommands = this.convertLegacyCommandIds(importData.topCommands);
-        hasUpdates = true;
-      }
-      
-      if (importData.fixedCommands) {
-        this.plugin.settings.fixedCommands = this.convertLegacyCommandIds(importData.fixedCommands);
-        hasUpdates = true;
-      }
-      
-      if (importData.mobileCommands) {
-        this.plugin.settings.mobileCommands = this.convertLegacyCommandIds(importData.mobileCommands);
-        hasUpdates = true;
-      }
-    } else {
-      // 两者配置模式一致，直接导入
-      
-      // 导入工具栏命令配置
-      if (importData.menuCommands) {
-        this.plugin.settings.menuCommands = this.convertLegacyCommandIds(importData.menuCommands);
-        hasUpdates = true;
-      }
-      
-      // 导入多配置相关设置
-      if (importData.enableMultipleConfig !== undefined) {
-        this.plugin.settings.enableMultipleConfig = importData.enableMultipleConfig;
-        
-        if (importData.enableMultipleConfig) {
-          if (importData.followingCommands) {
-            this.plugin.settings.followingCommands = this.convertLegacyCommandIds(importData.followingCommands);
-            hasUpdates = true;
-          }
-          
-          if (importData.topCommands) {
-            this.plugin.settings.topCommands = this.convertLegacyCommandIds(importData.topCommands);
-            hasUpdates = true;
-          }
-          
-          if (importData.fixedCommands) {
-            this.plugin.settings.fixedCommands = this.convertLegacyCommandIds(importData.fixedCommands);
-            hasUpdates = true;
-          }
-          
-          if (importData.mobileCommands) {
-            this.plugin.settings.mobileCommands = this.convertLegacyCommandIds(importData.mobileCommands);
-            hasUpdates = true;
-          }
+      console.log(`覆盖导入配置类型: ${importType}`);
+
+      // 根据导入类型执行不同的导入操作
+      if (importType === 'all') {
+        // 导入全部配置
+        if (importData.positionStyle) {
+          this.plugin.settings.positionStyle = importData.positionStyle;
         }
-      }
-    }
-
-    // 只有在导入完整配置时才导入其他设置
-    if (isFullConfig) {
-      const otherSettings = [
-        'positionStyle', 'aestheticStyle', 'appendMethod', 'autohide',
-        'isLoadOnMobile', 'cMenuNumRows',
-        'custom_bg1', 'custom_bg2', 'custom_bg3', 'custom_bg4', 'custom_bg5',
-        'custom_fc1', 'custom_fc2', 'custom_fc3', 'custom_fc4', 'custom_fc5'
-      ];
-
-      otherSettings.forEach(key => {
-        if (importData[key] !== undefined) {
-          (this.plugin.settings as any)[key] = importData[key];
-          hasUpdates = true;
+        if (importData.menuCommands) {
+          this.plugin.settings.menuCommands = importData.menuCommands;
         }
-      });
-
-      // 特殊处理enableMultipleConfig
-      if (importData.enableMultipleConfig === undefined || importData.enableMultipleConfig === false) {
-        // 如果导入文件中未定义或为false，则根据前面的处理逻辑决定是否设置为false
-        if (!localMultiConfigEnabled || !importMultiConfigEnabled) {
-          (this.plugin.settings as any).enableMultipleConfig = false;
-          hasUpdates = true;
+        if (importData.customCommands) {
+          this.plugin.settings.customCommands = importData.customCommands;
         }
-      }
-    }
-
-    if (hasUpdates) {
-      try {
-        // 在保存设置前修复命令ID
-        const commandsFixed = await this.fixCommandIds();
-   
-        await this.plugin.saveSettings();
-        this.plugin.reloadCustomCommands();
-        dispatchEvent(new Event("editingToolbar-NewCommand"));
-        
-        // 根据导入的配置类型显示不同的成功消息
-        if (isFullConfig) {
-          new Notice(t('Configuration imported successfully (Overwrite mode)'));
-        } else if (hasCommands) {
-          new Notice(t('Configuration imported successfully (Overwrite mode)') + ' - ' + t('Toolbar Commands Only'));
-        } else if (hasCustomCommands) {
-          new Notice(t('Configuration imported successfully (Overwrite mode)') + ' - ' + t('Custom Commands Only'));
-        } else {
-          new Notice(t('Configuration imported successfully (Overwrite mode)'));
+        if (importData.followingCommands) {
+          this.plugin.settings.followingCommands = importData.followingCommands;
         }
-        
-        this.close();
-      } catch (error) {
-        // 导入失败，恢复备份
-        this.plugin.settings = backupSettings;
-        await this.plugin.saveSettings();
-
-        new Notice(t('Error:') + ' ' + error.message);
+        if (importData.topCommands) {
+          this.plugin.settings.topCommands = importData.topCommands;
+        }
+        if (importData.fixedCommands) {
+          this.plugin.settings.fixedCommands = importData.fixedCommands;
+        }
+        if (importData.mobileCommands) {
+          this.plugin.settings.mobileCommands = importData.mobileCommands;
+        }
+        new Notice(t('Configuration imported successfully (Overwrite mode)'));
+      } else if (importType === 'custom') {
+        // 仅导入自定义命令
+        if (importData.customCommands) {
+          this.plugin.settings.customCommands = importData.customCommands;
+        }
+        new Notice(t('Configuration imported successfully (Overwrite mode)') + ' - ' + t('Custom Commands Only'));
+      } else if (importType === 'commands') {
+        // 仅导入菜单命令
+        if (importData.menuCommands) {
+          this.plugin.settings.menuCommands = importData.menuCommands;
+        }
+        new Notice(t('Configuration imported successfully (Overwrite mode)') + ' - ' + t('Toolbar Commands Only'));
+      } else if (importType === 'following') {
+        // 仅导入跟随样式命令
+        if (importData.followingCommands) {
+          this.plugin.settings.followingCommands = importData.followingCommands;
+        }
+        new Notice(t('Configuration imported successfully (Overwrite mode)') + ' - ' + t('Following Style Only'));
+      } else if (importType === 'top') {
+        // 仅导入顶部样式命令
+        if (importData.topCommands) {
+          this.plugin.settings.topCommands = importData.topCommands;
+        }
+        new Notice(t('Configuration imported successfully (Overwrite mode)') + ' - ' + t('Top Style Only'));
+      } else if (importType === 'fixed') {
+        // 仅导入固定样式命令
+        if (importData.fixedCommands) {
+          this.plugin.settings.fixedCommands = importData.fixedCommands;
+        }
+        new Notice(t('Configuration imported successfully (Overwrite mode)') + ' - ' + t('Fixed Style Only'));
+      } else if (importType === 'mobile') {
+        // 仅导入移动样式命令
+        if (importData.mobileCommands) {
+          this.plugin.settings.mobileCommands = importData.mobileCommands;
+        }
+        new Notice(t('Configuration imported successfully (Overwrite mode)') + ' - ' + t('Mobile Style Only'));
+      } else {
+        // 未知类型，恢复备份
+        this.restoreBackup(backup);
+        new Notice(t('Error:') + ' ' + 'Unknown import type');
+        return;
       }
-    } else {
-      new Notice(t('No valid configuration found in import data'));
+
+      // 保存设置
+      this.plugin.saveSettings();
+      this.close();
+    } catch (error) {
+      console.error('导入失败:', error);
+      new Notice(t('Error:') + ' ' + error.message);
     }
   }
 
-  // 更新导入 
-  async updateImport(importData: any) {
-    let hasUpdates = false;
-    
-    // 处理兼容性：检查本地和导入配置的多配置模式状态
-    const localMultiConfigEnabled = this.plugin.settings.enableMultipleConfig === true;
-    const importMultiConfigEnabled = importData.enableMultipleConfig === true;
-    const importMultiConfigUndefined = importData.enableMultipleConfig === undefined;
-    
-    // 备份当前设置，以便导入失败时恢复
-    const backupSettings = JSON.parse(JSON.stringify(this.plugin.settings));
+  // 更新导入 - 保留现有设置，仅更新导入的设置
+  updateImport(importData: any) {
+    try {
+      // 创建备份
+      const backup = {
+        positionStyle: this.plugin.settings.positionStyle,
+        menuCommands: [...this.plugin.settings.menuCommands],
+        customCommands: [...this.plugin.settings.customCommands],
+        followingCommands: [...this.plugin.settings.followingCommands],
+        topCommands: [...this.plugin.settings.topCommands],
+        fixedCommands: [...this.plugin.settings.fixedCommands],
+        mobileCommands: [...this.plugin.settings.mobileCommands]
+      };
 
-    // 检测导入的是什么类型的配置
-    const isFullConfig = 'positionStyle' in importData; // 全部配置包含positionStyle
-    const hasCommands = 'menuCommands' in importData || 'followingCommands' in importData || 'topCommands' in importData || 'fixedCommands' in importData;
-    const hasCustomCommands = 'customCommands' in importData;
-    
+      // 检测导入的是什么类型的配置
+      const isFullConfig = 'positionStyle' in importData; // 全部配置包含positionStyle
+      const hasCommands = 'menuCommands' in importData;
+      const hasCustomCommands = 'customCommands' in importData;
+      const hasFollowingCommands = 'followingCommands' in importData;
+      const hasTopCommands = 'topCommands' in importData;
+      const hasFixedCommands = 'fixedCommands' in importData;
+      const hasMobileCommands = 'mobileCommands' in importData;
+      
+      // 确定导入的具体类型
+      let importType = 'unknown';
+      if (isFullConfig) {
+        importType = 'all';
+      } else if (hasCustomCommands && !hasCommands && !hasFollowingCommands && !hasTopCommands && !hasFixedCommands && !hasMobileCommands) {
+        importType = 'custom';
+      } else if (hasCommands && !hasCustomCommands && !hasFollowingCommands && !hasTopCommands && !hasFixedCommands && !hasMobileCommands) {
+        importType = 'commands';
+      } else if (hasFollowingCommands && !hasCommands && !hasCustomCommands && !hasTopCommands && !hasFixedCommands && !hasMobileCommands) {
+        importType = 'following';
+      } else if (hasTopCommands && !hasCommands && !hasCustomCommands && !hasFollowingCommands && !hasFixedCommands && !hasMobileCommands) {
+        importType = 'top';
+      } else if (hasFixedCommands && !hasCommands && !hasCustomCommands && !hasFollowingCommands && !hasTopCommands && !hasMobileCommands) {
+        importType = 'fixed';
+      } else if (hasMobileCommands && !hasCommands && !hasCustomCommands && !hasFollowingCommands && !hasTopCommands && !hasFixedCommands) {
+        importType = 'mobile';
+      } else if (hasCommands || hasFollowingCommands || hasTopCommands || hasFixedCommands || hasMobileCommands) {
+        importType = 'commands';
+      }
+      
+      console.log(`更新导入配置类型: ${importType}`);
 
-    // 更新自定义命令
-    if (importData.customCommands) {
-      // 转换老版本的命令ID
-      const convertedCustomCommands = this.convertLegacyCommandIds(importData.customCommands);
-      
-      // 遍历导入的自定义命令
-      convertedCustomCommands.forEach((importedCommand: any) => {
-        // 检查命令是否已存在
-        const existingCommandIndex = this.plugin.settings.customCommands.findIndex(
-          cmd => cmd.id === importedCommand.id
-        );
+      let hasUpdates = false;
 
-        if (existingCommandIndex >= 0) {
-          // 更新现有命令
-          this.plugin.settings.customCommands[existingCommandIndex] = importedCommand;
-        } else {
-          // 添加新命令
-          this.plugin.settings.customCommands.push(importedCommand);
-        }
-      });
-      hasUpdates = true;
-    }
-
-    // 处理多配置模式兼容性
-    if (localMultiConfigEnabled && (importMultiConfigUndefined || !importMultiConfigEnabled)) {
-      // 本地启用了多配置，但导入文件是老版本或未启用多配置
-      if (importData.menuCommands) {
-        // 转换老版本的命令ID
-        const convertedMenuCommands = this.convertLegacyCommandIds(importData.menuCommands);
-        
-        // 根据positionStyle决定将命令导入到哪个配置中
-        const positionStyle = importData.positionStyle || 'top';
-        
-        switch (positionStyle) {
-          case 'following':
-            if (this.plugin.settings.followingCommands) {
-              this.updateCommandArray(this.plugin.settings.followingCommands, convertedMenuCommands);
-            } else {
-              this.plugin.settings.followingCommands = convertedMenuCommands.slice();
-            }
-            break;
-          case 'top':
-            if (this.plugin.settings.topCommands) {
-              this.updateCommandArray(this.plugin.settings.topCommands, convertedMenuCommands);
-            } else {
-              this.plugin.settings.topCommands = convertedMenuCommands.slice();
-            }
-            break;
-          case 'fixed':
-            if (this.plugin.settings.fixedCommands) {
-              this.updateCommandArray(this.plugin.settings.fixedCommands, convertedMenuCommands);
-            } else {
-              this.plugin.settings.fixedCommands = convertedMenuCommands.slice();
-            }
-            break;
-          default:
-            if (this.plugin.settings.topCommands) {
-              this.updateCommandArray(this.plugin.settings.topCommands, convertedMenuCommands);
-            } else {
-              this.plugin.settings.topCommands = convertedMenuCommands.slice();
-            }
-        }
-        
-        // 如果导入配置启用了移动设备支持，也更新移动设备配置
-        if (importData.isLoadOnMobile === true) {
-          if (this.plugin.settings.mobileCommands) {
-            this.updateCommandArray(this.plugin.settings.mobileCommands, convertedMenuCommands);
-          } else {
-            this.plugin.settings.mobileCommands = convertedMenuCommands.slice();
-          }
-        }
-        
-        hasUpdates = true;
-      }
-    } else if (!localMultiConfigEnabled && importMultiConfigEnabled) {
-      // 本地未启用多配置，但导入文件启用了多配置
-      // 启用多配置并导入所有配置
-      this.plugin.settings.enableMultipleConfig = true;
-      
-      if (importData.followingCommands) {
-        const convertedFollowingCommands = this.convertLegacyCommandIds(importData.followingCommands);
-        this.plugin.settings.followingCommands = convertedFollowingCommands;
-        hasUpdates = true;
-      }
-      
-      if (importData.topCommands) {
-        const convertedTopCommands = this.convertLegacyCommandIds(importData.topCommands);
-        this.plugin.settings.topCommands = convertedTopCommands;
-        hasUpdates = true;
-      }
-      
-      if (importData.fixedCommands) {
-        const convertedFixedCommands = this.convertLegacyCommandIds(importData.fixedCommands);
-        this.plugin.settings.fixedCommands = convertedFixedCommands;
-        hasUpdates = true;
-      }
-      
-      if (importData.mobileCommands) {
-        const convertedMobileCommands = this.convertLegacyCommandIds(importData.mobileCommands);
-        this.plugin.settings.mobileCommands = convertedMobileCommands;
-        hasUpdates = true;
-      }
-    } else {
-      // 两者配置模式一致
-      
-      // 更新工具栏命令
-      if (importData.menuCommands && this.plugin.settings.menuCommands) {
-        // 转换老版本的命令ID
-        const convertedMenuCommands = this.convertLegacyCommandIds(importData.menuCommands);
-        this.updateCommandArray(this.plugin.settings.menuCommands, convertedMenuCommands);
-        hasUpdates = true;
-      }
-      
-      // 更新多配置相关设置
-      if (importData.enableMultipleConfig !== undefined) {
-        this.plugin.settings.enableMultipleConfig = importData.enableMultipleConfig;
-        
-        if (importData.enableMultipleConfig) {
-          if (importData.followingCommands && this.plugin.settings.followingCommands) {
-            // 转换老版本的命令ID
-            const convertedFollowingCommands = this.convertLegacyCommandIds(importData.followingCommands);
-            this.updateCommandArray(this.plugin.settings.followingCommands, convertedFollowingCommands);
-            hasUpdates = true;
-          } else if (importData.followingCommands) {
-            this.plugin.settings.followingCommands = this.convertLegacyCommandIds(importData.followingCommands);
-            hasUpdates = true;
-          }
-          
-          if (importData.topCommands && this.plugin.settings.topCommands) {
-            // 转换老版本的命令ID
-            const convertedTopCommands = this.convertLegacyCommandIds(importData.topCommands);
-            this.updateCommandArray(this.plugin.settings.topCommands, convertedTopCommands);
-            hasUpdates = true;
-          } else if (importData.topCommands) {
-            this.plugin.settings.topCommands = this.convertLegacyCommandIds(importData.topCommands);
-            hasUpdates = true;
-          }
-          
-          if (importData.fixedCommands && this.plugin.settings.fixedCommands) {
-            // 转换老版本的命令ID
-            const convertedFixedCommands = this.convertLegacyCommandIds(importData.fixedCommands);
-            this.updateCommandArray(this.plugin.settings.fixedCommands, convertedFixedCommands);
-            hasUpdates = true;
-          } else if (importData.fixedCommands) {
-            this.plugin.settings.fixedCommands = this.convertLegacyCommandIds(importData.fixedCommands);
-            hasUpdates = true;
-          }
-          
-          if (importData.mobileCommands && this.plugin.settings.mobileCommands) {
-            // 转换老版本的命令ID
-            const convertedMobileCommands = this.convertLegacyCommandIds(importData.mobileCommands);
-            this.updateCommandArray(this.plugin.settings.mobileCommands, convertedMobileCommands);
-            hasUpdates = true;
-          } else if (importData.mobileCommands) {
-            this.plugin.settings.mobileCommands = this.convertLegacyCommandIds(importData.mobileCommands);
-            hasUpdates = true;
-          }
-        }
-      }
-    }
-
-    // 只有在导入完整配置时才更新其他设置
-    if (isFullConfig) {
-      const otherSettings = [
-        'positionStyle', 'aestheticStyle', 'appendMethod', 'autohide',
-        'isLoadOnMobile', 'cMenuNumRows',
-        'custom_bg1', 'custom_bg2', 'custom_bg3', 'custom_bg4', 'custom_bg5',
-        'custom_fc1', 'custom_fc2', 'custom_fc3', 'custom_fc4', 'custom_fc5'
-      ];
-
-      otherSettings.forEach(key => {
-        if (importData[key] !== undefined) {
-          (this.plugin.settings as any)[key] = importData[key];
+      // 根据导入类型执行不同的导入操作
+      if (importType === 'all') {
+        // 更新全部配置
+        if (importData.customCommands) {
+          this.updateCommandArray(this.plugin.settings.customCommands, importData.customCommands);
           hasUpdates = true;
         }
-      });
-    }
+        if (importData.menuCommands) {
+          this.updateCommandArray(this.plugin.settings.menuCommands, importData.menuCommands);
+          hasUpdates = true;
+        }
+        if (importData.followingCommands) {
+          this.updateCommandArray(this.plugin.settings.followingCommands, importData.followingCommands);
+          hasUpdates = true;
+        }
+        if (importData.topCommands) {
+          this.updateCommandArray(this.plugin.settings.topCommands, importData.topCommands);
+          hasUpdates = true;
+        }
+        if (importData.fixedCommands) {
+          this.updateCommandArray(this.plugin.settings.fixedCommands, importData.fixedCommands);
+          hasUpdates = true;
+        }
+        if (importData.mobileCommands) {
+          this.updateCommandArray(this.plugin.settings.mobileCommands, importData.mobileCommands);
+          hasUpdates = true;
+        }
+      } else if (importType === 'custom') {
+        // 仅更新自定义命令
+        if (importData.customCommands) {
+          this.updateCommandArray(this.plugin.settings.customCommands, importData.customCommands);
+          hasUpdates = true;
+        }
+      } else if (importType === 'commands') {
+        // 仅更新菜单命令
+        if (importData.menuCommands) {
+          this.updateCommandArray(this.plugin.settings.menuCommands, importData.menuCommands);
+          hasUpdates = true;
+        }
+      } else if (importType === 'following') {
+        // 仅更新跟随样式命令
+        if (importData.followingCommands) {
+          this.updateCommandArray(this.plugin.settings.followingCommands, importData.followingCommands);
+          hasUpdates = true;
+        }
+      } else if (importType === 'top') {
+        // 仅更新顶部样式命令
+        if (importData.topCommands) {
+          this.updateCommandArray(this.plugin.settings.topCommands, importData.topCommands);
+          hasUpdates = true;
+        }
+      } else if (importType === 'fixed') {
+        // 仅更新固定样式命令
+        if (importData.fixedCommands) {
+          this.updateCommandArray(this.plugin.settings.fixedCommands, importData.fixedCommands);
+          hasUpdates = true;
+        }
+      } else if (importType === 'mobile') {
+        // 仅更新移动样式命令
+        if (importData.mobileCommands) {
+          this.updateCommandArray(this.plugin.settings.mobileCommands, importData.mobileCommands);
+          hasUpdates = true;
+        }
+      } else {
+        // 未知类型，恢复备份
+        this.restoreBackup(backup);
+        new Notice(t('Error:') + ' ' + 'Unknown import type');
+        return;
+      }
 
-    if (hasUpdates) {
-      try {
-        // 在保存设置前修复命令ID
-        const commandsFixed = await this.fixCommandIds();
-  
-        await this.plugin.saveSettings();
-        this.plugin.reloadCustomCommands();
-        dispatchEvent(new Event("editingToolbar-NewCommand"));
+      if (hasUpdates) {
+        // 保存设置
+        this.plugin.saveSettings();
         
         // 根据导入的配置类型显示不同的成功消息
-        if (isFullConfig) {
+        if (importType === 'all') {
           new Notice(t('Configuration imported successfully (Update mode)'));
-        } else if (hasCommands) {
-          new Notice(t('Configuration imported successfully (Update mode)') + ' - ' + t('Toolbar Commands Only'));
-        } else if (hasCustomCommands) {
+        } else if (importType === 'custom') {
           new Notice(t('Configuration imported successfully (Update mode)') + ' - ' + t('Custom Commands Only'));
-        } else {
-          new Notice(t('Configuration imported successfully (Update mode)'));
+        } else if (importType === 'commands') {
+          new Notice(t('Configuration imported successfully (Update mode)') + ' - ' + t('Toolbar Commands Only'));
+        } else if (importType === 'following') {
+          new Notice(t('Configuration imported successfully (Update mode)') + ' - ' + t('Following Style Only'));
+        } else if (importType === 'top') {
+          new Notice(t('Configuration imported successfully (Update mode)') + ' - ' + t('Top Style Only'));
+        } else if (importType === 'fixed') {
+          new Notice(t('Configuration imported successfully (Update mode)') + ' - ' + t('Fixed Style Only'));
+        } else if (importType === 'mobile') {
+          new Notice(t('Configuration imported successfully (Update mode)') + ' - ' + t('Mobile Style Only'));
         }
         
         this.close();
-      } catch (error) {
-        // 导入失败，恢复备份
-        this.plugin.settings = backupSettings;
-        await this.plugin.saveSettings();
-        new Notice(t('Error:') + ' ' + error.message);
+      } else {
+        new Notice(t('No valid configuration found in import data'));
       }
-    } else {
-      new Notice(t('No valid configuration found in import data'));
+    } catch (error) {
+      console.error('导入失败:', error);
+      new Notice(t('Error:') + ' ' + error.message);
     }
   }
 

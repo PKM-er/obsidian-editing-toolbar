@@ -99,48 +99,49 @@ export class UpdateNoticeModal extends Modal {
             let hasChanges = false;
             const settings = this.plugin.settings;
 
-            // 遍历菜单命令
-            if (settings.menuCommands) {
-                const updateCommands = (commands: Command[]) => {
-                    commands.forEach(cmd => {
-                        if (cmd.id && commandMappings[cmd.id]) {
-                            cmd.id = commandMappings[cmd.id];
-                            hasChanges = true;
-                        }
-                        // 查找格式刷命令并更新图标
-                        if (cmd.id === 'editing-toolbar:format-eraser') {
-                            cmd.icon = 'eraser';
-                            hasChanges = true;
-                        }
-
-                        // 递归检查子菜单
-                        if (cmd.SubmenuCommands) {
-                            updateCommands(cmd.SubmenuCommands);
-                        }
-                    });
-                };
-
-                updateCommands(settings.menuCommands);
-
-                // 检查是否存在格式刷命令
-                let hasFormatBrush = false;
-                const checkFormatBrush = (commands: Command[]) => {
-                    for (const cmd of commands) {
-                        if (cmd.id === 'editing-toolbar:toggle-format-brush') {
-                            hasFormatBrush = true;
-                            return;
-                        }
-                        if (cmd.SubmenuCommands) {
-                            checkFormatBrush(cmd.SubmenuCommands);
-                            if (hasFormatBrush) return;
-                        }
+            // 通用命令更新函数
+            const updateCommands = (commands: Command[]) => {
+                if (!commands || !Array.isArray(commands)) return;
+                
+                commands.forEach(cmd => {
+                    if (cmd.id && commandMappings[cmd.id]) {
+                        cmd.id = commandMappings[cmd.id];
+                        hasChanges = true;
                     }
-                };
+                    // 查找格式刷命令并更新图标
+                    if (cmd.id === 'editing-toolbar:format-eraser') {
+                        cmd.icon = 'eraser';
+                        hasChanges = true;
+                    }
 
-                checkFormatBrush(settings.menuCommands);
+                    // 递归检查子菜单
+                    if (cmd.SubmenuCommands) {
+                        updateCommands(cmd.SubmenuCommands);
+                    }
+                });
+            };
 
-                // 如果不存在格式刷命令，在第三项位置添加
-                if (!hasFormatBrush && settings.menuCommands.length >= 2) {
+            // 检查格式刷命令是否存在的函数
+            const checkFormatBrush = (commands: Command[]) => {
+                if (!commands || !Array.isArray(commands)) return false;
+                
+                for (const cmd of commands) {
+                    if (cmd.id === 'editing-toolbar:toggle-format-brush') {
+                        return true;
+                    }
+                    if (cmd.SubmenuCommands) {
+                        const hasInSubmenu = checkFormatBrush(cmd.SubmenuCommands);
+                        if (hasInSubmenu) return true;
+                    }
+                }
+                return false;
+            };
+
+            // 添加格式刷命令的函数
+            const addFormatBrushIfNeeded = (commands: Command[]) => {
+                if (!commands || !Array.isArray(commands)) return false;
+                
+                if (!checkFormatBrush(commands) && commands.length >= 2) {
                     const formatBrushCommand: Command = {
                         id: "editing-toolbar:toggle-format-brush",
                         name: "Format Brush",
@@ -148,8 +149,53 @@ export class UpdateNoticeModal extends Modal {
                     };
 
                     // 在第三项位置插入格式刷命令
-                    settings.menuCommands.splice(2, 0, formatBrushCommand);
+                    commands.splice(2, 0, formatBrushCommand);
+                    return true;
+                }
+                return false;
+            };
+
+            // 处理所有配置中的命令
+            // 1. 处理主菜单命令
+            if (settings.menuCommands) {
+                updateCommands(settings.menuCommands);
+                if (addFormatBrushIfNeeded(settings.menuCommands)) {
                     hasChanges = true;
+                }
+            }
+
+            // 2. 处理多配置模式下的各种命令
+            if (settings.enableMultipleConfig) {
+                // 处理跟随样式命令
+                if (settings.followingCommands) {
+                    updateCommands(settings.followingCommands);
+                    if (addFormatBrushIfNeeded(settings.followingCommands)) {
+                        hasChanges = true;
+                    }
+                }
+                
+                // 处理顶部样式命令
+                if (settings.topCommands) {
+                    updateCommands(settings.topCommands);
+                    if (addFormatBrushIfNeeded(settings.topCommands)) {
+                        hasChanges = true;
+                    }
+                }
+                
+                // 处理固定样式命令
+                if (settings.fixedCommands) {
+                    updateCommands(settings.fixedCommands);
+                    if (addFormatBrushIfNeeded(settings.fixedCommands)) {
+                        hasChanges = true;
+                    }
+                }
+                
+                // 处理移动样式命令
+                if (settings.mobileCommands) {
+                    updateCommands(settings.mobileCommands);
+                    if (addFormatBrushIfNeeded(settings.mobileCommands)) {
+                        hasChanges = true;
+                    }
                 }
             }
 

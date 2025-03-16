@@ -292,4 +292,10 @@ export default {
   'Update Import': '增量导入',
   'Overwrite Import': '覆盖导入',
   'Importing configuration...': '正在导入配置...',
+  'Following Style Only': '仅Following样式',
+  'Top Style Only': '仅Top样式',
+  'Fixed Style Only': '仅Fixed样式',
+  'Mobile Style Only': '仅Mobile样式',
+  'Unknown import type': '未知导入类型',
+  'All Toolbar Commands': '所有工具栏命令',
 };
