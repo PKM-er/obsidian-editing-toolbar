@@ -289,5 +289,7 @@ export default {
   'Example text:': '示例文本：',
   'Preview': '预览',
   'Result': '结果',
-
+  'Update Import': '增量导入',
+  'Overwrite Import': '覆盖导入',
+  'Importing configuration...': '正在导入配置...',
 };

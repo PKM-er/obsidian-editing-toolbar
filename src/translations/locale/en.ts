@@ -290,5 +290,8 @@ export default {
 'Preview': 'Preview',
 'Result': 'Result',
 'Please select text or copy text to clipboard first': 'Please select text or copy text to clipboard first',
+'Overwrite Import': 'Overwrite Import',
+'Update Import': 'Update Import',
+'Importing configuration...': 'Importing configuration...',
 };
 

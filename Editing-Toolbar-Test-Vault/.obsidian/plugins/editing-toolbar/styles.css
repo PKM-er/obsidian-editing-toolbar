@@ -328,6 +328,29 @@ button[class^=editingToolbarCommandsubItem]::after {
 
 }
 
+:is(#editingToolbarModalBar, #editingToolbarPopoverBar) button[class^=editingToolbarCommandsubItem]:first-child>.subitem
+{
+  left: 0;
+}
+:is(#editingToolbarModalBar, #editingToolbarPopoverBar) button[class^=editingToolbarCommandsubItem]:nth-child(2)>.subitem
+{
+  left: 0;
+}
+:is(#editingToolbarModalBar, #editingToolbarPopoverBar) button[class^=editingToolbarCommandsubItem]:nth-last-child(1)>.subitem
+{
+  right: 0;
+}
+:is(#editingToolbarModalBar, #editingToolbarPopoverBar) button[class^=editingToolbarCommandsubItem]:nth-last-child(2)>.subitem
+{
+  right: 0;
+}
+@media screen and (max-width: 768px) {
+  :is(#editingToolbarModalBar, #editingToolbarPopoverBar):not(:is(.top,.editingToolbarFlex)) button[class^=editingToolbarCommandsubItem]>.subitem {
+    left: 58%;
+    transform: translate(-60%, 90%);
+  }
+}
+
 :is(#editingToolbarModalBar, #editingToolbarPopoverBar) button[class^=editingToolbarCommandsubItem]>.subitem svg {
   max-width: 1.3em;
   max-height: 1.3em;
@@ -379,13 +402,13 @@ button[class^=editingToolbarCommandsubItem]::after {
 
 }
 
-:is(#editingToolbarModalBar, #editingToolbarPopoverBar):not(.top) button.editingToolbarCommandsubItem-font-color .x-color-picker-wrapper {
+:is(#editingToolbarModalBar, #editingToolbarPopoverBar):not(:is(.top,.editingToolbarFlex)) button.editingToolbarCommandsubItem-font-color .x-color-picker-wrapper {
   top: auto;
-  bottom: calc(100%);
+  bottom: calc(100% - 2rem);
 }
 
-:is(#editingToolbarModalBar, #editingToolbarPopoverBar):not(.top) button[class^=editingToolbarCommandsubItem]:not(.editingToolbarSecond)>.subitem {
-  bottom: calc(100% + 2.8em);
+:is(#editingToolbarModalBar, #editingToolbarPopoverBar):not(:is(.top,.editingToolbarFlex)) button[class^=editingToolbarCommandsubItem]:not(.editingToolbarSecond)>.subitem {
+  bottom: calc(100% + 2.2em);
 }
 
 
@@ -685,6 +708,13 @@ button[class^=editingToolbarCommandsubItem]::after {
   right: 0;
 }
 
+@media screen and (max-width: 768px) {
+  #editingToolbarPopoverBar {
+   left: 50%;
+   transform: translateX(-50%);
+   right: unset;
+  }
+}
 .markdown-source-view.mod-cm6 #editingToolbarPopoverBar {
   margin-top: 38px;
 }

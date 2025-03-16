@@ -384,9 +384,9 @@ button[class^=editingToolbarCommandsubItem]::after {
   bottom: calc(100%);
 }
 
-:is(#editingToolbarModalBar, #editingToolbarPopoverBar):not(.top) button[class^=editingToolbarCommandsubItem]:not(.editingToolbarSecond)>.subitem {
+/* :is(#editingToolbarModalBar, #editingToolbarPopoverBar):not(.top) button[class^=editingToolbarCommandsubItem]:not(.editingToolbarSecond)>.subitem {
   bottom: calc(100% + 2.8em);
-}
+} */
 
 
 :is(#editingToolbarModalBar, #editingToolbarPopoverBar) button.editingToolbarCommandsubItem-font-color .subitem {

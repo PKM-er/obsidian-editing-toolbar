@@ -766,7 +766,7 @@ export function editingToolbarPopover(app: App, plugin: editingToolbarPlugin): v
 
             button.setClass("editingToolbarCommandItem");
             if (index >= settings.cMenuNumRows) {
-
+              
               button.setClass("editingToolbarSecond");
             } else {
               if (settings.positionStyle != "top")

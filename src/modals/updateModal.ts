@@ -93,6 +93,7 @@ export class UpdateNoticeModal extends Modal {
                 'editing-toolbar:editor:toggle-inline-math': 'editing-toolbar:toggle-inline-math',
                 'editing-toolbar:editor:insert-callout': 'editing-toolbar:insert-callout',
                 'editing-toolbar:editor:insert-link': 'editing-toolbar:insert-link',
+                'cMenuToolbar-Divider-Line': 'editingToolbar-Divider-Line',
             };
 
             let hasChanges = false;
