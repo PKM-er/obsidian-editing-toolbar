@@ -1,6 +1,6 @@
 import type editingToolbarPlugin from "src/plugin/main";
 import { CommandPicker, ChooseFromIconList, ChangeCmdname } from "src/modals/suggesterModals";
-import { App, Setting, PluginSettingTab, Command, Notice,setIcon} from "obsidian";
+import { App, Setting, PluginSettingTab, Command, Notice, setIcon } from "obsidian";
 import { APPEND_METHODS, AESTHETIC_STYLES, POSITION_STYLES } from "src/settings/settingsData";
 import { selfDestruct, editingToolbarPopover, checkHtml } from "src/modals/editingToolbarModal";
 import Sortable from "sortablejs";
@@ -176,6 +176,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
         break;
     }
   }
+
   // 创建删除按钮
   private createDeleteButton(
     button: any,
@@ -219,6 +220,44 @@ export class editingToolbarSettingTab extends PluginSettingTab {
         }
       });
   }
+  private onPositionStyleChange(newStyle: string) {
+    // 如果启用了多配置模式，检查对应样式的配置是否存在
+    if (this.plugin.settings.enableMultipleConfig) {
+      switch (newStyle) {
+        case 'following':
+          if (!this.plugin.settings.followingCommands || this.plugin.settings.followingCommands.length === 0) {
+            this.plugin.settings.followingCommands = [...this.plugin.settings.menuCommands];
+            this.plugin.saveSettings();
+            new Notice(t('Following style commands successfully initialized'));
+          }
+          break;
+        case 'top':
+          if (!this.plugin.settings.topCommands || this.plugin.settings.topCommands.length === 0) {
+            this.plugin.settings.topCommands = [...this.plugin.settings.menuCommands];
+            this.plugin.saveSettings();
+            new Notice(t('Top style commands successfully initialized'));
+          }
+          break;
+        case 'fixed':
+          if (!this.plugin.settings.fixedCommands || this.plugin.settings.fixedCommands.length === 0) {
+            this.plugin.settings.fixedCommands = [...this.plugin.settings.menuCommands];
+            this.plugin.saveSettings();
+            new Notice(t('Fixed style commands successfully initialized'));
+          }
+          break;
+        case 'mobile':
+          if (!this.plugin.settings.mobileCommands || this.plugin.settings.mobileCommands.length === 0) {
+            this.plugin.settings.mobileCommands = [...this.plugin.settings.menuCommands];
+            this.plugin.saveSettings();
+            new Notice(t('Mobile style commands successfully initialized'));
+          }
+          break;
+      }
+    }
+
+    // 重新加载工具栏
+    dispatchEvent(new Event("editingToolbar-NewCommand"));
+  }
   // 拆分设置项到不同方法
   private displayGeneralSettings(containerEl: HTMLElement): void {
     new Setting(containerEl)
@@ -244,22 +283,8 @@ export class editingToolbarSettingTab extends PluginSettingTab {
         .setValue(this.plugin.settings.enableMultipleConfig || false)
         .onChange(async (value) => {
           this.plugin.settings.enableMultipleConfig = value;
-
-          // 如果启用多配置，确保每个位置样式都有对应的命令配置
-          if (value) {
-            // 初始化各个位置样式的命令配置
-            if (!this.plugin.settings.followingCommands || this.plugin.settings.followingCommands.length === 0) {
-              this.plugin.settings.followingCommands = [...this.plugin.settings.menuCommands];
-            }
-
-            if (!this.plugin.settings.topCommands || this.plugin.settings.topCommands.length === 0) {
-              this.plugin.settings.topCommands = [...this.plugin.settings.menuCommands];
-            }
-
-            if (!this.plugin.settings.fixedCommands || this.plugin.settings.fixedCommands.length === 0) {
-              this.plugin.settings.fixedCommands = [...this.plugin.settings.menuCommands];
-            }
-          }
+          //只初始化当前配置
+          this.onPositionStyleChange(this.plugin.settings.positionStyle);
 
           await this.plugin.saveSettings();
           this.display();
@@ -306,13 +331,12 @@ export class editingToolbarSettingTab extends PluginSettingTab {
         dropdown
           .addOptions(positions)
           .setValue(this.plugin.settings.positionStyle)
-          .onChange((value) => {
+          .onChange(async (value) => {
             this.plugin.settings.positionStyle = value;
-            if (value == "top") this.plugin.settings.aestheticStyle = "glass";
-            if (value == "fixed") this.plugin.settings.aestheticStyle = "default";
-            if (value == "following") this.plugin.settings.aestheticStyle = "tiny";
-            this.plugin.saveSettings();
-            this.triggerRefresh();
+            await this.plugin.saveSettings();
+            // 调用位置样式变更处理函数
+            this.onPositionStyleChange(value);
+            this.display();
           });
       });
     if (this.plugin.settings.positionStyle == "top") {
@@ -335,7 +359,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
         .setName(t('Editing Toolbar columns')
         )
         .setDesc(
-          t('Choose the number of columns per row to display on Editing Toolbar. To see the change, hit the refresh button below, or in the status bar menu.')
+          t('Choose the number of columns per row to display on Editing Toolbar.')
         )
         .addSlider((slider) => {
           slider
@@ -385,7 +409,111 @@ export class editingToolbarSettingTab extends PluginSettingTab {
           });
         });
     }
+    // 在显示命令配置的地方添加初始化按钮
+    if (this.plugin.settings.enableMultipleConfig) {
+      // 获取当前编辑的配置类型
+      const currentConfigType = this.currentEditingConfig;
 
+
+      const commandsArray = this.getCommandsArrayByType(currentConfigType);
+      const buttonContainer = containerEl.createDiv('command-buttons-container');
+      buttonContainer.style.marginBottom = '1rem';
+      // 如果当前配置为空或不存在，添加初始化按钮
+      if (!commandsArray || commandsArray.length === 0) {
+        new Setting(buttonContainer)
+          .setName(t('Initialize Commands'))
+          .setDesc(t('Initialize commands to default settings'))
+          .addButton(button => button
+            .setButtonText(t('Initialize Commands'))
+            .onClick(async () => {
+              // 根据当前配置类型初始化命令
+              switch (currentConfigType) {
+                case 'following':
+                  this.plugin.settings.followingCommands = [...this.plugin.settings.menuCommands];
+                  break;
+                case 'top':
+                  this.plugin.settings.topCommands = [...this.plugin.settings.menuCommands];
+                  break;
+                case 'fixed':
+                  this.plugin.settings.fixedCommands = [...this.plugin.settings.menuCommands];
+                  break;
+                case 'mobile':
+                  this.plugin.settings.mobileCommands = [...this.plugin.settings.menuCommands];
+                  break;
+              }
+
+              await this.plugin.saveSettings();
+              new Notice(t('Commands initialized successfully'));
+              this.display();
+            })
+          );
+      } else {
+        // 如果已有配置，提供重置按钮
+        // 如果已有配置，提供重置和删除按钮
+        const buttonSetting = new Setting(buttonContainer)
+          .setName(t('Manage Commands'))
+          .setDesc(t('Reset or clear all commands in this configuration'))
+          .addButton(button => button
+            .setButtonText(t('Reset Commands'))
+            .setWarning()
+            .onClick(async () => {
+              // 添加确认对话框
+              if (confirm(t('Are you sure you want to reset the current configuration?'))) {
+                // 根据当前配置类型重置命令
+                switch (currentConfigType) {
+                  case 'following':
+                    this.plugin.settings.followingCommands = [...this.plugin.settings.menuCommands];
+                    break;
+                  case 'top':
+                    this.plugin.settings.topCommands = [...this.plugin.settings.menuCommands];
+                    break;
+                  case 'fixed':
+                    this.plugin.settings.fixedCommands = [...this.plugin.settings.menuCommands];
+                    break;
+                  case 'mobile':
+                    this.plugin.settings.mobileCommands = [...this.plugin.settings.menuCommands];
+                    break;
+                }
+
+                await this.plugin.saveSettings();
+                new Notice(t('Commands reset successfully'));
+                this.display();
+              }
+            })
+          );
+        // 添加删除全部按钮
+        buttonSetting.addButton(button => button
+          .setButtonText(t('Clear All Commands'))
+          .setTooltip(t('Remove all commands from this configuration'))
+          .setWarning()
+          .onClick(async () => {
+            // 添加确认对话框
+            if (confirm(t('Are you sure you want to clear all commands under the current style?'))) {
+              // 根据当前配置类型清空命令
+              switch (currentConfigType) {
+                case 'following':
+                  this.plugin.settings.followingCommands = [];
+                  break;
+                case 'top':
+                  this.plugin.settings.topCommands = [];
+                  break;
+                case 'fixed':
+                  this.plugin.settings.fixedCommands = [];
+                  break;
+                case 'mobile':
+                  this.plugin.settings.mobileCommands = [];
+                  break;
+              }
+
+              await this.plugin.saveSettings();
+              new Notice(t('Current style commands have been cleared'));
+              this.display();
+            }
+          })
+        );
+      }
+
+    }
     // 添加当前正在编辑的配置提示
     if (this.plugin.settings.enableMultipleConfig) {
       const positionStyleInfo = containerEl.createEl('div', {
@@ -408,69 +536,73 @@ export class editingToolbarSettingTab extends PluginSettingTab {
       });
 
     // 现有的命令列表代码
+
+
+
     this.createCommandList(containerEl);
   }
+
   private displayCustomCommandSettings(containerEl: HTMLElement): void {
     containerEl.empty();
-    
+
     const customCommandsContainer = containerEl.createDiv('custom-commands-container');
-    
+
     // 添加说明
     const descriptionEl = customCommandsContainer.createEl('p', {
-        text: t('Add, edit or delete custom format commands')
+      text: t('Add, edit or delete custom format commands')
     });
-    
+
     // 添加命令列表
     const commandListContainer = customCommandsContainer.createDiv('command-list-container');
-    
+
     // 添加新命令按钮容器
     const addButtonContainer = customCommandsContainer.createDiv('add-command-button-container');
     addButtonContainer.style.marginBottom = '20px';
     addButtonContainer.style.marginTop = '20px';
     addButtonContainer.style.display = 'flex';
     addButtonContainer.style.gap = '10px';
-    
+
     // 添加普通格式命令按钮
     const addFormatButton = addButtonContainer.createEl('button', {
-        text: t('Add Format Command')
+      text: t('Add Format Command')
     });
     addFormatButton.addClass('mod-cta');
     addFormatButton.addEventListener('click', () => {
-        // 打开新命令模态框
-        new CustomCommandModal(this.app, this.plugin, null).open();
+      // 打开新命令模态框
+      new CustomCommandModal(this.app, this.plugin, null).open();
     });
-    
+
     // 添加正则表达式命令按钮
     const addRegexButton = addButtonContainer.createEl('button', {
-        text: t('Add Regex Command')
+      text: t('Add Regex Command')
     });
     addRegexButton.addClass('mod-cta');
     addRegexButton.addEventListener('click', () => {
-        // 打开正则表达式命令模态框
-        
-        new RegexCommandModal(this.app, this.plugin, null).open();
+      // 打开正则表达式命令模态框
+
+      new RegexCommandModal(this.app, this.plugin, null).open();
     });
-    
+
     // 显示现有命令
     this.plugin.settings.customCommands.forEach((command, index) => {
       const commandSetting = new Setting(commandListContainer)
         .setName(command.name);
-      
+
       // 创建描述元素
       const descEl = createFragment();
-      
+
       // 基本描述
       let desc = `${t('ID')}: ${command.id}`;
-      
+
       // 根据命令类型添加不同的描述
       if (command.useRegex) {
         desc += `, ${t('Pattern')}: ${command.regexPattern}`;
       } else {
         desc += `, ${t('Prefix')}: ${command.prefix}, ${t('Suffix')}: ${command.suffix}`;
       }
-      
+
       descEl.createSpan({ text: desc });
-      
+
       // 添加命令类型标签
       const typeBadge = descEl.createSpan({ cls: 'command-type-badge' });
       if (command.useRegex) {
@@ -479,43 +611,43 @@ export class editingToolbarSettingTab extends PluginSettingTab {
       } else {
         typeBadge.setText(t('Prefix/Suffix'));
       }
-      
+
       commandSetting.descEl.appendChild(descEl);
       commandSetting.addButton(button => button
-          .setButtonText(t('Add to Toolbar'))
-          .setTooltip(t('Add this command to the toolbar'))
-          .setButtonText(t('Add to Toolbar'))
-          .setTooltip(t('Add this command to the toolbar'))
-          .onClick(() => {
-            if (this.plugin.settings.enableMultipleConfig) {
-              // 如果启用了多配置，打开部署模态框
-              new DeployCommandModal(this.app, this.plugin, command).open();
-            } else {
-              // 原有的单配置逻辑
-              const isInToolbar = this.plugin.settings.menuCommands.some(
-                cmd => cmd.id === `editing-toolbar:${command.id}`
-              );
+        .setButtonText(t('Add to Toolbar'))
+        .setTooltip(t('Add this command to the toolbar'))
+        .setButtonText(t('Add to Toolbar'))
+        .setTooltip(t('Add this command to the toolbar'))
+        .onClick(() => {
+          if (this.plugin.settings.enableMultipleConfig) {
+            // 如果启用了多配置，打开部署模态框
+            new DeployCommandModal(this.app, this.plugin, command).open();
+          } else {
+            // 原有的单配置逻辑
+            const isInToolbar = this.plugin.settings.menuCommands.some(
+              cmd => cmd.id === `editing-toolbar:${command.id}`
+            );
 
-              if (isInToolbar) {
-                new Notice(t('This command is already in the toolbar'));
-                return;
-              }
-
-              const toolbarCommand = {
-                id: `editing-toolbar:${command.id}`,
-                name: command.name,
-                icon: command.icon || 'obsidian-new'
-              };
-
-              this.plugin.settings.menuCommands.push(toolbarCommand);
-              this.plugin.saveSettings().then(() => {
-                new Notice(t('Command added to toolbar'));
-                dispatchEvent(new Event("editingToolbar-NewCommand"));
-                this.plugin.reloadCustomCommands();
-              });
+            if (isInToolbar) {
+              new Notice(t('This command is already in the toolbar'));
+              return;
             }
-          })
-        )
+
+            const toolbarCommand = {
+              id: `editing-toolbar:${command.id}`,
+              name: command.name,
+              icon: command.icon || 'obsidian-new'
+            };
+
+            this.plugin.settings.menuCommands.push(toolbarCommand);
+            this.plugin.saveSettings().then(() => {
+              new Notice(t('Command added to toolbar'));
+              dispatchEvent(new Event("editingToolbar-NewCommand"));
+              this.plugin.reloadCustomCommands();
+            });
+          }
+        })
+      )
         .addExtraButton(button => {
           button
             .setIcon("pencil")
@@ -523,7 +655,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
             .onClick(() => {
               // 根据命令类型打开不同的编辑模态框
               if (command.useRegex) {
-                
+
                 new RegexCommandModal(this.app, this.plugin, index).open();
               } else {
                 new CustomCommandModal(this.app, this.plugin, index).open();
@@ -552,9 +684,9 @@ export class editingToolbarSettingTab extends PluginSettingTab {
           new Notice(t('Command deleted'));
         }))
 
-  
 
-      
+
+
       // 如果有图标，显示图标
       if (command.icon) {
         try {
@@ -691,20 +823,20 @@ export class editingToolbarSettingTab extends PluginSettingTab {
   private createCommandList(containerEl: HTMLElement): void {
     // 根据编辑的配置获取对应的命令列表
     let commandsToEdit: Command[] = [];
-    if(this.plugin.settings.enableMultipleConfig){
+    if (this.plugin.settings.enableMultipleConfig) {
       switch (this.currentEditingConfig) {
         case 'mobile':
-        commandsToEdit = this.plugin.settings.mobileCommands;
-        break;
-      case 'following':
-        commandsToEdit = this.plugin.settings.followingCommands;
-        break;
-      case 'top':
-        commandsToEdit = this.plugin.settings.topCommands;
-        break;
-      case 'fixed':
-        commandsToEdit = this.plugin.settings.fixedCommands;
-        break;
+          commandsToEdit = this.plugin.settings.mobileCommands;
+          break;
+        case 'following':
+          commandsToEdit = this.plugin.settings.followingCommands;
+          break;
+        case 'top':
+          commandsToEdit = this.plugin.settings.topCommands;
+          break;
+        case 'fixed':
+          commandsToEdit = this.plugin.settings.fixedCommands;
+          break;
         default:
           commandsToEdit = this.plugin.settings.menuCommands;
       }
@@ -1090,7 +1222,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     importExportContainer.style.borderRadius = '8px';
     importExportContainer.style.backgroundColor = 'var(--background-secondary)';
     importExportContainer.style.marginBottom = '20px';
-    
+
     // 导出设置
     new Setting(importExportContainer)
       .setName(t('Export Configuration'))
@@ -1102,7 +1234,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
           new ImportExportModal(this.app, this.plugin, 'export').open();
         })
       );
-    
+
     // 导入设置
     new Setting(importExportContainer)
       .setName(t('Import Configuration'))
@@ -1114,27 +1246,27 @@ export class editingToolbarSettingTab extends PluginSettingTab {
           new ImportExportModal(this.app, this.plugin, 'import').open();
         })
       );
-      
+
     // 添加说明
     const infoDiv = containerEl.createDiv('import-export-info');
     infoDiv.style.marginTop = '20px';
     infoDiv.style.padding = '16px';
     infoDiv.style.borderRadius = '8px';
     infoDiv.style.backgroundColor = 'var(--background-secondary)';
-    
-    infoDiv.createEl('h3', { 
+
+    infoDiv.createEl('h3', {
       text: t('Usage Instructions'),
       cls: 'import-export-heading'
     }).style.marginTop = '0';
-    
+
     const ul = infoDiv.createEl('ul');
     ul.style.paddingLeft = '20px';
-    
+
     ul.createEl('li', { text: t('Export: Generate a JSON configuration that you can save or share') });
     ul.createEl('li', { text: t('Import: Paste a previously exported JSON configuration') });
     ul.createEl('li', { text: t('You can choose to export all settings, only toolbar commands, or only custom commands') });
     ul.createEl('li', { text: t('When importing, the plugin will only update the settings included in the import data') });
-    
+
     // 添加警告
     const warningDiv = containerEl.createDiv('import-export-warning');
     warningDiv.style.marginTop = '20px';
@@ -1142,11 +1274,29 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     warningDiv.style.borderRadius = '8px';
     warningDiv.style.backgroundColor = 'rgba(var(--color-red-rgb), 0.1)';
     warningDiv.style.border = '1px solid rgba(var(--color-red-rgb), 0.3)';
-    
-    warningDiv.createEl('p', { 
+
+    warningDiv.createEl('p', {
       text: t('Warning: Importing configuration will overwrite your current settings. Consider exporting your current configuration first as a backup.'),
       cls: 'warning-text'
     }).style.margin = '0';
+  }
+
+
+
+  // 辅助函数：根据类型获取命令数组
+  private getCommandsArrayByType(type: string) {
+    switch (type) {
+      case 'following':
+        return this.plugin.settings.followingCommands;
+      case 'top':
+        return this.plugin.settings.topCommands;
+      case 'fixed':
+        return this.plugin.settings.fixedCommands;
+      case 'mobile':
+        return this.plugin.settings.mobileCommands;
+      default:
+        return this.plugin.settings.menuCommands;
+    }
   }
 }
 
