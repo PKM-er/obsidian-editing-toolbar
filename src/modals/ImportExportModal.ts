@@ -55,7 +55,7 @@ export class ImportExportModal extends Modal {
             .setValue('')
             .setPlaceholder(t('Loading...'))
             .then(textArea => {
-              textArea.inputEl.style.width = '40vw';
+              textArea.inputEl.style.width = '30vw';
               textArea.inputEl.style.height = '200px';
               textArea.inputEl.style.fontFamily = 'monospace';
               textArea.inputEl.style.fontSize = '12px';
@@ -114,7 +114,7 @@ export class ImportExportModal extends Modal {
             .setValue('')
             .setPlaceholder(t('Paste configuration here...'))
             .then(textArea => {
-              textArea.inputEl.style.width = '40vw';
+              textArea.inputEl.style.width = '30vw';
               textArea.inputEl.style.height = '200px';
               textArea.inputEl.style.fontFamily = 'monospace';
               textArea.inputEl.style.fontSize = '12px';

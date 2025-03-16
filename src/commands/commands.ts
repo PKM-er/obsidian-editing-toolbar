@@ -1,4 +1,4 @@
-import { Editor, Command, Notice, MarkdownView } from "obsidian";
+import { Editor, Command, Notice, MarkdownView,htmlToMarkdown } from "obsidian";
 
 import { setMenuVisibility } from "src/util/statusBarConstants";
 import { selfDestruct, setFormateraser, quiteFormatbrushes } from "src/modals/editingToolbarModal";
@@ -7,6 +7,8 @@ import { fullscreenMode, workplacefullscreenMode } from "src/util/fullscreen";
 import editingToolbarPlugin from "src/plugin/main";
 import { InsertCalloutModal } from "src/modals/insertCalloutModal";
 import { InsertLinkModal } from "src/modals/insertLinkModal";
+import { CustomCommand } from "src/settings/settingsData";
+import { t } from 'src/translations/helper';
 export class CommandsManager {
     private plugin: editingToolbarPlugin;
 
@@ -182,6 +184,7 @@ export class CommandsManager {
 
     // 应用格式化命令的辅助函数
     public applyCommand = (command: CommandPlot, editor: Editor) => {
+        // 获取选中的文本
         const selectedText = editor.getSelection();
         const curserStart = editor.getCursor("from");
         const curserEnd = editor.getCursor("to");
@@ -190,7 +193,6 @@ export class CommandsManager {
         if (command.islinehead && curserStart.ch > 0) {
             prefix = '\n' + prefix;
         }
-
         const suffix = command.suffix;
 
         const preStart = {
@@ -244,6 +246,115 @@ export class CommandsManager {
         }
     };
 
+    // 应用正则表达式命令
+    public async applyRegexCommand(editor: Editor, command: CustomCommand) {
+        try {
+            // 获取选中的文本
+            let selectedText = editor.getSelection();
+            const curserStart = editor.getCursor("from");
+            const curserEnd = editor.getCursor("to");
+            
+            // 如果没有选中文本，尝试从剪贴板读取
+            if (!selectedText) {
+                try {
+                    const clipboardItems = await this.readClipboard();
+ 
+                    if(clipboardItems['text/html']){
+                        selectedText = htmlToMarkdown(clipboardItems['text/html']);
+                    }else{
+                        selectedText = clipboardItems['text/markdown'] || 
+                                   clipboardItems['text/plain'];
+                    }
+                    
+                    if (!selectedText) {
+                        new Notice(t('Please select text or copy text to clipboard first'));
+                        return;
+                    }
+                    
+                    // 将剪贴板文本插入到当前光标位置
+                    editor.replaceRange(selectedText, curserStart, curserStart);
+                    // 更新光标位置
+                    const newEnd = editor.offsetToPos(editor.posToOffset(curserStart) + selectedText.length);
+                    editor.setSelection(curserStart, newEnd);
+                } catch (error) {
+                    console.error('读取剪贴板失败:', error);
+                    new Notice(t('Please select text first'));
+                    return;
+                }
+            }
+
+            // 检查条件匹配
+            if (command.useCondition && command.conditionPattern) {
+                const conditionRegex = new RegExp(command.conditionPattern);
+                if (!conditionRegex.test(selectedText)) {
+                    // 如果不满足条件，则不执行操作
+                    new Notice(t('The selected text does not meet the condition requirements'));
+                    return;
+                }
+            }
+
+            // 构建正则表达式标志
+            let flags = '';
+            if (command.regexGlobal !== false) flags += 'g';
+            if (command.regexCaseInsensitive) flags += 'i';
+            if (command.regexMultiline) flags += 'm';
+
+            // 创建正则表达式
+            const regex = new RegExp(command.regexPattern, flags);
+
+            // 获取更新后的光标位置
+            const updatedCurserStart = editor.getCursor("from");
+            const updatedCurserEnd = editor.getCursor("to");
+
+            editor.transaction({
+                changes: [{
+                    from: updatedCurserStart,
+                    to: updatedCurserEnd,
+                    text: selectedText.replace(regex, command.regexReplacement)
+                }]
+            });
+            
+            const replacedText = editor.getSelection();
+            const newStart = editor.offsetToPos(editor.posToOffset(updatedCurserStart));
+            const newEnd = editor.offsetToPos(editor.posToOffset(updatedCurserStart) + replacedText.length);
+            editor.setSelection(newStart, newEnd);
+        } catch (error) {
+            console.error('正则表达式命令执行错误:', error);
+            new Notice(t('Regex command execution error:') + error.message);
+        }
+    }
+
+    // 添加读取剪贴板的方法
+    private async readClipboard(): Promise<Record<string, string>> {
+        const items: Record<string, string> = {};
+
+        try {
+            // 尝试读取剪贴板项目
+            const clipboardItems = await navigator.clipboard.read();
+
+            for (const clipboardItem of clipboardItems) {
+                // 获取所有可用的类型
+                const types = clipboardItem.types;
+
+                for (const type of types) {
+                    if (type === 'text/html' || type === 'text/plain' || type === 'text/markdown') {
+                        const blob = await clipboardItem.getType(type);
+                        items[type] = await blob.text();
+                    }
+                }
+            }
+        } catch (e) {
+            // 如果无法访问剪贴板 API，回退到基本文本读取
+            try {
+                const text = await navigator.clipboard.readText();
+                items['text/plain'] = text;
+            } catch (e) {
+                console.error("读取剪贴板失败:", e);
+            }
+        }
+
+        return items;
+    }
 
     public getActiveEditor(): any {
         // 首先尝试获取常规的 Markdown 视图
@@ -288,7 +399,7 @@ export class CommandsManager {
             },
         });
 
-        // 格式刷相关命令
+        // 格式擦相关命令
         this.plugin.addCommand({
             id: 'format-eraser',
             name: 'Format Eraser',
@@ -300,7 +411,7 @@ export class CommandsManager {
             icon: `eraser`
         });
 
-        // 添加格式刷相关命令
+        // 添加字体颜色相关命令
         this.plugin.addCommand({
             id: 'change-font-color',
             name: 'Change font color[html]',
@@ -604,7 +715,7 @@ export class CommandsManager {
             'format-eraser',
             'change-font-color', 'change-background-color',
             // 添加所有自定义命令
-            ...this.plugin.settings.customCommands.map(cmd => `custom-${cmd.id}`),
+            ...this.plugin.settings.customCommands.map(cmd => `${cmd.id}`),
             ...Object.keys(this._commandsMap)
         ];
 
@@ -634,7 +745,7 @@ export class CommandsManager {
     public reloadCustomCommands() {
         // 移除旧的自定义命令
         this.plugin.settings.customCommands.forEach(command => {
-            const commandId = `custom-${command.id}`;
+            const commandId = `${command.id}`;
             if (this.plugin.app.commands.commands[`editing-toolbar:${commandId}`]) {
                 // 从命令注册表中移除命令
                 delete this.plugin.app.commands.commands[`editing-toolbar:${commandId}`];
@@ -647,33 +758,45 @@ export class CommandsManager {
 
     // 注册自定义命令
     private registerCustomCommands() {
+        // 遍历自定义命令并注册
         this.plugin.settings.customCommands.forEach(command => {
-            const commandId = `custom-${command.id}`;
+            const commandId = `${command.id}`;
 
-            // 创建命令配置
-            const commandConfig: CommandPlot = {
-                char: command.char,
-                line: command.line,
-                prefix: command.prefix,
-                suffix: command.suffix,
-                islinehead: command.islinehead
-            };
-
-            // 添加到 commandsMap
-            this._commandsMap[command.id] = commandConfig;
-
-            // 注册命令
             this.plugin.addCommand({
                 id: commandId,
                 name: command.name,
-                icon: command.icon || 'text-glyph',
-                callback: () => {
-                    const editor = this.getActiveEditor();
-                    editor && this.executeCommandWithoutBlur(editor, () => {
-                        this.applyCommand(commandConfig, editor);
-                        // 记录为最后执行的命令，以支持格式刷
-                        this.plugin.setLastExecutedCommand(`editing-toolbar:${commandId}`);
-                    });
+                icon: command.icon,
+                editorCallback: (editor) => {
+
+                    // 检查是否使用正则表达式替换
+                    if (command.useRegex && command.regexPattern) {
+
+                        editor && this.executeCommandWithoutBlur(editor, () => {
+                            // 应用命令
+                            this.applyRegexCommand(editor, command);
+                            this.plugin.setLastExecutedCommand(`editing-toolbar:${commandId}`);
+                        });
+
+
+                    } else {
+                        // 创建命令配置对象
+                        const commandConfig: CommandPlot = {
+                            prefix: command.prefix,
+                            suffix: command.suffix,
+                            char: command.char,
+                            line: command.line,
+                            islinehead: command.islinehead
+                        };
+                        this._commandsMap[command.id] = commandConfig;
+
+                        editor && this.executeCommandWithoutBlur(editor, () => {
+                            // 应用命令
+                            this.applyCommand(commandConfig, editor);
+                            this.plugin.setLastExecutedCommand(`editing-toolbar:${commandId}`);
+                        });
+                    }
+                    // 记录为最后执行的命令，以支持格式刷
+
                 }
             });
         });

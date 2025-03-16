@@ -1111,3 +1111,37 @@ body.auto-hide-header .workspace-tab-header-container + .workspace-tab-container
     display: none;
   }
  }
+
+
+ 
+/* 命令类型标签 */
+.command-type-badge {
+  display: inline-block;
+  padding: 2px 6px;
+  margin-left: 8px;
+  border-radius: 4px;
+  font-size: 0.8em;
+  background-color: var(--background-modifier-border);
+}
+
+.command-type-badge.regex {
+  background-color: var(--text-accent);
+  color: var(--text-on-accent);
+} 
+.custom-commands-container .command-list-container .setting-item-name {
+  display: flex;
+  gap: 8px;
+}
+.custom-commands-modal {
+ 
+  width: auto;
+  max-width: 800px;
+ 
+}
+.custom-commands-modal input {
+ 
+ width: 100%;
+ max-width: 300px;
+}
+
+ 

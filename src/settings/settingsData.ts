@@ -19,6 +19,14 @@ export interface CustomCommand {
   line: number;
   islinehead: boolean;
   icon?: string;
+  useRegex?: boolean;
+  regexPattern?: string;
+  regexReplacement?: string;
+  regexCaseInsensitive?: boolean;
+  regexGlobal?: boolean;
+  regexMultiline?: boolean;
+  useCondition?: boolean;
+  conditionPattern?: string;
 }
 
 export interface editingToolbarSettings {

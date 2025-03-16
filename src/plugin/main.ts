@@ -320,7 +320,7 @@ export default class editingToolbarPlugin extends Plugin {
     if (this.settings.isLoadOnMobile && Platform.isMobileApp) {
       return this.settings.mobileCommands;
     }
- console.log(currentstyle,"currentstyle")
+
     switch (currentstyle) {
       case 'following':
         return this.settings.followingCommands;
@@ -409,11 +409,13 @@ export default class editingToolbarPlugin extends Plugin {
 
   applyFormatBrush(editor: Editor): void {
     if (!this.lastExecutedCommand || !this.formatBrushActive) return;
-
     // 执行保存的命令
     const command = this.app.commands.commands[this.lastExecutedCommand];
     if (command && command.callback) {
       command.callback();
+    }
+    if (command && command.editorCallback) {
+      command.editorCallback(editor,this.app.workspace.getActiveViewOfType(MarkdownView));
     }
   }
 

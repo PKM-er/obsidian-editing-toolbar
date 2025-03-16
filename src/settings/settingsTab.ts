@@ -14,6 +14,7 @@ import '@simonwep/pickr/dist/themes/nano.min.css';
 import { CustomCommandModal } from "src/modals/CustomCommandModal";
 import { DeployCommandModal } from "src/modals/DeployCommand";
 import { ImportExportModal } from "src/modals/ImportExportModal";
+import { RegexCommandModal } from "src/modals/RegexCommandModal";
 
 // 添加类型定义
 interface SubmenuCommand {
@@ -410,32 +411,79 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     this.createCommandList(containerEl);
   }
   private displayCustomCommandSettings(containerEl: HTMLElement): void {
-
-    // 添加自定义命令设置部分
-    new Setting(containerEl)
-      .setName(t('Custom Format Commands'))
-      .setDesc(t('Add, edit or delete custom format commands'))
-      .addButton(button => button
-        .setIcon("plus")
-        .setTooltip(t("Add"))
-        .onClick(() => {
-          // 打开添加命令的模态框
-          new CustomCommandModal(this.app, this.plugin, null).open();
-        })
-      );
-    // 显示现有的自定义命令
+    containerEl.empty();
+    
     const customCommandsContainer = containerEl.createDiv('custom-commands-container');
+    
+    // 添加说明
+    const descriptionEl = customCommandsContainer.createEl('p', {
+        text: t('Add, edit or delete custom format commands')
+    });
+    
+    // 添加命令列表
+    const commandListContainer = customCommandsContainer.createDiv('command-list-container');
+    
+    // 添加新命令按钮容器
+    const addButtonContainer = customCommandsContainer.createDiv('add-command-button-container');
+    addButtonContainer.style.marginBottom = '20px';
+    addButtonContainer.style.marginTop = '20px';
+    addButtonContainer.style.display = 'flex';
+    addButtonContainer.style.gap = '10px';
+    
+    // 添加普通格式命令按钮
+    const addFormatButton = addButtonContainer.createEl('button', {
+        text: t('Add Format Command')
+    });
+    addFormatButton.addClass('mod-cta');
+    addFormatButton.addEventListener('click', () => {
+        // 打开新命令模态框
+        new CustomCommandModal(this.app, this.plugin, null).open();
+    });
+    
+    // 添加正则表达式命令按钮
+    const addRegexButton = addButtonContainer.createEl('button', {
+        text: t('Add Regex Command')
+    });
+    addRegexButton.addClass('mod-cta');
+    addRegexButton.addEventListener('click', () => {
+        // 打开正则表达式命令模态框
+        
+        new RegexCommandModal(this.app, this.plugin, null).open();
+    });
+    
+    // 显示现有命令
     this.plugin.settings.customCommands.forEach((command, index) => {
-      const commandSetting = new Setting(customCommandsContainer)
-        .setName(command.name)
-        .setDesc(`${t('ID')}: ${command.id}, ${t('Prefix')}: ${command.prefix}, ${t('Suffix')}: ${command.suffix}`)
-        .addButton((addicon) => {
-          addicon
-            .setClass("editingToolbarSettingsIcon")
-          checkHtml(command.icon) ? addicon.buttonEl.innerHTML = command.icon : addicon.setIcon(command.icon)
-        })
-        // 添加到工具栏按钮
-        .addButton(button => button
+      const commandSetting = new Setting(commandListContainer)
+        .setName(command.name);
+      
+      // 创建描述元素
+      const descEl = createFragment();
+      
+      // 基本描述
+      let desc = `${t('ID')}: ${command.id}`;
+      
+      // 根据命令类型添加不同的描述
+      if (command.useRegex) {
+        desc += `, ${t('Pattern')}: ${command.regexPattern}`;
+      } else {
+        desc += `, ${t('Prefix')}: ${command.prefix}, ${t('Suffix')}: ${command.suffix}`;
+      }
+      
+      descEl.createSpan({ text: desc });
+      
+      // 添加命令类型标签
+      const typeBadge = descEl.createSpan({ cls: 'command-type-badge' });
+      if (command.useRegex) {
+        typeBadge.addClass('regex');
+        typeBadge.setText(t('Regex'));
+      } else {
+        typeBadge.setText(t('Prefix/Suffix'));
+      }
+      
+      commandSetting.descEl.appendChild(descEl);
+      commandSetting.addButton(button => button
+          .setButtonText(t('Add to Toolbar'))
+          .setTooltip(t('Add this command to the toolbar'))
           .setButtonText(t('Add to Toolbar'))
           .setTooltip(t('Add this command to the toolbar'))
           .onClick(() => {
@@ -445,7 +493,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
             } else {
               // 原有的单配置逻辑
               const isInToolbar = this.plugin.settings.menuCommands.some(
-                cmd => cmd.id === `editing-toolbar:custom-${command.id}`
+                cmd => cmd.id === `editing-toolbar:${command.id}`
               );
 
               if (isInToolbar) {
@@ -454,7 +502,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
               }
 
               const toolbarCommand = {
-                id: `editing-toolbar:custom-${command.id}`,
+                id: `editing-toolbar:${command.id}`,
                 name: command.name,
                 icon: command.icon || 'obsidian-new'
               };
@@ -468,16 +516,22 @@ export class editingToolbarSettingTab extends PluginSettingTab {
             }
           })
         )
-        .addButton(button => button
-          .setIcon('pencil')
-          .setTooltip(t('Edit'))
-          .onClick(() => {
-            // 打开编辑命令的模态框
-            new CustomCommandModal(this.app, this.plugin, index).open();
-          })
-        )
+        .addExtraButton(button => {
+          button
+            .setIcon("pencil")
+            .setTooltip(t("Edit"))
+            .onClick(() => {
+              // 根据命令类型打开不同的编辑模态框
+              if (command.useRegex) {
+                
+                new RegexCommandModal(this.app, this.plugin, index).open();
+              } else {
+                new CustomCommandModal(this.app, this.plugin, index).open();
+              }
+            });
+        })
         .addButton(button => this.createDeleteButton(button, async () => {
-          const customCommandId = `editing-toolbar:custom-${this.plugin.settings.customCommands[index].id}`;
+          const customCommandId = `editing-toolbar:${this.plugin.settings.customCommands[index].id}`;
 
           // 从所有配置中删除该命令
           this.removeCommandFromConfig(this.plugin.settings.menuCommands, customCommandId);
@@ -491,7 +545,6 @@ export class editingToolbarSettingTab extends PluginSettingTab {
               this.removeCommandFromConfig(this.plugin.settings.mobileCommands, customCommandId);
             }
           }
-
           this.plugin.settings.customCommands.splice(index, 1);
           await this.plugin.saveSettings();
           this.plugin.reloadCustomCommands();
@@ -499,6 +552,21 @@ export class editingToolbarSettingTab extends PluginSettingTab {
           new Notice(t('Command deleted'));
         }))
 
+  
+
+      
+      // 如果有图标，显示图标
+      if (command.icon) {
+        try {
+          const iconContainer = commandSetting.nameEl.createSpan({
+            cls: "editingToolbarSettingsIcon"
+          });
+          iconContainer.style.marginRight = "8px";
+          checkHtml(command.icon) ? iconContainer.innerHTML = command.icon : setIcon(iconContainer, command.icon)
+        } catch (e) {
+          console.error("Failed to set icon:", e);
+        }
+      }
     });
 
 
