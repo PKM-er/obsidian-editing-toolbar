@@ -556,7 +556,8 @@ button[class^=editingToolbarCommandsubItem]::after {
 
 
 .x-color-picker-wrapper {
-  right: 0px;
+  right: -50%;
+  transform: translateX(50%);
   top: 1.8em;
   min-width: 1px;
   padding: 10px;
@@ -567,6 +568,46 @@ button[class^=editingToolbarCommandsubItem]::after {
   font-family: Source Sans Pro, sans-serif;
   border-radius: var(--radius-s);
   background-color: var(--color-base-10, --background-primary);
+}
+:is(#editingToolbarModalBar, #editingToolbarPopoverBar) button:first-child.editingToolbarCommandsubItem-font-color .x-color-picker-wrapper {
+  right: unset;
+  transform: translateX(0);
+  left: 0px;
+}
+:is(#editingToolbarModalBar, #editingToolbarPopoverBar) button:nth-child(2).editingToolbarCommandsubItem-font-color .x-color-picker-wrapper {
+  right: unset;
+  transform: translateX(0);
+  left: 0px;
+}
+:is(#editingToolbarModalBar, #editingToolbarPopoverBar) button:nth-child(3).editingToolbarCommandsubItem-font-color .x-color-picker-wrapper {
+  right: unset;
+  transform: translateX(0);
+  left: -30px;
+}
+:is(#editingToolbarModalBar, #editingToolbarPopoverBar) button:nth-child(4).editingToolbarCommandsubItem-font-color .x-color-picker-wrapper {
+  right: unset;
+  transform: translateX(0);
+  left: -50px;
+}
+:is(#editingToolbarModalBar, #editingToolbarPopoverBar) button:nth-last-child(1).editingToolbarCommandsubItem-font-color .x-color-picker-wrapper {
+  right: 0px;
+  transform: translateX(0);
+}
+:is(#editingToolbarModalBar, #editingToolbarPopoverBar) button:nth-last-child(2).editingToolbarCommandsubItem-font-color .x-color-picker-wrapper {
+  right: 0px;
+  transform: translateX(0);
+}
+:is(#editingToolbarModalBar, #editingToolbarPopoverBar) button:nth-last-child(3).editingToolbarCommandsubItem-font-color .x-color-picker-wrapper {
+  right: 0px;
+  transform: translateX(30px);
+}
+:is(#editingToolbarModalBar, #editingToolbarPopoverBar) button:nth-last-child(4).editingToolbarCommandsubItem-font-color .x-color-picker-wrapper {
+  right: 0px;
+  transform: translateX(40px);
+}
+:is(#editingToolbarModalBar, #editingToolbarPopoverBar) button:nth-last-child(5).editingToolbarCommandsubItem-font-color .x-color-picker-wrapper {
+  right: 0px;
+  transform: translateX(50px);
 }
 
 .markdown-source-view.mod-cm6 .x-color-picker-wrapper table.x-color-picker-table#x-color-picker-table {
