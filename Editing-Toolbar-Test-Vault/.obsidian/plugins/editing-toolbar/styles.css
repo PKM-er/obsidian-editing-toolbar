@@ -1215,4 +1215,21 @@ body.auto-hide-header .workspace-tab-header-container + .workspace-tab-container
  max-width: 300px;
 }
 
- 
+.command-buttons-container {
+  background: var(--background-secondary);
+  border-radius: 5px;
+  padding: 10px;
+  margin-bottom: 15px;
+}
+
+.command-buttons-container .setting-item {
+  border: none;
+  padding: 8px 0;
+}
+
+.command-buttons-container .setting-item-control {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+

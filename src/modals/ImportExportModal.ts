@@ -6,7 +6,7 @@ import { t } from 'src/translations/helper';
 export class ImportExportModal extends Modal {
   plugin: editingToolbarPlugin;
   mode: 'import' | 'export';
-  exportType: 'all' | 'commands' | 'custom' | 'following' | 'top' | 'fixed' | 'mobile';
+  exportType: 'all' | 'All commands' | 'custom' | 'following' | 'top' | 'fixed' | 'mobile';
   importMode: 'overwrite' | 'update';
   textArea: TextAreaComponent;
   importButton: ButtonComponent;
@@ -39,19 +39,19 @@ export class ImportExportModal extends Modal {
         .addDropdown(dropdown => {
           dropdown
             .addOption('all', t('All Settings'))
-            .addOption('commands', t('All Toolbar Commands'))
+            .addOption('All commands', t('All Toolbar Commands'))
             .addOption('custom', t('Custom Commands Only'))
-          if(this.plugin.settings.enableMultipleConfig){
+          if (this.plugin.settings.enableMultipleConfig) {
             dropdown
               .addOption('following', t('Following Style Only'))
               .addOption('top', t('Top Style Only'))
               .addOption('fixed', t('Fixed Style Only'))
               .addOption('mobile', t('Mobile Style Only'))
-            }
-            
-            dropdown.setValue(this.exportType)
+          }
+
+          dropdown.setValue(this.exportType)
             .onChange(value => {
-              this.exportType = value as 'all' | 'commands' | 'custom' | 'following' | 'top' | 'fixed' | 'mobile';
+              this.exportType = value as 'all' | 'All commands' | 'custom' | 'following' | 'top' | 'fixed' | 'mobile';
               this.updateExportContent();
             });
         });
@@ -111,12 +111,12 @@ export class ImportExportModal extends Modal {
         .addDropdown(dropdown => {
           dropdown
             .addOption('update', t('Update Mode (Add new items and update existing ones)'))
-            .addOption('overwrite', t('Overwrite Mode (Replace all settings with imported ones)'))
+            .addOption('overwrite', t('Overwrite Mode (Replace settings with imported ones)'))
             .setValue(this.importMode)
             .onChange(value => {
               this.importMode = value as 'overwrite' | 'update';
               this.importButton.setButtonText(this.importMode === 'overwrite' ? t('Overwrite Import') : t('Update Import'));
-              this.warningContent.setText(this.importMode === 'overwrite' ? t('Warning: Overwrite mode will completely replace your current settings with the imported ones. Consider exporting your current configuration first as a backup.') : t('Warning: Update mode will add new items and update existing ones based on the imported configuration.'));
+              this.warningContent.setText(this.importMode === 'overwrite' ? t('Warning: Overwrite mode will replace existing settings with imported ones.') : t('Warning: Update mode will add new items and update existing ones.'));
             });
         });
       const importContainer = contentEl.createDiv('import-container');
@@ -152,13 +152,12 @@ export class ImportExportModal extends Modal {
         .addButton(button => {
           this.importButton = button
             .setIcon('import')
-            .setButtonText(t('Update Import'))
-            .setTooltip(t('Import Configuration'))
+            .setButtonText(t('Import Configuration'))
             .onClick(() => {
               this.importConfiguration();
             });
         });
-   
+
 
       // 添加警告信息
       const warningDiv = contentEl.createDiv('import-export-warning');
@@ -169,7 +168,7 @@ export class ImportExportModal extends Modal {
       warningDiv.style.border = '1px solid rgba(var(--color-red-rgb), 0.3)';
 
       const warningParagraph = warningDiv.createEl('p', {
-        text: t('Warning: Update mode will add new items and update existing ones based on the imported configuration.'),
+        text: t('Warning: Update mode will add new items and update existing ones.'),
         cls: 'warning-text'
       });
       warningParagraph.style.margin = '0';
@@ -219,7 +218,7 @@ export class ImportExportModal extends Modal {
           custom_fc5: this.plugin.settings.custom_fc5,
         };
         break;
-      case 'commands':
+      case 'All commands':
         // 只导出工具栏命令
         exportContent = {
           ...exportContent,
@@ -309,80 +308,256 @@ export class ImportExportModal extends Modal {
 
   async importConfiguration() {
     try {
-      const importData = JSON.parse(this.textArea.getValue());
-
-      // 验证导入的数据
-      if (!importData) {
-        new Notice(t('Invalid import data'));
+      const importText = this.textArea.getValue();
+      if (!importText.trim()) {
+        new Notice(t('Please paste configuration data first'));
         return;
       }
 
-      // 检查是否包含元数据
-      if (importData._exportInfo) {
-        // 显示导入信息
-        const exportInfo = importData._exportInfo;
-        const exportTime = new Date(exportInfo.exportTime).toLocaleString();
-        const exportType = exportInfo.exportType;
-        const exportVersion = exportInfo.version;
-        
-        // 根据导出类型显示不同的提示信息
-        let importTypeMessage = '';
-        switch (exportType) {
-          case 'all':
-            importTypeMessage = t('All Settings');
-            break;
-          case 'commands':
-            importTypeMessage = t('Toolbar Commands Only');
-            break;
-          case 'custom':
-            importTypeMessage = t('Custom Commands Only');
-            break;
-          case 'following':
-            importTypeMessage = t('Following Style');
-            break;
-          case 'top':
-            importTypeMessage = t('Top Style');
-            break;
-          case 'fixed':
-            importTypeMessage = t('Fixed Style');
-            break;
-          case 'mobile':
-            importTypeMessage = t('Mobile Style');
-            break;
-          default:
-            importTypeMessage = exportType;
-        }
-        
-        new Notice(t('Import Configuration') + ': ' + importTypeMessage + ' (' + exportVersion + ')');
-        
-        // 移除元数据，避免干扰导入
-        delete importData._exportInfo;
+      const importData = JSON.parse(importText);
+
+      // 基本验证
+      if (!importData || typeof importData !== 'object') {
+        new Notice(t('Invalid import data format'));
+        return;
       }
 
-      // 根据导入模式处理导入
+      // 检查导入内容包含哪些配置
+      const containsMenuCommands = 'menuCommands' in importData;
+      const containsCustomCommands = 'customCommands' in importData;
+      const containsFollowingCommands = 'followingCommands' in importData;
+      const containsTopCommands = 'topCommands' in importData;
+      const containsFixedCommands = 'fixedCommands' in importData;
+      const containsMobileCommands = 'mobileCommands' in importData;
+      const containsGeneralSettings = 'positionStyle' in importData || 'aestheticStyle' in importData;
+      const containsEnableMultipleConfig = 'enableMultipleConfig' in importData;
+      const positionStyle = importData.positionStyle;
+
+      // 检查数组是否为空
+      const hasMenuCommands = containsMenuCommands && Array.isArray(importData.menuCommands) && importData.menuCommands.length > 0;
+      const hasCustomCommands = containsCustomCommands && Array.isArray(importData.customCommands) && importData.customCommands.length > 0;
+      const hasFollowingCommands = containsFollowingCommands && Array.isArray(importData.followingCommands) && importData.followingCommands.length > 0;
+      const hasTopCommands = containsTopCommands && Array.isArray(importData.topCommands) && importData.topCommands.length > 0;
+      const hasFixedCommands = containsFixedCommands && Array.isArray(importData.fixedCommands) && importData.fixedCommands.length > 0;
+      const hasMobileCommands = containsMobileCommands && Array.isArray(importData.mobileCommands) && importData.mobileCommands.length > 0;
+
+      // 检查数组是否为空（但字段存在）
+      const emptyMenuCommands = containsMenuCommands && (!Array.isArray(importData.menuCommands) || importData.menuCommands.length === 0);
+      const emptyCustomCommands = containsCustomCommands && (!Array.isArray(importData.customCommands) || importData.customCommands.length === 0);
+      const emptyFollowingCommands = containsFollowingCommands && (!Array.isArray(importData.followingCommands) || importData.followingCommands.length === 0);
+      const emptyTopCommands = containsTopCommands && (!Array.isArray(importData.topCommands) || importData.topCommands.length === 0);
+      const emptyFixedCommands = containsFixedCommands && (!Array.isArray(importData.fixedCommands) || importData.fixedCommands.length === 0);
+      const emptyMobileCommands = containsMobileCommands && (!Array.isArray(importData.mobileCommands) || importData.mobileCommands.length === 0);
+
+      // 构建导入内容摘要
+      let importSummary = t('This import will:') + '\n';
+
+      // 添加更新内容
+      if (containsGeneralSettings) importSummary += '• ' + t('Update general settings') + '\n';
+      if (hasMenuCommands) importSummary += '• ' + t('Update Main Menu Commands') + ' (' + importData.menuCommands.length + ' ' + ')\n';
+      if (hasCustomCommands) importSummary += '• ' + t('Update Custom Commands') + ' (' + importData.customCommands.length + ' ' + ')\n';
+      if (hasFollowingCommands) importSummary += '• ' + t('Update Following Style Commands') + ' (' + importData.followingCommands.length + ' ' + ')\n';
+      if (hasTopCommands) importSummary += '• ' + t('Update Top Style Commands') + ' (' + importData.topCommands.length + ' ' + ')\n';
+      if (hasFixedCommands) importSummary += '• ' + t('Update Fixed Style Commands') + ' (' + importData.fixedCommands.length + ' ' + ')\n';
+      if (hasMobileCommands) importSummary += '• ' + t('Update Mobile Style Commands') + ' (' + importData.mobileCommands.length + ' ' + ')\n';
       if (this.importMode === 'overwrite') {
-        // 覆盖模式 - 直接替换所有设置
-        await this.overwriteImport(importData);
-      } else {
-        // 更新模式 - 只更新存在的设置，添加新的设置
-        await this.updateImport(importData);
+        // 添加清空内容
+        if (emptyMenuCommands) importSummary += '• ' + t('Clear all Main Menu Commands') + ' ⚠️\n';
+        if (emptyCustomCommands) importSummary += '• ' + t('Clear all Custom Commands') + ' ⚠️\n';
+        if (emptyFollowingCommands) importSummary += '• ' + t('Clear all Following Style Commands') + ' ⚠️\n';
+        if (emptyTopCommands) importSummary += '• ' + t('Clear all Top Style Commands') + ' ⚠️\n';
+        if (emptyFixedCommands) importSummary += '• ' + t('Clear all Fixed Style Commands') + ' ⚠️\n';
+        if (emptyMobileCommands) importSummary += '• ' + t('Clear all Mobile Style Commands') + ' ⚠️\n';
+      }
+      // 添加其他设置信息
+      if (containsEnableMultipleConfig) {
+        const multiConfigStatus = importData.enableMultipleConfig ? t('Enable') : t('Disable');
+        importSummary += '• ' + t('Set Multiple Config to:') + ' ' + multiConfigStatus + '\n';
       }
 
+      if (positionStyle) {
+        importSummary += '• ' + t('Set Position Style to:') + ' ' + this.getPositionStyleName(positionStyle) + '\n';
+      }
+
+      // 如果没有找到任何有效配置
+      if (!hasMenuCommands && !hasCustomCommands && !hasFollowingCommands &&
+        !hasTopCommands && !hasFixedCommands && !hasMobileCommands &&
+        !emptyMenuCommands && !emptyCustomCommands && !emptyFollowingCommands &&
+        !emptyTopCommands && !emptyFixedCommands && !emptyMobileCommands &&
+        !containsGeneralSettings && !containsEnableMultipleConfig) {
+        new Notice(t('No valid configuration found in import data'));
+        return;
+      }
+
+      // 添加导入模式提示
+      if (this.importMode === 'overwrite') {
+        importSummary += '\n' + t('⚠️ Overwrite mode will replace existing settings with imported ones.');
+      } else {
+        importSummary += '\n' + t('ℹ️ Update mode will merge imported settings with existing ones.');
+      }
+
+      // 显示确认对话框
+      if (!confirm(importSummary + '\n' + t('Do you want to continue?'))) {
+        return;
+      }
+
+      // 创建备份
+      const backup = {
+        positionStyle: this.plugin.settings.positionStyle,
+        menuCommands: [...this.plugin.settings.menuCommands],
+        customCommands: [...this.plugin.settings.customCommands],
+        followingCommands: [...this.plugin.settings.followingCommands],
+        topCommands: [...this.plugin.settings.topCommands],
+        fixedCommands: [...this.plugin.settings.fixedCommands],
+        mobileCommands: [...this.plugin.settings.mobileCommands]
+      };
+
+      try {
+        // 根据导入模式处理导入
+        if (this.importMode === 'overwrite') {
+          // 覆盖模式 - 直接替换相应设置
+          this.performOverwriteImport(importData);
+        } else {
+          // 更新模式 - 合并设置
+          this.performUpdateImport(importData);
+        }
+
+        // 修复命令ID
+        this.fixImportedCommandIds();
+
+        // 保存设置
+        await this.plugin.saveSettings();
+
+        // 重新加载自定义命令
+        this.plugin.reloadCustomCommands();
+
+        // 触发工具栏更新
+        dispatchEvent(new Event("editingToolbar-NewCommand"));
+
+        new Notice(t('Configuration imported successfully'));
+        this.close();
+      } catch (error) {
+        // 导入失败，恢复备份
+        this.restoreBackup(backup);
+        throw error;
+      }
     } catch (error) {
       console.error('Import error:', error);
-      new Notice(t('Failed to import configuration. Invalid format.'));
+      new Notice(t('Error:') + ' ' + error.message);
     }
   }
 
-  // 辅助方法：转换老版本的命令ID为新版本的命令ID
-  private convertLegacyCommandIds(commandArray: any[]): any[] {
-    if (!commandArray || !Array.isArray(commandArray)) {
-      return commandArray;
+  // 执行覆盖导入
+  performOverwriteImport(importData: any) {
+    // 导入一般设置
+    this.importGeneralSettings(importData);
+
+    // 导入命令配置
+    if (importData.menuCommands) {
+      this.plugin.settings.menuCommands = importData.menuCommands;
     }
-    
-    // 命令ID映射表，将老版本的命令ID映射到新版本的命令ID
-    const commandIdMap: Record<string, string> = {
-      'cMenuToolbar-Divider-Line': 'editingToolbar-Divider-Line',
+
+    if (importData.customCommands) {
+      this.plugin.settings.customCommands = importData.customCommands;
+    }
+
+    if (importData.followingCommands) {
+      this.plugin.settings.followingCommands = importData.followingCommands;
+    }
+
+    if (importData.topCommands) {
+      this.plugin.settings.topCommands = importData.topCommands;
+    }
+
+    if (importData.fixedCommands) {
+      this.plugin.settings.fixedCommands = importData.fixedCommands;
+    }
+
+    if (importData.mobileCommands) {
+      this.plugin.settings.mobileCommands = importData.mobileCommands;
+    }
+  }
+
+  // 执行更新导入
+  performUpdateImport(importData: any) {
+    // 导入一般设置
+    this.importGeneralSettings(importData);
+
+    // 导入命令配置
+    if (importData.menuCommands) {
+      this.updateCommandArray(this.plugin.settings.menuCommands, importData.menuCommands);
+    }
+
+    if (importData.customCommands) {
+      this.updateCommandArray(this.plugin.settings.customCommands, importData.customCommands);
+    }
+
+    if (importData.followingCommands) {
+      this.updateCommandArray(this.plugin.settings.followingCommands, importData.followingCommands);
+    }
+
+    if (importData.topCommands) {
+      this.updateCommandArray(this.plugin.settings.topCommands, importData.topCommands);
+    }
+
+    if (importData.fixedCommands) {
+      this.updateCommandArray(this.plugin.settings.fixedCommands, importData.fixedCommands);
+    }
+
+    if (importData.mobileCommands) {
+      this.updateCommandArray(this.plugin.settings.mobileCommands, importData.mobileCommands);
+    }
+  }
+  private updateCommandArray(targetArray: any[], sourceArray: any[]) {
+    if (!targetArray) {
+      return sourceArray.slice();
+    }
+
+    // 遍历导入的命令
+    sourceArray.forEach((importedCommand: any) => {
+      // 检查命令是否已存在
+      const existingCommandIndex = targetArray.findIndex(
+        cmd => cmd.id === importedCommand.id
+      );
+
+      if (existingCommandIndex >= 0) {
+        // 更新现有命令
+        targetArray[existingCommandIndex] = importedCommand;
+      } else {
+        // 添加新命令
+        targetArray.push(importedCommand);
+      }
+
+      // 如果有子菜单命令，递归更新
+      if (importedCommand.SubmenuCommands && targetArray[existingCommandIndex]?.SubmenuCommands) {
+        this.updateCommandArray(
+          targetArray[existingCommandIndex].SubmenuCommands,
+          importedCommand.SubmenuCommands
+        );
+      }
+    });
+
+    return targetArray;
+  }
+  // 导入一般设置
+  importGeneralSettings(importData: any) {
+    const generalSettings = [
+      'positionStyle', 'aestheticStyle', 'appendMethod', 'autohide',
+      'isLoadOnMobile', 'cMenuNumRows', 'enableMultipleConfig',
+      'custom_bg1', 'custom_bg2', 'custom_bg3', 'custom_bg4', 'custom_bg5',
+      'custom_fc1', 'custom_fc2', 'custom_fc3', 'custom_fc4', 'custom_fc5'
+    ];
+
+    generalSettings.forEach(key => {
+      if (importData[key] !== undefined) {
+        (this.plugin.settings as any)[key] = importData[key];
+      }
+    });
+  }
+
+  // 修复导入的命令ID
+  fixImportedCommandIds() {
+    const commandMappings: { [key: string]: string } = {
       'editor:toggle-numbered-list': 'editing-toolbar:toggle-numbered-list',
       'editor:toggle-bullet-list': 'editing-toolbar:toggle-bullet-list',
       'editor:toggle-highlight': 'editing-toolbar:toggle-highlight',
@@ -393,84 +568,31 @@ export class ImportExportModal extends Modal {
       'editing-toolbar:editor:toggle-inline-math': 'editing-toolbar:toggle-inline-math',
       'editing-toolbar:editor:insert-callout': 'editing-toolbar:insert-callout',
       'editing-toolbar:editor:insert-link': 'editing-toolbar:insert-link',
-      // 可以在这里添加更多的命令ID映射
+      'cMenuToolbar-Divider-Line': 'editingToolbar-Divider-Line',
     };
-    
-    // 递归处理命令数组
-    return commandArray.map(command => {
-      // 创建命令的副本，避免修改原始对象
-      const newCommand = { ...command };
-      
-      // 检查并转换命令ID
-      if (newCommand.id && commandIdMap[newCommand.id]) {
-        newCommand.id = commandIdMap[newCommand.id];
-   
-      }
-      
-      // 如果有子菜单命令，递归处理
-      if (newCommand.SubmenuCommands && Array.isArray(newCommand.SubmenuCommands)) {
-        newCommand.SubmenuCommands = this.convertLegacyCommandIds(newCommand.SubmenuCommands);
-      }
-      
-      return newCommand;
-    });
-  }
 
-  // 添加修复命令ID的方法，从updateModal.ts中复制过来
-  private async fixCommandIds() {
-    try {
-      const commandMappings: { [key: string]: string } = {
-        'editor:toggle-numbered-list': 'editing-toolbar:toggle-numbered-list',
-        'editor:toggle-bullet-list': 'editing-toolbar:toggle-bullet-list',
-        'editor:toggle-highlight': 'editing-toolbar:toggle-highlight',
-        'toggle-highlight': 'editing-toolbar:toggle-highlight',
-        'editing-toolbar:editor:toggle-bold': 'editing-toolbar:toggle-bold',
-        'editing-toolbar:editor:toggle-italics': 'editing-toolbar:toggle-italics',
-        'editing-toolbar:editor:toggle-strikethrough': 'editing-toolbar:toggle-strikethrough',
-        'editing-toolbar:editor:toggle-inline-math': 'editing-toolbar:toggle-inline-math',
-        'editing-toolbar:editor:insert-callout': 'editing-toolbar:insert-callout',
-        'editing-toolbar:editor:insert-link': 'editing-toolbar:insert-link',
-        'cMenuToolbar-Divider-Line': 'editingToolbar-Divider-Line',
-      };
+    const fixCommandsInArray = (commands: any[]) => {
+      if (!commands || !Array.isArray(commands)) return;
 
-      let hasChanges = false;
-      const settings = this.plugin.settings;
+      commands.forEach(cmd => {
+        if (cmd.id && commandMappings[cmd.id]) {
+          cmd.id = commandMappings[cmd.id];
+        }
 
-      // 遍历菜单命令
-      const updateCommands = (commands: any[]) => {
-        if (!commands || !Array.isArray(commands)) return;
-        
-        commands.forEach(cmd => {
-          if (cmd.id && commandMappings[cmd.id]) {
-            cmd.id = commandMappings[cmd.id];
-            hasChanges = true;
-          }
-          // 查找格式刷命令并更新图标
-          if (cmd.id === 'editing-toolbar:format-eraser') {
-            cmd.icon = 'eraser';
-            hasChanges = true;
-          }
+        // 递归处理子菜单
+        if (cmd.SubmenuCommands && Array.isArray(cmd.SubmenuCommands)) {
+          fixCommandsInArray(cmd.SubmenuCommands);
+        }
+      });
+    };
 
-          // 递归检查子菜单
-          if (cmd.SubmenuCommands) {
-            updateCommands(cmd.SubmenuCommands);
-          }
-        });
-      };
-
-      // 修复所有配置中的命令ID
-      if (settings.menuCommands) updateCommands(settings.menuCommands);
-      if (settings.followingCommands) updateCommands(settings.followingCommands);
-      if (settings.topCommands) updateCommands(settings.topCommands);
-      if (settings.fixedCommands) updateCommands(settings.fixedCommands);
-      if (settings.mobileCommands) updateCommands(settings.mobileCommands);
-
-
-      return hasChanges;
-    } catch (error) {
-
-      return false;
-    }
+    // 修复所有命令数组中的命令ID
+    fixCommandsInArray(this.plugin.settings.menuCommands);
+    fixCommandsInArray(this.plugin.settings.customCommands);
+    fixCommandsInArray(this.plugin.settings.followingCommands);
+    fixCommandsInArray(this.plugin.settings.topCommands);
+    fixCommandsInArray(this.plugin.settings.fixedCommands);
+    fixCommandsInArray(this.plugin.settings.mobileCommands);
   }
 
   // 恢复备份
@@ -484,322 +606,22 @@ export class ImportExportModal extends Modal {
     this.plugin.settings.mobileCommands = backup.mobileCommands;
   }
 
-  // 覆盖导入
-  overwriteImport(importData: any) {
-    try {
-      // 创建备份
-      const backup = {
-        positionStyle: this.plugin.settings.positionStyle,
-        menuCommands: [...this.plugin.settings.menuCommands],
-        customCommands: [...this.plugin.settings.customCommands],
-        followingCommands: [...this.plugin.settings.followingCommands],
-        topCommands: [...this.plugin.settings.topCommands],
-        fixedCommands: [...this.plugin.settings.fixedCommands],
-        mobileCommands: [...this.plugin.settings.mobileCommands]
-      };
-
-      // 检测导入的是什么类型的配置
-      const isFullConfig = 'positionStyle' in importData; // 全部配置包含positionStyle
-      const hasCommands = 'menuCommands' in importData;
-      const hasCustomCommands = 'customCommands' in importData;
-      const hasFollowingCommands = 'followingCommands' in importData;
-      const hasTopCommands = 'topCommands' in importData;
-      const hasFixedCommands = 'fixedCommands' in importData;
-      const hasMobileCommands = 'mobileCommands' in importData;
-      
-      // 确定导入的具体类型
-      let importType = 'unknown';
-      if (isFullConfig) {
-        importType = 'all';
-      } else if (hasCustomCommands && !hasCommands && !hasFollowingCommands && !hasTopCommands && !hasFixedCommands && !hasMobileCommands) {
-        importType = 'custom';
-      } else if (hasCommands && !hasCustomCommands && !hasFollowingCommands && !hasTopCommands && !hasFixedCommands && !hasMobileCommands) {
-        importType = 'commands';
-      } else if (hasFollowingCommands && !hasCommands && !hasCustomCommands && !hasTopCommands && !hasFixedCommands && !hasMobileCommands) {
-        importType = 'following';
-      } else if (hasTopCommands && !hasCommands && !hasCustomCommands && !hasFollowingCommands && !hasFixedCommands && !hasMobileCommands) {
-        importType = 'top';
-      } else if (hasFixedCommands && !hasCommands && !hasCustomCommands && !hasFollowingCommands && !hasTopCommands && !hasMobileCommands) {
-        importType = 'fixed';
-      } else if (hasMobileCommands && !hasCommands && !hasCustomCommands && !hasFollowingCommands && !hasTopCommands && !hasFixedCommands) {
-        importType = 'mobile';
-      } else if (hasCommands || hasFollowingCommands || hasTopCommands || hasFixedCommands || hasMobileCommands) {
-        importType = 'commands';
-      }
-      
-      console.log(`覆盖导入配置类型: ${importType}`);
-
-      // 根据导入类型执行不同的导入操作
-      if (importType === 'all') {
-        // 导入全部配置
-        if (importData.positionStyle) {
-          this.plugin.settings.positionStyle = importData.positionStyle;
-        }
-        if (importData.menuCommands) {
-          this.plugin.settings.menuCommands = importData.menuCommands;
-        }
-        if (importData.customCommands) {
-          this.plugin.settings.customCommands = importData.customCommands;
-        }
-        if (importData.followingCommands) {
-          this.plugin.settings.followingCommands = importData.followingCommands;
-        }
-        if (importData.topCommands) {
-          this.plugin.settings.topCommands = importData.topCommands;
-        }
-        if (importData.fixedCommands) {
-          this.plugin.settings.fixedCommands = importData.fixedCommands;
-        }
-        if (importData.mobileCommands) {
-          this.plugin.settings.mobileCommands = importData.mobileCommands;
-        }
-        new Notice(t('Configuration imported successfully (Overwrite mode)'));
-      } else if (importType === 'custom') {
-        // 仅导入自定义命令
-        if (importData.customCommands) {
-          this.plugin.settings.customCommands = importData.customCommands;
-        }
-        new Notice(t('Configuration imported successfully (Overwrite mode)') + ' - ' + t('Custom Commands Only'));
-      } else if (importType === 'commands') {
-        // 仅导入菜单命令
-        if (importData.menuCommands) {
-          this.plugin.settings.menuCommands = importData.menuCommands;
-        }
-        new Notice(t('Configuration imported successfully (Overwrite mode)') + ' - ' + t('Toolbar Commands Only'));
-      } else if (importType === 'following') {
-        // 仅导入跟随样式命令
-        if (importData.followingCommands) {
-          this.plugin.settings.followingCommands = importData.followingCommands;
-        }
-        new Notice(t('Configuration imported successfully (Overwrite mode)') + ' - ' + t('Following Style Only'));
-      } else if (importType === 'top') {
-        // 仅导入顶部样式命令
-        if (importData.topCommands) {
-          this.plugin.settings.topCommands = importData.topCommands;
-        }
-        new Notice(t('Configuration imported successfully (Overwrite mode)') + ' - ' + t('Top Style Only'));
-      } else if (importType === 'fixed') {
-        // 仅导入固定样式命令
-        if (importData.fixedCommands) {
-          this.plugin.settings.fixedCommands = importData.fixedCommands;
-        }
-        new Notice(t('Configuration imported successfully (Overwrite mode)') + ' - ' + t('Fixed Style Only'));
-      } else if (importType === 'mobile') {
-        // 仅导入移动样式命令
-        if (importData.mobileCommands) {
-          this.plugin.settings.mobileCommands = importData.mobileCommands;
-        }
-        new Notice(t('Configuration imported successfully (Overwrite mode)') + ' - ' + t('Mobile Style Only'));
-      } else {
-        // 未知类型，恢复备份
-        this.restoreBackup(backup);
-        new Notice(t('Error:') + ' ' + 'Unknown import type');
-        return;
-      }
-
-      // 保存设置
-      this.plugin.saveSettings();
-      this.close();
-    } catch (error) {
-      console.error('导入失败:', error);
-      new Notice(t('Error:') + ' ' + error.message);
-    }
-  }
-
-  // 更新导入 - 保留现有设置，仅更新导入的设置
-  updateImport(importData: any) {
-    try {
-      // 创建备份
-      const backup = {
-        positionStyle: this.plugin.settings.positionStyle,
-        menuCommands: [...this.plugin.settings.menuCommands],
-        customCommands: [...this.plugin.settings.customCommands],
-        followingCommands: [...this.plugin.settings.followingCommands],
-        topCommands: [...this.plugin.settings.topCommands],
-        fixedCommands: [...this.plugin.settings.fixedCommands],
-        mobileCommands: [...this.plugin.settings.mobileCommands]
-      };
-
-      // 检测导入的是什么类型的配置
-      const isFullConfig = 'positionStyle' in importData; // 全部配置包含positionStyle
-      const hasCommands = 'menuCommands' in importData;
-      const hasCustomCommands = 'customCommands' in importData;
-      const hasFollowingCommands = 'followingCommands' in importData;
-      const hasTopCommands = 'topCommands' in importData;
-      const hasFixedCommands = 'fixedCommands' in importData;
-      const hasMobileCommands = 'mobileCommands' in importData;
-      
-      // 确定导入的具体类型
-      let importType = 'unknown';
-      if (isFullConfig) {
-        importType = 'all';
-      } else if (hasCustomCommands && !hasCommands && !hasFollowingCommands && !hasTopCommands && !hasFixedCommands && !hasMobileCommands) {
-        importType = 'custom';
-      } else if (hasCommands && !hasCustomCommands && !hasFollowingCommands && !hasTopCommands && !hasFixedCommands && !hasMobileCommands) {
-        importType = 'commands';
-      } else if (hasFollowingCommands && !hasCommands && !hasCustomCommands && !hasTopCommands && !hasFixedCommands && !hasMobileCommands) {
-        importType = 'following';
-      } else if (hasTopCommands && !hasCommands && !hasCustomCommands && !hasFollowingCommands && !hasFixedCommands && !hasMobileCommands) {
-        importType = 'top';
-      } else if (hasFixedCommands && !hasCommands && !hasCustomCommands && !hasFollowingCommands && !hasTopCommands && !hasMobileCommands) {
-        importType = 'fixed';
-      } else if (hasMobileCommands && !hasCommands && !hasCustomCommands && !hasFollowingCommands && !hasTopCommands && !hasFixedCommands) {
-        importType = 'mobile';
-      } else if (hasCommands || hasFollowingCommands || hasTopCommands || hasFixedCommands || hasMobileCommands) {
-        importType = 'commands';
-      }
-      
-      console.log(`更新导入配置类型: ${importType}`);
-
-      let hasUpdates = false;
-
-      // 根据导入类型执行不同的导入操作
-      if (importType === 'all') {
-        // 更新全部配置
-        if (importData.customCommands) {
-          this.updateCommandArray(this.plugin.settings.customCommands, importData.customCommands);
-          hasUpdates = true;
-        }
-        if (importData.menuCommands) {
-          this.updateCommandArray(this.plugin.settings.menuCommands, importData.menuCommands);
-          hasUpdates = true;
-        }
-        if (importData.followingCommands) {
-          this.updateCommandArray(this.plugin.settings.followingCommands, importData.followingCommands);
-          hasUpdates = true;
-        }
-        if (importData.topCommands) {
-          this.updateCommandArray(this.plugin.settings.topCommands, importData.topCommands);
-          hasUpdates = true;
-        }
-        if (importData.fixedCommands) {
-          this.updateCommandArray(this.plugin.settings.fixedCommands, importData.fixedCommands);
-          hasUpdates = true;
-        }
-        if (importData.mobileCommands) {
-          this.updateCommandArray(this.plugin.settings.mobileCommands, importData.mobileCommands);
-          hasUpdates = true;
-        }
-      } else if (importType === 'custom') {
-        // 仅更新自定义命令
-        if (importData.customCommands) {
-          this.updateCommandArray(this.plugin.settings.customCommands, importData.customCommands);
-          hasUpdates = true;
-        }
-      } else if (importType === 'commands') {
-        // 仅更新菜单命令
-        if (importData.menuCommands) {
-          this.updateCommandArray(this.plugin.settings.menuCommands, importData.menuCommands);
-          hasUpdates = true;
-        }
-      } else if (importType === 'following') {
-        // 仅更新跟随样式命令
-        if (importData.followingCommands) {
-          this.updateCommandArray(this.plugin.settings.followingCommands, importData.followingCommands);
-          hasUpdates = true;
-        }
-      } else if (importType === 'top') {
-        // 仅更新顶部样式命令
-        if (importData.topCommands) {
-          this.updateCommandArray(this.plugin.settings.topCommands, importData.topCommands);
-          hasUpdates = true;
-        }
-      } else if (importType === 'fixed') {
-        // 仅更新固定样式命令
-        if (importData.fixedCommands) {
-          this.updateCommandArray(this.plugin.settings.fixedCommands, importData.fixedCommands);
-          hasUpdates = true;
-        }
-      } else if (importType === 'mobile') {
-        // 仅更新移动样式命令
-        if (importData.mobileCommands) {
-          this.updateCommandArray(this.plugin.settings.mobileCommands, importData.mobileCommands);
-          hasUpdates = true;
-        }
-      } else {
-        // 未知类型，恢复备份
-        this.restoreBackup(backup);
-        new Notice(t('Error:') + ' ' + 'Unknown import type');
-        return;
-      }
-
-      if (hasUpdates) {
-        // 保存设置
-        this.plugin.saveSettings();
-        
-        // 根据导入的配置类型显示不同的成功消息
-        if (importType === 'all') {
-          new Notice(t('Configuration imported successfully (Update mode)'));
-        } else if (importType === 'custom') {
-          new Notice(t('Configuration imported successfully (Update mode)') + ' - ' + t('Custom Commands Only'));
-        } else if (importType === 'commands') {
-          new Notice(t('Configuration imported successfully (Update mode)') + ' - ' + t('Toolbar Commands Only'));
-        } else if (importType === 'following') {
-          new Notice(t('Configuration imported successfully (Update mode)') + ' - ' + t('Following Style Only'));
-        } else if (importType === 'top') {
-          new Notice(t('Configuration imported successfully (Update mode)') + ' - ' + t('Top Style Only'));
-        } else if (importType === 'fixed') {
-          new Notice(t('Configuration imported successfully (Update mode)') + ' - ' + t('Fixed Style Only'));
-        } else if (importType === 'mobile') {
-          new Notice(t('Configuration imported successfully (Update mode)') + ' - ' + t('Mobile Style Only'));
-        }
-        
-        this.close();
-      } else {
-        new Notice(t('No valid configuration found in import data'));
-      }
-    } catch (error) {
-      console.error('导入失败:', error);
-      new Notice(t('Error:') + ' ' + error.message);
-    }
-  }
-
-  // 辅助方法：更新命令数组
-  private updateCommandArray(targetArray: any[], sourceArray: any[]) {
-    if (!targetArray) {
-      return sourceArray ? sourceArray.slice() : [];
-    }
-
-    if (!sourceArray || !Array.isArray(sourceArray)) {
-      return targetArray;
-    }
-
-    // 遍历导入的命令
-    sourceArray.forEach((importedCommand: any) => {
-      if (!importedCommand || !importedCommand.id) return;
-      
-      // 检查命令是否已存在
-      const existingCommandIndex = targetArray.findIndex(
-        cmd => cmd && cmd.id === importedCommand.id
-      );
-
-      if (existingCommandIndex >= 0) {
-        // 更新现有命令
-        const updatedCommand = { ...targetArray[existingCommandIndex], ...importedCommand };
-        
-        // 特殊处理子菜单命令
-        if (importedCommand.SubmenuCommands) {
-          if (!updatedCommand.SubmenuCommands) {
-            updatedCommand.SubmenuCommands = [];
-          }
-          updatedCommand.SubmenuCommands = this.updateCommandArray(
-            updatedCommand.SubmenuCommands,
-            importedCommand.SubmenuCommands
-          );
-        }
-        
-        targetArray[existingCommandIndex] = updatedCommand;
-      } else {
-        // 添加新命令
-        targetArray.push(importedCommand);
-      }
-    });
-
-    return targetArray;
-  }
-
   onClose() {
     const { contentEl } = this;
     contentEl.empty();
+  }
+
+  // 获取位置样式的显示名称
+  getPositionStyleName(style: string): string {
+    switch (style) {
+      case 'following':
+        return t('Following Style');
+      case 'top':
+        return t('Top Style');
+      case 'fixed':
+        return t('Fixed Style');
+      default:
+        return style;
+    }
   }
 } 

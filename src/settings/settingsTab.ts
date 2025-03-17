@@ -417,102 +417,149 @@ export class editingToolbarSettingTab extends PluginSettingTab {
 
       const commandsArray = this.getCommandsArrayByType(currentConfigType);
       const buttonContainer = containerEl.createDiv('command-buttons-container');
+    
+    
+      buttonContainer.style.display = 'flex';
+      buttonContainer.style.flexDirection = 'column';
+      buttonContainer.style.gap = '10px';
       buttonContainer.style.marginBottom = '1rem';
-      // 如果当前配置为空或不存在，添加初始化按钮
-      if (!commandsArray || commandsArray.length === 0) {
-        new Setting(buttonContainer)
-          .setName(t('Initialize Commands'))
-          .setDesc(t('Initialize commands to default settings'))
-          .addButton(button => button
-            .setButtonText(t('Initialize Commands'))
-            .onClick(async () => {
-              // 根据当前配置类型初始化命令
-              switch (currentConfigType) {
-                case 'following':
-                  this.plugin.settings.followingCommands = [...this.plugin.settings.menuCommands];
-                  break;
-                case 'top':
-                  this.plugin.settings.topCommands = [...this.plugin.settings.menuCommands];
-                  break;
-                case 'fixed':
-                  this.plugin.settings.fixedCommands = [...this.plugin.settings.menuCommands];
-                  break;
-                case 'mobile':
-                  this.plugin.settings.mobileCommands = [...this.plugin.settings.menuCommands];
-                  break;
-              }
-
-              await this.plugin.saveSettings();
-              new Notice(t('Commands initialized successfully'));
-              this.display();
-            })
-          );
-      } else {
-        // 如果已有配置，提供重置按钮
-        // 如果已有配置，提供重置和删除按钮
-        const buttonSetting = new Setting(buttonContainer)
-          .setName(t('Manage Commands'))
-          .setDesc(t('Reset or clear all commands in this configuration'))
-          .addButton(button => button
-            .setButtonText(t('Reset Commands'))
-            .setWarning()
-            .onClick(async () => {
-              // 添加确认对话框
-              if (confirm(t('Are you sure you want to reset the current configuration?'))) {
-                // 根据当前配置类型重置命令
-                switch (currentConfigType) {
-                  case 'following':
-                    this.plugin.settings.followingCommands = [...this.plugin.settings.menuCommands];
-                    break;
-                  case 'top':
-                    this.plugin.settings.topCommands = [...this.plugin.settings.menuCommands];
-                    break;
-                  case 'fixed':
-                    this.plugin.settings.fixedCommands = [...this.plugin.settings.menuCommands];
-                    break;
-                  case 'mobile':
-                    this.plugin.settings.mobileCommands = [...this.plugin.settings.menuCommands];
-                    break;
-                }
-
-                await this.plugin.saveSettings();
-                new Notice(t('Commands reset successfully'));
-                this.display();
-              }
-            })
-          );
-        // 添加删除全部按钮
-        buttonSetting.addButton(button => button
-          .setButtonText(t('Clear All Commands'))
-          .setTooltip(t('Remove all commands from this configuration'))
-          .setWarning()
-          .onClick(async () => {
-            // 添加确认对话框
-            if (confirm(t('Are you sure you want to clear all commands under the current style?'))) {
-              // 根据当前配置类型清空命令
-              switch (currentConfigType) {
-                case 'following':
-                  this.plugin.settings.followingCommands = [];
-                  break;
-                case 'top':
-                  this.plugin.settings.topCommands = [];
-                  break;
-                case 'fixed':
-                  this.plugin.settings.fixedCommands = [];
-                  break;
-                case 'mobile':
-                  this.plugin.settings.mobileCommands = [];
-                  break;
-              }
-
-              await this.plugin.saveSettings();
-              new Notice(t('Current style commands have been cleared'));
-              this.display();
+      
+      // 添加命令导入设置
+      const importSetting = new Setting(buttonContainer)
+        .setName(t('Import From'))
+        .setDesc(t('Copy commands from another style configuration'));
+      
+      // 添加源样式选择下拉菜单
+      let selectedSourceStyle = 'Main menu'; // 默认从主菜单导入
+      const configSwitcher = new Setting(buttonContainer)
+     
+      configSwitcher.addDropdown(dropdown => {
+        // 添加所有可用的样式选项，排除当前样式
+        dropdown.addOption('Main menu', 'Main Menu Commands');
+        
+        if (currentConfigType !== 'following' && this.plugin.settings.followingCommands) {
+          dropdown.addOption('following', t('Following Style'));
+        }
+        
+        if (currentConfigType !== 'top' && this.plugin.settings.topCommands) {
+          dropdown.addOption('top', t('Top Style'));
+        }
+        
+        if (currentConfigType !== 'fixed' && this.plugin.settings.fixedCommands) {
+          dropdown.addOption('fixed', t('Fixed Style'));
+        }
+        
+        if (currentConfigType !== 'mobile' && this.plugin.settings.mobileCommands) {
+          dropdown.addOption('mobile', t('Mobile Style'));
+        }
+        
+        dropdown.setValue(selectedSourceStyle)
+          .onChange(value => {
+            selectedSourceStyle = value;
+          });
+      });
+      configSwitcher.addExtraButton(button => button
+        .setIcon('arrow-right')
+      );
+      // 添加导入按钮
+      configSwitcher.addButton(button => button
+        .setButtonText(this.currentEditingConfig.replace(this.currentEditingConfig[0],this.currentEditingConfig[0].toUpperCase()) + ' ' + t('Import'))
+        .setTooltip('Copy commands from selected style')
+        .onClick(async () => {
+          // 获取源样式的命令数组
+          const sourceCommands = this.getCommandsArrayByType(selectedSourceStyle);
+          
+          if (!sourceCommands || sourceCommands.length === 0) {
+            new Notice('The selected style has no commands to import');
+            return;
+          }
+          
+          // 确认对话框
+          const confirmMessage = 
+            'Import commands from' + ' ' + `"${selectedSourceStyle}"` + ' to ' + `"${this.currentEditingConfig}" ` + t(`configuration`) + '?'
+            ;
+          
+          if (confirm(confirmMessage)) {
+            // 根据当前配置类型导入命令
+            switch (currentConfigType) {
+              case 'Main menu':
+                this.plugin.settings.menuCommands = [...sourceCommands];
+                break;
+              case 'following':
+                this.plugin.settings.followingCommands = [...sourceCommands];
+                break;
+              case 'top':
+                this.plugin.settings.topCommands = [...sourceCommands];
+                break;
+              case 'fixed':
+                this.plugin.settings.fixedCommands = [...sourceCommands];
+                break;
+              case 'mobile':
+                this.plugin.settings.mobileCommands = [...sourceCommands];
+                break;
             }
-          })
-        );
-      }
+            
+            await this.plugin.saveSettings();
+            new Notice('Commands imported successfully from' + ' ' + `"${selectedSourceStyle}"` + ' to ' + `"${this.currentEditingConfig}" ` + t(`configuration`));
+            this.display();
+          }
+        })
+      );
 
+       // 添加清除按钮（如果当前配置有命令）
+       importSetting.addButton(button => button
+        .setButtonText(t('Clear') + ' ' + `${this.currentEditingConfig}`)
+        .setTooltip(t('Remove all commands from this configuration'))
+        .setWarning()
+        .onClick(async () => {
+          // 添加确认对话框
+          if (confirm(t('Are you sure you want to clear all commands under the current style?'))) {
+            // 根据当前配置类型清空命令
+            switch (currentConfigType) {
+              case 'following':
+                this.plugin.settings.followingCommands = [];
+                break;
+              case 'top':
+                this.plugin.settings.topCommands = [];
+                break;
+              case 'fixed':
+                this.plugin.settings.fixedCommands = [];
+                break;
+              case 'mobile':
+                this.plugin.settings.mobileCommands = [];
+                break;
+            }
+            await this.plugin.saveSettings();
+            new Notice('All commands have been removed');
+            this.display();
+          }
+        })
+      );
+    
+  
+
+    } else
+    {
+      const buttonContainer = containerEl.createDiv('command-buttons-container');
+      buttonContainer.style.display = 'flex';
+      buttonContainer.style.flexDirection = 'column';
+      buttonContainer.style.gap = '10px';
+      buttonContainer.style.marginBottom = '1rem';
+      const clearButton = new Setting(buttonContainer)
+      clearButton.addButton(button => button
+        .setButtonText(t('One-click clear'))
+        .setTooltip(t('Remove all commands from this configuration'))
+        .setWarning()
+        .onClick(async () => {
+          // 添加确认对话框
+          if (confirm(t('Are you sure you want to clear all commands under the current style?'))) {
+            this.plugin.settings.menuCommands = [];
+            await this.plugin.saveSettings();
+            new Notice('All commands have been removed');
+            this.display();
+          }
+        })
+      );
     }
     // 添加当前正在编辑的配置提示
     if (this.plugin.settings.enableMultipleConfig) {
