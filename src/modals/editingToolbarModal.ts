@@ -385,6 +385,7 @@ export function createFollowingbar(app: App, settings: editingToolbarSettings, e
   let editingToolbarModalBar = isExistoolbar(app, settings);
 
   const view = app.workspace.getActiveViewOfType(ItemView);
+  // 如果视图类型不在允许列表中，隐藏工具栏后返回
   if (!ViewUtils.isAllowedViewType(view)) {
     if (editingToolbarModalBar) {
       editingToolbarModalBar.style.visibility = "hidden";
@@ -392,49 +393,70 @@ export function createFollowingbar(app: App, settings: editingToolbarSettings, e
     return;
   }
 
-  if (ViewUtils.isSourceMode(view)) {
-    if (editingToolbarModalBar) {
-      // const editor = app.workspace.activeLeaf.view?.editor;
+  // 获取视图类型，只有当settings.positionStyle为"following"时才执行特殊逻辑
+  if (settings.positionStyle === "following") {
+    const viewType = view?.getViewType();
+    const isMarkdownView = viewType === 'markdown';
+    
+    // 如果是Markdown视图
+    if (isMarkdownView) {
+      // 如果是源码模式
+      if (ViewUtils.isSourceMode(view)) {
+        if (editingToolbarModalBar) {
+          // 在源码模式下，只有选中文本时才显示工具栏
+          editingToolbarModalBar.style.visibility = editor.somethingSelected() ? "visible" : "hidden";
+          editingToolbarModalBar.style.height = (settings.aestheticStyle === "tiny") ? 30 + "px" : 40 + "px";
+          editingToolbarModalBar.addClass("editingToolbarFlex");
+          editingToolbarModalBar.removeClass("editingToolbarGrid");
 
-      editingToolbarModalBar.style.visibility = editor.somethingSelected() ? "visible" : "hidden";
-      editingToolbarModalBar.style.height = (settings.aestheticStyle === "tiny") ? 30 + "px" : 40 + "px";
-      editingToolbarModalBar.addClass("editingToolbarFlex");
-      editingToolbarModalBar.removeClass("editingToolbarGrid");
+          if (editingToolbarModalBar.style.visibility === "visible") {
+            // 计算工具栏位置
+            const editorRect = editor.containerEl.getBoundingClientRect();
+            const toolbarWidth = editingToolbarModalBar.offsetWidth;
+            const toolbarHeight = editingToolbarModalBar.offsetHeight;
+            const coords = getCoords(editor);
+            const isSelectionFromBottomToTop = editor.getCursor("head").ch == editor.getCursor("from").ch;
+            const rightMargin = 12;
 
-      if (editingToolbarModalBar.style.visibility === "visible") {
+            const sideDockWidth = activeDocument.getElementsByClassName("mod-left-split")[0]?.clientWidth ?? 0;
+            const sideDockRibbonWidth = activeDocument.getElementsByClassName("side-dock-ribbon mod-left")[0]?.clientWidth ?? 0;
+            const leftSideDockWidth = sideDockWidth + sideDockRibbonWidth;
 
-        const editorRect = editor.containerEl.getBoundingClientRect();
-        const toolbarWidth = editingToolbarModalBar.offsetWidth;
-        const toolbarHeight = editingToolbarModalBar.offsetHeight;
-        const coords = getCoords(editor);
-        const isSelectionFromBottomToTop = editor.getCursor("head").ch == editor.getCursor("from").ch;
-        const rightMargin = 12;
+            let leftPosition = coords.left - leftSideDockWidth;
+            if (leftPosition + toolbarWidth + rightMargin >= editorRect.right)
+              leftPosition = Math.max(0, editorRect.right - toolbarWidth - leftSideDockWidth - rightMargin);
 
-        const sideDockWidth = activeDocument.getElementsByClassName("mod-left-split")[0]?.clientWidth ?? 0;
-        const sideDockRibbonWidth = activeDocument.getElementsByClassName("side-dock-ribbon mod-left")[0]?.clientWidth ?? 0;
-        const leftSideDockWidth = sideDockWidth + sideDockRibbonWidth;
+            let topPosition = 0;
 
-        let leftPosition = coords.left - leftSideDockWidth;
-        if (leftPosition + toolbarWidth + rightMargin >= editorRect.right)
-          leftPosition = Math.max(0, editorRect.right - toolbarWidth - leftSideDockWidth - rightMargin);
+            if (isSelectionFromBottomToTop) {
+              topPosition = coords.top - toolbarHeight - 10;
+              if (topPosition <= editorRect.top) topPosition = editorRect.top + toolbarHeight;
+            } else {
+              topPosition = coords.top + 25;
+              if (topPosition >= editorRect.bottom - toolbarHeight) topPosition = editorRect.bottom - 2 * toolbarHeight;
+            }
 
-        let topPosition = 0;
-
-        if (isSelectionFromBottomToTop) {
-          topPosition = coords.top - toolbarHeight - 10;
-          if (topPosition <= editorRect.top) topPosition = editorRect.top + toolbarHeight;
-        } else {
-          topPosition = coords.top + 25;
-          if (topPosition >= editorRect.bottom - toolbarHeight) topPosition = editorRect.bottom - 2 * toolbarHeight;
+            editingToolbarModalBar.style.left = leftPosition + "px";
+            editingToolbarModalBar.style.top = topPosition + "px";
+          }
         }
-
-        editingToolbarModalBar.style.left = leftPosition + "px";
-        editingToolbarModalBar.style.top = topPosition + "px";
+      } else {
+        // 在阅读模式下隐藏工具栏
+        if (editingToolbarModalBar) {
+          editingToolbarModalBar.style.visibility = "hidden";
+        }
+      }
+    } else {
+      // 对于其他视图类型（canvas等），保持工具栏可见
+      if (editingToolbarModalBar) {
+        editingToolbarModalBar.style.visibility = "visible";
+        editingToolbarModalBar.style.height = (settings.aestheticStyle === "tiny") ? 30 + "px" : 40 + "px";
+        editingToolbarModalBar.addClass("editingToolbarFlex");
+        editingToolbarModalBar.removeClass("editingToolbarGrid");
       }
     }
-  } else {
-    editingToolbarModalBar.style.visibility = "hidden";
   }
+  // 对于非following样式的工具栏，逻辑由handleeditingToolbar和handleeditingToolbar_layout处理
 }
 
 export function editingToolbarPopover(app: App, plugin: editingToolbarPlugin): void {
@@ -494,9 +516,9 @@ export function editingToolbarPopover(app: App, plugin: editingToolbarPlugin): v
         const markdownDom = currentleaf?.querySelector<HTMLElement>(".markdown-source-view");
         const canvasDom = currentleaf?.querySelector<HTMLElement>(".canvas-wrapper");
         const excalidrawDom = currentleaf?.querySelector<HTMLElement>(".excalidraw-wrapper");
-
+        const imageDom = currentleaf?.querySelector<HTMLElement>(".image-container");
         // 确定要插入工具栏的目标元素
-        const targetDom = markdownDom || canvasDom || excalidrawDom;
+        const targetDom = markdownDom || canvasDom || excalidrawDom || imageDom;
 
         if (!targetDom) return;
 

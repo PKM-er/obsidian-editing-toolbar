@@ -223,24 +223,52 @@ export default class editingToolbarPlugin extends Plugin {
   }
 
   handleeditingToolbar = () => {
-
     if (this.settings.cMenuVisibility == true) {
       const view = this.app.workspace.getActiveViewOfType(ItemView);
-
       let toolbar = isExistoolbar(this.app, this.settings);
 
-      if (toolbar) {
-        if (!ViewUtils.isAllowedViewType(view)) {
+      // 如果视图类型不在允许列表中，隐藏工具栏后返回
+      if (!ViewUtils.isAllowedViewType(view)) {
+        if (toolbar) {
           toolbar.style.visibility = "hidden";
           return;
         }
+      }
 
-        if (this.settings.positionStyle != "following") {
-          toolbar.style.visibility = "visible";
+      // 获取视图类型
+      const viewType = view?.getViewType();
+      const isMarkdownView = viewType === 'markdown';
+      
+      // 如果是Markdown视图
+      if (isMarkdownView) {
+        // 如果是源码模式
+        if (ViewUtils.isSourceMode(view)) {
+          // 对于following样式，保持隐藏状态（等待用户选择文本时显示）
+          if (this.settings.positionStyle === "following") {
+            if (toolbar) {
+              toolbar.style.visibility = "hidden";
+            }
+          } else {
+            // 非following样式下，在源码模式中保持工具栏可见
+            if (toolbar) {
+              toolbar.style.visibility = "visible";
+            }
+          }
         } else {
-          toolbar.style.visibility = "hidden";
+          // 在Markdown阅读模式下，隐藏工具栏
+          if (toolbar) {
+            toolbar.style.visibility = "hidden";
+          }
         }
       } else {
+        // 对于其他允许的视图类型（canvas等），保持工具栏可见
+        if (toolbar) {
+          toolbar.style.visibility = "visible";
+        }
+      }
+
+      // 如果没有找到工具栏，创建一个
+      if (!toolbar) {
         setTimeout(() => {
           editingToolbarPopover(this.app, this);
         }, 100);
@@ -254,17 +282,48 @@ export default class editingToolbarPlugin extends Plugin {
     const view = this.app.workspace.getActiveViewOfType(ItemView);
     let editingToolbarModalBar = isExistoolbar(this.app, this.settings);
 
-    if (!ViewUtils.isSourceMode(view) || !ViewUtils.isAllowedViewType(view)) {
+    // 如果视图类型不在允许列表中，隐藏工具栏后返回
+    if (!ViewUtils.isAllowedViewType(view)) {
       if (editingToolbarModalBar) {
         editingToolbarModalBar.style.visibility = "hidden";
       }
       return;
     }
 
-    if (editingToolbarModalBar) {
-      editingToolbarModalBar.style.visibility =
-        this.settings.positionStyle == "following" ? "hidden" : "visible";
+    // 获取视图类型
+    const viewType = view?.getViewType();
+    const isMarkdownView = viewType === 'markdown';
+    
+    // 如果是Markdown视图
+    if (isMarkdownView) {
+      // 如果是源码模式
+      if (ViewUtils.isSourceMode(view)) {
+        // 对于following样式，保持当前逻辑（隐藏工具栏，等待选择文本时显示）
+        if (this.settings.positionStyle === "following") {
+          if (editingToolbarModalBar) {
+            editingToolbarModalBar.style.visibility = "hidden";
+          }
+        } else {
+          // 非following样式下，在源码模式中保持工具栏可见
+          if (editingToolbarModalBar) {
+            editingToolbarModalBar.style.visibility = "visible";
+          }
+        }
+      } else {
+        // 在Markdown阅读模式下，隐藏工具栏
+        if (editingToolbarModalBar) {
+          editingToolbarModalBar.style.visibility = "hidden";
+        }
+      }
     } else {
+      // 对于其他允许的视图类型（canvas等），保持工具栏可见
+      if (editingToolbarModalBar) {
+        editingToolbarModalBar.style.visibility = "visible";
+      }
+    }
+
+    // 如果没有找到工具栏，创建一个
+    if (!editingToolbarModalBar) {
       setTimeout(() => {
         editingToolbarPopover(this.app, this);
       }, 100);
