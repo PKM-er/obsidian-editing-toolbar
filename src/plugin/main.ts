@@ -92,14 +92,29 @@ export default class editingToolbarPlugin extends Plugin {
       });
     }
     const lastVersion = this.settings?.lastVersion || '0.0.0';
-    if (lastVersion !== currentVersion) {
-      // 显示更新提示
-      new UpdateNoticeModal(this.app, this).open();
-
-      // 更新版本号
-      this.settings.lastVersion = currentVersion;
-      await this.saveSettings();
+   
+    const parseVersion = (version: string) => {
+      const parts = version.split('.').map(p => parseInt(p));
+      return {
+        major: parts[0] || 0,
+        minor: parts[1] || 0,
+        patch: parts[2] || 0
+      };
+    };
+    const lastVer = parseVersion(lastVersion);
+    const currentVer = parseVersion(currentVersion);
+    const isNewInstall = lastVersion === '0.0.0';
+    const needUpdateNotice = 
+      !isNewInstall && 
+      (lastVer.major < 3 || 
+      (lastVer.major === 3 && lastVer.minor < 1));
+    if (needUpdateNotice) {
+      setTimeout(() => {
+        new UpdateNoticeModal(this.app, this).open();
+      }, 3000);
     }
+    this.settings.lastVersion = currentVersion;
+    await this.saveSettings();
 
     const isThinoEnabled = app.plugins.enabledPlugins.has("obsidian-memos");
     if (isThinoEnabled) {

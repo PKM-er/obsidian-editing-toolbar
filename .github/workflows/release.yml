@@ -43,7 +43,7 @@ jobs:
 
                   
                   # 使用 git log 获取提交信息，但过滤掉不需要的内容
-                  git log --pretty=format:"%s%n%b" $PREVIOUS_TAG..${{ steps.get_version.outputs.version }} | grep -v "^update changelog" | grep -v "^Update manifest.json and CHANGELOG.md for version" | grep -v "^$" > COMMITS.tmp
+                  git log --pretty=format:"### %s%n%b" $PREVIOUS_TAG..${{ steps.get_version.outputs.version }} | grep -v "^Update CHANGELOG.md" | grep -v "^Update manifest.json and CHANGELOG.md for version" | grep -v "^$" > COMMITS.tmp
                   
                   # 处理提交信息，去除重复标题
                   PREV_TITLE=""
