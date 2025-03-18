@@ -362,5 +362,10 @@ export default {
 'Do you want to continue?': 'Do you want to continue?',
 'Imported settings:': 'Imported settings:',
 'Imported commands:': 'Imported commands:',
-
+'Disable toolbar for this view': 'Disable toolbar for this view',
+'Enable toolbar for this view': 'Enable toolbar for this view',
+'Manage all view types': 'Manage all view types',
+'Current View: ': 'Current View: ',
+'Appearance Style': 'Appearance Style',
+'Position Settings': 'Position Settings',
 }

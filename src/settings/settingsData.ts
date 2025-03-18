@@ -65,6 +65,9 @@ export interface editingToolbarSettings {
     [key: string]: boolean;
   };
   customCommands: CustomCommand[];
+  viewTypeSettings?: {
+    [viewType: string]: boolean;
+  };
 }
 
 export const DEFAULT_SETTINGS: editingToolbarSettings = {
@@ -383,5 +386,6 @@ export const DEFAULT_SETTINGS: editingToolbarSettings = {
     horizontalPosition: 0,
     verticalPosition: 0,
     formatBrushes: {},
-    customCommands: []
+    customCommands: [],
+    viewTypeSettings: {}
   }

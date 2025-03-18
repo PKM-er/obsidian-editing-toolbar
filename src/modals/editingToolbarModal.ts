@@ -10,6 +10,16 @@ import { setFontcolor, setBackgroundcolor } from "src/util/util";
 
 let activeDocument: Document;
 
+// 定义视图类型到目标DOM选择器的映射
+const viewTypeToSelectorMap: { [key: string]: string } = {
+  markdown: ".markdown-source-view",
+  thino_view: ".markdown-source-view",
+  canvas: ".canvas-wrapper",
+  excalidraw: ".excalidraw-wrapper",
+  image: ".image-container",
+  pdf: ".view-content",
+};
+
 export function getRootSplits(): WorkspaceParentExt[] {
 
   const rootSplits: WorkspaceParentExt[] = [];
@@ -512,15 +522,32 @@ export function editingToolbarPopover(app: App, plugin: editingToolbarPlugin): v
       if (settings.positionStyle == "top") {
         let currentleaf = app.workspace.activeLeaf.view.containerEl;
 
-        // 尝试获取 markdown 视图或 canvas 视图，并指定为 HTMLElement 类型
-        const markdownDom = currentleaf?.querySelector<HTMLElement>(".markdown-source-view");
-        const canvasDom = currentleaf?.querySelector<HTMLElement>(".canvas-wrapper");
-        const excalidrawDom = currentleaf?.querySelector<HTMLElement>(".excalidraw-wrapper");
-        const imageDom = currentleaf?.querySelector<HTMLElement>(".image-container");
         // 确定要插入工具栏的目标元素
-        const targetDom = markdownDom || canvasDom || excalidrawDom || imageDom;
+        let targetDom: HTMLElement | null = null;
 
-        if (!targetDom) return;
+        // 获取当前视图类型
+        const viewType = app.workspace.activeLeaf.view.getViewType();
+
+        // 使用映射选择目标DOM
+        const selector = viewTypeToSelectorMap[viewType];
+        if (selector) {
+          targetDom = currentleaf?.querySelector<HTMLElement>(selector);
+        }
+
+        // 如果没有找到目标DOM，尝试查找view-content后的第一个div元素
+        if (!targetDom) {
+          const viewContent = currentleaf?.querySelector<HTMLElement>(".view-content");
+          if (viewContent) {
+            const childDivs = viewContent.querySelectorAll<HTMLElement>(":scope > div");
+            targetDom = childDivs.length > 0 ? childDivs[0] : viewContent;
+          }
+        }
+
+        // 如果没有找到任何目标元素，则退出
+        if (!targetDom) {
+          console.log("Editing Toolbar: Failed to find target DOM element for toolbar insertion");
+          return;
+        }
 
         // 只有在没有工具栏时才添加 PopoverMenu
         if (!currentleaf?.querySelector("#editingToolbarPopoverBar")) {

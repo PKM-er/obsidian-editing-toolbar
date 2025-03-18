@@ -367,4 +367,10 @@ export default {
   'ℹ️ Update mode will merge imported settings with existing ones.': 'ℹ️ 更新模式将合并导入的设置与现有的设置。',
   'Imported settings:': '导入的设置：',
   'Imported commands:': '导入的命令：',
+  'Disable toolbar for this view': '禁用此视图的工具栏',
+  'Enable toolbar for this view': '启用此视图的工具栏',
+  'Manage all view types': '管理所有视图类型',
+  'Current View: ': '当前视图：',
+  'Appearance Style': '外观样式',
+  'Position Settings': '位置设置',
 };
