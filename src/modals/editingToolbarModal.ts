@@ -453,9 +453,15 @@ function positionToolbar(toolbar: HTMLElement, editor: Editor) {
   const toolbarWidth = toolbar.offsetWidth;
   const toolbarHeight = toolbar.offsetHeight;
   const coords = getCoords(editor);
-  const isSelectionFromBottomToTop = editor.getCursor("head").ch == editor.getCursor("from").ch;
   const rightMargin = 12;
 
+  // 获取选择的起点和终点位置
+  const from = editor.getCursor("from");
+  const to = editor.getCursor("to");
+  
+  // 检查选择是否都在同一行
+  const isSingleLineSelection = from.line === to.line;
+  
   // 计算左侧位置
   const sideDockWidth = activeDocument.getElementsByClassName("mod-left-split")[0]?.clientWidth ?? 0;
   const sideDockRibbonWidth = activeDocument.getElementsByClassName("side-dock-ribbon mod-left")[0]?.clientWidth ?? 0;
@@ -468,12 +474,22 @@ function positionToolbar(toolbar: HTMLElement, editor: Editor) {
 
   // 计算顶部位置
   let topPosition = 0;
-  if (isSelectionFromBottomToTop) {
+  
+  if (isSingleLineSelection) {
+    // 单行选择：总是显示在上方
     topPosition = coords.top - toolbarHeight - 10;
     if (topPosition <= editorRect.top) topPosition = editorRect.top + toolbarHeight;
   } else {
-    topPosition = coords.top + 25;
-    if (topPosition >= editorRect.bottom - toolbarHeight) topPosition = editorRect.bottom - 2 * toolbarHeight;
+    // 多行选择：使用原来的逻辑
+    const isSelectionFromBottomToTop = editor.getCursor("head").ch == editor.getCursor("from").ch;
+    
+    if (isSelectionFromBottomToTop) {
+      topPosition = coords.top - toolbarHeight - 10;
+      if (topPosition <= editorRect.top) topPosition = editorRect.top + toolbarHeight;
+    } else {
+      topPosition = coords.top + 25;
+      if (topPosition >= editorRect.bottom - toolbarHeight) topPosition = editorRect.bottom - 2 * toolbarHeight;
+    }
   }
 
   // 设置位置
@@ -631,12 +647,19 @@ export function editingToolbarPopover(app: App, plugin: editingToolbarPlugin): v
 
                     app.commands.executeCommandById(subitem.id);
 
-                    if (settings.cMenuVisibility == false)
+                    // 检查命令执行后是否仍有文本选中
+                    const editor = plugin.commandsManager.getActiveEditor();
+                    const hasSelection = editor && editor.somethingSelected();
+
+                    if (settings.cMenuVisibility == false) {
                       editingToolbar.style.visibility = "hidden";
-                    else {
-                      if (settings.positionStyle == "following") {
+                    } else if (settings.positionStyle == "following") {
+                      // 只有在没有选中内容时才隐藏工具栏
+                      if (!hasSelection) {
                         editingToolbar.style.visibility = "hidden";
-                      } else editingToolbar.style.visibility = "visible";
+                      }
+                    } else {
+                      editingToolbar.style.visibility = "visible";
                     }
                   });
                 if (index < settings.cMenuNumRows) {
@@ -662,12 +685,20 @@ export function editingToolbarPopover(app: App, plugin: editingToolbarPlugin): v
               .onClick(() => {
 
                 app.commands.executeCommandById(item.id);
-                if (settings.cMenuVisibility == false)
+                
+                // 检查命令执行后是否仍有文本选中
+                const editor = plugin.commandsManager.getActiveEditor();
+                const hasSelection = editor && editor.somethingSelected();
+                
+                if (settings.cMenuVisibility == false) {
                   editingToolbar.style.visibility = "hidden";
-                else {
-                  if (settings.positionStyle == "following") {
+                } else if (settings.positionStyle == "following") {
+                  // 只有在没有选中内容时才隐藏工具栏
+                  if (!hasSelection) {
                     editingToolbar.style.visibility = "hidden";
-                  } else editingToolbar.style.visibility = "visible";
+                  }
+                } else {
+                  editingToolbar.style.visibility = "visible";
                 }
               });
             checkHtml(item.icon)
@@ -737,12 +768,20 @@ export function editingToolbarPopover(app: App, plugin: editingToolbarPlugin): v
               .onClick(() => {
 
                 app.commands.executeCommandById(item.id);
-                if (settings.cMenuVisibility == false)
+                
+                // 检查命令执行后是否仍有文本选中
+                const editor = plugin.commandsManager.getActiveEditor();
+                const hasSelection = editor && editor.somethingSelected();
+                
+                if (settings.cMenuVisibility == false) {
                   editingToolbar.style.visibility = "hidden";
-                else {
-                  if (settings.positionStyle == "following") {
+                } else if (settings.positionStyle == "following") {
+                  // 只有在没有选中内容时才隐藏工具栏
+                  if (!hasSelection) {
                     editingToolbar.style.visibility = "hidden";
-                  } else editingToolbar.style.visibility = "visible";
+                  }
+                } else {
+                  editingToolbar.style.visibility = "visible";
                 }
               });
             checkHtml(item.icon)
@@ -816,12 +855,20 @@ export function editingToolbarPopover(app: App, plugin: editingToolbarPlugin): v
             hotkey == "–" ? tip = item.name : tip = item.name + "(" + hotkey + ")";
             button.setTooltip(tip).onClick(() => {
               app.commands.executeCommandById(item.id);
-              if (settings.cMenuVisibility == false)
+              
+              // 检查命令执行后是否仍有文本选中
+              const editor = plugin.commandsManager.getActiveEditor();
+              const hasSelection = editor && editor.somethingSelected();
+              
+              if (settings.cMenuVisibility == false) {
                 editingToolbar.style.visibility = "hidden";
-              else {
-                if (settings.positionStyle == "following") {
+              } else if (settings.positionStyle == "following") {
+                // 只有在没有选中内容时才隐藏工具栏
+                if (!hasSelection) {
                   editingToolbar.style.visibility = "hidden";
-                } else editingToolbar.style.visibility = "visible";
+                }
+              } else {
+                editingToolbar.style.visibility = "visible";
               }
             });
 
