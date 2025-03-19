@@ -666,7 +666,7 @@ button[class^=editingToolbarCommandsubItem]::after {
   transition: all 0.2s linear;
   -webkit-transition: all 0.2s linear;
   transform: none;
-
+  z-index: var(--layer-status-bar);
 }
 #editingToolbarModalBar ~.excalidraw .FixedSideContainer_side_top
 {
@@ -1232,4 +1232,4 @@ body.auto-hide-header .workspace-tab-header-container + .workspace-tab-container
   gap: 10px;
   align-items: center;
 }
-
+ 

@@ -150,71 +150,104 @@ export default class editingToolbarPlugin extends Plugin {
     return true;
   }
   init_evt(container: Document, editor: Editor) {
+    // 重置状态
     this.EN_FontColor_Format_Brush = false;
     this.EN_BG_Format_Brush = false;
     this.EN_Text_Format_Brush = false;
     this.formatBrushActive = false;
 
-    this.registerDomEvent(container, "mouseup", async (e: { button: any; }) => {
-      if (e.button) {
-        if (this.EN_FontColor_Format_Brush || this.EN_BG_Format_Brush || this.EN_Text_Format_Brush || this.formatBrushActive) {
-          quiteFormatbrushes(this);
+    // 添加鼠标中键双击跟踪
+    let lastMiddleClickTime = 0;
+    
+    // 统一处理鼠标事件
+    this.registerDomEvent(container, "mousedown", (e: MouseEvent) => {
+      // 检查视图类型
+      if (!this.isView()) return;
+      
+      const cmEditor = this.commandsManager.getActiveEditor();
+      if (!cmEditor) return;
+      
+      const editingToolbarModalBar = isExistoolbar(this.app, this.settings);
+      
+      // 判断是否点击在工具栏外部
+      if (this.settings.positionStyle === "following" && editingToolbarModalBar) {
+        const isClickInsideToolbar = editingToolbarModalBar.contains(e.target as Node);
+        if (!isClickInsideToolbar) {
+          editingToolbarModalBar.style.visibility = "hidden";
         }
       }
-
-      if (!this.isView()) return;
-
-      let cmEditor = this.commandsManager.getActiveEditor();
-      if (cmEditor?.hasFocus()) {
-        let editingToolbarModalBar = isExistoolbar(this.app, this.settings);
-
-        if (cmEditor.getSelection() == null || cmEditor.getSelection() == "") {
-          if (editingToolbarModalBar && this.settings.positionStyle == "following")
-            editingToolbarModalBar.style.visibility = "hidden";
-          return
-        } else {
-          //   console.log(this.EN_FontColor_Format_Brush,'EN_FontColor_Format_Brush')
-          if (this.EN_FontColor_Format_Brush) {
-            setFontcolor(this.settings.cMenuFontColor, cmEditor);
-          } else if (this.EN_BG_Format_Brush) {
-            setBackgroundcolor(this.settings.cMenuBackgroundColor, cmEditor);
-          } else if (this.EN_Text_Format_Brush) {
-            setFormateraser(this, cmEditor);
-          } else if (this.formatBrushActive && this.lastExecutedCommand) {
-            // 应用最后执行的命令
-            this.applyFormatBrush(cmEditor);
-          } else if (this.settings.positionStyle == "following") {
-            createFollowingbar(this.app, this.settings, cmEditor);
+      
+      // 处理鼠标中键双击
+      if (e.button === 1) {
+        const currentTime = new Date().getTime();
+        if (currentTime - lastMiddleClickTime < 300) { // 300ms内的双击
+          if (this.settings.positionStyle === "following" && cmEditor.hasFocus()) {
+            this.showFollowingToolbar(cmEditor);
           }
         }
-      } else if (this.EN_FontColor_Format_Brush || this.EN_BG_Format_Brush || this.EN_Text_Format_Brush || this.formatBrushActive) {
+        lastMiddleClickTime = currentTime;
+      }
+      
+      // 处理格式刷
+      if (e.button && (this.EN_FontColor_Format_Brush || this.EN_BG_Format_Brush || 
+          this.EN_Text_Format_Brush || this.formatBrushActive)) {
         quiteFormatbrushes(this);
       }
     });
-
-    this.registerDomEvent(activeDocument, "keydown", (e) => {
-      if (this.settings.positionStyle !== "following") return;
-      const editingToolbarModalBar = isExistoolbar(this.app, this.settings);
-      if (!e.shiftKey && editingToolbarModalBar) editingToolbarModalBar.style.visibility = "hidden";
+    
+    // 处理鼠标选中文本
+    this.registerDomEvent(container, "mouseup", () => {
+      this.handleTextSelection();
     });
-
+    
+    // 处理键盘选中文本
+    this.registerDomEvent(container, "keyup", (e) => {
+      // 常用于选择文本的键：方向键、Shift、Home、End、PageUp、PageDown
+      const selectionKeys = [
+        "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight",
+        "Home", "End", "PageUp", "PageDown", "ShiftLeft", "ShiftRight"
+      ];
+      
+      if (selectionKeys.includes(e.code) || e.shiftKey) {
+        this.handleTextSelection();
+      } else if (!e.shiftKey && this.settings.positionStyle === "following") {
+        // 非Shift键按下时隐藏工具栏
+        const editingToolbarModalBar = isExistoolbar(this.app, this.settings);
+        if (editingToolbarModalBar) {
+          editingToolbarModalBar.style.visibility = "hidden";
+        }
+      }
+    });
+    
+    // 处理滚轮事件
     this.registerDomEvent(activeDocument, "wheel", () => {
       if (this.settings.positionStyle !== "following") return;
       const editingToolbarModalBar = isExistoolbar(this.app, this.settings);
-      if (editingToolbarModalBar) editingToolbarModalBar.style.visibility = "hidden";
+      if (editingToolbarModalBar) {
+        editingToolbarModalBar.style.visibility = "hidden";
+      }
     });
   }
 
   onunload(): void {
-    selfDestruct();
-    console.log("editingToolbar unloaded");
-
+    // 注销工作区事件
     this.app.workspace.off("active-leaf-change", this.handleeditingToolbar);
     this.app.workspace.off("layout-change", this.handleeditingToolbar_layout);
     this.app.workspace.off("resize", this.handleeditingToolbar_resize);
-
-
-
+    
+    // 移除格式刷通知
+    if (this.formatBrushNotice) {
+      this.formatBrushNotice.hide();
+      this.formatBrushNotice = null;
+    }
+    
+    // 清理格式刷相关状态
+    this.quiteAllFormatBrushes();
+    
+    // 销毁工具栏
+    selfDestruct();
+    
+    console.log("editingToolbar unloaded");
   }
 
   isView() {
@@ -520,5 +553,47 @@ export default class editingToolbarPlugin extends Plugin {
 
   public reloadCustomCommands(): void {
     this.commandsManager.reloadCustomCommands();
+  }
+
+  // 抽取文本选择的处理逻辑
+  private handleTextSelection() {
+    if (!this.isView()) return;
+    
+    const cmEditor = this.commandsManager.getActiveEditor();
+    if (!cmEditor?.hasFocus()) return;
+    
+    // 检查是否有选中的文本
+    if (cmEditor.getSelection()) {
+      const editingToolbarModalBar = isExistoolbar(this.app, this.settings);
+      
+      // 处理各种格式刷
+      if (this.EN_FontColor_Format_Brush) {
+        setFontcolor(this.settings.cMenuFontColor, cmEditor);
+      } else if (this.EN_BG_Format_Brush) {
+        setBackgroundcolor(this.settings.cMenuBackgroundColor, cmEditor);
+      } else if (this.EN_Text_Format_Brush) {
+        setFormateraser(this, cmEditor);
+      } else if (this.formatBrushActive && this.lastExecutedCommand) {
+        this.applyFormatBrush(cmEditor);
+      } else if (this.settings.positionStyle === "following") {
+        this.showFollowingToolbar(cmEditor);
+      }
+    }
+  }
+  
+  // 抽取显示工具栏的逻辑
+  private showFollowingToolbar(editor: Editor) {
+    const editingToolbarModalBar = isExistoolbar(this.app, this.settings);
+    
+    if (editingToolbarModalBar) {
+      editingToolbarModalBar.style.visibility = "visible";
+      editingToolbarModalBar.classList.add("editingToolbarFlex");
+      editingToolbarModalBar.classList.remove("editingToolbarGrid");
+      
+      // 直接使用createFollowingbar的定位逻辑
+      createFollowingbar(this.app, this.settings, editor, true);
+    } else {
+      createFollowingbar(this.app, this.settings, editor, true);
+    }
   }
 }

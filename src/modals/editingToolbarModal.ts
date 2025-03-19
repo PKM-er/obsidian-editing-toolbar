@@ -391,11 +391,12 @@ export function setFormateraser(plugin: editingToolbarPlugin, editor: Editor) {
 
 }
 
-export function createFollowingbar(app: App, settings: editingToolbarSettings, editor: Editor) {
+export function createFollowingbar(app: App, settings: editingToolbarSettings, editor: Editor, forceShow: boolean = false) {
+  // 获取或创建工具栏
   let editingToolbarModalBar = isExistoolbar(app, settings);
 
+  // 检查视图类型
   const view = app.workspace.getActiveViewOfType(ItemView);
-  // 如果视图类型不在允许列表中，隐藏工具栏后返回
   if (!ViewUtils.isAllowedViewType(view)) {
     if (editingToolbarModalBar) {
       editingToolbarModalBar.style.visibility = "hidden";
@@ -403,70 +404,81 @@ export function createFollowingbar(app: App, settings: editingToolbarSettings, e
     return;
   }
 
-  // 获取视图类型，只有当settings.positionStyle为"following"时才执行特殊逻辑
-  if (settings.positionStyle === "following") {
-    const viewType = view?.getViewType();
-    const isMarkdownView = viewType === 'markdown';
-    
-    // 如果是Markdown视图
-    if (isMarkdownView) {
-      // 如果是源码模式
-      if (ViewUtils.isSourceMode(view)) {
-        if (editingToolbarModalBar) {
-          // 在源码模式下，只有选中文本时才显示工具栏
-          editingToolbarModalBar.style.visibility = editor.somethingSelected() ? "visible" : "hidden";
+  // 仅处理 following 样式
+  if (settings.positionStyle !== "following") return;
+
+  const viewType = view?.getViewType();
+  const isMarkdownView = viewType === 'markdown';
+  
+  if (isMarkdownView) {
+    // 处理 Markdown 视图
+    if (ViewUtils.isSourceMode(view)) {
+      // 源码模式
+      if (editingToolbarModalBar) {
+        // 当 forceShow 为 true 或有文本选中时显示工具栏
+        const shouldShow = forceShow || editor.somethingSelected();
+        editingToolbarModalBar.style.visibility = shouldShow ? "visible" : "hidden";
+        
+        // 仅在工具栏可见时执行后续操作
+        if (editingToolbarModalBar.style.visibility === "visible") {
+          // 设置工具栏样式
           editingToolbarModalBar.style.height = (settings.aestheticStyle === "tiny") ? 30 + "px" : 40 + "px";
           editingToolbarModalBar.addClass("editingToolbarFlex");
           editingToolbarModalBar.removeClass("editingToolbarGrid");
-
-          if (editingToolbarModalBar.style.visibility === "visible") {
-            // 计算工具栏位置
-            const editorRect = editor.containerEl.getBoundingClientRect();
-            const toolbarWidth = editingToolbarModalBar.offsetWidth;
-            const toolbarHeight = editingToolbarModalBar.offsetHeight;
-            const coords = getCoords(editor);
-            const isSelectionFromBottomToTop = editor.getCursor("head").ch == editor.getCursor("from").ch;
-            const rightMargin = 12;
-
-            const sideDockWidth = activeDocument.getElementsByClassName("mod-left-split")[0]?.clientWidth ?? 0;
-            const sideDockRibbonWidth = activeDocument.getElementsByClassName("side-dock-ribbon mod-left")[0]?.clientWidth ?? 0;
-            const leftSideDockWidth = sideDockWidth + sideDockRibbonWidth;
-
-            let leftPosition = coords.left - leftSideDockWidth;
-            if (leftPosition + toolbarWidth + rightMargin >= editorRect.right)
-              leftPosition = Math.max(0, editorRect.right - toolbarWidth - leftSideDockWidth - rightMargin);
-
-            let topPosition = 0;
-
-            if (isSelectionFromBottomToTop) {
-              topPosition = coords.top - toolbarHeight - 10;
-              if (topPosition <= editorRect.top) topPosition = editorRect.top + toolbarHeight;
-            } else {
-              topPosition = coords.top + 25;
-              if (topPosition >= editorRect.bottom - toolbarHeight) topPosition = editorRect.bottom - 2 * toolbarHeight;
-            }
-
-            editingToolbarModalBar.style.left = leftPosition + "px";
-            editingToolbarModalBar.style.top = topPosition + "px";
-          }
-        }
-      } else {
-        // 在阅读模式下隐藏工具栏
-        if (editingToolbarModalBar) {
-          editingToolbarModalBar.style.visibility = "hidden";
+          
+          // 计算工具栏位置
+          positionToolbar(editingToolbarModalBar, editor);
         }
       }
     } else {
-      // 对于其他视图类型（canvas等），保持工具栏可见
+      // 阅读模式隐藏工具栏
       if (editingToolbarModalBar) {
-        editingToolbarModalBar.style.visibility = "visible";
-        editingToolbarModalBar.style.height = (settings.aestheticStyle === "tiny") ? 30 + "px" : 40 + "px";
-        editingToolbarModalBar.addClass("editingToolbarFlex");
-        editingToolbarModalBar.removeClass("editingToolbarGrid");
+        editingToolbarModalBar.style.visibility = "hidden";
       }
     }
+  } else {
+    // 处理其他视图类型（canvas等）
+    if (editingToolbarModalBar) {
+      editingToolbarModalBar.style.visibility = "visible";
+      editingToolbarModalBar.style.height = (settings.aestheticStyle === "tiny") ? 30 + "px" : 40 + "px";
+      editingToolbarModalBar.addClass("editingToolbarFlex");
+      editingToolbarModalBar.removeClass("editingToolbarGrid");
+    }
   }
-  // 对于非following样式的工具栏，逻辑由handleeditingToolbar和handleeditingToolbar_layout处理
+}
+
+// 新增：计算并设置工具栏位置的辅助函数
+function positionToolbar(toolbar: HTMLElement, editor: Editor) {
+  const editorRect = editor.containerEl.getBoundingClientRect();
+  const toolbarWidth = toolbar.offsetWidth;
+  const toolbarHeight = toolbar.offsetHeight;
+  const coords = getCoords(editor);
+  const isSelectionFromBottomToTop = editor.getCursor("head").ch == editor.getCursor("from").ch;
+  const rightMargin = 12;
+
+  // 计算左侧位置
+  const sideDockWidth = activeDocument.getElementsByClassName("mod-left-split")[0]?.clientWidth ?? 0;
+  const sideDockRibbonWidth = activeDocument.getElementsByClassName("side-dock-ribbon mod-left")[0]?.clientWidth ?? 0;
+  const leftSideDockWidth = sideDockWidth + sideDockRibbonWidth;
+
+  let leftPosition = coords.left - leftSideDockWidth;
+  if (leftPosition + toolbarWidth + rightMargin >= editorRect.right) {
+    leftPosition = Math.max(0, editorRect.right - toolbarWidth - leftSideDockWidth - rightMargin);
+  }
+
+  // 计算顶部位置
+  let topPosition = 0;
+  if (isSelectionFromBottomToTop) {
+    topPosition = coords.top - toolbarHeight - 10;
+    if (topPosition <= editorRect.top) topPosition = editorRect.top + toolbarHeight;
+  } else {
+    topPosition = coords.top + 25;
+    if (topPosition >= editorRect.bottom - toolbarHeight) topPosition = editorRect.bottom - 2 * toolbarHeight;
+  }
+
+  // 设置位置
+  toolbar.style.left = leftPosition + "px";
+  toolbar.style.top = topPosition + "px";
 }
 
 export function editingToolbarPopover(app: App, plugin: editingToolbarPlugin): void {
