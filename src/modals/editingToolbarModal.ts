@@ -467,7 +467,7 @@ function positionToolbar(toolbar: HTMLElement, editor: Editor) {
   const sideDockRibbonWidth = activeDocument.getElementsByClassName("side-dock-ribbon mod-left")[0]?.clientWidth ?? 0;
   const leftSideDockWidth = sideDockWidth + sideDockRibbonWidth;
 
-  let leftPosition = coords.left - leftSideDockWidth;
+  let leftPosition = coords.left - leftSideDockWidth - 28;
   if (leftPosition + toolbarWidth + rightMargin >= editorRect.right) {
     leftPosition = Math.max(0, editorRect.right - toolbarWidth - leftSideDockWidth - rightMargin);
   }

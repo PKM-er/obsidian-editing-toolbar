@@ -596,4 +596,44 @@ export default class editingToolbarPlugin extends Plugin {
       createFollowingbar(this.app, this.settings, editor, true);
     }
   }
+
+
+  public onPositionStyleChange(newStyle: string): void {
+    // 如果启用了多配置模式，检查对应样式的配置是否存在
+    if (this.settings.enableMultipleConfig) {
+      switch (newStyle) {
+        case 'following':
+          if (!this.settings.followingCommands || this.settings.followingCommands.length === 0) {
+            this.settings.followingCommands = [...this.settings.menuCommands];
+            this.saveSettings();
+            new Notice(t('Following style commands successfully initialized'));
+          }
+          break;
+        case 'top':
+          if (!this.settings.topCommands || this.settings.topCommands.length === 0) {
+            this.settings.topCommands = [...this.settings.menuCommands];
+            this.saveSettings();
+            new Notice(t('Top style commands successfully initialized'));
+          }
+          break;
+        case 'fixed':
+          if (!this.settings.fixedCommands || this.settings.fixedCommands.length === 0) {
+            this.settings.fixedCommands = [...this.settings.menuCommands];
+            this.saveSettings();
+            new Notice(t('Fixed style commands successfully initialized'));
+          }
+          break;
+        case 'mobile':
+          if (!this.settings.mobileCommands || this.settings.mobileCommands.length === 0) {
+            this.settings.mobileCommands = [...this.settings.menuCommands];
+            this.saveSettings();
+            new Notice(t('Mobile style commands successfully initialized'));
+          }
+          break;
+      }
+    }
+
+    // 重新加载工具栏
+    dispatchEvent(new Event("editingToolbar-NewCommand"));
+  }
 }

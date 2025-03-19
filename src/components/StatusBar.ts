@@ -99,11 +99,8 @@ export class StatusBar {
           subItem.onClick(async () => {
             this.plugin.settings.positionStyle = position;
             await this.plugin.saveSettings();
-            // 触发刷新
-            selfDestruct();
-            setTimeout(() => {
-              dispatchEvent(new Event("editingToolbar-NewCommand"));
-            }, 100);
+            // 调用插件的 onPositionStyleChange 方法
+            this.plugin.onPositionStyleChange(position);
           });
         });
       });

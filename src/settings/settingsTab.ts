@@ -220,44 +220,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
         }
       });
   }
-  private onPositionStyleChange(newStyle: string) {
-    // 如果启用了多配置模式，检查对应样式的配置是否存在
-    if (this.plugin.settings.enableMultipleConfig) {
-      switch (newStyle) {
-        case 'following':
-          if (!this.plugin.settings.followingCommands || this.plugin.settings.followingCommands.length === 0) {
-            this.plugin.settings.followingCommands = [...this.plugin.settings.menuCommands];
-            this.plugin.saveSettings();
-            new Notice(t('Following style commands successfully initialized'));
-          }
-          break;
-        case 'top':
-          if (!this.plugin.settings.topCommands || this.plugin.settings.topCommands.length === 0) {
-            this.plugin.settings.topCommands = [...this.plugin.settings.menuCommands];
-            this.plugin.saveSettings();
-            new Notice(t('Top style commands successfully initialized'));
-          }
-          break;
-        case 'fixed':
-          if (!this.plugin.settings.fixedCommands || this.plugin.settings.fixedCommands.length === 0) {
-            this.plugin.settings.fixedCommands = [...this.plugin.settings.menuCommands];
-            this.plugin.saveSettings();
-            new Notice(t('Fixed style commands successfully initialized'));
-          }
-          break;
-        case 'mobile':
-          if (!this.plugin.settings.mobileCommands || this.plugin.settings.mobileCommands.length === 0) {
-            this.plugin.settings.mobileCommands = [...this.plugin.settings.menuCommands];
-            this.plugin.saveSettings();
-            new Notice(t('Mobile style commands successfully initialized'));
-          }
-          break;
-      }
-    }
-
-    // 重新加载工具栏
-    dispatchEvent(new Event("editingToolbar-NewCommand"));
-  }
+ 
   // 拆分设置项到不同方法
   private displayGeneralSettings(containerEl: HTMLElement): void {
     new Setting(containerEl)
@@ -284,7 +247,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
         .onChange(async (value) => {
           this.plugin.settings.enableMultipleConfig = value;
           //只初始化当前配置
-          this.onPositionStyleChange(this.plugin.settings.positionStyle);
+          this.plugin.onPositionStyleChange(this.plugin.settings.positionStyle);
 
           await this.plugin.saveSettings();
           this.display();
@@ -334,8 +297,8 @@ export class editingToolbarSettingTab extends PluginSettingTab {
           .onChange(async (value) => {
             this.plugin.settings.positionStyle = value;
             await this.plugin.saveSettings();
-            // 调用位置样式变更处理函数
-            this.onPositionStyleChange(value);
+            // 调用插件的公共方法
+            this.plugin.onPositionStyleChange(value);
             this.display();
           });
       });
