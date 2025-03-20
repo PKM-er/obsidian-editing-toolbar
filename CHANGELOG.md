@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.1.5 (2025-03-20)
+### #35 #55 #203 feat: Support toolbar theme & icon size!!
+### 多配置下，状态栏切换位置也可以初始化工具栏
+### Update manifest.json and CHANGELOG.md for version 3.1.4
+
+
 ## 3.1.4 (2025-03-19)
 ### 优化跟随模式工具栏位置
 - 如果执行命令后文本仍然是选中状态，工具栏不会消失。
