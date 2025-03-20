@@ -2,6 +2,7 @@
 
 ## 3.1.5 (2025-03-20)
 ### #35 #55 #203 feat: Support toolbar theme & icon size!!
+![image](https://github.com/user-attachments/assets/dc75340a-5b59-4212-ae4f-3b17ab6242d9)
 ### 多配置下，状态栏切换位置也可以初始化工具栏
 ### Update manifest.json and CHANGELOG.md for version 3.1.4
 
