@@ -35,6 +35,7 @@ import { CommandsManager } from "src/commands/commands";
 import { t } from 'src/translations/helper';
 
 
+
 let activeDocument: Document;
 
 
@@ -43,7 +44,7 @@ export default class editingToolbarPlugin extends Plugin {
   settings: editingToolbarSettings;
   statusBarIcon: HTMLElement;
   statusBar: StatusBar;
-
+  public toolbarIconSize: number; // 新增全局变量
   // 修改为公共属性
   commandsManager: CommandsManager;
 
@@ -135,6 +136,20 @@ export default class editingToolbarPlugin extends Plugin {
 
     // 初始化图标
     addIcons();
+    this.toolbarIconSize = this.settings.toolbarIconSize;
+    // 初始化 CSS 变量
+    activeDocument.documentElement.style.setProperty(
+      '--editing-toolbar-background-color',
+      this.settings.toolbarBackgroundColor
+    );
+    activeDocument.documentElement.style.setProperty(
+      '--editing-toolbar-icon-color',
+      this.settings.toolbarIconColor
+    );
+    activeDocument.documentElement.style.setProperty(
+      '--toolbar-icon-size',
+      `${this.settings.toolbarIconSize}px`
+    );
   }
 
   isLoadMobile() {

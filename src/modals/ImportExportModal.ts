@@ -216,6 +216,9 @@ export class ImportExportModal extends Modal {
           custom_fc3: this.plugin.settings.custom_fc3,
           custom_fc4: this.plugin.settings.custom_fc4,
           custom_fc5: this.plugin.settings.custom_fc5,
+          toolbarBackgroundColor: this.plugin.settings.toolbarBackgroundColor,
+          toolbarIconColor: this.plugin.settings.toolbarIconColor,
+          toolbarIconSize: this.plugin.settings.toolbarIconSize,
         };
         break;
       case 'All commands':
@@ -545,7 +548,8 @@ export class ImportExportModal extends Modal {
       'positionStyle', 'aestheticStyle', 'appendMethod', 'autohide',
       'isLoadOnMobile', 'cMenuNumRows', 'enableMultipleConfig',
       'custom_bg1', 'custom_bg2', 'custom_bg3', 'custom_bg4', 'custom_bg5',
-      'custom_fc1', 'custom_fc2', 'custom_fc3', 'custom_fc4', 'custom_fc5'
+      'custom_fc1', 'custom_fc2', 'custom_fc3', 'custom_fc4', 'custom_fc5',
+      'toolbarBackgroundColor', 'toolbarIconColor', 'toolbarIconSize'
     ];
 
     generalSettings.forEach(key => {

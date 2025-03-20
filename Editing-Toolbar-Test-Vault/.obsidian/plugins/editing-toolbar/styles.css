@@ -1,6 +1,9 @@
 :root {
   --toolbar-horizontal-offset: 0px;
   --toolbar-vertical-offset: 0px;
+  --editing-toolbar-background-color: rgba(var(--background-secondary-rgb), 0.7);
+  --editing-toolbar-icon-color: var(--text-normal);
+  --toolbar-icon-size: 18px;
 }
 
 
@@ -19,7 +22,39 @@
   z-index: var(--layer-modal);
   transform: translate(var(--toolbar-horizontal-offset), var(--toolbar-vertical-offset));
 }
+#editingToolbarModalBar.editingToolbarCustomAesthetic,
+:is(#editingToolbarModalBar, #editingToolbarPopoverBar).editingToolbarCustomAesthetic button[class^=editingToolbarCommandsubItem]>.subitem,
+#editingToolbarPopoverBar.editingToolbarCustomAesthetic
+{
+  background-color: var(--editing-toolbar-background-color);
+}
+#editingToolbarModalBar.editingToolbarCustomAesthetic
+{
+  padding:calc(var(--toolbar-icon-size) / 4);
+}
+:is(#editingToolbarModalBar, #editingToolbarPopoverBar).editingToolbarCustomAesthetic :is(.editingToolbarCommandItem, button[class^=editingToolbarCommandsubItem]):not(.editingToolbar-Divider-Line) {
+ 
+height: var(--toolbar-icon-size) + 8px;
+}
 
+/* 应用到工具栏图标 */
+:is(#editingToolbarModalBar, #editingToolbarPopoverBar).editingToolbarCustomAesthetic .editingToolbarCommandItem svg,
+:is(#editingToolbarModalBar, #editingToolbarPopoverBar).editingToolbarCustomAesthetic button[class^=editingToolbarCommandsubItem] svg,
+:is(#editingToolbarModalBar, #editingToolbarPopoverBar).editingToolbarCustomAesthetic button[class^=editingToolbarCommandsubItem]>.subitem svg
+ {
+  color: var(--editing-toolbar-icon-color);
+  width: var(--toolbar-icon-size);
+  height: var(--toolbar-icon-size);
+  max-width: var(--toolbar-icon-size);
+  max-height: var(--toolbar-icon-size);
+}
+
+#editingToolbarModalBar.fixed{
+    display: grid;
+    grid-template-columns: repeat(12, calc(var(--toolbar-icon-size) + 10px));
+} 
+ 
+ 
 #editingToolbarModalBar.editingToolbarFlex {
   display: flex;
   transform:none;
@@ -322,8 +357,8 @@ button[class^=editingToolbarCommandsubItem]::after {
   position: absolute;
   z-index: var(--layer-menu);
   user-select: none;
-  transform: translateY(90%) translateX(0%);
-  -webkit-transform: translateY(90%) translateX(0%);
+  transform: translateY(105%) translateX(0%);
+  -webkit-transform: translateY(105%) translateX(0%);
   display: flex;
 
 }
@@ -408,7 +443,7 @@ button[class^=editingToolbarCommandsubItem]::after {
 }
 
 :is(#editingToolbarModalBar, #editingToolbarPopoverBar):not(:is(.top,.editingToolbarFlex)) button[class^=editingToolbarCommandsubItem]:not(.editingToolbarSecond)>.subitem {
-  bottom: calc(100% + 2.2em);
+  bottom: calc(100% + calc(var(--toolbar-icon-size) + 18px));
 }
 
 
@@ -661,7 +696,7 @@ button[class^=editingToolbarCommandsubItem]::after {
   display: flex;
   flex-wrap: nowrap;
   position: relative;
-  height: 38px;
+  height: calc(var(--toolbar-icon-size) + 18px);
   align-items: center;
   transition: all 0.2s linear;
   -webkit-transition: all 0.2s linear;
@@ -694,7 +729,7 @@ button[class^=editingToolbarCommandsubItem]::after {
 }
 
 
-#editingToolbarModalBar.top :is(.editingToolbarCommandItem, button[class^=editingToolbarCommandsubItem]):not(.editingToolbar-Divider-Line) {
+:is(#editingToolbarModalBar, #editingToolbarPopoverBar) :is(.editingToolbarCommandItem, button[class^=editingToolbarCommandsubItem]):not(.editingToolbar-Divider-Line) {
   font-size: 10px;
   margin-right: 0px;
   clear: both;
@@ -713,8 +748,6 @@ button[class^=editingToolbarCommandsubItem]::after {
   align-items: center;
   transition: all 0.2s linear;
   -webkit-transition: all 0.2s linear;
-
-
 
 
 }
@@ -757,7 +790,7 @@ button[class^=editingToolbarCommandsubItem]::after {
   }
 }
 .markdown-source-view.mod-cm6 #editingToolbarPopoverBar {
-  margin-top: 38px;
+  margin-top: calc(var(--toolbar-icon-size) + 20px);
 }
 
 #editingToolbarPopoverBar :is(.editingToolbarCommandItem, button[class^=editingToolbarCommandsubItem]) {
@@ -769,7 +802,6 @@ button[class^=editingToolbarCommandsubItem]::after {
   clear: both;
   opacity: 1;
   flex-shrink: 0;
-  height: 26px;
   padding: 0;
   border: none;
   background: transparent;
@@ -793,6 +825,12 @@ button[class^=editingToolbarCommandsubItem]::after {
   height: 24px;
   opacity: 0.8;
 }
+
+#editingToolbarModalBar.editingToolbarCustomAesthetic .more-menu>.editingToolbarCommandItem svg {
+  width: calc(var(--toolbar-icon-size) * 0.8);
+  height: calc(var(--toolbar-icon-size) * 0.8);
+}
+
 
 /*Divider-Line**/
 
@@ -1177,6 +1215,21 @@ body.auto-hide-header .workspace-tab-header-container + .workspace-tab-container
   background-color: rgba(var(--color-yellow-rgb), 0.8);
  }
  
+ .command-lists-container.following{
+  background-color: rgba(var(--color-green-rgb), 0.1);
+  border: 1px solid rgba(var(--color-green-rgb), 0.3);
+ }
+ .command-lists-container.fixed{
+  background-color: rgba(var(--color-blue-rgb), 0.1);
+  border: 1px solid rgba(var(--color-blue-rgb), 0.3);
+ }
+ .command-lists-container.top{
+  background-color: rgba(var(--color-yellow-rgb), 0.1);
+  border: 1px solid rgba(var(--color-yellow-rgb), 0.3);
+ }
+ 
+
+
  @media screen and (max-width: 1024px) {
   .editing-toolbar-tabs .editing-toolbar-tab:not(.active)>span {
     display: none;
@@ -1232,4 +1285,22 @@ body.auto-hide-header .workspace-tab-header-container + .workspace-tab-container
   gap: 10px;
   align-items: center;
 }
+ 
+/* 工具栏预览样式 */
+.toolbar-preview {
+  background-color: var(--editing-toolbar-background-color);
+}
+
+.toolbar-preview .clickable-icon svg {
+  color: var(--editing-toolbar-icon-color);
+  width: var(--toolbar-icon-size);
+  height: var(--toolbar-icon-size);
+}
+
+
+ .toolbar-preview-container #editingToolbarModalBar{
+  visibility:visible !important;
+ }
+ 
+ 
  

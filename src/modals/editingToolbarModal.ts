@@ -500,17 +500,38 @@ function positionToolbar(toolbar: HTMLElement, editor: Editor) {
 export function editingToolbarPopover(app: App, plugin: editingToolbarPlugin): void {
   let settings = plugin.settings;
   requireApiVersion("0.15.0") ? activeDocument = activeWindow.document : activeDocument = window.document;
-
+  const aestheticStyleMap: { [key: string]: string } = {
+    default: "editingToolbarDefaultAesthetic",
+    tiny: "editingToolbarTinyAesthetic",
+    glass: "editingToolbarGlassAesthetic",
+    custom: "editingToolbarCustomAesthetic",
+  };
   function createMenu() {
+    function applyAestheticStyle(element: HTMLElement, style: string) {
+      // 移除所有美观风格类
+      Object.values(aestheticStyleMap).forEach(className => {
+        element.removeClass(className);
+      });
+      
+      // 添加当前选择的风格类
+      const selectedClass = aestheticStyleMap[style] || aestheticStyleMap.default;
+      element.addClass(selectedClass);
+    }
+    
     const generateMenu = () => {
       let btnwidth = 0;
       let leafwidth = 0;
+      let buttonWidth = 26;
+      if(plugin.toolbarIconSize){
+        buttonWidth = plugin.toolbarIconSize + 8;
+      }
+     
       let editingToolbar = createEl("div");
       if (editingToolbar) {
         if (settings.positionStyle == "top") {
           editingToolbar.setAttribute(
             "style",
-            `position: relative; grid-template-columns: repeat(auto-fit, minmax(28px, 1fr));`
+            `position: relative; grid-template-columns: repeat(auto-fit, minmax(calc(var(--toolbar-icon-size) + 10px), 1fr));`
           );
           editingToolbar.className += " top";
           if (settings.autohide) {
@@ -529,20 +550,12 @@ export function editingToolbarPopover(app: App, plugin: editingToolbarPlugin): v
       PopoverMenu.setAttribute("id", "editingToolbarPopoverBar");
       PopoverMenu.style.visibility = "hidden";
       PopoverMenu.style.height = "0";
-      if (settings.aestheticStyle == "default") {
-        editingToolbar.addClass("editingToolbarDefaultAesthetic");
-        editingToolbar.removeClass("editingToolbarTinyAesthetic");
-        editingToolbar.removeClass("editingToolbarGlassAesthetic");
-      } else if (settings.aestheticStyle == "tiny") {
-        editingToolbar.addClass("editingToolbarTinyAesthetic");
-        editingToolbar.removeClass("editingToolbarDefaultAesthetic");
-        editingToolbar.removeClass("editingToolbarGlassAesthetic");
-      } else {
-        editingToolbar.addClass("editingToolbarGlassAesthetic");
-        editingToolbar.removeClass("editingToolbarTinyAesthetic");
-        editingToolbar.removeClass("editingToolbarDefaultAesthetic");
-      }
+ // 应用样式到编辑工具栏
 
+// 在生成工具栏时应用样式
+applyAestheticStyle(editingToolbar, settings.aestheticStyle);
+// 在生成工具栏时应用样式
+applyAestheticStyle(PopoverMenu, settings.aestheticStyle);
       //  if (settings.positionStyle == "following") {
       //    editingToolbar.style.visibility = "hidden";
       // }
@@ -607,7 +620,7 @@ export function editingToolbarPopover(app: App, plugin: editingToolbarPlugin): v
         if ("SubmenuCommands" in item) {
           let _btn: any;
 
-          if (btnwidth >= leafwidth - 26 * 4 && leafwidth > 100) {
+          if (btnwidth >= leafwidth - buttonWidth * 4 && leafwidth > 100) {
             //说明已经溢出
             plugin.setIS_MORE_Button(true);
             // globalThis.IS_MORE_Button = true; //需要添加更多按钮
@@ -633,7 +646,7 @@ export function editingToolbarPopover(app: App, plugin: editingToolbarPlugin): v
           //   if (_btn.buttonEl.offsetWidth < 26) __btnwidth = 26;
           //   else __btnwidth = _btn.buttonEl.offsetWidth;
           // }
-          btnwidth += 26 + 2;
+          btnwidth += buttonWidth + 2;
           let submenu = createDiv("subitem");
           if (submenu) {
             item.SubmenuCommands.forEach(
@@ -705,7 +718,7 @@ export function editingToolbarPopover(app: App, plugin: editingToolbarPlugin): v
               ? (button2.buttonEl.innerHTML = item.icon)
               : button2.setIcon(item.icon);
 
-            btnwidth += 26;
+            btnwidth += buttonWidth;
             //  let Selection = createDiv("triangle-icon");
             let submenu2 = createEl("div");
             submenu2.addClass("subitem");
@@ -788,7 +801,7 @@ export function editingToolbarPopover(app: App, plugin: editingToolbarPlugin): v
               ? (button2.buttonEl.innerHTML = item.icon)
               : button2.setIcon(item.icon);
 
-            btnwidth += 26;
+            btnwidth += buttonWidth;
             //  let Selection = createDiv("triangle-icon");
             let submenu2 = createEl("div");
             submenu2.addClass("subitem");
@@ -845,7 +858,7 @@ export function editingToolbarPopover(app: App, plugin: editingToolbarPlugin): v
             }
           } else {
             let button;
-            if (btnwidth >= leafwidth - 26 * 4 && leafwidth > 100) {
+            if (btnwidth >= leafwidth - buttonWidth * 4 && leafwidth > 100) {
               //说明已经溢出
               plugin.setIS_MORE_Button(true);
               //globalpluginIS_MORE_Button = true; //需要添加更多按钮
@@ -892,13 +905,13 @@ export function editingToolbarPopover(app: App, plugin: editingToolbarPlugin): v
             //   else __btnwidth2 = button.buttonEl.offsetWidth;
             // }
 
-            btnwidth += 26;
+            btnwidth += buttonWidth;
           }
         }
       });
 
       createMoremenu(app, plugin, editingToolbar);
-      if (Math.abs(plugin.settings.cMenuWidth - Number(btnwidth)) > 30) {
+      if (Math.abs(plugin.settings.cMenuWidth - Number(btnwidth)) > (btnwidth + 4)) {
         plugin.settings.cMenuWidth = Number(btnwidth);
         setTimeout(() => {
           plugin.saveSettings();
@@ -947,3 +960,4 @@ function setsvgColor(fontcolor: string, bgcolor: string) {
   }
 
 }
+ 

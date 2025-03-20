@@ -17,6 +17,7 @@ export class CustomCommandModal extends Modal {
   private iconDisplay: HTMLElement;
   private commandNameInput: TextComponent;
   private commandIdInput: TextComponent;
+  private suffixInput: TextComponent;
 
   constructor(app: App, plugin: editingToolbarPlugin, commandIndex: number | null) {
     super(app);
@@ -115,11 +116,9 @@ export class CustomCommandModal extends Modal {
             this.suffix = mirrorText;
 
             // 更新后缀输入框的值
-            const suffixInput = contentEl.querySelector('.setting-item:nth-child(5) input');
-            if (suffixInput instanceof HTMLInputElement) {
-              suffixInput.value = mirrorText;
-              this.suffix = mirrorText;
-            }
+
+            this.suffixInput.setValue(mirrorText);
+           
           }
 
           // 设置光标位置偏移为前缀的字符长度
@@ -137,10 +136,11 @@ export class CustomCommandModal extends Modal {
     const suffixSetting = new Setting(contentEl)
       .setName(t('Suffix'))
       .setDesc(t('Add content after selected text'))
-      .addText(text => text
-        .setValue(this.suffix)
+      .addText(text => {
+        this.suffixInput = text;
+        text.setValue(this.suffix)
         .onChange(value => this.suffix = value)
-      );
+      });
 
     const charSetting = new Setting(contentEl)
       .setName(t('Cursor Position Offset'))

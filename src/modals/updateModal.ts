@@ -1,7 +1,16 @@
-import { App, Modal, Setting, Notice, request, MarkdownRenderer, MarkdownView, Component } from "obsidian";
+import {
+    App,
+    Modal,
+    Setting,
+    Notice,
+    request,
+    MarkdownRenderer,
+    MarkdownView,
+    Component,
+} from "obsidian";
 import type editingToolbarPlugin from "src/plugin/main";
 import { DEFAULT_SETTINGS } from "src/settings/settingsData";
-import { t } from 'src/translations/helper';
+import { t } from "src/translations/helper";
 
 interface Command {
     id: string;
@@ -29,28 +38,28 @@ export class UpdateNoticeModal extends Modal {
                 url: `https://raw.githubusercontent.com/PKM-er/obsidian-editing-toolbar/master/CHANGELOG.md`,
                 method: "GET",
             });
-            
+
             if (response) {
                 // 解析 Markdown 内容，提取最新版本的更新说明
-                const lines = response.split('\n');
+                const lines = response.split("\n");
                 let latestVersion = "";
                 let content = [];
                 let isLatestVersion = false;
-                
+
                 for (const line of lines) {
-                    if (line.startsWith('## ') && !latestVersion) {
+                    if (line.startsWith("## ") && !latestVersion) {
                         latestVersion = line.substring(3).trim();
                         isLatestVersion = true;
                         content.push(line);
-                    } else if (line.startsWith('## ') && isLatestVersion) {
+                    } else if (line.startsWith("## ") && isLatestVersion) {
                         // 遇到下一个版本标题，结束收集
                         break;
                     } else if (isLatestVersion) {
                         content.push(line);
                     }
                 }
-                
-                this.changelogContent = content.join('\n');
+
+                this.changelogContent = content.join("\n");
             } else {
                 throw new Error("无法获取 Changelog 内容");
             }
@@ -58,18 +67,18 @@ export class UpdateNoticeModal extends Modal {
             console.error("加载 Changelog 时出错:", error);
             this.changelogContent = `### 无法加载更新说明\n\n请[点击此处查看最新更新说明](https://github.com/PKM-er/obsidian-editing-toolbar/blob/master/CHANGELOG.md)`;
         }
-        
+
         this.changelogLoaded = true;
         this.updateChangelogDisplay();
     }
-    
+
     updateChangelogDisplay() {
         if (!this.changelogContainer || !this.changelogContentEl) return;
-        
+
         if (this.changelogLoaded) {
             // 清空加载提示
             this.changelogContentEl.empty();
-            
+
             // 渲染 Markdown 内容
             MarkdownRenderer.renderMarkdown(
                 this.changelogContent,
@@ -83,17 +92,19 @@ export class UpdateNoticeModal extends Modal {
     async fixCommandIds() {
         try {
             const commandMappings: { [key: string]: string } = {
-                'editor:toggle-numbered-list': 'editing-toolbar:toggle-numbered-list',
-                'editor:toggle-bullet-list': 'editing-toolbar:toggle-bullet-list',
-                'editor:toggle-highlight': 'editing-toolbar:toggle-highlight',
-                'toggle-highlight': 'editing-toolbar:toggle-highlight',
-                'editing-toolbar:editor:toggle-bold': 'editing-toolbar:toggle-bold',
-                'editing-toolbar:editor:toggle-italics': 'editing-toolbar:toggle-italics',
-                'editing-toolbar:editor:toggle-strikethrough': 'editing-toolbar:toggle-strikethrough',
-                'editing-toolbar:editor:toggle-inline-math': 'editing-toolbar:toggle-inline-math',
-                'editing-toolbar:editor:insert-callout': 'editing-toolbar:insert-callout',
-                'editing-toolbar:editor:insert-link': 'editing-toolbar:insert-link',
-                'cMenuToolbar-Divider-Line': 'editingToolbar-Divider-Line',
+                "editor:toggle-numbered-list": "editing-toolbar:toggle-numbered-list",
+                "editor:toggle-bullet-list": "editing-toolbar:toggle-bullet-list",
+                "editor:toggle-highlight": "editing-toolbar:toggle-highlight",
+                "toggle-highlight": "editing-toolbar:toggle-highlight",
+                "editing-toolbar:editor:toggle-bold": "editing-toolbar:toggle-bold",
+                "editing-toolbar:editor:toggle-italics": "editing-toolbar:toggle-italics",
+                "editing-toolbar:editor:toggle-strikethrough":
+                    "editing-toolbar:toggle-strikethrough",
+                "editing-toolbar:editor:toggle-inline-math":
+                    "editing-toolbar:toggle-inline-math",
+                "editing-toolbar:editor:insert-callout": "editing-toolbar:insert-callout",
+                "editing-toolbar:editor:insert-link": "editing-toolbar:insert-link",
+                "cMenuToolbar-Divider-Line": "editingToolbar-Divider-Line",
             };
 
             let hasChanges = false;
@@ -102,18 +113,22 @@ export class UpdateNoticeModal extends Modal {
             // 通用命令更新函数
             const updateCommands = (commands: Command[]) => {
                 if (!commands || !Array.isArray(commands)) return;
-                
-                commands.forEach(cmd => {
+
+                commands.forEach((cmd) => {
                     if (cmd.id && commandMappings[cmd.id]) {
                         cmd.id = commandMappings[cmd.id];
                         hasChanges = true;
                     }
                     // 查找格式刷命令并更新图标
-                    if (cmd.id === 'editing-toolbar:format-eraser') {
-                        cmd.icon = 'eraser';
+                    if (cmd.id === "editing-toolbar:format-eraser") {
+                        cmd.icon = "eraser";
                         hasChanges = true;
                     }
-
+                    if (cmd.id === "editing-toolbar:change-font-color") {
+                        cmd.icon =
+                            '<svg width="24" height="24" viewBox="0 0 24 24" focusable="false" fill="currentColor"><g fill-rule="evenodd"><path id="change-font-color-icon" d="M3 18h18v3H3z" style="fill:#2DC26B"></path><path d="M8.7 16h-.8a.5.5 0 01-.5-.6l2.7-9c.1-.3.3-.4.5-.4h2.8c.2 0 .4.1.5.4l2.7 9a.5.5 0 01-.5.6h-.8a.5.5 0 01-.4-.4l-.7-2.2c0-.3-.3-.4-.5-.4h-3.4c-.2 0-.4.1-.5.4l-.7 2.2c0 .3-.2.4-.4.4zm2.6-7.6l-.6 2a.5.5 0 00.5.6h1.6a.5.5 0 00.5-.6l-.6-2c0-.3-.3-.4-.5-.4h-.4c-.2 0-.4.1-.5.4z"></path></g></svg>';
+                        hasChanges = true;
+                    }
                     // 递归检查子菜单
                     if (cmd.SubmenuCommands) {
                         updateCommands(cmd.SubmenuCommands);
@@ -124,9 +139,9 @@ export class UpdateNoticeModal extends Modal {
             // 检查格式刷命令是否存在的函数
             const checkFormatBrush = (commands: Command[]) => {
                 if (!commands || !Array.isArray(commands)) return false;
-                
+
                 for (const cmd of commands) {
-                    if (cmd.id === 'editing-toolbar:toggle-format-brush') {
+                    if (cmd.id === "editing-toolbar:toggle-format-brush") {
                         return true;
                     }
                     if (cmd.SubmenuCommands) {
@@ -140,12 +155,12 @@ export class UpdateNoticeModal extends Modal {
             // 添加格式刷命令的函数
             const addFormatBrushIfNeeded = (commands: Command[]) => {
                 if (!commands || !Array.isArray(commands)) return false;
-                
+
                 if (!checkFormatBrush(commands) && commands.length >= 2) {
                     const formatBrushCommand: Command = {
                         id: "editing-toolbar:toggle-format-brush",
                         name: "Format Brush",
-                        icon: "paintbrush"
+                        icon: "paintbrush",
                     };
 
                     // 在第三项位置插入格式刷命令
@@ -173,7 +188,7 @@ export class UpdateNoticeModal extends Modal {
                         hasChanges = true;
                     }
                 }
-                
+
                 // 处理顶部样式命令
                 if (settings.topCommands) {
                     updateCommands(settings.topCommands);
@@ -181,7 +196,7 @@ export class UpdateNoticeModal extends Modal {
                         hasChanges = true;
                     }
                 }
-                
+
                 // 处理固定样式命令
                 if (settings.fixedCommands) {
                     updateCommands(settings.fixedCommands);
@@ -189,7 +204,7 @@ export class UpdateNoticeModal extends Modal {
                         hasChanges = true;
                     }
                 }
-                
+
                 // 处理移动样式命令
                 if (settings.mobileCommands) {
                     updateCommands(settings.mobileCommands);
@@ -209,10 +224,12 @@ export class UpdateNoticeModal extends Modal {
             }
         } catch (error) {
             console.error("修复命令ID时出错:", error);
-            new Notice(t("Error repairing command IDs, please check the console for details"));
+            new Notice(
+                t("Error repairing command IDs, please check the console for details")
+            );
         }
     }
-    
+
     async reloadPlugin(pluginName: string): Promise<void> {
         // @ts-ignore
         const { plugins } = this.app;
@@ -220,10 +237,10 @@ export class UpdateNoticeModal extends Modal {
             await plugins.disablePlugin(pluginName);
             await plugins.enablePlugin(pluginName);
         } catch (e) {
-            console.error(e)
+            console.error(e);
         }
     }
-    
+
     async restoreDefaultSettings() {
         try {
             // 保留当前版本号和自定义命令
@@ -234,50 +251,62 @@ export class UpdateNoticeModal extends Modal {
             this.plugin.settings = {
                 ...DEFAULT_SETTINGS,
                 lastVersion: currentVersion,
-                customCommands: customCommands
+                customCommands: customCommands,
             };
 
             // 保存设置
             await this.plugin.saveSettings();
 
-            new Notice(t("Successfully restored default settings! (Custom commands preserved)"));
-            
+            new Notice(
+                t("Successfully restored default settings! (Custom commands preserved)")
+            );
+
             // 重新加载插件
             this.reloadPlugin(this.plugin.manifest.id);
             this.close();
         } catch (error) {
             console.error("恢复默认设置时出错:", error);
-            new Notice(t("Error restoring default settings, please check the console for details"));
+            new Notice(
+                t("Error restoring default settings, please check the console for details")
+            );
         }
     }
 
     onOpen() {
         const { contentEl } = this;
 
-        contentEl.createEl("h2", { text: "" + this.plugin.manifest.version + "⚡Tips" });
+        contentEl.createEl("h2", {
+            text: "" + this.plugin.manifest.version + "⚡Tips",
+        });
 
         // 版本更新说明
         contentEl.createEl("p", {
-            text: t("Notice:")
+            text: t("Notice:"),
         });
 
         const ul = contentEl.createEl("ul");
-    
+
         ul.createEl("li", {
-            text: t("⚠️This update is not compatible with 2.x version command ids, please click [Repair command] to be compatible")
+            text: t(
+                "⚠️This update is not compatible with 2.x version command ids, please click [Repair command] to be compatible"
+            ),
         });
         ul.createEl("li", {
-            text: t("⚠️If you want to restore the default settings, please click [Restore default settings]")
+            text: t(
+                "⚠️If you want to restore the default settings, please click [Restore default settings]"
+            ),
         });
 
         // 创建更新日志容器，但先不加载内容
         this.changelogContainer = contentEl.createDiv({ cls: "changelog-container" });
         this.changelogContainer.createEl("h3", { text: t("Latest Changes") });
-        
-        this.changelogContentEl = this.changelogContainer.createDiv({ cls: "changelog-content" });
+
+        this.changelogContentEl = this.changelogContainer.createDiv({
+            cls: "changelog-content",
+        });
         // 显示加载中提示
         this.changelogContentEl.setText(t("Loading changelog..."));
-        
+
         // 异步加载更新日志，不阻塞界面显示
         setTimeout(() => {
             this.loadChangelog();
@@ -286,44 +315,60 @@ export class UpdateNoticeModal extends Modal {
         // 数据修复按钮
         new Setting(contentEl)
             .setName(t("🔧Data repair"))
-            .setDesc(t("This update changed the ID of some commands, please click this button to repair the commands to ensure the toolbar works properly"))
-            .addButton(button => button
-                .setButtonText(t("Repair command ID"))
-                .onClick(async () => {
+            .setDesc(
+                t(
+                    "This update changed the ID of some commands, please click this button to repair the commands to ensure the toolbar works properly"
+                )
+            )
+            .addButton((button) =>
+                button.setButtonText(t("Repair command ID")).onClick(async () => {
                     await this.fixCommandIds();
-                }));
+                })
+            );
 
         // 恢复默认设置按钮
         new Setting(contentEl)
             .setName(t("🔄Restore default settings"))
-            .setDesc(t("This will reset all your custom configurations, but custom commands will be preserved"))
-            .addButton(button => button
-                .setButtonText(t("Restore default"))
-                .onClick(async () => {
+            .setDesc(
+                t(
+                    "This will reset all your custom configurations, but custom commands will be preserved"
+                )
+            )
+            .addButton((button) =>
+                button.setButtonText(t("Restore default")).onClick(async () => {
                     // 添加确认对话框
-                    if (confirm(t("Are you sure you want to restore all settings to default? But custom commands will be preserved."))) {
+                    if (
+                        confirm(
+                            t(
+                                "Are you sure you want to restore all settings to default? But custom commands will be preserved."
+                            )
+                        )
+                    ) {
                         await this.restoreDefaultSettings();
                     }
-                }));
+                })
+            );
 
         // 查看完整更新日志按钮
         new Setting(contentEl)
             .setName(t("📋View full changelog"))
             .setDesc(t("Open the complete changelog in your browser"))
-            .addButton(button => button
-                .setButtonText(t("Open changelog"))
-                .onClick(() => {
-                    window.open("https://github.com/PKM-er/obsidian-editing-toolbar/blob/master/CHANGELOG.md", "_blank");
-                }));
+            .addButton((button) =>
+                button.setButtonText(t("Open changelog")).onClick(() => {
+                    window.open(
+                        "https://github.com/PKM-er/obsidian-editing-toolbar/blob/master/CHANGELOG.md",
+                        "_blank"
+                    );
+                })
+            );
 
         // 关闭按钮
-        new Setting(contentEl)
-            .addButton(button => button
-                .setButtonText(t("Close"))
-                .onClick(() => {
-                    this.close();
-                }));
-                
+        new Setting(contentEl).addButton((button) =>
+            button.setButtonText(t("Close")).onClick(() => {
+                this.close();
+            })
+        );
+
         // 添加样式
         contentEl.createEl("style", {
             text: `
@@ -342,7 +387,7 @@ export class UpdateNoticeModal extends Modal {
             .changelog-content a {
                 text-decoration: underline;
             }
-            `
+            `,
         });
     }
 
@@ -350,4 +395,4 @@ export class UpdateNoticeModal extends Modal {
         const { contentEl } = this;
         contentEl.empty();
     }
-} 
+}

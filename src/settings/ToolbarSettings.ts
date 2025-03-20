@@ -50,5 +50,8 @@ export interface editingToolbarSettings {
   custom_fc3: string;
   custom_fc4: string;
   custom_fc5: string;
+  toolbarBackgroundColor: string;
+  toolbarIconColor: string;
+  toolbarIconSize: number;
   [key: string]: any;
 }

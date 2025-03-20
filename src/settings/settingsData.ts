@@ -1,7 +1,7 @@
 import type { Command } from "obsidian";
 export const APPEND_METHODS = ["body", "workspace"];
-export const AESTHETIC_STYLES = ["glass", "default", "tiny"];
-export const POSITION_STYLES = ["fixed", "following", "top"];
+export const AESTHETIC_STYLES = ["default", "tiny", "glass", "custom"];
+export const POSITION_STYLES = ["following", "top", "fixed"];
 
 
 
@@ -68,6 +68,10 @@ export interface editingToolbarSettings {
   viewTypeSettings?: {
     [viewType: string]: boolean;
   };
+  toolbarBackgroundColor: string;
+  toolbarIconColor: string;
+  toolbarIconSize: number;
+  
 }
 
 export const DEFAULT_SETTINGS: editingToolbarSettings = {
@@ -340,7 +344,7 @@ export const DEFAULT_SETTINGS: editingToolbarSettings = {
       {
         "id": "editing-toolbar:change-font-color",
         "name": "Change font color[html]",
-        "icon": "<svg width=\"24\" height=\"24\" focusable=\"false\" fill=\"currentColor\"><g fill-rule=\"evenodd\"><path id=\"change-font-color-icon\" d=\"M3 18h18v3H3z\" style=\"fill:#2DC26B\"></path><path d=\"M8.7 16h-.8a.5.5 0 01-.5-.6l2.7-9c.1-.3.3-.4.5-.4h2.8c.2 0 .4.1.5.4l2.7 9a.5.5 0 01-.5.6h-.8a.5.5 0 01-.4-.4l-.7-2.2c0-.3-.3-.4-.5-.4h-3.4c-.2 0-.4.1-.5.4l-.7 2.2c0 .3-.2.4-.4.4zm2.6-7.6l-.6 2a.5.5 0 00.5.6h1.6a.5.5 0 00.5-.6l-.6-2c0-.3-.3-.4-.5-.4h-.4c-.2 0-.4.1-.5.4z\"></path></g></svg>"
+        "icon": "<svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" focusable=\"false\" fill=\"currentColor\"><g fill-rule=\"evenodd\"><path id=\"change-font-color-icon\" d=\"M3 18h18v3H3z\" style=\"fill:#2DC26B\"></path><path d=\"M8.7 16h-.8a.5.5 0 01-.5-.6l2.7-9c.1-.3.3-.4.5-.4h2.8c.2 0 .4.1.5.4l2.7 9a.5.5 0 01-.5.6h-.8a.5.5 0 01-.4-.4l-.7-2.2c0-.3-.3-.4-.5-.4h-3.4c-.2 0-.4.1-.5.4l-.7 2.2c0 .3-.2.4-.4.4zm2.6-7.6l-.6 2a.5.5 0 00.5.6h1.6a.5.5 0 00.5-.6l-.6-2c0-.3-.3-.4-.5-.4h-.4c-.2 0-.4.1-.5.4z\"></path></g></svg>"
       },
       {
         "id": "editing-toolbar:change-background-color",
@@ -383,9 +387,12 @@ export const DEFAULT_SETTINGS: editingToolbarSettings = {
     "custom_fc4": "#6425D0",
     "custom_fc5": "#646A73",
     "isLoadOnMobile": false,
-    horizontalPosition: 0,
-    verticalPosition: 0,
-    formatBrushes: {},
-    customCommands: [],
-    viewTypeSettings: {}
+    "horizontalPosition": 0,
+    "verticalPosition": 0,
+    "formatBrushes": {},
+    "customCommands": [],
+    "viewTypeSettings": {},
+    "toolbarBackgroundColor": "rgba(var(--background-secondary-rgb), 0.7)",
+    "toolbarIconColor": "var(--text-normal)",
+    "toolbarIconSize": 18
   }

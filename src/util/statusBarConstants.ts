@@ -35,7 +35,13 @@ export const setBottomValue = (
   activeDocument.documentElement.style.setProperty('--toolbar-vertical-offset', `${settings.verticalPosition}px`);
   let editingToolbarModalBar = activeDocument.getElementById("editingToolbarModalBar");
   if(editingToolbarModalBar&&settings.positionStyle == "fixed"){
-  editingToolbarModalBar.setAttribute("style", `left: calc(50% - calc(${settings.cMenuNumRows*28}px / 2)); bottom: 4.25em; grid-template-columns: repeat(${settings.cMenuNumRows}, 28px)`);
+    let Rowsize= settings.toolbarIconSize || 18;
+    editingToolbarModalBar.setAttribute("style", 
+      `left: calc(50% - calc(${settings.cMenuNumRows*(Rowsize+10)}px / 2));
+       bottom: 4.25em; 
+       grid-template-columns: repeat(${settings.cMenuNumRows}, ${Rowsize+10}px);
+       gap: ${(Rowsize-18)/4}px`
+    );
 }
 
 
