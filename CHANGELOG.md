@@ -1,5 +1,13 @@
 # Changelog
 
+## 3.1.6 (2025-03-21)
+### 移动端设备开启following时屏蔽系统菜单
+### 优化following工具栏位置展示
+###  解决移动端选中文本无法触发following样式
+### Update CHANGELOG.md
+### Update manifest.json and CHANGELOG.md for version 3.1.5
+
+
 ## 3.1.5 (2025-03-20)
 ### #35 #55 #203 feat: Support toolbar theme & icon size!!
 ![image](https://github.com/user-attachments/assets/dc75340a-5b59-4212-ae4f-3b17ab6242d9)
