@@ -112,9 +112,9 @@ export function selfDestruct() {
 
 }
 
-export function isExistoolbar(app: App, settings: editingToolbarSettings): HTMLElement {
+export function isExistoolbar(app: App, plugin: editingToolbarPlugin): HTMLElement {
   requireApiVersion("0.15.0") ? activeDocument = activeWindow.document : activeDocument = window.document;
-  let container = settings.positionStyle == "top" ? app.workspace.activeLeaf?.view.containerEl?.querySelector("#editingToolbarModalBar")
+  let container = plugin.positionStyle == "top" ? app.workspace.activeLeaf?.view.containerEl?.querySelector("#editingToolbarModalBar")
     : activeDocument.getElementById("editingToolbarModalBar");
   return (container) ? container as HTMLElement : null;
 }
@@ -185,7 +185,7 @@ export function createTablecell(app: App, plugin: editingToolbarPlugin, el: stri
   requireApiVersion("0.15.0") ? activeDocument = activeWindow.document : activeDocument = window.document;
 
   const editor = plugin.commandsManager.getActiveEditor();
-  let container = isExistoolbar(app, plugin.settings) as HTMLElement;
+  let container = isExistoolbar(app, plugin) as HTMLElement;
   let tab = container?.querySelector('#' + el);
   if (tab) {
     // @ts-ignore
@@ -391,9 +391,9 @@ export function setFormateraser(plugin: editingToolbarPlugin, editor: Editor) {
 
 }
 
-export function createFollowingbar(app: App, iconSize: number, settings: editingToolbarSettings, editor: Editor, forceShow: boolean = false) {
+export function createFollowingbar(app: App, iconSize: number, plugin: editingToolbarPlugin, editor: Editor, forceShow: boolean = false) {
   // 获取或创建工具栏
-  let editingToolbarModalBar = isExistoolbar(app, settings);
+  let editingToolbarModalBar = isExistoolbar(app, plugin);
 
   // 检查视图类型
   const view = app.workspace.getActiveViewOfType(ItemView);
@@ -405,13 +405,13 @@ export function createFollowingbar(app: App, iconSize: number, settings: editing
   }
 
   // 仅处理 following 样式
-  if (settings.positionStyle !== "following") return;
+  if (plugin.positionStyle !== "following") return;
 
   const viewType = view?.getViewType();
   const isMarkdownView = viewType === 'markdown';
 
   let height = 30;
-  if (settings.aestheticStyle === "tiny") {
+  if (plugin.settings.aestheticStyle === "tiny") {
     height = 30;
   } else height = iconSize + 14;
 
@@ -457,50 +457,81 @@ function positionToolbar(toolbar: HTMLElement, editor: Editor) {
   const editorRect = editor.containerEl.getBoundingClientRect();
   const toolbarWidth = toolbar.offsetWidth;
   const toolbarHeight = toolbar.offsetHeight;
-  const coords = getCoords(editor);
+
   const rightMargin = 12;
+  const windowWidth = window.innerWidth;
 
   // 获取选择的起点和终点位置
   const from = editor.getCursor("from");
   const to = editor.getCursor("to");
-
-  // 检查选择是否都在同一行
-  const isSingleLineSelection = from.line === to.line;
+  //@ts-ignore
+  const coords = editor.coordsAtPos(from); //选择开始位置
 
   // 计算左侧位置
   const sideDockWidth = activeDocument.getElementsByClassName("mod-left-split")[0]?.clientWidth ?? 0;
   const sideDockRibbonWidth = activeDocument.getElementsByClassName("side-dock-ribbon mod-left")[0]?.clientWidth ?? 0;
   const leftSideDockWidth = sideDockWidth + sideDockRibbonWidth;
 
+  // 计算水平位置，确保不超出屏幕右侧
   let leftPosition = coords.left - leftSideDockWidth - 28;
-  if (leftPosition + toolbarWidth + rightMargin >= editorRect.right) {
-    leftPosition = Math.max(0, editorRect.right - toolbarWidth - leftSideDockWidth - rightMargin);
+
+  // 检查是否超出屏幕右侧
+  const rightEdge = leftPosition + toolbarWidth;
+  if (rightEdge > windowWidth - leftSideDockWidth) {
+
+    leftPosition = windowWidth - leftSideDockWidth - toolbarWidth - rightMargin;
+
   }
 
-  // 计算顶部位置
-  let topPosition = 0;
+  // 确保不会超出左侧
+  leftPosition = Math.max(0, leftPosition);
 
+  // 计算顶部位置（保持原有逻辑）
+  let topPosition = calculateTopPosition(editor, coords, editorRect, toolbarHeight);
+
+  // 确保不会超出左上角
+  topPosition = Math.max(0, topPosition);
+
+
+  // 设置位置
+  toolbar.style.left = `${leftPosition}px`;
+  toolbar.style.top = `${topPosition}px`;
+}
+
+// 单独提取垂直位置计算逻辑
+function calculateTopPosition(editor: Editor, coords: { top: number; left: number; bottom: number; }, editorRect: { top: number; left: number; bottom: number; }, toolbarHeight: number) {
+
+
+  const from = editor.getCursor("from");
+  const to = editor.getCursor("to");
+  //@ts-ignore
+  const coordsTO = editor.coordsAtPos(to); //选择结束位置
+  const isSingleLineSelection = from.line === to.line;
+  let topPosition = coords.top - toolbarHeight - 10;
   if (isSingleLineSelection) {
-    // 单行选择：总是显示在上方
-    topPosition = coords.top - toolbarHeight - 10;
-    if (topPosition <= editorRect.top) topPosition = editorRect.top + toolbarHeight;
+    if (topPosition <= editorRect.top) {
+      topPosition = coordsTO.bottom + 10;
+    }
   } else {
     // 多行选择：使用原来的逻辑
     const isSelectionFromBottomToTop = editor.getCursor("head").ch == editor.getCursor("from").ch;
 
     if (isSelectionFromBottomToTop) {
       topPosition = coords.top - toolbarHeight - 10;
-      if (topPosition <= editorRect.top) topPosition = editorRect.top + toolbarHeight;
+      if (topPosition <= editorRect.top) topPosition = editorRect.top + 2 * toolbarHeight;
     } else {
-      topPosition = coords.top + 25;
+      const cursorCoords = getCoords(editor);
+      topPosition = cursorCoords.bottom + 10; //光标位置
       if (topPosition >= editorRect.bottom - toolbarHeight) topPosition = editorRect.bottom - 2 * toolbarHeight;
     }
   }
-
-  // 设置位置
-  toolbar.style.left = leftPosition + "px";
-  toolbar.style.top = topPosition + "px";
+  return topPosition;
 }
+
+
+
+
+
 
 export function editingToolbarPopover(app: App, plugin: editingToolbarPlugin): void {
   let settings = plugin.settings;
@@ -533,7 +564,7 @@ export function editingToolbarPopover(app: App, plugin: editingToolbarPlugin): v
 
       let editingToolbar = createEl("div");
       if (editingToolbar) {
-        if (settings.positionStyle == "top") {
+        if (plugin.positionStyle == "top") {
           editingToolbar.setAttribute(
             "style",
             `position: relative; grid-template-columns: repeat(auto-fit, minmax(calc(var(--toolbar-icon-size) + 10px), 1fr));`
@@ -542,7 +573,7 @@ export function editingToolbarPopover(app: App, plugin: editingToolbarPlugin): v
           if (settings.autohide) {
             editingToolbar.className += " autohide";
           }
-        } else if (settings.positionStyle == "following") {
+        } else if (plugin.positionStyle == "following") {
           editingToolbar.style.visibility = "hidden"
         }
       }
@@ -565,7 +596,7 @@ export function editingToolbarPopover(app: App, plugin: editingToolbarPlugin): v
       //    editingToolbar.style.visibility = "hidden";
       // }
 
-      if (settings.positionStyle == "top") {
+      if (plugin.positionStyle == "top") {
         let currentleaf = app.workspace.activeLeaf.view.containerEl;
 
         // 确定要插入工具栏的目标元素
@@ -637,7 +668,7 @@ export function editingToolbarPopover(app: App, plugin: editingToolbarPlugin): v
             _btn.setClass("editingToolbarSecond");
           }
           else {
-            if (settings.positionStyle != "top")
+            if (plugin.positionStyle != "top")
               _btn.buttonEl.setAttribute('aria-label-position', 'top')
           }
 
@@ -671,7 +702,7 @@ export function editingToolbarPopover(app: App, plugin: editingToolbarPlugin): v
 
                     if (settings.cMenuVisibility == false) {
                       editingToolbar.style.visibility = "hidden";
-                    } else if (settings.positionStyle == "following") {
+                    } else if (plugin.positionStyle == "following") {
                       // 只有在没有选中内容时才隐藏工具栏
                       if (!hasSelection) {
                         editingToolbar.style.visibility = "hidden";
@@ -681,7 +712,7 @@ export function editingToolbarPopover(app: App, plugin: editingToolbarPlugin): v
                     }
                   });
                 if (index < settings.cMenuNumRows) {
-                  if (settings.positionStyle != "top")
+                  if (plugin.positionStyle != "top")
                     sub_btn.buttonEl.setAttribute('aria-label-position', 'top')
                 }
                 if (subitem.id == "editingToolbar-Divider-Line")
@@ -710,7 +741,7 @@ export function editingToolbarPopover(app: App, plugin: editingToolbarPlugin): v
 
                 if (settings.cMenuVisibility == false) {
                   editingToolbar.style.visibility = "hidden";
-                } else if (settings.positionStyle == "following") {
+                } else if (plugin.positionStyle == "following") {
                   // 只有在没有选中内容时才隐藏工具栏
                   if (!hasSelection) {
                     editingToolbar.style.visibility = "hidden";
@@ -793,7 +824,7 @@ export function editingToolbarPopover(app: App, plugin: editingToolbarPlugin): v
 
                 if (settings.cMenuVisibility == false) {
                   editingToolbar.style.visibility = "hidden";
-                } else if (settings.positionStyle == "following") {
+                } else if (plugin.positionStyle == "following") {
                   // 只有在没有选中内容时才隐藏工具栏
                   if (!hasSelection) {
                     editingToolbar.style.visibility = "hidden";
@@ -880,7 +911,7 @@ export function editingToolbarPopover(app: App, plugin: editingToolbarPlugin): v
 
               if (settings.cMenuVisibility == false) {
                 editingToolbar.style.visibility = "hidden";
-              } else if (settings.positionStyle == "following") {
+              } else if (plugin.positionStyle == "following") {
                 // 只有在没有选中内容时才隐藏工具栏
                 if (!hasSelection) {
                   editingToolbar.style.visibility = "hidden";
@@ -895,7 +926,7 @@ export function editingToolbarPopover(app: App, plugin: editingToolbarPlugin): v
 
               button.setClass("editingToolbarSecond");
             } else {
-              if (settings.positionStyle != "top")
+              if (plugin.positionStyle != "top")
                 button.buttonEl.setAttribute('aria-label-position', 'top')
             }
             if (item.id == "editingToolbar-Divider-Line")
@@ -928,7 +959,7 @@ export function editingToolbarPopover(app: App, plugin: editingToolbarPlugin): v
     if (ViewUtils.isAllowedViewType(view)) {
       //  let Markdown = app.workspace.getActiveViewOfType(MarkdownView);
       // if (Markdown) {
-      if (isExistoolbar(app, plugin.settings)) return;
+      if (isExistoolbar(app, plugin)) return;
 
       generateMenu();
 

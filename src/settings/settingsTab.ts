@@ -117,7 +117,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     super(app, plugin);
     this.plugin = plugin;
     // 初始化 currentEditingConfig
-    this.currentEditingConfig = this.plugin.settings.positionStyle;
+    this.currentEditingConfig = this.plugin.positionStyle;
 
     addEventListener("editingToolbar-NewCommand", () => {
       selfDestruct();
@@ -253,7 +253,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
         .onChange(async (value) => {
           this.plugin.settings.enableMultipleConfig = value;
           //只初始化当前配置
-          this.plugin.onPositionStyleChange(this.plugin.settings.positionStyle);
+          this.plugin.onPositionStyleChange(this.plugin.positionStyle);
 
           await this.plugin.saveSettings();
           this.display();
@@ -291,16 +291,16 @@ export class editingToolbarSettingTab extends PluginSettingTab {
         POSITION_STYLES.map((position) => (positions[position] = position));
         dropdown
           .addOptions(positions)
-          .setValue(this.plugin.settings.positionStyle)
+          .setValue(this.plugin.positionStyle)
           .onChange(async (value) => {
-            this.plugin.settings.positionStyle = value;
+            this.plugin.positionStyle = value;
             await this.plugin.saveSettings();
             // 调用插件的公共方法
             this.plugin.onPositionStyleChange(value);
             this.display();
           });
       });
-    if (this.plugin.settings.positionStyle == "top") {
+    if (this.plugin.positionStyle == "top") {
 
       new Setting(appearanceSettingContainer)
         .setName(t('Editing Toolbar Auto-hide')
@@ -315,7 +315,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
             this.triggerRefresh();
           }));
     }
-    if (this.plugin.settings.positionStyle == "fixed") {
+    if (this.plugin.positionStyle == "fixed") {
       new Setting(containerEl)
         .setName(t('Editing Toolbar columns')
         )
@@ -1025,7 +1025,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     // 创建预览工具栏 - 使用类似 generateMenu 的方式
     const editingToolbar = previewContainer.createDiv();
     editingToolbar.setAttribute("id", "editingToolbarModalBar");
-    this.applyAestheticStyle(editingToolbar, this.plugin.settings.aestheticStyle, this.plugin.settings.positionStyle);
+    this.applyAestheticStyle(editingToolbar, this.plugin.settings.aestheticStyle, this.plugin.positionStyle);
     // 根据当前美观风格设置类
 
 

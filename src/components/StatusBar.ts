@@ -95,7 +95,7 @@ export class StatusBar {
       ["top", "fixed", "following"].forEach(position => {
         submenu.addItem(subItem => {
           subItem.setTitle(position);
-          subItem.setIcon(this.plugin.settings.positionStyle === position ? "check" : "");
+          subItem.setIcon(this.plugin.positionStyle === position ? "check" : "");
           subItem.onClick(async () => {
             this.plugin.settings.positionStyle = position;
             await this.plugin.saveSettings();
@@ -240,7 +240,7 @@ export class StatusBar {
     ];
 
     // 只在 positionStyle 为 "fixed" 时添加 sliders 选项
-    if (this.plugin.settings.positionStyle === "fixed") {
+    if (this.plugin.positionStyle === "fixed") {
       controls.push({
         icon: "file-sliders",
         title: t("Position Settings"),

@@ -711,7 +711,7 @@ export class InsertLinkModal extends Modal {
         // 用于存储新光标位置
         let newCursorPos: { line: number, ch: number };
 
-        const selection = editor.getSelection();
+        const selection = editor.somethingSelected();
         if (selection) {
             // 如果有选中文本
             const selectionStart = editor.getCursor('from');

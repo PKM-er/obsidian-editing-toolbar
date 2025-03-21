@@ -20,8 +20,7 @@ export class CommandsManager {
     private executeCommandWithoutBlur = async (editor: Editor, callback: () => any) => {
 
         if (editor) {
-            const selection = editor.getSelection();
-            const cursor = editor.getCursor();
+       
 
             await callback();
 
