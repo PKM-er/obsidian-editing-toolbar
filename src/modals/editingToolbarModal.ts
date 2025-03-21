@@ -315,57 +315,57 @@ export function setFormateraser(plugin: editingToolbarPlugin, editor: Editor) {
   // } else {
   // 处理 callout 格式
   // 处理最外层的 callout 格式，每次只脱一层壳
-   // 检查是否是 callout 格式
-   if (selectText.match(/^>\s*\[\![\w\s]*\]/m)) {
+  // 检查是否是 callout 格式
+  if (selectText.match(/^>\s*\[\![\w\s]*\]/m)) {
     // 处理 callout 格式
     let lines = selectText.split('\n');
     let result = [];
     let inCallout = false;
     let calloutLevel = 0;
     let foundFirstCallout = false;
-    
+
     for (let i = 0; i < lines.length; i++) {
-        let line = lines[i];
-        
-        // 检测 callout 开始
-        let calloutMatch = line.match(/^(>+)\s*\[\!([\w\s]*)\]\s*(.*?)$/);
-        if (calloutMatch && !foundFirstCallout) {
-            // 找到第一个 callout，记录其级别
-            calloutLevel = calloutMatch[1].length;
-            foundFirstCallout = true;
-            
-            // 如果有标题，保留标题
-            if (calloutMatch[3].trim()) {
-                result.push(calloutMatch[3].trim());
-            }
-            
-            inCallout = true;
-            continue;
+      let line = lines[i];
+
+      // 检测 callout 开始
+      let calloutMatch = line.match(/^(>+)\s*\[\!([\w\s]*)\]\s*(.*?)$/);
+      if (calloutMatch && !foundFirstCallout) {
+        // 找到第一个 callout，记录其级别
+        calloutLevel = calloutMatch[1].length;
+        foundFirstCallout = true;
+
+        // 如果有标题，保留标题
+        if (calloutMatch[3].trim()) {
+          result.push(calloutMatch[3].trim());
         }
-        
-        // 处理 callout 内容
-        if (inCallout) {
-            let linePrefix = line.match(/^(>+)\s*/);
-            if (linePrefix && linePrefix[1].length >= calloutLevel) {
-                // 这行是当前 callout 的一部分
-                // 去除与当前 callout 级别相同的前缀
-                let newLine = line.replace(new RegExp(`^>{${calloutLevel}}\\s*`), '');
-                
-                // 如果有更深层次的 >，保留它们
-                result.push(newLine);
-            } else {
-                // 这行不是当前 callout 的一部分
-                inCallout = false;
-                result.push(line);
-            }
+
+        inCallout = true;
+        continue;
+      }
+
+      // 处理 callout 内容
+      if (inCallout) {
+        let linePrefix = line.match(/^(>+)\s*/);
+        if (linePrefix && linePrefix[1].length >= calloutLevel) {
+          // 这行是当前 callout 的一部分
+          // 去除与当前 callout 级别相同的前缀
+          let newLine = line.replace(new RegExp(`^>{${calloutLevel}}\\s*`), '');
+
+          // 如果有更深层次的 >，保留它们
+          result.push(newLine);
         } else {
-            result.push(line);
+          // 这行不是当前 callout 的一部分
+          inCallout = false;
+          result.push(line);
         }
+      } else {
+        result.push(line);
+      }
     }
-    
+
     editor.replaceSelection(result.join('\n'));
     return;
-}
+  }
 
   let mdText = /(^#+\s|^#(?=\s)|^\>|^\- \[( |x)\]|^\+ |\<[^\<\>]+?\>|^1\. |^\s*\- |^\-+$|^\*+$)/mg;
   selectText = selectText.replace(mdText, "");
@@ -385,13 +385,13 @@ export function setFormateraser(plugin: editingToolbarPlugin, editor: Editor) {
   //editor.setSelection(cursor);
 
 
- 
+
   //app.commands.executeCommandById("editor:clear-formatting");
 
 
 }
 
-export function createFollowingbar(app: App, settings: editingToolbarSettings, editor: Editor, forceShow: boolean = false) {
+export function createFollowingbar(app: App, iconSize: number, settings: editingToolbarSettings, editor: Editor, forceShow: boolean = false) {
   // 获取或创建工具栏
   let editingToolbarModalBar = isExistoolbar(app, settings);
 
@@ -409,7 +409,12 @@ export function createFollowingbar(app: App, settings: editingToolbarSettings, e
 
   const viewType = view?.getViewType();
   const isMarkdownView = viewType === 'markdown';
-  
+
+  let height = 30;
+  if (settings.aestheticStyle === "tiny") {
+    height = 30;
+  } else height = iconSize + 14;
+
   if (isMarkdownView) {
     // 处理 Markdown 视图
     if (ViewUtils.isSourceMode(view)) {
@@ -418,14 +423,14 @@ export function createFollowingbar(app: App, settings: editingToolbarSettings, e
         // 当 forceShow 为 true 或有文本选中时显示工具栏
         const shouldShow = forceShow || editor.somethingSelected();
         editingToolbarModalBar.style.visibility = shouldShow ? "visible" : "hidden";
-        
+
         // 仅在工具栏可见时执行后续操作
         if (editingToolbarModalBar.style.visibility === "visible") {
           // 设置工具栏样式
-          editingToolbarModalBar.style.height = (settings.aestheticStyle === "tiny") ? 30 + "px" : 40 + "px";
+          editingToolbarModalBar.style.height = height + "px";
           editingToolbarModalBar.addClass("editingToolbarFlex");
           editingToolbarModalBar.removeClass("editingToolbarGrid");
-          
+
           // 计算工具栏位置
           positionToolbar(editingToolbarModalBar, editor);
         }
@@ -440,7 +445,7 @@ export function createFollowingbar(app: App, settings: editingToolbarSettings, e
     // 处理其他视图类型（canvas等）
     if (editingToolbarModalBar) {
       editingToolbarModalBar.style.visibility = "visible";
-      editingToolbarModalBar.style.height = (settings.aestheticStyle === "tiny") ? 30 + "px" : 40 + "px";
+      editingToolbarModalBar.style.height = height + "px";
       editingToolbarModalBar.addClass("editingToolbarFlex");
       editingToolbarModalBar.removeClass("editingToolbarGrid");
     }
@@ -458,10 +463,10 @@ function positionToolbar(toolbar: HTMLElement, editor: Editor) {
   // 获取选择的起点和终点位置
   const from = editor.getCursor("from");
   const to = editor.getCursor("to");
-  
+
   // 检查选择是否都在同一行
   const isSingleLineSelection = from.line === to.line;
-  
+
   // 计算左侧位置
   const sideDockWidth = activeDocument.getElementsByClassName("mod-left-split")[0]?.clientWidth ?? 0;
   const sideDockRibbonWidth = activeDocument.getElementsByClassName("side-dock-ribbon mod-left")[0]?.clientWidth ?? 0;
@@ -474,7 +479,7 @@ function positionToolbar(toolbar: HTMLElement, editor: Editor) {
 
   // 计算顶部位置
   let topPosition = 0;
-  
+
   if (isSingleLineSelection) {
     // 单行选择：总是显示在上方
     topPosition = coords.top - toolbarHeight - 10;
@@ -482,7 +487,7 @@ function positionToolbar(toolbar: HTMLElement, editor: Editor) {
   } else {
     // 多行选择：使用原来的逻辑
     const isSelectionFromBottomToTop = editor.getCursor("head").ch == editor.getCursor("from").ch;
-    
+
     if (isSelectionFromBottomToTop) {
       topPosition = coords.top - toolbarHeight - 10;
       if (topPosition <= editorRect.top) topPosition = editorRect.top + toolbarHeight;
@@ -512,20 +517,20 @@ export function editingToolbarPopover(app: App, plugin: editingToolbarPlugin): v
       Object.values(aestheticStyleMap).forEach(className => {
         element.removeClass(className);
       });
-      
+
       // 添加当前选择的风格类
       const selectedClass = aestheticStyleMap[style] || aestheticStyleMap.default;
       element.addClass(selectedClass);
     }
-    
+
     const generateMenu = () => {
       let btnwidth = 0;
       let leafwidth = 0;
       let buttonWidth = 26;
-      if(plugin.toolbarIconSize){
+      if (plugin.toolbarIconSize) {
         buttonWidth = plugin.toolbarIconSize + 8;
       }
-     
+
       let editingToolbar = createEl("div");
       if (editingToolbar) {
         if (settings.positionStyle == "top") {
@@ -550,12 +555,12 @@ export function editingToolbarPopover(app: App, plugin: editingToolbarPlugin): v
       PopoverMenu.setAttribute("id", "editingToolbarPopoverBar");
       PopoverMenu.style.visibility = "hidden";
       PopoverMenu.style.height = "0";
- // 应用样式到编辑工具栏
+      // 应用样式到编辑工具栏
 
-// 在生成工具栏时应用样式
-applyAestheticStyle(editingToolbar, settings.aestheticStyle);
-// 在生成工具栏时应用样式
-applyAestheticStyle(PopoverMenu, settings.aestheticStyle);
+      // 在生成工具栏时应用样式
+      applyAestheticStyle(editingToolbar, settings.aestheticStyle);
+      // 在生成工具栏时应用样式
+      applyAestheticStyle(PopoverMenu, settings.aestheticStyle);
       //  if (settings.positionStyle == "following") {
       //    editingToolbar.style.visibility = "hidden";
       // }
@@ -611,10 +616,10 @@ applyAestheticStyle(PopoverMenu, settings.aestheticStyle);
 
       let editingToolbarPopoverBar = app.workspace.activeLeaf.view.containerEl
         ?.querySelector("#editingToolbarPopoverBar") as HTMLElement;
-      
+
       // 使用plugin.getCurrentCommands()获取当前位置样式对应的命令配置
       const currentCommands = plugin.getCurrentCommands();
-      
+
       currentCommands.forEach((item, index) => {
         let tip;
         if ("SubmenuCommands" in item) {
@@ -698,11 +703,11 @@ applyAestheticStyle(PopoverMenu, settings.aestheticStyle);
               .onClick(() => {
 
                 app.commands.executeCommandById(item.id);
-                
+
                 // 检查命令执行后是否仍有文本选中
                 const editor = plugin.commandsManager.getActiveEditor();
                 const hasSelection = editor && editor.somethingSelected();
-                
+
                 if (settings.cMenuVisibility == false) {
                   editingToolbar.style.visibility = "hidden";
                 } else if (settings.positionStyle == "following") {
@@ -781,11 +786,11 @@ applyAestheticStyle(PopoverMenu, settings.aestheticStyle);
               .onClick(() => {
 
                 app.commands.executeCommandById(item.id);
-                
+
                 // 检查命令执行后是否仍有文本选中
                 const editor = plugin.commandsManager.getActiveEditor();
                 const hasSelection = editor && editor.somethingSelected();
-                
+
                 if (settings.cMenuVisibility == false) {
                   editingToolbar.style.visibility = "hidden";
                 } else if (settings.positionStyle == "following") {
@@ -868,11 +873,11 @@ applyAestheticStyle(PopoverMenu, settings.aestheticStyle);
             hotkey == "–" ? tip = item.name : tip = item.name + "(" + hotkey + ")";
             button.setTooltip(tip).onClick(() => {
               app.commands.executeCommandById(item.id);
-              
+
               // 检查命令执行后是否仍有文本选中
               const editor = plugin.commandsManager.getActiveEditor();
               const hasSelection = editor && editor.somethingSelected();
-              
+
               if (settings.cMenuVisibility == false) {
                 editingToolbar.style.visibility = "hidden";
               } else if (settings.positionStyle == "following") {
@@ -887,7 +892,7 @@ applyAestheticStyle(PopoverMenu, settings.aestheticStyle);
 
             button.setClass("editingToolbarCommandItem");
             if (index >= settings.cMenuNumRows) {
-              
+
               button.setClass("editingToolbarSecond");
             } else {
               if (settings.positionStyle != "top")
@@ -960,4 +965,3 @@ function setsvgColor(fontcolor: string, bgcolor: string) {
   }
 
 }
- 

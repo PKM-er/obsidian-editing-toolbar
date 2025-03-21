@@ -182,15 +182,15 @@ export default class editingToolbarPlugin extends Plugin {
       const cmEditor = this.commandsManager.getActiveEditor();
       if (!cmEditor) return;
       
-      const editingToolbarModalBar = isExistoolbar(this.app, this.settings);
+      // const editingToolbarModalBar = isExistoolbar(this.app, this.settings);
       
-      // 判断是否点击在工具栏外部
-      if (this.settings.positionStyle === "following" && editingToolbarModalBar) {
-        const isClickInsideToolbar = editingToolbarModalBar.contains(e.target as Node);
-        if (!isClickInsideToolbar) {
-          editingToolbarModalBar.style.visibility = "hidden";
-        }
-      }
+      // // 判断是否点击在工具栏外部
+      // if (this.settings.positionStyle === "following" && editingToolbarModalBar) {
+      //   const isClickInsideToolbar = editingToolbarModalBar.contains(e.target as Node);
+      //   if (!isClickInsideToolbar) {
+      //     editingToolbarModalBar.style.visibility = "hidden";
+      //   }
+      // }
       
       // 处理鼠标中键双击
       if (e.button === 1) {
@@ -210,10 +210,19 @@ export default class editingToolbarPlugin extends Plugin {
       }
     });
     
-    // 处理鼠标选中文本
-    this.registerDomEvent(container, "mouseup", () => {
-      this.handleTextSelection();
-    });
+    if(Platform.isMobileApp){
+      this.registerDomEvent(container, "selectionchange", (e) => {
+        this.handleTextSelection();
+      });
+     
+    } else{
+      // 处理鼠标选中文本
+      this.registerDomEvent(container, "mouseup", (e) => {
+        if(e.button != 1)
+        this.handleTextSelection();
+      });
+    }
+    
     
     // 处理键盘选中文本
     this.registerDomEvent(container, "keyup", (e) => {
@@ -576,10 +585,10 @@ export default class editingToolbarPlugin extends Plugin {
     
     const cmEditor = this.commandsManager.getActiveEditor();
     if (!cmEditor?.hasFocus()) return;
-    
+    const editingToolbarModalBar = isExistoolbar(this.app, this.settings);
     // 检查是否有选中的文本
     if (cmEditor.getSelection()) {
-      const editingToolbarModalBar = isExistoolbar(this.app, this.settings);
+     
       
       // 处理各种格式刷
       if (this.EN_FontColor_Format_Brush) {
@@ -592,6 +601,10 @@ export default class editingToolbarPlugin extends Plugin {
         this.applyFormatBrush(cmEditor);
       } else if (this.settings.positionStyle === "following") {
         this.showFollowingToolbar(cmEditor);
+      }
+    } else {
+      if (editingToolbarModalBar&&this.settings.positionStyle === "following") {
+        editingToolbarModalBar.style.visibility = "hidden";
       }
     }
   }
@@ -606,9 +619,9 @@ export default class editingToolbarPlugin extends Plugin {
       editingToolbarModalBar.classList.remove("editingToolbarGrid");
       
       // 直接使用createFollowingbar的定位逻辑
-      createFollowingbar(this.app, this.settings, editor, true);
+      createFollowingbar(this.app,this.toolbarIconSize, this.settings, editor, true);
     } else {
-      createFollowingbar(this.app, this.settings, editor, true);
+      createFollowingbar(this.app, this.toolbarIconSize, this.settings, editor, true);
     }
   }
 

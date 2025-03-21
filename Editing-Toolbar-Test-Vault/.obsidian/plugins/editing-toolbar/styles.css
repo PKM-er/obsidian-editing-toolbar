@@ -10,7 +10,7 @@
 #editingToolbarModalBar {
   width: auto;
   height: auto;
-  padding: 3px;
+  /* padding: 3px; */
   display: grid;
   user-select: none;
   border-radius: var(--radius-m);
@@ -27,6 +27,9 @@
 #editingToolbarPopoverBar.editingToolbarCustomAesthetic
 {
   background-color: var(--editing-toolbar-background-color);
+  gap: calc(var(--toolbar-icon-size) / 15) !important;
+
+
 }
 #editingToolbarModalBar.editingToolbarCustomAesthetic
 {
@@ -314,8 +317,7 @@ body.theme-dark .modal-container.editingToolbar-Modal .modal input[type='range']
   margin-right: 0px;
   position: relative;
   background-color: transparent;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+ 
 
 }
 
@@ -1300,6 +1302,7 @@ body.auto-hide-header .workspace-tab-header-container + .workspace-tab-container
 
  .toolbar-preview-container #editingToolbarModalBar{
   visibility:visible !important;
+  position: relative;
  }
  
  
