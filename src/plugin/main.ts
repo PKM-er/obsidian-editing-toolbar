@@ -134,7 +134,21 @@ export default class editingToolbarPlugin extends Plugin {
         dispatchEvent(new Event("editingToolbar-NewCommand"));
       }, 100)
     }
-
+    this.registerDomEvent(
+      activeDocument,
+      'contextmenu',
+      e => {
+        if (this.settings.isLoadOnMobile && Platform.isMobile && this.positionStyle == "following") {
+          const { target } = e;
+          if (target instanceof HTMLElement) {
+            const iseditor = target.closest('.cm-editor') !== null;
+            if (iseditor) {
+              e.preventDefault();
+            }
+          }
+        }
+      },
+    );
     // 初始化图标
     addIcons();
     this.toolbarIconSize = this.settings.toolbarIconSize;
