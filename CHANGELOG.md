@@ -1,5 +1,10 @@
 # Changelog
 
+## 3.1.8 (2025-03-22)
+### #214 fixed 兼容 Excalidraw
+### Update manifest.json and CHANGELOG.md for version 3.1.7
+
+
 ## 3.1.7 (2025-03-22)
 ### fix：移动端固定模式失效
 ### Update manifest.json and CHANGELOG.md for version 3.1.6
