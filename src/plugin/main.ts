@@ -105,14 +105,18 @@ export default class editingToolbarPlugin extends Plugin {
     };
     const lastVer = parseVersion(lastVersion);
     const currentVer = parseVersion(currentVersion);
+    const updateModal = new UpdateNoticeModal(this.app, this);
     const isNewInstall = lastVersion === '0.0.0';
+    if(isNewInstall){
+      updateModal.fixCommandIds();
+    }
     const needUpdateNotice = 
       !isNewInstall && 
       (lastVer.major < 3 || 
       (lastVer.major === 3 && lastVer.minor < 1));
     if (needUpdateNotice) {
       setTimeout(() => {
-        new UpdateNoticeModal(this.app, this).open();
+        updateModal.open();
       }, 3000);
     }
     this.settings.lastVersion = currentVersion;

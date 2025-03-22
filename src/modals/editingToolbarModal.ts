@@ -15,7 +15,7 @@ const viewTypeToSelectorMap: { [key: string]: string } = {
   markdown: ".markdown-source-view",
   thino_view: ".markdown-source-view",
   canvas: ".canvas-wrapper",
-  excalidraw: ".excalidraw-wrapper",
+  excalidraw: ".view-header",
   image: ".image-container",
   pdf: ".view-content",
   meld_encrypted_view: ".markdown-source-view",
@@ -634,11 +634,19 @@ export function editingToolbarPopover(app: App, plugin: editingToolbarPlugin): v
 
         // 只有在没有工具栏时才添加 PopoverMenu
         if (!currentleaf?.querySelector("#editingToolbarPopoverBar")) {
+         if (viewType == "excalidraw") {
+          targetDom.insertAdjacentElement("afterend", PopoverMenu);
+         } else {
           targetDom.insertAdjacentElement("afterbegin", PopoverMenu);
+         }
         }
 
         // 添加编辑工具栏
+       if (viewType == "excalidraw") {
+        targetDom.insertAdjacentElement("afterend", editingToolbar);
+       } else {
         targetDom.insertAdjacentElement("afterbegin", editingToolbar);
+       }
 
         // 获取宽度
         leafwidth = targetDom?.offsetWidth;
