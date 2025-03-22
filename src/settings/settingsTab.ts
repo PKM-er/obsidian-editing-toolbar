@@ -1,5 +1,6 @@
 import type editingToolbarPlugin from "src/plugin/main";
-import { CommandPicker, ChooseFromIconList, ChangeCmdname } from "src/modals/suggesterModals";
+import { CommandPicker, ChooseFromIconList, openSlider, ChangeCmdname } from "src/modals/suggesterModals";
+
 import { App, Setting, PluginSettingTab, Command, Notice, setIcon } from "obsidian";
 import { APPEND_METHODS, AESTHETIC_STYLES, POSITION_STYLES } from "src/settings/settingsData";
 import { selfDestruct, editingToolbarPopover, checkHtml } from "src/modals/editingToolbarModal";
@@ -291,9 +292,9 @@ export class editingToolbarSettingTab extends PluginSettingTab {
         POSITION_STYLES.map((position) => (positions[position] = position));
         dropdown
           .addOptions(positions)
-          .setValue(this.plugin.positionStyle)
+          .setValue(this.plugin.settings.positionStyle)
           .onChange(async (value) => {
-            this.plugin.positionStyle = value;
+            this.plugin.settings.positionStyle = value;
             await this.plugin.saveSettings();
             // 调用插件的公共方法
             this.plugin.onPositionStyleChange(value);
@@ -316,7 +317,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
           }));
     }
     if (this.plugin.positionStyle == "fixed") {
-      new Setting(containerEl)
+      new Setting(appearanceSettingContainer)
         .setName(t('Editing Toolbar columns')
         )
         .setDesc(
@@ -331,6 +332,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
                 async (value: number) => {
                   this.plugin.settings.cMenuNumRows = value;
                   await this.plugin.saveSettings();
+                  this.triggerRefresh();
                 },
                 100,
                 true
@@ -338,7 +340,14 @@ export class editingToolbarSettingTab extends PluginSettingTab {
             )
             .setDynamicTooltip();
         });
-
+      new Setting(appearanceSettingContainer)
+        .setName(t('Fixed position offset'))
+        .setDesc(t('Choose the offset of the Editing Toolbar in the fixed position.'))
+        .addButton(button => button
+          .setButtonText(t('Settings'))
+          .onClick(() => {
+            new openSlider(this.app, this.plugin).open();
+          }));
     }
     // Color settings
     this.createColorSettings(containerEl);
@@ -881,7 +890,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
 
           // 根据选择的主题设置颜色和大小
           switch (value) {
-             
+
             case 'light':
               this.plugin.settings.toolbarBackgroundColor = '#F5F8FA';
               this.plugin.settings.toolbarIconColor = '#4A5568';
@@ -1008,7 +1017,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
             this.plugin.settings.aestheticStyle = 'custom';
 
             await this.plugin.saveSettings();
-        
+
           });
       });
 
@@ -1028,7 +1037,17 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     this.applyAestheticStyle(editingToolbar, this.plugin.settings.aestheticStyle, this.plugin.positionStyle);
     // 根据当前美观风格设置类
 
+    if (this.plugin.positionStyle == "fixed") {
 
+      let Rowsize = this.plugin.settings.toolbarIconSize || 18;
+      editingToolbar.setAttribute("style",
+        `left: calc(50% - calc(${this.plugin.settings.cMenuNumRows * (Rowsize + 10)}px / 2));
+   bottom: 4.25em; 
+   grid-template-columns: repeat(${this.plugin.settings.cMenuNumRows}, ${Rowsize + 10}px);
+   gap: ${(Rowsize - 18) / 4}px;
+   position:absolute;`
+      );
+    }
 
 
     // 定义预览工具栏的命令

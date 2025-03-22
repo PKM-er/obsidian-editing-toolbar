@@ -165,8 +165,6 @@ export class StatusBar {
           'canvas',
           'thino_view',
           'meld-encrypted-view',
-          'excalidraw',
-          'image',
         ];
         
         // 添加所有当前已知的视图类型
@@ -220,8 +218,6 @@ export class StatusBar {
         'canvas',
         'thino_view',
         'meld-encrypted-view',
-        'excalidraw',
-        'image',
       ];
       return defaultViewTypes.includes(viewType);
     }

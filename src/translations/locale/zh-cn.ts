@@ -377,7 +377,7 @@ export default {
   'Share your toolbar settings and styles in our': '分享您的工具栏设置和样式：',
   'section!': '社区！',
   'Get inspired by what others have created or showcase your own customizations.': '获取灵感或展示您的自定义设置。',
-  'Toolbar preview': '工具栏预览',
+  'Toolbar preview': '工具栏预览（按钮仅供参考）',
   'Toolbar theme': '工具栏主题',
   'Select a preset toolbar theme, automatically setting the background color, icon color, and size': '选择预设的工具栏主题，自动设置背景颜色、图标颜色和大小',
   'Toolbar background color': '工具栏背景颜色',
@@ -387,4 +387,6 @@ export default {
   'Toolbar icon size': '工具栏图标大小',
   'Set the size of the toolbar icon (px) default 18px': '设置工具栏图标大小（px）默认18px',
   'Custom theme': '自定义主题',
+  'Fixed position offset': '固定位置偏移',
+  'Choose the offset of the Editing Toolbar in the fixed position.': '选择固定位置工具栏的偏移量。',
 };

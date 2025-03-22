@@ -33,16 +33,6 @@ export const setBottomValue = (
 ) => {
   requireApiVersion("0.15.0")?activeDocument=activeWindow.document:activeDocument=window.document;
   activeDocument.documentElement.style.setProperty('--toolbar-vertical-offset', `${settings.verticalPosition}px`);
-  let editingToolbarModalBar = activeDocument.getElementById("editingToolbarModalBar");
-  if(editingToolbarModalBar&&settings.positionStyle == "fixed"){
-    let Rowsize= settings.toolbarIconSize || 18;
-    editingToolbarModalBar.setAttribute("style", 
-      `left: calc(50% - calc(${settings.cMenuNumRows*(Rowsize+10)}px / 2));
-       bottom: 4.25em; 
-       grid-template-columns: repeat(${settings.cMenuNumRows}, ${Rowsize+10}px);
-       gap: ${(Rowsize-18)/4}px`
-    );
-}
 
 
 };

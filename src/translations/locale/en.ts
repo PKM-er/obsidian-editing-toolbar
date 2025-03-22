@@ -372,7 +372,7 @@ export default {
 'Join the Community': 'Join the Community',
 'Share your toolbar settings and styles in our': 'Share your toolbar settings and styles in our',
 'Get inspired by what others have created or showcase your own customizations.': 'Get inspired by what others have created or showcase your own customizations.',
-'Toolbar preview': 'Toolbar preview',
+'Toolbar preview': 'Toolbar preview (for example only)',
 'Toolbar theme': 'Toolbar theme',
 'Select a preset toolbar theme, automatically setting the background color, icon color, and size': 'Select a preset toolbar theme, automatically setting the background color, icon color, and size',
 'Toolbar background color': 'Toolbar background color',
@@ -382,4 +382,6 @@ export default {
 'Toolbar icon size': 'Toolbar icon size',
 'Set the size of the toolbar icon (px) default 18px': 'Set the size of the toolbar icon (px) default 18px', 
 'Custom theme': 'Custom theme',
+'Fixed position offset': 'Fixed position offset',
+'Choose the offset of the Editing Toolbar in the fixed position.': 'Choose the offset of the Editing Toolbar in the fixed position.',
 }

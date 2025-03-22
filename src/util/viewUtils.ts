@@ -25,8 +25,6 @@ export class ViewUtils {
         'canvas',
         'thino_view',
         'meld-encrypted-view',
-        'excalidraw',
-        'image',
       ];
     const types = allowedTypes || defaultAllowedTypes;
 

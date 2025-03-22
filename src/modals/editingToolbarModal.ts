@@ -18,6 +18,7 @@ const viewTypeToSelectorMap: { [key: string]: string } = {
   excalidraw: ".excalidraw-wrapper",
   image: ".image-container",
   pdf: ".view-content",
+  meld_encrypted_view: ".markdown-source-view",
 };
 
 export function getRootSplits(): WorkspaceParentExt[] {
@@ -565,16 +566,21 @@ export function editingToolbarPopover(app: App, plugin: editingToolbarPlugin): v
       let editingToolbar = createEl("div");
       if (editingToolbar) {
         if (plugin.positionStyle == "top") {
-          editingToolbar.setAttribute(
-            "style",
-            `position: relative; grid-template-columns: repeat(auto-fit, minmax(calc(var(--toolbar-icon-size) + 10px), 1fr));`
-          );
           editingToolbar.className += " top";
           if (settings.autohide) {
             editingToolbar.className += " autohide";
           }
         } else if (plugin.positionStyle == "following") {
           editingToolbar.style.visibility = "hidden"
+        } else if (plugin.positionStyle == "fixed") {
+
+          let Rowsize = settings.toolbarIconSize || 18;
+          editingToolbar.setAttribute("style",
+            `left: calc(50% - calc(${settings.cMenuNumRows * (Rowsize + 10)}px / 2));
+       bottom: 4.25em; 
+       grid-template-columns: repeat(${settings.cMenuNumRows}, ${Rowsize + 10}px);
+       gap: ${(Rowsize - 18) / 4}px`
+          );
         }
       }
       editingToolbar.setAttribute("id", "editingToolbarModalBar");
