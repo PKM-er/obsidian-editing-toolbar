@@ -1,5 +1,10 @@
 # Changelog
 
+## 3.1.7 (2025-03-22)
+### fix：移动端固定模式失效
+### Update manifest.json and CHANGELOG.md for version 3.1.6
+
+
 ## 3.1.6 (2025-03-21)
 ### 移动端设备开启following时屏蔽系统菜单
 ### 优化following工具栏位置展示
