@@ -3,6 +3,7 @@
 ## 3.1.9 (2025-03-27)
 ### ADD Renumber  List
 ### Update manifest.json and CHANGELOG.md for version 3.1.8
+![renumber](https://github.com/user-attachments/assets/d086221e-38c8-4c23-b5fd-86766694d957)
 
 
 ## 3.1.8 (2025-03-22)
