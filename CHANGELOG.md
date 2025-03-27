@@ -1,5 +1,10 @@
 # Changelog
 
+## 3.1.9 (2025-03-27)
+### ADD Renumber  List
+### Update manifest.json and CHANGELOG.md for version 3.1.8
+
+
 ## 3.1.8 (2025-03-22)
 ### #214 fixed 兼容 Excalidraw
 ### Update manifest.json and CHANGELOG.md for version 3.1.7
