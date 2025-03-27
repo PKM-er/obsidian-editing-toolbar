@@ -2,7 +2,7 @@ import { Editor, Command, Notice, MarkdownView,htmlToMarkdown } from "obsidian";
 
 import { setMenuVisibility } from "src/util/statusBarConstants";
 import { selfDestruct, setFormateraser, quiteFormatbrushes } from "src/modals/editingToolbarModal";
-import { setHeader, setFontcolor, setBackgroundcolor } from "src/util/util";
+import { setHeader, setFontcolor, setBackgroundcolor, renumberSelection } from "src/util/util";
 import { fullscreenMode, workplacefullscreenMode } from "src/util/fullscreen";
 import editingToolbarPlugin from "src/plugin/main";
 import { InsertCalloutModal } from "src/modals/insertCalloutModal";
@@ -379,6 +379,13 @@ export class CommandsManager {
 
     public registerCommands() {
 
+        this.plugin.addCommand({
+            id: 'renumber-ordered-list',
+            name: 'Renumber ordered list',
+            editorCallback: (editor: Editor) => {
+                editor && this.executeCommandWithoutBlur(editor, () => renumberSelection(editor));
+            },    
+          });
         // 隐藏/显示菜单命令
         this.plugin.addCommand({
             id: "hide-show-menu",

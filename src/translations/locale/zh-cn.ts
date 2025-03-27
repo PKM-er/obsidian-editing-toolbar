@@ -389,4 +389,5 @@ export default {
   'Custom theme': '自定义主题',
   'Fixed position offset': '固定位置偏移',
   'Choose the offset of the Editing Toolbar in the fixed position.': '选择固定位置工具栏的偏移量。',
+  'Renumber List': '列表重新编号',
 };

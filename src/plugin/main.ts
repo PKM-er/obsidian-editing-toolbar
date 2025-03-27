@@ -25,7 +25,7 @@ import addIcons, {
 } from "src/icons/customIcons";
 
 
-import { setFontcolor, setBackgroundcolor } from "src/util/util";
+import { setFontcolor, setBackgroundcolor, renumberSelection } from "src/util/util";
 
 
 import { ViewUtils } from 'src/util/viewUtils';
@@ -153,6 +153,26 @@ export default class editingToolbarPlugin extends Plugin {
         }
       },
     );
+
+//////
+
+
+    // 注册右键菜单
+    this.registerEvent(
+      this.app.workspace.on('editor-menu', (menu: Menu, editor: Editor, view: MarkdownView) => {
+        const cursor = editor.getCursor();
+        const lineText = editor.getLine(cursor.line);
+        // 判断光标是否在有序列表行（简单匹配数字开头）
+        if (/^\d+\.\s/.test(lineText)) {
+          menu.addItem((item) =>
+            item
+              .setTitle(t('Renumber List'))
+              .setIcon('list-restart')
+              .onClick(() => renumberSelection(editor))
+          );
+        }
+      })
+    );
     // 初始化图标
     addIcons();
     this.toolbarIconSize = this.settings.toolbarIconSize;
@@ -171,7 +191,7 @@ export default class editingToolbarPlugin extends Plugin {
       `${this.settings.toolbarIconSize}px`
     );
   }
-
+ 
   isLoadMobile() {
     let screenWidth = window.innerWidth > 0 ? window.innerWidth : screen.width;
     let isLoadOnMobile = this.settings?.isLoadOnMobile ? this.settings.isLoadOnMobile : false;
@@ -184,8 +204,7 @@ export default class editingToolbarPlugin extends Plugin {
     }
     return true;
   }
- 
-
+  
   onunload(): void {
     // 注销工作区事件
     this.app.workspace.off("active-leaf-change", this.handleeditingToolbar);

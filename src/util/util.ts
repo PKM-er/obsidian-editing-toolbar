@@ -1,4 +1,5 @@
-import { Editor,Command } from "obsidian";
+import { Editor,Command,MarkdownView } from "obsidian";
+import { syntaxTree } from '@codemirror/language';
 export async function wait(delay: number) {
   return new Promise((resolve) => setTimeout(resolve, delay));
 }
@@ -395,3 +396,210 @@ export function setBackgroundcolor(color: string, editor?: Editor) {
   // Restore the original selection
   editor.setSelections(adjustedSelections);
 }
+// 重编号选中的行
+export function renumberSelection(editor: Editor) {
+  const selection = editor.getSelection();
+  if (!selection) {
+    const cursor = editor.getCursor();
+    const lineText = editor.getLine(cursor.line);
+    if (/^\s*\d+\.\s/.test(lineText)) {
+      const currentIndent = editor.getLine(cursor.line).match(/^\s*/)?.[0].length || 0;
+      const prevLineNum = cursor.line - 1;
+      const prevLine = prevLineNum >= 0 ? editor.getLine(prevLineNum).trim() : '';
+      const isListStart = prevLineNum < 0 || !/^\s*\d+\.\s/.test(prevLine) || (prevLine.match(/^\s*/)?.[0].length || 0) < currentIndent;
+
+      if (isListStart) {
+        // 光标在列表首行，处理整个连续列表
+        const { startLine, endLine } = getFullListRange(editor, cursor.line);
+        renumberLines(editor, startLine, endLine);
+      } else {
+        // 光标在列表中间行，处理从当前行开始的列表
+        const { startLine, endLine } = getListRangeForCursor(editor, cursor.line);
+        renumberLines(editor, startLine, endLine);
+      }
+    }
+    return;
+  }
+
+  const { lines, startLine } = getSelectionLines(editor);
+  processSelectionWithContext(lines, startLine, editor);
+}
+
+function getSelectionLines(editor: Editor): { lines: string[]; startLine: number } {
+  const selection = editor.getSelection();
+  const cursor = editor.getCursor('from');
+  return { lines: selection.split('\n'), startLine: cursor.line };
+}
+
+function processSelectionWithContext(lines: string[], startLine: number, editor: Editor) {
+  // 检查是否选中的行中有列表项
+  let hasListItems = false;
+  for (const line of lines) {
+    if (/^\s*\d+\.\s/.test(line.trim())) {
+      hasListItems = true;
+      break;
+    }
+  }
+  if (!hasListItems) {
+    return;
+  };
+
+  // 获取 CodeMirror 视图和语法树
+  const view = (app.workspace.getActiveViewOfType(MarkdownView) as MarkdownView)?.editor.cm;
+  if (!view) return;
+
+  const state = view.state;
+  const tree = syntaxTree(state);
+
+  // 计算选中范围的字符位置
+  const docStartPos = editor.posToOffset({ line: startLine, ch: 0 });
+  let prevListEndPos = -1;
+
+  // 遍历语法树，找到上一个有序列表的结束位置
+  tree.iterate({
+    from: 0,
+    to: docStartPos,
+    enter: (node) => {
+      if (node.name === 'OrderedList') {
+        prevListEndPos = node.to; // 记录最后一个有序列表的结束位置
+      }
+    },
+  });
+
+  // 在上一个列表后插入空行（如果需要）
+  if (prevListEndPos >= 0) {
+    const prevListEndLine = editor.offsetToPos(prevListEndPos).line;
+    const nextLineAfterPrevList = prevListEndLine + 1;
+    if (nextLineAfterPrevList < startLine && !/^\s*$/.test(editor.getLine(nextLineAfterPrevList).trim())) {
+      editor.replaceRange(
+        '\n',
+        { line: nextLineAfterPrevList, ch: 0 },
+        { line: nextLineAfterPrevList, ch: 0 }
+      );
+      startLine++; // 调整选中范围的起始行
+    }
+  }
+
+  // 检查选中列表是否已经正确编号
+  let isAlreadyNumberedCorrectly = true;
+  let expectedNumbers: number[] = [];
+  let prevIndentLevel = -1;
+
+  for (const line of lines) {
+    const trimmedLine = line.trim();
+    if (/^\d+\.\s/.test(trimmedLine)) {
+      const indentLevel = line.match(/^\s*/)?.[0].length || 0;
+      const currentNumber = parseInt(trimmedLine.match(/^\d+/)![0], 10);
+
+      if (indentLevel !== prevIndentLevel) {
+        expectedNumbers[indentLevel] = 1;
+      } else {
+        expectedNumbers[indentLevel] = (expectedNumbers[indentLevel] || 1) + 1;
+      }
+
+      if (currentNumber !== expectedNumbers[indentLevel]) {
+        isAlreadyNumberedCorrectly = false;
+        break;
+      }
+      prevIndentLevel = indentLevel;
+    }
+  }
+
+  // 处理选中部分
+  let result: string[] = [];
+  const prevLineNum = startLine - 1;
+  const prevLine = prevLineNum >= 0 ? editor.getLine(prevLineNum).trim() : '';
+  const needsSeparationBefore = prevLine && !/^\s*$/.test(prevLine) && !prevLine.includes('ㅤ');
+
+  if (needsSeparationBefore) {
+    result.push('');
+    result.push('ㅤ');
+  }
+
+  if (isAlreadyNumberedCorrectly) {
+    result.push(...lines);
+  } else {
+    let numberByIndent: { [level: number]: number } = {};
+    let prevLevel = -1;
+
+    for (const line of lines) {
+      const trimmedLine = line.trim();
+      const isListItem = /^\d+\.\s/.test(trimmedLine);
+      const indentation = line.match(/^\s*/)?.[0] || '';
+
+      if (isListItem) {
+        const indentLevel = indentation.length;
+        if (indentLevel !== prevLevel) {
+          numberByIndent[indentLevel] = 1;
+        } else {
+          numberByIndent[indentLevel] = (numberByIndent[indentLevel] || 1) + 1;
+        }
+        result.push(`${indentation}${numberByIndent[indentLevel]}. ${trimmedLine.replace(/^\d+\.\s/, '')}`);
+        prevLevel = indentLevel;
+      } else {
+        result.push(line);
+        prevLevel = -1;
+      }
+    }
+  }
+
+  editor.replaceRange(
+    result.join('\n'),
+    { line: startLine, ch: 0 },
+    { line: startLine + lines.length - 1, ch: editor.getLine(startLine + lines.length - 1).length }
+  );
+}
+
+function getListRangeForCursor(editor: Editor, currentLine: number): { startLine: number; endLine: number } {
+  let startLine = currentLine;
+  let endLine = currentLine;
+
+  const currentIndent = editor.getLine(currentLine).match(/^\s*/)?.[0].length || 0;
+
+  // 向下查找同级列表或子列表
+  while (endLine < editor.lineCount() - 1) {
+    const nextLine = editor.getLine(endLine + 1);
+    const nextIndent = nextLine.match(/^\s*/)?.[0].length || 0;
+    if (!/^\s*\d+\.\s/.test(nextLine.trim()) || nextIndent < currentIndent) {
+      break; // 遇到非列表行或上级列表，停止
+    }
+    endLine++;
+  }
+
+  return { startLine, endLine };
+}
+
+function getFullListRange(editor: Editor, currentLine: number): { startLine: number; endLine: number } {
+  let startLine = currentLine;
+  let endLine = currentLine;
+
+  // 向上查找顶级列表起点
+  while (startLine > 0) {
+    const prevLine = editor.getLine(startLine - 1);
+    if (!/^\s*\d+\.\s/.test(prevLine.trim())) {
+      break; // 遇到非列表行，停止
+    }
+    startLine--;
+  }
+
+  // 向下查找顶级列表终点
+  while (endLine < editor.lineCount() - 1) {
+    const nextLine = editor.getLine(endLine + 1);
+    if (!/^\s*\d+\.\s/.test(nextLine.trim())) {
+      break; // 遇到非列表行，停止
+    }
+    endLine++;
+  }
+
+  return { startLine, endLine };
+}
+
+function renumberLines(editor: Editor, startLine: number, endLine: number) {
+  const lines = [];
+  for (let i = startLine; i <= endLine; i++) {
+    lines.push(editor.getLine(i));
+  }
+  processSelectionWithContext(lines, startLine, editor);
+}
+
+// 重编号选中的行结束

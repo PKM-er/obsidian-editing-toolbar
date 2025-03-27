@@ -384,4 +384,5 @@ export default {
 'Custom theme': 'Custom theme',
 'Fixed position offset': 'Fixed position offset',
 'Choose the offset of the Editing Toolbar in the fixed position.': 'Choose the offset of the Editing Toolbar in the fixed position.',
+'Renumber List': 'Renumber List',
 }
