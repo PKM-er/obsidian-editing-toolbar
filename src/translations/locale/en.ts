@@ -153,7 +153,7 @@ export default {
 'Image Height':'Image Height',
 'If it is an image, turn on':'If it is an image, turn on',
 'Insert a link on the next line':'Insert a link on the next line',
-'Link Alias(optional)':'Link Alias(optional)',
+'Link Title(optional)':'Link Title(optional)',
 'Alias':'Alias',
 'Optional':'Optional',
 'Default 0, format will keep the text selected':'Default 0, format will keep the text selected',
@@ -385,4 +385,5 @@ export default {
 'Fixed position offset': 'Fixed position offset',
 'Choose the offset of the Editing Toolbar in the fixed position.': 'Choose the offset of the Editing Toolbar in the fixed position.',
 'Renumber List': 'Renumber List',
+
 }

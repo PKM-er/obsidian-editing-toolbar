@@ -33,7 +33,8 @@ import { UpdateNoticeModal } from "src/modals/updateModal";
 import { StatusBar } from "src/components/StatusBar";
 import { CommandsManager } from "src/commands/commands";
 import { t } from 'src/translations/helper';
-
+import { InsertLinkModal } from "src/modals/insertLinkModal";
+import { InsertCalloutModal } from "src/modals/insertCalloutModal";
 
 
 let activeDocument: Document;
@@ -94,7 +95,7 @@ export default class editingToolbarPlugin extends Plugin {
       });
     }
     const lastVersion = this.settings?.lastVersion || '0.0.0';
-   
+
     const parseVersion = (version: string) => {
       const parts = version.split('.').map(p => parseInt(p));
       return {
@@ -107,13 +108,13 @@ export default class editingToolbarPlugin extends Plugin {
     const currentVer = parseVersion(currentVersion);
     const updateModal = new UpdateNoticeModal(this.app, this);
     const isNewInstall = lastVersion === '0.0.0';
-    if(isNewInstall){
+    if (isNewInstall) {
       updateModal.fixCommandIds();
     }
-    const needUpdateNotice = 
-      !isNewInstall && 
-      (lastVer.major < 3 || 
-      (lastVer.major === 3 && lastVer.minor < 1));
+    const needUpdateNotice =
+      !isNewInstall &&
+      (lastVer.major < 3 ||
+        (lastVer.major === 3 && lastVer.minor < 1));
     if (needUpdateNotice) {
       setTimeout(() => {
         updateModal.open();
@@ -151,26 +152,59 @@ export default class editingToolbarPlugin extends Plugin {
             }
           }
         }
+
       },
     );
 
-//////
+
+
+    //////
 
 
     // 注册右键菜单
     this.registerEvent(
       this.app.workspace.on('editor-menu', (menu: Menu, editor: Editor, view: MarkdownView) => {
+        const selection = editor.getSelection();
+
+        if (selection) {
+          // 检查是否为链接或图片（包括带大小参数的图片）
+          if (/(!)?\[.*(?:\|(?:\d+x\d+|\d+))?\]\([a-zA-Z]+:\/\/[^\s)]+(?:\s+["'][^"']*["'])?\)/.test(selection.trim())) {
+            menu.addItem((item) =>
+              item
+                .setTitle('Edit Link')
+                .setIcon('link')
+                .onClick(() => new InsertLinkModal(this).open())
+            );
+          }
+          return; // 有选中文本时，不继续检查光标周围
+        }
+
+        // 如果没有选中文本，检查光标周围是否为链接或图片
         const cursor = editor.getCursor();
         const lineText = editor.getLine(cursor.line);
-        // 判断光标是否在有序列表行（简单匹配数字开头）
-        if (/^\d+\.\s/.test(lineText)) {
-          menu.addItem((item) =>
-            item
-              .setTitle(t('Renumber List'))
-              .setIcon('list-restart')
-              .onClick(() => renumberSelection(editor))
-          );
+        const cursorPos = cursor.ch;
+
+        // 使用合并的正则表达式，同时匹配链接和图片
+        const combinedRegex = /(!)?\[([^\]]+)(?:\|(\d+x\d+|\d+))?\]\(([a-zA-Z]+:\/\/[^\s)]+)(?:\s+["'][^"']*["'])?\)/g;
+        let match;
+
+        while ((match = combinedRegex.exec(lineText)) !== null) {
+          const linkStart = match.index;
+          const linkEnd = match.index + match[0].length;
+
+          // 检查光标是否在链接或图片范围内（包括边缘）
+          if (cursorPos >= linkStart && cursorPos <= linkEnd) {
+            menu.addItem((item) =>
+              item
+                .setTitle('Edit Link(Modal)')
+                .setIcon('link')
+                .onClick(() => new InsertLinkModal(this).open())
+            );
+            break; // 找到匹配后退出
+          }
         }
+
+
       })
     );
     // 初始化图标
@@ -191,7 +225,9 @@ export default class editingToolbarPlugin extends Plugin {
       `${this.settings.toolbarIconSize}px`
     );
   }
- 
+
+
+
   isLoadMobile() {
     let screenWidth = window.innerWidth > 0 ? window.innerWidth : screen.width;
     let isLoadOnMobile = this.settings?.isLoadOnMobile ? this.settings.isLoadOnMobile : false;
@@ -204,25 +240,25 @@ export default class editingToolbarPlugin extends Plugin {
     }
     return true;
   }
-  
+
   onunload(): void {
     // 注销工作区事件
     this.app.workspace.off("active-leaf-change", this.handleeditingToolbar);
     this.app.workspace.off("layout-change", this.handleeditingToolbar_layout);
     this.app.workspace.off("resize", this.handleeditingToolbar_resize);
-    
+
     // 移除格式刷通知
     if (this.formatBrushNotice) {
       this.formatBrushNotice.hide();
       this.formatBrushNotice = null;
     }
-    
+
     // 清理格式刷相关状态
     this.quiteAllFormatBrushes();
-    
+
     // 销毁工具栏
     selfDestruct();
-    
+
     console.log("editingToolbar unloaded");
   }
 
@@ -247,7 +283,7 @@ export default class editingToolbarPlugin extends Plugin {
       // 获取视图类型
       const viewType = view?.getViewType();
       const isMarkdownView = viewType === 'markdown';
-      
+
       // 如果是Markdown视图
       if (isMarkdownView) {
         // 如果是源码模式
@@ -302,7 +338,7 @@ export default class editingToolbarPlugin extends Plugin {
     // 获取视图类型
     const viewType = view?.getViewType();
     const isMarkdownView = viewType === 'markdown';
-    
+
     // 如果是Markdown视图
     if (isMarkdownView) {
       // 如果是源码模式
@@ -389,7 +425,7 @@ export default class editingToolbarPlugin extends Plugin {
 
     // 初始化多配置
     // 如果是新安装或升级，初始化各个位置样式的命令配置
-     
+
   }
 
   // 获取当前位置样式对应的命令配置
@@ -498,7 +534,7 @@ export default class editingToolbarPlugin extends Plugin {
       command.callback();
     }
     if (command && command.editorCallback) {
-      command.editorCallback(editor,this.app.workspace.getActiveViewOfType(MarkdownView));
+      command.editorCallback(editor, this.app.workspace.getActiveViewOfType(MarkdownView));
     }
   }
 
@@ -530,24 +566,24 @@ export default class editingToolbarPlugin extends Plugin {
   public reloadCustomCommands(): void {
     this.commandsManager.reloadCustomCommands();
   }
- 
-  
+
+
   init_evt(container: Document, editor: Editor) {
     // 重置状态
     this.resetFormatBrushStates();
-  
+
     // 防抖的文本选择处理
     const debouncedHandleTextSelection = debounce(() => {
       this.handleTextSelection();
     }, 100);
-  
+
     // 中键双击跟踪
     let lastMiddleClickTime = 0;
-  
+
     // 统一的鼠标事件处理
     this.registerDomEvent(container, "mousedown", (e: MouseEvent) => {
       if (!this.isView() || !this.commandsManager.getActiveEditor()) return;
-  
+
       // 中键双击处理
       if (e.button === 1) {
         const currentTime = new Date().getTime();
@@ -556,11 +592,11 @@ export default class editingToolbarPlugin extends Plugin {
         }
         lastMiddleClickTime = currentTime;
       }
-  
+
       // 格式刷重置
       this.resetFormatBrushIfActive(e);
     });
-  
+
     // 跨平台选择处理
     if (Platform.isMobileApp) {
       this.registerDomEvent(container, "selectionchange", () => {
@@ -573,89 +609,89 @@ export default class editingToolbarPlugin extends Plugin {
         }
       });
     }
-  
+
     // 键盘选择处理
     this.registerDomEvent(container, "keyup", this.handleKeyboardSelection);
-  
+
     // 滚动和失焦隐藏工具栏
     this.registerScrollAndBlurEvents(container);
   }
-  
+
   private resetFormatBrushStates() {
     this.EN_FontColor_Format_Brush = false;
     this.EN_BG_Format_Brush = false;
     this.EN_Text_Format_Brush = false;
     this.formatBrushActive = false;
   }
-  
+
   private handleMiddleClickToolbar(e: MouseEvent) {
     const cmEditor = this.commandsManager.getActiveEditor();
     if (this.positionStyle === "following" && cmEditor?.hasFocus()) {
       this.showFollowingToolbar(cmEditor);
     }
   }
-  
+
   private resetFormatBrushIfActive(e: MouseEvent) {
     if (e.button && this.isFormatBrushActive()) {
       quiteFormatbrushes(this);
     }
   }
-  
+
   private isFormatBrushActive(): boolean {
-    return this.EN_FontColor_Format_Brush || 
-           this.EN_BG_Format_Brush || 
-           this.EN_Text_Format_Brush || 
-           this.formatBrushActive;
+    return this.EN_FontColor_Format_Brush ||
+      this.EN_BG_Format_Brush ||
+      this.EN_Text_Format_Brush ||
+      this.formatBrushActive;
   }
-  
+
   private handleKeyboardSelection = (e: KeyboardEvent) => {
     const selectionKeys = [
       "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight",
       "Home", "End", "PageUp", "PageDown", "ShiftLeft", "ShiftRight"
     ];
-    
+
     const cmEditor = this.commandsManager.getActiveEditor();
-    
+
     if (selectionKeys.includes(e.code) || e.shiftKey) {
       this.handleTextSelection();
     } else if (!e.shiftKey && this.positionStyle === "following") {
       this.hideToolbarIfNotSelected();
     }
   }
-  
+
   private registerScrollAndBlurEvents(container: Document) {
     const hideToolbar = this.throttle(() => {
       if (this.positionStyle !== "following") return;
       this.hideToolbarIfNotSelected();
     }, 200);
-  
+
     this.registerDomEvent(activeDocument, "wheel", hideToolbar);
     this.registerDomEvent(container, "blur", () => {
       this.hideToolbarIfNotSelected();
     });
   }
-  
+
   private hideToolbarIfNotSelected() {
     const editingToolbarModalBar = isExistoolbar(this.app, this);
-    if (editingToolbarModalBar&&this.positionStyle=="following") {
+    if (editingToolbarModalBar && this.positionStyle == "following") {
       editingToolbarModalBar.style.visibility = "hidden";
     }
   }
-  
+
   private handleTextSelection() {
     if (!this.isView()) return;
-    
+
     const cmEditor = this.commandsManager.getActiveEditor();
     if (!cmEditor?.hasFocus()) return;
- 
-    
+
+
     if (cmEditor.somethingSelected()) {
       this.handleSelectedText(cmEditor);
     } else {
       this.hideToolbarIfNotSelected();
     }
   }
-  
+
   private handleSelectedText(cmEditor: Editor) {
     if (this.EN_FontColor_Format_Brush) {
       setFontcolor(this.settings.cMenuFontColor, cmEditor);
@@ -669,7 +705,7 @@ export default class editingToolbarPlugin extends Plugin {
       this.showFollowingToolbar(cmEditor);
     }
   }
-  
+
   private throttle(func: Function, limit: number = 100) {
     let inThrottle: boolean;
     return function (this: any, ...args: any[]) {
@@ -685,14 +721,14 @@ export default class editingToolbarPlugin extends Plugin {
   // 抽取显示工具栏的逻辑
   private showFollowingToolbar(editor: Editor) {
     const editingToolbarModalBar = isExistoolbar(this.app, this);
-    
+
     if (editingToolbarModalBar) {
       editingToolbarModalBar.style.visibility = "visible";
       editingToolbarModalBar.classList.add("editingToolbarFlex");
       editingToolbarModalBar.classList.remove("editingToolbarGrid");
-      
+
       // 直接使用createFollowingbar的定位逻辑
-      createFollowingbar(this.app,this.toolbarIconSize, this, editor, true);
+      createFollowingbar(this.app, this.toolbarIconSize, this, editor, true);
     } else {
       createFollowingbar(this.app, this.toolbarIconSize, this, editor, true);
     }

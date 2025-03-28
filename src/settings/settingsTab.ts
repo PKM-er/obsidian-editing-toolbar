@@ -519,25 +519,20 @@ export class editingToolbarSettingTab extends PluginSettingTab {
 
     } else {
       const buttonContainer = commandSettingContainer.createDiv('command-buttons-container');
-      buttonContainer.style.display = 'flex';
-      buttonContainer.style.flexDirection = 'column';
-      buttonContainer.style.gap = '10px';
-      buttonContainer.style.marginBottom = '1rem';
-      const clearButton = new Setting(buttonContainer)
-      clearButton.addButton(button => button
-        .setButtonText(t('One-click clear'))
-        .setTooltip(t('Remove all commands from this configuration'))
-        .setWarning()
-        .onClick(async () => {
-          // 添加确认对话框
-          if (confirm(t('Are you sure you want to clear all commands under the current style?'))) {
-            this.plugin.settings.menuCommands = [];
-            await this.plugin.saveSettings();
-            new Notice(t('All commands have been removed'));
-            this.display();
-          }
-        })
-      );
+
+      const clearButton = buttonContainer.createEl('button', {
+        text: t('One-click clear'),
+        cls: 'mod-warning' // Obsidian 的警告样式类
+      });
+
+      clearButton.addEventListener('click', async () => {
+        if (confirm(t('Are you sure you want to clear all commands under the current style?'))) {
+          this.plugin.settings.menuCommands = [];
+          await this.plugin.saveSettings();
+          new Notice(t('All commands have been removed'));
+          this.display();
+        }
+      });
     }
     const commandListContainer = containerEl.createDiv('command-lists-container');
     commandListContainer.style.padding = '16px';

@@ -153,7 +153,7 @@ export default {
   'Image Height': '图片高度',
   'Insert a link on the next line': '在下一行插入链接',
   'If it is an image, turn on': '如果是图片，请开启',
-  'Link Alias(optional)': '链接别名(可选)',
+  'Link Title(optional)': '链接标题(可选)',
   'Alias': '别名',
   'Optional': '可选',
   'Default 0, format will keep the text selected': '默认0，格式化将保持文本选中',

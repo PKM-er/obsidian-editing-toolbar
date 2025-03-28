@@ -39,9 +39,53 @@ export class InsertLinkModal extends Modal {
                 this.selectedText = selectedText;
                 this.parseSelectedText(selectedText);
             }
-            // 如果没有选中文本，则尝试解析剪贴板
+            // 如果没有选中文本，尝试获取光标所在位置的链接
             else {
-                this.parseClipboard();
+                const cursor = editor.getCursor(); // Obsidian 的 API 获取光标位置
+                const line = editor.getLine(cursor.line); // 获取光标所在行的文本
+                const cursorPosInLine = cursor.ch; // 光标在行内的字符位置
+
+                // 使用正则表达式匹配 Markdown 链接 [text](url) 和图片 ![text](url)，包括可选标题
+                const combinedRegex = /(!)?\[([^\]]+)\]\(([^\s)]+)(?:\s+["']([^"']*)["'])?\)/g;
+                let target = null;
+                let match;
+                while ((match = combinedRegex.exec(line)) !== null) {
+                    const isImage = !!match[1]; // 如果有 "!" 前缀，则为图片
+                    const linkStart = match.index;
+                    const linkEnd = match.index + match[0].length;
+                    const text = match[2]; // 链接或图片的文本
+                    const url = match[3];  // URL
+                    const quotedTitle = match[4] || ''; // Title（如果存在）
+                    // 检查光标是否在链接或图片范围内（包括边缘）
+                    if (cursorPosInLine >= linkStart && cursorPosInLine <= linkEnd) {
+                        target = {
+                            isImage: isImage,
+                            text: text,
+                            url: url,
+                            title: quotedTitle,
+                            from: { line: cursor.line, ch: linkStart },
+                            to: { line: cursor.line, ch: linkEnd }
+                        };
+                        break; // 找到后直接退出循环
+                    }
+                }
+
+                // 如果找到目标，选中它并处理
+                if (target) {
+                    if (target.isImage) {
+                        this.selectedText = `![${target.text}](${target.url}${target.title ? ` "${target.title}"` : ''})`; // 完整图片语法
+                    } else {
+                        const linkFormat = target.title
+                            ? `[${target.text}](${target.url} "${target.title}")`
+                            : `[${target.text}](${target.url})`;
+                        this.selectedText = linkFormat; // 仅链接文本
+
+                    }
+                    editor.setSelection(target.from, target.to); // 选中目标范围
+                    this.parseSelectedText(this.selectedText);
+                } else {
+                    this.parseClipboard(); // 回退到剪贴板解析
+                }
             }
         }
         // 如果没有编辑器，尝试解析剪贴板
@@ -64,6 +108,7 @@ export class InsertLinkModal extends Modal {
             if (imageMatch) {
                 this.linkText = imageMatch.title;
                 this.linkUrl = imageMatch.url;
+                this.linkAlias = imageMatch.quotedTitle || '';
                 this.imageWidth = imageMatch.width || '';
                 this.imageHeight = imageMatch.height || '';
                 this.isEmbed = true;
@@ -72,19 +117,19 @@ export class InsertLinkModal extends Modal {
                 return;
             }
         }
-        // 查找链接的起始位置
-        const linkMatch = text.match(/\[.*?\]\(.*?\)/);
+
+        const linkMatch = text.match(/\[([^\]]+)\]\(([a-zA-Z]+:\/\/[^\s)]+)(?:\s+["']([^"']*)["'])?\)/);
         if (linkMatch) {
             const linkPart = linkMatch[0];
             const prefixText = text.substring(0, linkMatch.index); // 获取链接前的文本
             const suffixText = text.substring(linkMatch.index + linkPart.length); // 获取链接后的文本
-
             // 解析链接部分
             const parsedLink = this.parseMarkdownLink(linkPart);
+
             if (parsedLink) {
-                this.linkText = parsedLink.title;
+                this.linkText = parsedLink.text;
                 this.linkUrl = parsedLink.url;
-                this.linkAlias = parsedLink.alias || '';
+                this.linkAlias = parsedLink.title || ''; // 使用 text 作为默认别名
                 this.isEmbed = false; // 默认非嵌入模式
             }
 
@@ -251,14 +296,16 @@ export class InsertLinkModal extends Modal {
         url: string;
         width?: string;
         height?: string;
+        quotedTitle?: string;
     } | null {
-        // 匹配完整的图片链接格式，包括尺寸参数
-        // ![title|widthxheight](url) 或 ![title|width](url)
-        const imageRegex = /!\[(.*?)(?:\|(\d+)(?:x(\d+))?)?\]\(([^)]+)\)(?:!.*)?$/;
-        const match = markdown.match(imageRegex);
+        // 匹配完整的图片链接格式，包括尺寸参数和可选标题
+        // 格式1: ![title|widthxheight](url "optional title")
+        // 格式2: ![title|width](url "optional title")
+        // 格式3: ![title](url "optional title")
+        const imageRegex = /!\[(.*?)(?:\|(\d+)(?:x(\d+))?)?\]\(\s*([^\s)]+)(?:\s+["']([^"']*)["'])?\s*\)/; const match = markdown.match(imageRegex);
 
         if (match) {
-            const [, title, width, height, url] = match;
+            const[, title , width, height, url, quotedTitle] = match;
             // 设置为嵌入模式
             this.isEmbed = true;
             // 如果 embedToggle 已经创建，更新其状态
@@ -275,28 +322,28 @@ export class InsertLinkModal extends Modal {
                 title: title.trim(),
                 url: url.trim(),
                 width: width,
-                height: height
+                height: height,
+                quotedTitle: quotedTitle?.trim()
             };
         }
         return null;
     }
 
-    // 解析 Markdown 链接格式
     private parseMarkdownLink(markdown: string): {
-        title: string;
+        text: string;
         url: string;
-        alias?: string;
+        title?: string;
     } | null {
-        // 匹配带别名的链接格式 [title|alias](url)
-        const linkRegex = /\[(.*?)(?:\|(.*?))?\]\(([^)]+)\)/;
+        // 匹配 Markdown 链接格式，包括可选的 title
+        const linkRegex = /\[([^\]]+)\]\(([a-zA-Z]+:\/\/[^\s)]+)(?:\s+["']([^"']*)["'])?\)/;
         const match = markdown.match(linkRegex);
 
         if (match) {
-            const [, title, alias, url] = match;
+            const [, text, url, title] = match;
             return {
-                title: title.trim(),
+                text: text.trim(),
                 url: url.trim(),
-                alias: alias?.trim()
+                title: title?.trim() // 可选的 title
             };
         }
         return null;
@@ -315,6 +362,7 @@ export class InsertLinkModal extends Modal {
                 if (imageMatch) {
                     this.linkText = imageMatch.title;
                     this.linkUrl = imageMatch.url;
+                    this.linkAlias = imageMatch.quotedTitle || '';
                     if (imageMatch.width || imageMatch.height) {
                         this.isEmbed = true; // 自动开启嵌入模式
                         this.imageWidth = imageMatch.width || '';
@@ -327,9 +375,9 @@ export class InsertLinkModal extends Modal {
                 // 然后尝试解析为普通链接格式
                 const linkMatch = this.parseMarkdownLink(plainText);
                 if (linkMatch) {
-                    this.linkText = linkMatch.title;
+                    this.linkText = linkMatch.text;
                     this.linkUrl = linkMatch.url;
-                    this.linkAlias = linkMatch.alias || '';
+                    this.linkAlias = linkMatch.title || '';
                     this.isEmbed = false;
                     this.updateUI();
                     return;
@@ -464,11 +512,16 @@ export class InsertLinkModal extends Modal {
             } else if (this.imageHeight) {
                 markdownLink += `x${this.imageHeight}`;
             }
-        } else if (!this.isEmbed && this.linkAlias) {
-            markdownLink += `|${this.linkAlias}`;
         }
 
-        markdownLink += `](${linkUrl})`;
+        markdownLink += `](${linkUrl}`;
+
+        // 添加 title（如果存在）
+        if (this.linkAlias) {
+            markdownLink += ` "${this.linkAlias}"`;
+        }
+
+        markdownLink += `)`;
         return markdownLink;
     }
 
@@ -506,10 +559,10 @@ export class InsertLinkModal extends Modal {
 
         // 链接别名输入（非图片模式时显示）
         const aliasSetting = new Setting(linkTextSetting.controlEl)
-            .setName(t("Alias"))
+            .setName(t("Title"))
             .addText((text) => {
                 this.linkAliasInput = text;
-                text.setPlaceholder(t("Link Alias(optional)"))
+                text.setPlaceholder(t("Link Title(optional)"))
                     .setValue(this.linkAlias)
                     .onChange((value) => {
                         this.linkAlias = value;
@@ -702,11 +755,15 @@ export class InsertLinkModal extends Modal {
             } else if (this.imageHeight) {
                 markdownLink += `x${this.imageHeight}`;
             }
-        } else if (!this.isEmbed && this.linkAlias) {
-            markdownLink += `|${this.linkAlias}`;
+        }
+        markdownLink += `](${linkUrl}`;
+
+        // 添加 title（如果存在）
+        if (this.linkAlias) {
+            markdownLink += ` "${this.linkAlias}"`;
         }
 
-        markdownLink += `](${linkUrl})`;
+        markdownLink += `)`;
 
         // 用于存储新光标位置
         let newCursorPos: { line: number, ch: number };
@@ -726,14 +783,14 @@ export class InsertLinkModal extends Modal {
                 // 替换选中的文本为链接
                 const fullText = this.prefixText + markdownLink + this.suffixText;
                 editor.replaceRange(
-                    fullText, 
-                    { line: selectionStart.line, ch: 0 }, 
+                    fullText,
+                    { line: selectionStart.line, ch: 0 },
                     selectionEnd
                 );
                 // 设置新光标位置在链接后面
-                newCursorPos = { 
-                    line: selectionStart.line, 
-                    ch: this.prefixText.length + markdownLink.length 
+                newCursorPos = {
+                    line: selectionStart.line,
+                    ch: this.prefixText.length + markdownLink.length
                 };
             }
         } else {
@@ -753,9 +810,9 @@ export class InsertLinkModal extends Modal {
                 // 在当前位置插入
                 editor.replaceRange(markdownLink, cursor);
                 // 设置新光标位置在链接后面
-                newCursorPos = { 
-                    line: cursor.line, 
-                    ch: cursor.ch + markdownLink.length 
+                newCursorPos = {
+                    line: cursor.line,
+                    ch: cursor.ch + markdownLink.length
                 };
             }
         }
