@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.1.10 (2025-03-28)
+### 右键增加链接，图片修改模态框
+### Update CHANGELOG.md
+### Update manifest.json and CHANGELOG.md for version 3.1.9
+
+
 ## 3.1.9 (2025-03-27)
 ### ADD Renumber  List
 ### Update manifest.json and CHANGELOG.md for version 3.1.8
