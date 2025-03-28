@@ -1175,7 +1175,10 @@ body.auto-hide-header .workspace-tab-header-container + .workspace-tab-container
   height: 16px;
   color: rgb(var(--callout-color));
 }
-
+.insert-link-modal .setting-item
+{
+ border-top: none;
+}
 .insert-link-modal .link-url-setting input{
      width: 100%;
 }

@@ -1,4 +1,4 @@
-import { App, Modal, Setting, TextComponent, ToggleComponent, Platform } from "obsidian";
+import { App, Modal, Setting, TextComponent, ToggleComponent, Platform, setIcon } from "obsidian";
 import editingToolbarPlugin from "src/plugin/main";
 import { t } from "src/translations/helper";
 
@@ -634,8 +634,11 @@ export class InsertLinkModal extends Modal {
                         text.setValue(this.imageWidth);
                         this.updateHeader();
                     });
-            })
-            .addText((text) => {
+            });
+            const imageSizeIcon = imageSizeSetting.controlEl.createDiv("image-size-icon");
+            setIcon(imageSizeIcon, "lucide-x")
+
+            imageSizeSetting.addText((text) => {
                 text.inputEl.addClass('image-height-input');
                 text.setPlaceholder(t("Image Height"))
                     .setValue(this.imageHeight)

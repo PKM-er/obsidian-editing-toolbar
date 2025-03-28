@@ -161,52 +161,71 @@ export default class editingToolbarPlugin extends Plugin {
     //////
 
 
-    // 注册右键菜单
+    // // 注册右键菜单
+    // this.registerEvent(
+    //   this.app.workspace.on('editor-menu', (menu: Menu, editor: Editor, view: MarkdownView) => {
+    //     const selection = editor.getSelection();
+
+    //     if (selection) {
+    //       // 检查是否为链接或图片（包括带大小参数的图片）
+    //       if (/(!)?\[.*(?:\|(?:\d+x\d+|\d+))?\]\([a-zA-Z]+:\/\/[^\s)]+(?:\s+["'][^"']*["'])?\)/.test(selection.trim())) {
+    //         menu.addItem((item) =>
+    //           item
+    //             .setTitle('Edit Link')
+    //             .setIcon('link')
+    //             .onClick(() => new InsertLinkModal(this).open())
+    //         );
+    //       }
+    //       return; // 有选中文本时，不继续检查光标周围
+    //     }
+
+    //     // 如果没有选中文本，检查光标周围是否为链接或图片
+    //     const cursor = editor.getCursor();
+    //     const lineText = editor.getLine(cursor.line);
+    //     const cursorPos = cursor.ch;
+
+    //     // 使用合并的正则表达式，同时匹配链接和图片
+    //     const combinedRegex = /(!)?\[([^\]]+)(?:\|(\d+x\d+|\d+))?\]\(([a-zA-Z]+:\/\/[^\s)]+)(?:\s+["'][^"']*["'])?\)/g;
+    //     let match;
+
+    //     while ((match = combinedRegex.exec(lineText)) !== null) {
+    //       const linkStart = match.index;
+    //       const linkEnd = match.index + match[0].length;
+
+    //       // 检查光标是否在链接或图片范围内（包括边缘）
+    //       if (cursorPos >= linkStart && cursorPos <= linkEnd) {
+    //         menu.addItem((item) =>
+    //           item
+    //             .setTitle('Edit Link(Modal)')
+    //             .setIcon('link')
+    //             .onClick(() => new InsertLinkModal(this).open())
+    //         );
+    //         break; // 找到匹配后退出
+    //       }
+    //     }
+
+
+    //   })
+    // );
+
     this.registerEvent(
-      this.app.workspace.on('editor-menu', (menu: Menu, editor: Editor, view: MarkdownView) => {
-        const selection = editor.getSelection();
-
-        if (selection) {
-          // 检查是否为链接或图片（包括带大小参数的图片）
-          if (/(!)?\[.*(?:\|(?:\d+x\d+|\d+))?\]\([a-zA-Z]+:\/\/[^\s)]+(?:\s+["'][^"']*["'])?\)/.test(selection.trim())) {
-            menu.addItem((item) =>
+      // @ts-ignore
+      this.app.workspace.on('url-menu', (menu: Menu, url: string, view: MarkdownView) => {
+          // 添加自定义菜单项
+          menu.addItem((item) =>
               item
-                .setTitle('Edit Link')
-                .setIcon('link')
-                .onClick(() => new InsertLinkModal(this).open())
-            );
-          }
-          return; // 有选中文本时，不继续检查光标周围
-        }
-
-        // 如果没有选中文本，检查光标周围是否为链接或图片
-        const cursor = editor.getCursor();
-        const lineText = editor.getLine(cursor.line);
-        const cursorPos = cursor.ch;
-
-        // 使用合并的正则表达式，同时匹配链接和图片
-        const combinedRegex = /(!)?\[([^\]]+)(?:\|(\d+x\d+|\d+))?\]\(([a-zA-Z]+:\/\/[^\s)]+)(?:\s+["'][^"']*["'])?\)/g;
-        let match;
-
-        while ((match = combinedRegex.exec(lineText)) !== null) {
-          const linkStart = match.index;
-          const linkEnd = match.index + match[0].length;
-
-          // 检查光标是否在链接或图片范围内（包括边缘）
-          if (cursorPos >= linkStart && cursorPos <= linkEnd) {
-            menu.addItem((item) =>
-              item
-                .setTitle('Edit Link(Modal)')
-                .setIcon('link')
-                .onClick(() => new InsertLinkModal(this).open())
-            );
-            break; // 找到匹配后退出
-          }
-        }
-
-
+                  .setTitle('Edit Link(Modal)')
+                  .setSection("info")
+                  .setIcon('link')
+                  .onClick(() => {
+                   
+                       new InsertLinkModal(this).open()
+                  })
+          );
       })
-    );
+   
+
+  );
     // 初始化图标
     addIcons();
     this.toolbarIconSize = this.settings.toolbarIconSize;
