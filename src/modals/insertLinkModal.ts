@@ -730,7 +730,7 @@ private matchLinkInLine(line: string, startPos: number, endPos: number, lineNumb
        
     
         // 链接别名输入（非图片模式时显示）
-        const aliasSetting = new Setting(linkTextSetting.controlEl)
+        const aliasSetting = new Setting(contentEl)
             .setName(t("Title"))
             .addText((text) => {
                 this.linkAliasInput = text;
@@ -786,9 +786,7 @@ private matchLinkInLine(line: string, startPos: number, endPos: number, lineNumb
                 if (imageSizeEl) {
                     (imageSizeEl as HTMLElement).style.display = value ? 'flex' : 'none';
                 }
-                if (aliasSettingEl) {
-                    aliasSettingEl.style.display = value ? 'none' : 'flex';
-                }
+          
                 this.updateHeader();
             });
     
@@ -856,6 +854,7 @@ private matchLinkInLine(line: string, startPos: number, endPos: number, lineNumb
         // 预览设置
         this.previewSetting = new Setting(contentEl)
             .setClass("preview-setting")
+            .setTooltip(this.getPreviewText())
             .addText((text) => {
                 text.setValue(this.getPreviewText())
                     .inputEl.setAttribute("readonly", "true");
@@ -938,10 +937,7 @@ private getFallbackTitle(url: string): string {
                     }
                 });
             }
-            if (!targetImg) {
-                // 如果未找到匹配 URL 的，取第一个已加载的图片
-                targetImg = Array.from(imgEls).find(img => img.complete && img.naturalWidth > 0) as HTMLImageElement || null;
-            }
+           
 
             if (targetImg) {
                 const naturalWidth = targetImg.naturalWidth;
@@ -1110,7 +1106,7 @@ private getFallbackTitle(url: string): string {
         // 更新别名设置的显示状态
         const aliasSettingEl = this.contentEl.querySelector('.setting-item:nth-child(2)');
         if (aliasSettingEl) {
-            (aliasSettingEl as HTMLElement).style.display = this.isEmbed ? 'none' : 'flex';
+            (aliasSettingEl as HTMLElement).style.display =  'flex';
         }
         this.updateHeader();
     }

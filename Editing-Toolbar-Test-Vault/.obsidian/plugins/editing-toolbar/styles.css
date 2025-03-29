@@ -1179,7 +1179,7 @@ body.auto-hide-header .workspace-tab-header-container + .workspace-tab-container
 {
  border-top: none;
 }
-.insert-link-modal .link-url-setting input{
+.insert-link-modal   input{
      width: 100%;
 }
 .modal .insert-link-modal-title{
