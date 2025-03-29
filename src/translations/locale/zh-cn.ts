@@ -397,4 +397,6 @@ export default {
   'Unable to detect editor width': '无法检测编辑器宽度',
   'Fit Editor Width': '自适应宽度',
   'Fetch Remote Title': '获取URL标题',
+  'Please execute a format command or select format text first, then enable the format brush': '请先执行一个格式命令或选中带格式的文本，然后启用格式刷',
+  'Confirm': '确认',
 };

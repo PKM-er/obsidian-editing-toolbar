@@ -11,6 +11,7 @@ import {
 import type editingToolbarPlugin from "src/plugin/main";
 import { DEFAULT_SETTINGS } from "src/settings/settingsData";
 import { t } from "src/translations/helper";
+import { ConfirmModal } from "src/modals/ConfirmModal";
 
 interface Command {
     id: string;
@@ -337,15 +338,14 @@ export class UpdateNoticeModal extends Modal {
             .addButton((button) =>
                 button.setButtonText(t("Restore default")).onClick(async () => {
                     // 添加确认对话框
-                    if (
-                        confirm(
-                            t(
-                                "Are you sure you want to restore all settings to default? But custom commands will be preserved."
-                            )
-                        )
-                    ) {
-                        await this.restoreDefaultSettings();
-                    }
+                    ConfirmModal.show(this.app, {
+                        message: t(
+                            "Are you sure you want to restore all settings to default? But custom commands will be preserved."
+                        ),
+                        onConfirm: async () => {
+                            await this.restoreDefaultSettings();
+                        }
+                    });
                 })
             );
 

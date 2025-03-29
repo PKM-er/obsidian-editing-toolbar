@@ -17,7 +17,7 @@ import { DeployCommandModal } from "src/modals/DeployCommand";
 import { ImportExportModal } from "src/modals/ImportExportModal";
 import { RegexCommandModal } from "src/modals/RegexCommandModal";
 import { ButtonComponent } from "obsidian";
-
+import { ConfirmModal } from "src/modals/ConfirmModal";
 // 添加类型定义
 interface SubmenuCommand {
   id: string;
@@ -118,7 +118,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     super(app, plugin);
     this.plugin = plugin;
     // 初始化 currentEditingConfig
-    this.currentEditingConfig = this.plugin.positionStyle;
+    this.currentEditingConfig = this.plugin.settings.positionStyle;
 
     addEventListener("editingToolbar-NewCommand", () => {
       selfDestruct();
@@ -442,7 +442,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
       );
       // 添加导入按钮
       configSwitcher.addButton(button => button
-        .setButtonText(this.currentEditingConfig.replace(this.currentEditingConfig[0], this.currentEditingConfig[0].toUpperCase()) + ' ' + t('Import'))
+        .setButtonText(this.currentEditingConfig + ' ' + t('Import'))
         .setTooltip('Copy commands from selected style')
         .onClick(async () => {
           // 获取源样式的命令数组
@@ -457,10 +457,11 @@ export class editingToolbarSettingTab extends PluginSettingTab {
           const confirmMessage =
             'Import commands from' + ' ' + `"${selectedSourceStyle}"` + ' to ' + `"${this.currentEditingConfig}" ` + t(`configuration`) + '?'
             ;
-
-          if (confirm(confirmMessage)) {
-            // 根据当前配置类型导入命令
-            switch (currentConfigType) {
+          ConfirmModal.show(this.app, {
+            message: confirmMessage,
+            onConfirm: async () => {
+              // 根据当前配置类型导入命令
+              switch (currentConfigType) {
               case 'Main menu':
                 this.plugin.settings.menuCommands = [...sourceCommands];
                 break;
@@ -482,6 +483,9 @@ export class editingToolbarSettingTab extends PluginSettingTab {
             new Notice('Commands imported successfully from' + ' ' + `"${selectedSourceStyle}"` + ' to ' + `"${this.currentEditingConfig}" ` + t(`configuration`));
             this.display();
           }
+
+        
+      }) 
         })
       );
 
@@ -492,10 +496,12 @@ export class editingToolbarSettingTab extends PluginSettingTab {
         .setWarning()
         .onClick(async () => {
           // 添加确认对话框
-          if (confirm(t('Are you sure you want to clear all commands under the current style?'))) {
-            // 根据当前配置类型清空命令
-            switch (currentConfigType) {
-              case 'following':
+          ConfirmModal.show(this.app, {
+            message: t('Are you sure you want to clear all commands under the current style?'),
+            onConfirm: async () => {
+              // 根据当前配置类型清空命令
+              switch (currentConfigType) {
+                case 'following':
                 this.plugin.settings.followingCommands = [];
                 break;
               case 'top':
@@ -512,6 +518,8 @@ export class editingToolbarSettingTab extends PluginSettingTab {
             new Notice('All commands have been removed');
             this.display();
           }
+          })
+
         })
       );
 
@@ -526,12 +534,15 @@ export class editingToolbarSettingTab extends PluginSettingTab {
       });
 
       clearButton.addEventListener('click', async () => {
-        if (confirm(t('Are you sure you want to clear all commands under the current style?'))) {
-          this.plugin.settings.menuCommands = [];
-          await this.plugin.saveSettings();
-          new Notice(t('All commands have been removed'));
-          this.display();
-        }
+        ConfirmModal.show(this.app, {
+          message: t('Are you sure you want to clear all commands under the current style?'),
+          onConfirm: async () => {
+            this.plugin.settings.menuCommands = [];
+            await this.plugin.saveSettings();
+            new Notice(t('All commands have been removed'));
+            this.display();
+          }
+        })
       });
     }
     const commandListContainer = containerEl.createDiv('command-lists-container');

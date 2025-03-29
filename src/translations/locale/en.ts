@@ -183,6 +183,7 @@ export default {
 'Command deployed to: ': 'Command deployed to: ',
 'Command deleted': 'Command deleted',
 'Confirm delete?': 'Confirm delete?',
+'Confirm': 'Confirm',
 'Are you sure you want to restore all settings to default? But custom commands will be preserved.': 'Are you sure you want to restore all settings to default? But custom commands will be preserved.',
 'Successfully restored default settings! (Custom commands preserved)': 'Successfully restored default settings! (Custom commands preserved)',
 'This will reset all your custom configurations, but custom commands will be preserved': 'This will reset all your custom configurations, but custom commands will be preserved',
@@ -391,5 +392,6 @@ export default {
 'Link Title (optional)': 'Link Title (optional)',
 'Unable to detect editor width': 'Unable to detect editor width',
 'Fit Editor Width': 'Fit Editor Width',
+'Please execute a format command or select format text first, then enable the format brush': 'Please execute a format command or select format text first, then enable the format brush',
 
 }

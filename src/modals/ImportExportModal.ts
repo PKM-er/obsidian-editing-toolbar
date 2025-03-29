@@ -2,7 +2,7 @@ import { settings } from "cluster";
 import { App, Modal, Setting, Notice, TextAreaComponent, ButtonComponent } from "obsidian";
 import type editingToolbarPlugin from "src/plugin/main";
 import { t } from 'src/translations/helper';
-
+import { ConfirmModal } from "src/modals/ConfirmModal";
 export class ImportExportModal extends Modal {
   plugin: editingToolbarPlugin;
   mode: 'import' | 'export';
@@ -400,54 +400,63 @@ export class ImportExportModal extends Modal {
       }
 
       // 显示确认对话框
-      if (!confirm(importSummary + '\n' + t('Do you want to continue?'))) {
-        return;
-      }
+      ConfirmModal.show(this.app, {
+        message: importSummary + '\n' + t('Do you want to continue?'),
+        onConfirm: async () => {
 
-      // 创建备份
-      const backup = {
-        positionStyle: this.plugin.settings.positionStyle,
-        menuCommands: [...this.plugin.settings.menuCommands],
-        customCommands: [...this.plugin.settings.customCommands],
-        followingCommands: [...this.plugin.settings.followingCommands],
-        topCommands: [...this.plugin.settings.topCommands],
-        fixedCommands: [...this.plugin.settings.fixedCommands],
-        mobileCommands: [...this.plugin.settings.mobileCommands]
-      };
 
-      try {
-        // 根据导入模式处理导入
-        if (this.importMode === 'overwrite') {
-          // 覆盖模式 - 直接替换相应设置
-          this.performOverwriteImport(importData);
-        } else {
-          // 更新模式 - 合并设置
-          this.performUpdateImport(importData);
+          // 创建备份
+          const backup = {
+            positionStyle: this.plugin.settings.positionStyle,
+            menuCommands: [...this.plugin.settings.menuCommands],
+            customCommands: [...this.plugin.settings.customCommands],
+            followingCommands: [...this.plugin.settings.followingCommands],
+            topCommands: [...this.plugin.settings.topCommands],
+            fixedCommands: [...this.plugin.settings.fixedCommands],
+            mobileCommands: [...this.plugin.settings.mobileCommands]
+          };
+
+          try {
+            // 根据导入模式处理导入
+            if (this.importMode === 'overwrite') {
+              // 覆盖模式 - 直接替换相应设置
+              this.performOverwriteImport(importData);
+            } else {
+              // 更新模式 - 合并设置
+              this.performUpdateImport(importData);
+            }
+
+            // 修复命令ID
+            this.fixImportedCommandIds();
+
+            // 保存设置
+            await this.plugin.saveSettings();
+
+            // 重新加载自定义命令
+            this.plugin.reloadCustomCommands();
+
+            // 触发工具栏更新
+            dispatchEvent(new Event("editingToolbar-NewCommand"));
+
+            new Notice(t('Configuration imported successfully'));
+            this.close();
+          } catch (error) {
+            // 导入失败，恢复备份
+            this.restoreBackup(backup);
+            throw error;
+          }
+
+
         }
+      });
 
-        // 修复命令ID
-        this.fixImportedCommandIds();
-
-        // 保存设置
-        await this.plugin.saveSettings();
-
-        // 重新加载自定义命令
-        this.plugin.reloadCustomCommands();
-
-        // 触发工具栏更新
-        dispatchEvent(new Event("editingToolbar-NewCommand"));
-
-        new Notice(t('Configuration imported successfully'));
-        this.close();
-      } catch (error) {
-        // 导入失败，恢复备份
-        this.restoreBackup(backup);
-        throw error;
-      }
     } catch (error) {
       console.error('Import error:', error);
       new Notice(t('Error:') + ' ' + error.message);
     }
+
+
+
   }
 
   // 执行覆盖导入
