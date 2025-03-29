@@ -1,4 +1,4 @@
-import { App, Modal, Setting, TextComponent, ToggleComponent, Platform, setIcon } from "obsidian";
+import { App, Modal,Editor,EditorPosition, Setting, TextComponent, ToggleComponent, Platform, setIcon } from "obsidian";
 import editingToolbarPlugin from "src/plugin/main";
 import { t } from "src/translations/helper";
 
@@ -6,6 +6,15 @@ interface ClipboardItems {
     [key: string]: string;
 }
 
+   // 定义目标类型
+interface LinkTarget {
+    isImage: boolean;
+    text: string;
+    url: string;
+    title: string;
+    from: EditorPosition;
+    to: EditorPosition;
+}
 export class InsertLinkModal extends Modal {
     private linkText: string = "";
     private linkUrl: string = "";
@@ -28,74 +37,130 @@ export class InsertLinkModal extends Modal {
 
     constructor(private plugin: editingToolbarPlugin) {
         super(plugin.app);
-
-        // 如果有选中的文本，用作链接文本
+    
         const editor = this.plugin.commandsManager.getActiveEditor();
         if (editor) {
             const selectedText = editor.getSelection() || "";
-
-            // 优先处理选中文本
             if (selectedText) {
-                this.selectedText = selectedText;
-                this.parseSelectedText(selectedText);
+                this.handleSelectedText(editor, selectedText);
+            } else {
+                this.handleCursorPosition(editor);
             }
-            // 如果没有选中文本，尝试获取光标所在位置的链接
-            else {
-                const cursor = editor.getCursor(); // Obsidian 的 API 获取光标位置
-                const line = editor.getLine(cursor.line); // 获取光标所在行的文本
-                const cursorPosInLine = cursor.ch; // 光标在行内的字符位置
-
-                // 使用正则表达式匹配 Markdown 链接 [text](url) 和图片 ![text](url)，包括可选标题
-                const combinedRegex = /(!)?\[([^\]]+)\]\(([^\s)]+)(?:\s+["']([^"']*)["'])?\)/g;
-                let target = null;
-                let match;
-                while ((match = combinedRegex.exec(line)) !== null) {
-                    const isImage = !!match[1]; // 如果有 "!" 前缀，则为图片
-                    const linkStart = match.index;
-                    const linkEnd = match.index + match[0].length;
-                    const text = match[2]; // 链接或图片的文本
-                    const url = match[3];  // URL
-                    const quotedTitle = match[4] || ''; // Title（如果存在）
-                    // 检查光标是否在链接或图片范围内（包括边缘）
-                    if (cursorPosInLine >= linkStart && cursorPosInLine <= linkEnd) {
-                        target = {
-                            isImage: isImage,
-                            text: text,
-                            url: url,
-                            title: quotedTitle,
-                            from: { line: cursor.line, ch: linkStart },
-                            to: { line: cursor.line, ch: linkEnd }
-                        };
-                        break; // 找到后直接退出循环
-                    }
-                }
-
-                // 如果找到目标，选中它并处理
-                if (target) {
-                    if (target.isImage) {
-                        this.selectedText = `![${target.text}](${target.url}${target.title ? ` "${target.title}"` : ''})`; // 完整图片语法
-                    } else {
-                        const linkFormat = target.title
-                            ? `[${target.text}](${target.url} "${target.title}")`
-                            : `[${target.text}](${target.url})`;
-                        this.selectedText = linkFormat; // 仅链接文本
-
-                    }
-                    editor.setSelection(target.from, target.to); // 选中目标范围
-                    this.parseSelectedText(this.selectedText);
-                } else {
-                    this.parseClipboard(); // 回退到剪贴板解析
-                }
-            }
-        }
-        // 如果没有编辑器，尝试解析剪贴板
-        else {
+        } else {
             this.parseClipboard();
         }
-
+    
         this.updateHeader();
-
     }
+    
+    // 处理选中文本
+    private handleSelectedText(editor: Editor, selectedText: string) {
+        const target = this.tryExpandSelection(editor, selectedText);
+        if (target) {
+            // 扩展选择并处理完整链接或图片
+            const expandedText = this.formatTargetText(target);
+            editor.setSelection(target.from, target.to);
+            this.selectedText = expandedText;
+            this.parseSelectedText(expandedText);
+        } else {
+            // 未找到完整链接，按原始选中文本处理
+            this.selectedText = selectedText;
+            this.parseSelectedText(selectedText);
+        }
+    }
+    
+    // 处理光标位置
+    private handleCursorPosition(editor: Editor) {
+        const cursor = editor.getCursor();
+        const target = this.findLinkAtCursor(editor, cursor);
+        if (target) {
+            const formattedText = this.formatTargetText(target);
+            editor.setSelection(target.from, target.to);
+            this.selectedText = formattedText;
+            this.parseSelectedText(formattedText);
+        } else {
+            this.parseClipboard();
+        }
+    }
+    
+    // 尝试扩展选择范围，查找完整链接或图片
+    private tryExpandSelection(editor: Editor, selectedText: string): LinkTarget | null {
+        const cursorFrom = editor.getCursor('from');
+        const line = editor.getLine(cursorFrom.line);
+        const selectionStart = cursorFrom.ch;
+        const selectionEnd = editor.getCursor('to').ch;
+    
+        return this.matchLinkInLine(line, selectionStart, selectionEnd, cursorFrom.line);
+    }
+    
+    // 在光标位置查找链接或图片
+    private findLinkAtCursor(editor: Editor, cursor: EditorPosition): LinkTarget | null {
+        const line = editor.getLine(cursor.line);
+        const cursorPosInLine = cursor.ch;
+    
+        return this.matchLinkInLine(line, cursorPosInLine, cursorPosInLine, cursor.line);
+    }
+    
+   // 匹配行内的链接或图片，优先匹配 Markdown 格式，再匹配普通 URL
+private matchLinkInLine(line: string, startPos: number, endPos: number, lineNumber: number): LinkTarget | null {
+    // 优先匹配 Markdown 格式的链接或图片
+    const markdownRegex = /(!)?\[([^\]]+)\]\(([^\s)]+)(?:\s+["']([^"']*)["'])?\)/g;
+    let match;
+
+    while ((match = markdownRegex.exec(line)) !== null) {
+        const isImage = !!match[1];
+        const linkStart = match.index;
+        const linkEnd = match.index + match[0].length;
+        const text = match[2];
+        const url = match[3];
+        const quotedTitle = match[4] || '';
+
+        if (startPos <= linkEnd && endPos >= linkStart) {
+            return {
+                isImage,
+                text,
+                url,
+                title: quotedTitle,
+                from: { line: lineNumber, ch: linkStart },
+                to: { line: lineNumber, ch: linkEnd }
+            };
+        }
+    }
+
+    // 如果 Markdown 格式未匹配到，尝试匹配普通 URL
+    const urlRegex = /([a-zA-Z]+:\/\/[^\s]+|[^\s]+\.(jpg|png|gif|webp|pdf))/g;
+
+    while ((match = urlRegex.exec(line)) !== null) {
+        const linkStart = match.index;
+        const linkEnd = match.index + match[0].length;
+        const url = match[1];
+
+        if (startPos <= linkEnd && endPos >= linkStart) {
+            return {
+                isImage: false, // 普通 URL 默认作为链接处理
+                text: url,      // 使用 URL 作为默认文本
+                url,
+                title: '',
+                from: { line: lineNumber, ch: linkStart },
+                to: { line: lineNumber, ch: linkEnd }
+            };
+        }
+    }
+
+    return null;
+}
+    
+    // 格式化目标文本
+    private formatTargetText(target: LinkTarget): string {
+        if (target.isImage) {
+            return `![${target.text}](${target.url}${target.title ? ` "${target.title}"` : ''})`;
+        }
+        return target.title
+            ? `[${target.text}](${target.url} "${target.title}")`
+            : `[${target.text}](${target.url})`;
+    }
+    
+ 
 
     // 解析选中的文本
     private parseSelectedText(text: string) {
