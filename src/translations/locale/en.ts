@@ -385,5 +385,11 @@ export default {
 'Fixed position offset': 'Fixed position offset',
 'Choose the offset of the Editing Toolbar in the fixed position.': 'Choose the offset of the Editing Toolbar in the fixed position.',
 'Renumber List': 'Renumber List',
+'Fetch Remote Title': 'Fetch Remote Title',
+'Please enter a URL first': 'Please enter a URL first',
+'Failed to fetch title for': 'Failed to fetch title for',
+'Link Title (optional)': 'Link Title (optional)',
+'Unable to detect editor width': 'Unable to detect editor width',
+'Fit Editor Width': 'Fit Editor Width',
 
 }

@@ -390,4 +390,11 @@ export default {
   'Fixed position offset': '固定位置偏移',
   'Choose the offset of the Editing Toolbar in the fixed position.': '选择固定位置工具栏的偏移量。',
   'Renumber List': '列表重新编号',
+  'Insert link': '插入链接',
+  'Please enter a URL first': '请先输入一个URL',
+  'Failed to fetch title for': '获取标题失败',
+  'Link Title (optional)': '链接标题（可选）',
+  'Unable to detect editor width': '无法检测编辑器宽度',
+  'Fit Editor Width': '自适应宽度',
+  'Fetch Remote Title': '获取URL标题',
 };

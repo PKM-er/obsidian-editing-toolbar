@@ -1,4 +1,4 @@
-import { App, Modal,Editor,EditorPosition, Setting, TextComponent, ToggleComponent, Platform, setIcon } from "obsidian";
+import { App, Modal,Editor,EditorPosition, Setting, TextComponent, ToggleComponent, Platform, setIcon, Notice, requestUrl, MarkdownView } from "obsidian";
 import editingToolbarPlugin from "src/plugin/main";
 import { t } from "src/translations/helper";
 
@@ -15,6 +15,91 @@ interface LinkTarget {
     from: EditorPosition;
     to: EditorPosition;
 }
+
+class UrlTitleFetcher {
+    private static htmlTitlePattern = /<title>([^<]*)<\/title>/im;
+    private static wxTitlePattern = /<meta property="og:title" content="([^<]*)" \/>/im;
+
+    // 检查是否为有效 URL
+    private static isValidUrl(url: string): boolean {
+        try {
+            new URL(url);
+            return true;
+        } catch (err) {
+            return false;
+        }
+    }
+
+    private static parseTitle(url: string, body: string): string {
+        const patterns = [
+            url.includes('mp.weixin.qq.com') ? this.wxTitlePattern : null,
+            this.htmlTitlePattern,
+            /<title [^>]*>(.*?)<\/title>/i,
+            /<meta name="title" content="([^<]*)" \/>/im
+        ].filter(Boolean);
+    
+        for (const pattern of patterns) {
+            const match = body.match(pattern);
+            if (match && typeof match[1] === 'string') {
+                return match[1].trim();
+            }
+        }
+        
+        throw new Error('Unable to parse the title tag');
+    }
+
+    // 获取默认标题
+    public static getFallbackTitle(url: string): string {
+        const pathMatch = url.match(/[^/\\]+$/);
+        if (pathMatch) {
+            return pathMatch[0]
+                .replace(/\.[^/.]+$/, '')
+                .replace(/[-_]/g, ' ')
+                .trim();
+        }
+        return url;
+    }
+
+    // 异步获取远程标题
+    public static async fetchRemoteTitle(url: string): Promise<string> {
+        // 如果不是有效的 URL 或不是 http/https 开头，返回默认标题
+        if (!this.isValidUrl(url) || !url.match(/^https?:\/\//)) {
+            return this.getFallbackTitle(url);
+        }
+
+        try {
+            const response = await requestUrl({
+                url,
+                method: 'GET',
+                headers: {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+                },
+                throw: true // 抛出异常以便捕获非 200 状态
+            });
+
+            if (response.status !== 200) {
+                throw new Error(`Status code ${response.status}`);
+            }
+
+            const html = response.text;
+            const title = this.parseTitle(url, html);
+
+            // 如果标题为空或过长，返回默认标题
+            if (!title || title.length > 100) {
+                return this.getFallbackTitle(url);
+            }
+
+            return title;
+        } catch (error) {
+            console.error(`Failed to fetch title for ${url}:`, error);
+     
+            return this.getFallbackTitle(url);
+        }
+    }
+}
+
+
+
 export class InsertLinkModal extends Modal {
     private linkText: string = "";
     private linkUrl: string = "";
@@ -128,26 +213,29 @@ private matchLinkInLine(line: string, startPos: number, endPos: number, lineNumb
     }
 
     // 如果 Markdown 格式未匹配到，尝试匹配普通 URL
-    const urlRegex = /([a-zA-Z]+:\/\/[^\s]+|[^\s]+\.(jpg|png|gif|webp|pdf))/g;
 
-    while ((match = urlRegex.exec(line)) !== null) {
-        const linkStart = match.index;
-        const linkEnd = match.index + match[0].length;
-        const url = match[1];
+   // 匹配非 Markdown 格式的 URL
+   const urlRegex = /(?:^|\s)([a-zA-Z][a-zA-Z\d+\-.]*:\/\/\S+|\S+\.[a-zA-Z]{2,}(?:\/\S*)?)/g;
 
-        if (startPos <= linkEnd && endPos >= linkStart) {
-            return {
-                isImage: false, // 普通 URL 默认作为链接处理
-                text: url,      // 使用 URL 作为默认文本
-                url,
-                title: '',
-                from: { line: lineNumber, ch: linkStart },
-                to: { line: lineNumber, ch: linkEnd }
-            };
-        }
-    }
+   while ((match = urlRegex.exec(line)) !== null) {
+       const url = match[1]; // 获取完整 URL
+       const linkStart = match.index + (match[0].startsWith(' ') ? 1 : 0); // 调整起始位置
+       const linkEnd = linkStart + url.length;
 
-    return null;
+       // 检查是否与选择范围重叠，并排除已经被 Markdown 匹配的 URL
+       if (startPos <= linkEnd && endPos >= linkStart) {
+           return {
+               isImage: /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(url), // 根据文件扩展名判断是否为图片
+               text: url,      // 使用 URL 作为默认文本
+               url,
+               title: '',
+               from: { line: lineNumber, ch: linkStart },
+               to: { line: lineNumber, ch: linkEnd }
+           };
+       }
+   }
+
+   return null;
 }
     
     // 格式化目标文本
@@ -592,16 +680,14 @@ private matchLinkInLine(line: string, startPos: number, endPos: number, lineNumb
 
     private async display() {
         const { contentEl } = this;
-
+    
         contentEl.empty();
         contentEl.addClass("insert-link-modal");
         this.titleEl.textContent = "";
         this.titleEl.addClass("insert-link-modal-title");
-
+    
         // 添加键盘事件监听器到整个模态框
-
         contentEl.addEventListener('keydown', (event) => {
-            // 检测 Ctrl+Enter 或 Command+Enter
             if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
                 event.preventDefault();
                 if (this.insertButton) {
@@ -609,9 +695,29 @@ private matchLinkInLine(line: string, startPos: number, endPos: number, lineNumb
                 }
             }
         });
-        // 链接文本输入
+    
+        // 链接文本输入（带获取远程标题图标）
         const linkTextSetting = new Setting(contentEl)
-            .setName(t("Link Text"))
+
+        .addButton((btn) => {
+            btn.setIcon("lucide-globe")
+                .setTooltip(t("Fetch Remote Title"))
+                .onClick(async () => {
+                    if (this.linkUrl) {
+                        btn.setDisabled(true); // 禁用按钮，避免重复点击
+                        btn.setIcon("lucide-loader"); // 显示加载图标
+                        const title = await this.fetchRemoteTitle(this.linkUrl);
+                        btn.setIcon("lucide-globe"); // 恢复图标
+                        btn.setDisabled(false);
+                        this.linkText = title;
+                        this.linkTextInput.setValue(title);
+                        this.updateHeader();
+                    } else {
+                        new Notice(t("Please enter a URL first"));
+                    }
+                });
+        });
+        linkTextSetting.setName(t("Link Text"))
             .addText((text) => {
                 this.linkTextInput = text;
                 text.setPlaceholder(t("Link Text"))
@@ -620,21 +726,22 @@ private matchLinkInLine(line: string, startPos: number, endPos: number, lineNumb
                         this.linkText = value;
                         this.updateHeader();
                     });
-            });
-
+            })
+       
+    
         // 链接别名输入（非图片模式时显示）
         const aliasSetting = new Setting(linkTextSetting.controlEl)
             .setName(t("Title"))
             .addText((text) => {
                 this.linkAliasInput = text;
-                text.setPlaceholder(t("Link Title(optional)"))
+                text.setPlaceholder(t("Link Title (optional)"))
                     .setValue(this.linkAlias)
                     .onChange((value) => {
                         this.linkAlias = value;
                         this.updateHeader();
                     });
             });
-
+    
         // 链接地址输入
         const urlSetting = new Setting(contentEl)
             .setName(t("Link URL"))
@@ -658,23 +765,22 @@ private matchLinkInLine(line: string, startPos: number, endPos: number, lineNumb
                         this.updateHeader();
                     });
             });
-
-        // 添加 URL 错误提示元素
+    
+        // URL 错误提示
         this.urlErrorMsg = urlSetting.descEl.createDiv("url-error");
         this.urlErrorMsg.style.color = "var(--text-error)";
         this.urlErrorMsg.style.display = "none";
-
+    
         // 嵌入选项
         const embedSetting = new Setting(contentEl)
             .setName(t("Embed Content"))
             .setDesc(t("If it is an image, turn on"));
-
+    
         this.embedToggle = new ToggleComponent(embedSetting.controlEl);
         this.embedToggle
             .setValue(this.isEmbed)
             .onChange((value) => {
                 this.isEmbed = value;
-                // 显示/隐藏图片尺寸设置和别名设置
                 const imageSizeEl = contentEl.querySelector('.image-size-setting');
                 const aliasSettingEl = aliasSetting.settingEl;
                 if (imageSizeEl) {
@@ -685,10 +791,26 @@ private matchLinkInLine(line: string, startPos: number, endPos: number, lineNumb
                 }
                 this.updateHeader();
             });
-
-        // 图片尺寸设置
+    
+        // 图片尺寸设置（带自适应宽度图标）
         const imageSizeSetting = new Setting(contentEl)
-            .setClass('image-size-setting')
+        .addButton((btn) => {
+            btn.setIcon("lucide-maximize")
+                .setTooltip(t("Fit Editor Width"))
+                .onClick(() => {
+                    const dimensions = this.getImageDimensions();
+                    if (dimensions) {
+                        this.imageWidth = dimensions.width.toString();
+                        this.imageHeight = dimensions.height?.toString();
+                        (imageSizeSetting.components[1] as TextComponent).setValue(this.imageWidth); // 更新宽度
+                        if (this.imageHeight) {
+                            (imageSizeSetting.components[2] as TextComponent).setValue(this.imageHeight); // 更新高度
+                        }
+                        this.updateHeader();
+                    }
+                });
+        });
+        imageSizeSetting.setClass('image-size-setting')
             .setName(t("Image Size"))
             .addText((text) => {
                 text.inputEl.addClass('image-width-input');
@@ -699,24 +821,26 @@ private matchLinkInLine(line: string, startPos: number, endPos: number, lineNumb
                         text.setValue(this.imageWidth);
                         this.updateHeader();
                     });
-            });
-            const imageSizeIcon = imageSizeSetting.controlEl.createDiv("image-size-icon");
-            setIcon(imageSizeIcon, "lucide-x")
-
-            imageSizeSetting.addText((text) => {
-                text.inputEl.addClass('image-height-input');
-                text.setPlaceholder(t("Image Height"))
-                    .setValue(this.imageHeight)
-                    .onChange((value) => {
-                        this.imageHeight = value.replace(/[^\d]/g, '');
-                        text.setValue(this.imageHeight);
-                        this.updateHeader();
-                    });
-            });
-
+            })
+          
+    
+        const imageSizeIcon = imageSizeSetting.controlEl.createDiv("image-size-icon");
+        setIcon(imageSizeIcon, "lucide-x");
+    
+        imageSizeSetting.addText((text) => {
+            text.inputEl.addClass('image-height-input');
+            text.setPlaceholder(t("Image Height"))
+                .setValue(this.imageHeight)
+                .onChange((value) => {
+                    this.imageHeight = value.replace(/[^\d]/g, '');
+                    text.setValue(this.imageHeight);
+                    this.updateHeader();
+                });
+        });
+    
         // 初始隐藏图片尺寸设置
         imageSizeSetting.settingEl.style.display = this.isEmbed ? 'block' : 'none';
-
+    
         // 新行插入选项
         new Setting(contentEl)
             .setName(t("Insert New Line"))
@@ -728,19 +852,22 @@ private matchLinkInLine(line: string, startPos: number, endPos: number, lineNumb
                         this.updateHeader();
                     });
             });
+    
         // 预览设置
         this.previewSetting = new Setting(contentEl)
             .setClass("preview-setting")
             .addText((text) => {
                 text.setValue(this.getPreviewText())
-                    .inputEl.setAttribute("readonly", "true"); // 只读
-            })
+                    .inputEl.setAttribute("readonly", "true");
+            });
+    
         const shortcutHint = contentEl.createDiv("shortcut-hint");
         shortcutHint.setText(`${Platform.isMacOS ? "⌘" : "Ctrl"} + Enter ${t("to insert")}`);
         shortcutHint.style.textAlign = "right";
         shortcutHint.style.fontSize = "0.8em";
         shortcutHint.style.opacity = "0.7";
         shortcutHint.style.marginTop = "5px";
+    
         // 按钮
         const buttonSetting = new Setting(contentEl)
             .addButton((btn) => {
@@ -760,26 +887,89 @@ private matchLinkInLine(line: string, startPos: number, endPos: number, lineNumb
                         this.close();
                     })
             );
-
+    
         // 设置光标聚焦逻辑
         setTimeout(() => {
-            // 如果链接文本和URL都为空，聚焦到链接文本
             if (!this.linkText && !this.linkUrl) {
                 this.linkTextInput.inputEl.focus();
-            }
-            // 如果链接文本为空但URL不为空，聚焦到链接文本
-            else if (!this.linkText && this.linkUrl) {
+            } else if (!this.linkText && this.linkUrl) {
                 this.linkTextInput.inputEl.focus();
-            }
-            // 如果链接文本不为空但URL为空，聚焦到URL
-            else if (this.linkText && !this.linkUrl) {
+            } else if (this.linkText && !this.linkUrl) {
                 this.linkUrlInput.inputEl.focus();
-            }
-            // 如果两者都不为空，默认聚焦到链接文本
-            else {
+            } else {
                 this.linkAliasInput.inputEl.focus();
             }
         }, 10);
+    }
+    
+ // 在你的插件中使用
+private async fetchRemoteTitle(url: string): Promise<string> {
+    return UrlTitleFetcher.fetchRemoteTitle(url);
+}
+
+// 获取默认标题（保持原样供其他地方使用）
+private getFallbackTitle(url: string): string {
+    return UrlTitleFetcher.getFallbackTitle(url);
+}
+    // 获取当前编辑器宽度
+    private getImageDimensions(): { width: number; height: number } | null {
+        const view = this.app.workspace.getActiveViewOfType(MarkdownView);
+        if (!view) return null;
+    
+        // 获取编辑器内容区域
+    const editorEl = view.contentEl.querySelector('.markdown-source-view .cm-content') as HTMLElement;
+    const containerEl = view.contentEl as HTMLElement;
+    if (!editorEl || !containerEl) return null;
+
+    const editorWidth = editorEl.offsetWidth;
+    const viewHeight = containerEl.offsetHeight;
+    const maxHeight = Math.floor(viewHeight / 2);
+
+    // 在实时预览模式下，查找已渲染的 <img> 元素
+    if (view.getMode() === 'preview' || view.getMode() === 'source') { // Live Preview 或源代码模式
+        const imgEls = editorEl.querySelectorAll('img');
+        if (imgEls.length > 0) {
+            // 如果有多个 <img>，优先选择与当前 URL 匹配的，或者第一个已加载的
+            let targetImg: HTMLImageElement | null = null;
+            if (this.linkUrl) {
+                imgEls.forEach((img) => {
+                    if (img.src === this.linkUrl && img.complete && img.naturalWidth > 0) {
+                        targetImg = img as HTMLImageElement;
+                    }
+                });
+            }
+            if (!targetImg) {
+                // 如果未找到匹配 URL 的，取第一个已加载的图片
+                targetImg = Array.from(imgEls).find(img => img.complete && img.naturalWidth > 0) as HTMLImageElement || null;
+            }
+
+            if (targetImg) {
+                const naturalWidth = targetImg.naturalWidth;
+                const naturalHeight = targetImg.naturalHeight;
+                const aspectRatio = naturalWidth / naturalHeight;
+
+                let adjustedWidth = Math.min(naturalWidth, Math.floor(editorWidth * 0.65));
+                let adjustedHeight = Math.floor(adjustedWidth / aspectRatio);
+
+                if (adjustedHeight > maxHeight) {
+                    adjustedHeight = maxHeight;
+                    adjustedWidth = Math.floor(adjustedHeight * aspectRatio);
+                }
+
+                return { width: adjustedWidth, height: adjustedHeight };
+            }
+        }
+    }
+     
+      
+    
+        
+        const defaultAspectRatio = 4 / 3;
+        const heightLimitedWidth = Math.floor(maxHeight * defaultAspectRatio);
+        const adjustedWidth = Math.min(Math.floor(editorWidth * 0.65), heightLimitedWidth);
+      
+    
+        return { width: adjustedWidth, height: null };
     }
 
     private validateUrl(url: string) {
@@ -852,7 +1042,7 @@ private matchLinkInLine(line: string, startPos: number, endPos: number, lineNumb
                 const fullText = this.prefixText + markdownLink + this.suffixText;
                 editor.replaceRange(
                     fullText,
-                    { line: selectionStart.line, ch: 0 },
+                    { line: selectionStart.line, ch: selectionStart.ch },
                     selectionEnd
                 );
                 // 设置新光标位置在链接后面
