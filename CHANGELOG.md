@@ -1,5 +1,13 @@
 # Changelog
 
+## 3.1.12 (2025-03-29)
+### 增加获取远程url标题，自适应图片宽度
+### 优化对链接格式判断逻辑
+### Update manifest.json
+### Merge branch 'master' of https://github.com/PKM-er/obsidian-editing-toolbar
+### Update manifest.json and CHANGELOG.md for version 3.1.10
+
+
 ## 3.1.10 (2025-03-28)
 ### 右键增加链接，图片修改模态框
 ### Update CHANGELOG.md
