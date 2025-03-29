@@ -62,7 +62,7 @@ export default class editingToolbarPlugin extends Plugin {
   lastExecutedCommand: string | null = null;
   formatBrushActive: boolean = false;
   formatBrushNotice: Notice | null = null;
-
+  lastCalloutType: string | null = null;
   // 添加一个属性来存储上一个命令的可读名称
   lastExecutedCommandName: string | null = null;
 
@@ -211,21 +211,21 @@ export default class editingToolbarPlugin extends Plugin {
     this.registerEvent(
       // @ts-ignore
       this.app.workspace.on('url-menu', (menu: Menu, url: string, view: MarkdownView) => {
-          // 添加自定义菜单项
-          menu.addItem((item) =>
-              item
-                  .setTitle('Edit Link(Modal)')
-                  .setSection("info")
-                  .setIcon('link')
-                  .onClick(() => {
-                   
-                       new InsertLinkModal(this).open()
-                  })
-          );
-      })
-   
+        // 添加自定义菜单项
+        menu.addItem((item) =>
+          item
+            .setTitle('Edit Link(Modal)')
+            .setSection("info")
+            .setIcon('link')
+            .onClick(() => {
 
-  );
+              new InsertLinkModal(this).open()
+            })
+        );
+      })
+
+
+    );
     // 初始化图标
     addIcons();
     this.toolbarIconSize = this.settings.toolbarIconSize;
@@ -520,8 +520,382 @@ export default class editingToolbarPlugin extends Plugin {
 
   // 修改 toggleFormatBrush 方法，在通知中显示具体命令
   toggleFormatBrush(): void {
-    if (!this.lastExecutedCommand) {
-      new Notice(t("Please execute a editingToolbar format command first, then enable the format brush"));
+    const editor = this.commandsManager.getActiveEditor();
+    let detectedFormat = false;
+    let calloutType = "";
+    // 判断是否有选中文本
+    if (editor) {
+      if (editor.somethingSelected()) {
+        const selectedText = editor.getSelection();
+        // 检测选中文本的格式
+        if (/^\*\*.*\*\*$/.test(selectedText)) {
+          // 粗体
+          this.lastExecutedCommand = "editor:toggle-bold";
+          this.lastExecutedCommandName = "Bold";
+          detectedFormat = true;
+        } else if (/^\*.*\*$/.test(selectedText) || /^_.*_$/.test(selectedText)) {
+          // 斜体
+          this.lastExecutedCommand = "editor:toggle-italics";
+          this.lastExecutedCommandName = "Italic";
+          detectedFormat = true;
+        } else if (/^~~.*~~$/.test(selectedText)) {
+          // 删除线
+          this.lastExecutedCommand = "editor:toggle-strikethrough";
+          this.lastExecutedCommandName = "Strikethrough";
+          detectedFormat = true;
+        } else if (/^==.*==$/.test(selectedText)) {
+          // 高亮
+          this.lastExecutedCommand = "editor:toggle-highlight";
+          this.lastExecutedCommandName = "Highlight";
+          detectedFormat = true;
+        } else if (/^`.*`$/.test(selectedText)) {
+          // 代码
+          this.lastExecutedCommand = "editor:toggle-code";
+          this.lastExecutedCommandName = "Code";
+          detectedFormat = true;
+        }  else if (/^<font color=".*">.*<\/font>$/.test(selectedText)) {
+          // 字体颜色
+          this.lastExecutedCommand = "editing-toolbar:change-font-color";
+          this.lastExecutedCommandName = "Font Color";
+          detectedFormat = true;
+        } else if (/^<span style="background:.*">.*<\/span>$/.test(selectedText)) {
+          // 背景颜色
+          this.lastExecutedCommand = "editing-toolbar:change-background-color";
+          this.lastExecutedCommandName = "Background Color";
+          detectedFormat = true;
+        }
+        else if (/^<u>([^<]+)<\/u>$/.test(selectedText)) {
+          this.lastExecutedCommand = "editor:toggle-underline";
+          this.lastExecutedCommandName = "Underline";
+          detectedFormat = true;
+        }
+        else if (/^<center>([^<]+)<\/center>$/.test(selectedText)) {
+          this.lastExecutedCommand = "editing-toolbar:center";
+          this.lastExecutedCommandName = "Center";
+          detectedFormat = true;
+        }
+        else if (/^<p align="left">(.*?)<\/p>$/.test(selectedText)) {
+          this.lastExecutedCommand = "editing-toolbar:left";
+          this.lastExecutedCommandName = "Left Align";
+          detectedFormat = true;
+        }
+        else if (/^<p align="right">(.*?)<\/p>$/.test(selectedText)) {
+          this.lastExecutedCommand = "editing-toolbar:right";
+          this.lastExecutedCommandName = "Right Align";
+          detectedFormat = true;
+        }
+        else if (/^<p align="justify">(.*?)<\/p>$/.test(selectedText)) {
+          this.lastExecutedCommand = "editing-toolbar:justify";
+          this.lastExecutedCommandName = "Justify";
+          detectedFormat = true;
+        }
+        else if (/^<sup>(.*?)<\/sup>$/.test(selectedText)) {
+          this.lastExecutedCommand = "editing-toolbar:superscript";
+          this.lastExecutedCommandName = "Superscript";
+          detectedFormat = true;
+        }
+        else if (/^<sub>(.*?)<\/sub>$/.test(selectedText)) {
+          this.lastExecutedCommand = "editing-toolbar:subscript";
+          this.lastExecutedCommandName = "Subscript";
+          detectedFormat = true;
+        }
+        else if (
+          /^> \[!(note|tip|warning|danger|info|success|question|quote)\]/i.test(selectedText)
+        ) {
+          const match = selectedText.match(/^> \[!(note|tip|warning|danger|info|success|question|quote)\]/i);
+          if (match) {
+            this.lastExecutedCommand = "editor:insert-callout";
+            this.lastExecutedCommandName = "Callout-" + match[1].toLowerCase();
+            detectedFormat = true;
+            calloutType = match[1].toLowerCase(); // 转换为小写
+          }
+        }
+        // 检测标题格式
+        else if (/^# /.test(selectedText)) {
+          this.lastExecutedCommand = "editor:set-heading-1";
+          this.lastExecutedCommandName = "Heading 1";
+          detectedFormat = true;
+        } else if (/^## /.test(selectedText)) {
+          this.lastExecutedCommand = "editor:set-heading-2";
+          this.lastExecutedCommandName = "Heading 2";
+          detectedFormat = true;
+        } else if (/^### /.test(selectedText)) {
+          this.lastExecutedCommand = "editor:set-heading-3";
+          this.lastExecutedCommandName = "Heading 3";
+          detectedFormat = true;
+        } else if (/^#### /.test(selectedText)) {
+          this.lastExecutedCommand = "editor:set-heading-4";
+          this.lastExecutedCommandName = "Heading 4";
+          detectedFormat = true;
+        } else if (/^##### /.test(selectedText)) {
+          this.lastExecutedCommand = "editor:set-heading-5";
+          this.lastExecutedCommandName = "Heading 5";
+          detectedFormat = true;
+        } else if (/^###### /.test(selectedText)) {
+          this.lastExecutedCommand = "editor:set-heading-6";
+          this.lastExecutedCommandName = "Heading 6";
+          detectedFormat = true;
+        }
+
+      }
+      else {
+        // 没有选中文本时，探测光标周围的格式
+        const cursor = editor.getCursor();
+        const lineText = editor.getLine(cursor.line);
+        const cursorPos = cursor.ch;
+
+        // 用于记录找到的所有格式及其范围
+        const foundFormats = [];
+
+        // 检测下划线
+        const underlineRegex = /<u>([^<]+)<\/u>/g;
+        let match;
+        while ((match = underlineRegex.exec(lineText)) !== null) {
+          const formatStart = match.index;
+          const formatEnd = match.index + match[0].length;
+          if (cursorPos > formatStart && cursorPos < formatEnd) {
+            foundFormats.push({
+              command: "editing-toolbar:toggle-underline",
+              name: "Underline",
+              distance: Math.min(cursorPos - formatStart, formatEnd - cursorPos)
+            });
+          }
+        }
+
+        // 检测居中
+        const centerRegex = /<center>([^<]+)<\/center>/g;
+        while ((match = centerRegex.exec(lineText)) !== null) {
+          const formatStart = match.index;
+          const formatEnd = match.index + match[0].length;
+          if (cursorPos > formatStart && cursorPos < formatEnd) {
+            foundFormats.push({
+              command: "editing-toolbar:center",
+              name: "Center",
+              distance: Math.min(cursorPos - formatStart, formatEnd - cursorPos)
+            });
+          }
+        }
+
+        // 检测居左
+        const leftRegex = /<p align="left">([^<]+)<\/p>/g;
+        while ((match = leftRegex.exec(lineText)) !== null) {
+          const formatStart = match.index;
+          const formatEnd = match.index + match[0].length;
+          if (cursorPos > formatStart && cursorPos < formatEnd) {
+            foundFormats.push({
+              command: "editing-toolbar:left",
+              name: "Left Align",
+              distance: Math.min(cursorPos - formatStart, formatEnd - cursorPos)
+            });
+          }
+        }
+
+        // 检测居右
+        const rightRegex = /<p align="right">([^<]+)<\/p>/g;
+        while ((match = rightRegex.exec(lineText)) !== null) {
+          const formatStart = match.index;
+          const formatEnd = match.index + match[0].length;
+          if (cursorPos > formatStart && cursorPos < formatEnd) {
+            foundFormats.push({
+              command: "editing-toolbar:right",
+              name: "Right Align",
+              distance: Math.min(cursorPos - formatStart, formatEnd - cursorPos)
+            });
+          }
+        }
+
+        // 检测两端对齐
+        const justifyRegex = /<p align="justify">([^<]+)<\/p>/g;
+        while ((match = justifyRegex.exec(lineText)) !== null) {
+          const formatStart = match.index;
+          const formatEnd = match.index + match[0].length;
+          if (cursorPos > formatStart && cursorPos < formatEnd) {
+            foundFormats.push({
+              command: "editing-toolbar:justify",
+              name: "Justify",
+              distance: Math.min(cursorPos - formatStart, formatEnd - cursorPos)
+            });
+          }
+        }
+
+        // 检测上标
+        const superscriptRegex = /<sup>([^<]+)<\/sup>/g;
+        while ((match = superscriptRegex.exec(lineText)) !== null) {
+          const formatStart = match.index;
+          const formatEnd = match.index + match[0].length;
+          if (cursorPos > formatStart && cursorPos < formatEnd) {
+            foundFormats.push({
+              command: "editing-toolbar:superscript",
+              name: "Superscript",
+              distance: Math.min(cursorPos - formatStart, formatEnd - cursorPos)
+            });
+          }
+        }
+
+        // 检测下标
+        const subscriptRegex = /<sub>([^<]+)<\/sub>/g;
+        while ((match = subscriptRegex.exec(lineText)) !== null) {
+          const formatStart = match.index;
+          const formatEnd = match.index + match[0].length;
+          if (cursorPos > formatStart && cursorPos < formatEnd) {
+            foundFormats.push({
+              command: "editing-toolbar:subscript",
+              name: "Subscript",
+              distance: Math.min(cursorPos - formatStart, formatEnd - cursorPos)
+            });
+          }
+        }
+
+
+        // 检测光标是否在粗体中
+        const boldRegex = /\*\*([^*]+)\*\*/g;
+
+        while ((match = boldRegex.exec(lineText)) !== null) {
+          const formatStart = match.index;
+          const formatEnd = match.index + match[0].length;
+          if (cursorPos > formatStart && cursorPos < formatEnd) {
+            foundFormats.push({
+              command: "editor:toggle-bold",
+              name: "Bold",
+              distance: Math.min(cursorPos - formatStart, formatEnd - cursorPos)
+            });
+          }
+        }
+
+
+        // 检测删除线
+
+        const strikeRegex = /~~([^~]+)~~/g;
+        while ((match = strikeRegex.exec(lineText)) !== null) {
+          const formatStart = match.index;
+          const formatEnd = match.index + match[0].length;
+          if (cursorPos > formatStart && cursorPos < formatEnd) {
+            foundFormats.push({
+              command: "editor:toggle-strikethrough",
+              name: "Strikethrough",
+              distance: Math.min(cursorPos - formatStart, formatEnd - cursorPos)
+            });
+          }
+        }
+
+
+        // 检测高亮
+
+        const highlightRegex = /==([^=]+)==/g;
+        while ((match = highlightRegex.exec(lineText)) !== null) {
+          const formatStart = match.index;
+          const formatEnd = match.index + match[0].length;
+          if (cursorPos > formatStart && cursorPos < formatEnd) {
+            foundFormats.push({
+              command: "editor:toggle-highlight",
+              name: "Highlight",
+              distance: Math.min(cursorPos - formatStart, formatEnd - cursorPos)
+            });
+          }
+        }
+
+
+        // 检测代码
+
+        const codeRegex = /`([^`]+)`/g;
+        while ((match = codeRegex.exec(lineText)) !== null) {
+          const formatStart = match.index;
+          const formatEnd = match.index + match[0].length;
+          if (cursorPos > formatStart && cursorPos < formatEnd) {
+            foundFormats.push({
+              command: "editor:toggle-code",
+              name: "Code",
+              distance: Math.min(cursorPos - formatStart, formatEnd - cursorPos)
+            });
+          }
+        }
+
+
+        // 检测字体颜色
+
+        const fontColorRegex = /<font color="([^"]+)">([^<]+)<\/font>/g;
+        while ((match = fontColorRegex.exec(lineText)) !== null) {
+          const formatStart = match.index;
+          const formatEnd = match.index + match[0].length;
+          if (cursorPos > formatStart && cursorPos < formatEnd) {
+            foundFormats.push({
+              command: "editing-toolbar:change-font-color",
+              name: "Font Color",
+              distance: Math.min(cursorPos - formatStart, formatEnd - cursorPos)
+            });
+          }
+        }
+
+
+        // 检测背景颜色
+
+        const bgColorRegex = /<span style="background:([^"]+)">([^<]+)<\/span>/g;
+        while ((match = bgColorRegex.exec(lineText)) !== null) {
+          const formatStart = match.index;
+          const formatEnd = match.index + match[0].length;
+          if (cursorPos > formatStart && cursorPos < formatEnd) {
+            foundFormats.push({
+              command: "editing-toolbar:change-background-color",
+              name: "Background Color",
+              distance: Math.min(cursorPos - formatStart, formatEnd - cursorPos)
+            });
+          }
+        }
+
+        if (foundFormats.length > 0) {
+          // 按照距离排序，距离最小的在前
+          foundFormats.sort((a, b) => a.distance - b.distance);
+
+          // 使用距离最近的格式
+          const nearestFormat = foundFormats[0];
+          this.lastExecutedCommand = nearestFormat.command;
+          this.lastExecutedCommandName = nearestFormat.name;
+          detectedFormat = true;
+        }
+
+        // 如果不是粗体，检测是否在斜体中
+        if (!detectedFormat) {
+          const italicRegex = /(\*|_)([^*_]+)(\*|_)/g;
+          while ((match = italicRegex.exec(lineText)) !== null) {
+            this.lastExecutedCommand = "editor:toggle-italics";
+            this.lastExecutedCommandName = "Italic";
+            detectedFormat = true;
+          }
+        }
+
+        // 检测标题
+        if (!detectedFormat) {
+
+          if (/^# /.test(lineText) && cursorPos > 0) {
+            this.lastExecutedCommand = "editor:set-heading-1";
+            this.lastExecutedCommandName = "Heading 1";
+            detectedFormat = true;
+          } else if (/^## /.test(lineText) && cursorPos > 1) {
+            this.lastExecutedCommand = "editor:set-heading-2";
+            this.lastExecutedCommandName = "Heading 2";
+            detectedFormat = true;
+          } else if (/^### /.test(lineText) && cursorPos > 2) {
+            this.lastExecutedCommand = "editor:set-heading-3";
+            this.lastExecutedCommandName = "Heading 3";
+            detectedFormat = true;
+          } else if (/^#### /.test(lineText) && cursorPos > 3) {
+            this.lastExecutedCommand = "editor:set-heading-4";
+            this.lastExecutedCommandName = "Heading 4";
+            detectedFormat = true;
+          } else if (/^##### /.test(lineText) && cursorPos > 4) {
+            this.lastExecutedCommand = "editor:set-heading-5";
+            this.lastExecutedCommandName = "Heading 5";
+            detectedFormat = true;
+          } else if (/^###### /.test(lineText) && cursorPos > 5) {
+            this.lastExecutedCommand = "editor:set-heading-6";
+            this.lastExecutedCommandName = "Heading 6";
+            detectedFormat = true;
+          }
+        }
+      }
+    }
+    if (!detectedFormat && !this.lastExecutedCommand) {
+      new Notice(t("Please execute a format command or select format text first, then enable the format brush"));
       return;
     }
 
@@ -532,7 +906,8 @@ export default class editingToolbarPlugin extends Plugin {
       this.EN_FontColor_Format_Brush = false;
       this.EN_BG_Format_Brush = false;
       this.EN_Text_Format_Brush = false;
-
+      // 存储 Callout 类型
+      this.lastCalloutType = calloutType;
       // 显示通知，包含具体命令名称
       if (this.formatBrushNotice) this.formatBrushNotice.hide();
       this.formatBrushNotice = new Notice(t("Format brush ON! Select text to apply【") + this.lastExecutedCommandName + t("】format"), 0);
@@ -544,7 +919,24 @@ export default class editingToolbarPlugin extends Plugin {
       }
     }
   }
+  // 应用 Callout 的方法
+  applyCalloutFormat(editor: Editor, text: string, calloutType: string) {
+    // 移除现有的 Callout 前缀（如果存在）
+    const calloutPrefixRegex = /^> \[!(note|tip|warning|danger|info|success|question|quote)\] ?/i;
+    const cleanedText = text.replace(calloutPrefixRegex, '').trim();
 
+    // 处理多行 Callout 文本，去除第二行及以后的行首 >
+    const lines = cleanedText.split('\n');
+    const processedLines = lines.map((line, index) =>
+      line.replace(/^\s*>\s*/, '')
+    );
+
+    // 构建新的 Callout 文本
+    const newText = `> [!${calloutType}]\n> ${processedLines.join('\n> ')}`;
+
+    // 替换文本
+    editor.replaceSelection(newText);
+  }
   applyFormatBrush(editor: Editor): void {
     if (!this.lastExecutedCommand || !this.formatBrushActive) return;
     // 执行保存的命令
@@ -718,9 +1110,13 @@ export default class editingToolbarPlugin extends Plugin {
       setBackgroundcolor(this.settings.cMenuBackgroundColor, cmEditor);
     } else if (this.EN_Text_Format_Brush) {
       setFormateraser(this, cmEditor);
+    }
+    else if (this.formatBrushActive && this.lastCalloutType) {
+      this.applyCalloutFormat(cmEditor, cmEditor.getSelection(), this.lastCalloutType);
     } else if (this.formatBrushActive && this.lastExecutedCommand) {
       this.applyFormatBrush(cmEditor);
-    } else if (this.positionStyle === "following") {
+    }
+    else if (this.positionStyle === "following") {
       this.showFollowingToolbar(cmEditor);
     }
   }
