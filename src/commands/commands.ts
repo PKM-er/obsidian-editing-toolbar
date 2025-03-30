@@ -717,8 +717,8 @@ export class CommandsManager {
             'toggle-highlight', 'toggle-code', 'toggle-blockquote',
             'header0-text', 'header1-text', 'header2-text', 'header3-text',
             'header4-text', 'header5-text', 'header6-text',
-
-            'format-eraser',
+            'toggle-numbered-list', 'toggle-bullet-list',
+            'format-eraser', 'indent-list', 'undent-list',
             'change-font-color', 'change-background-color',
             // 添加所有自定义命令
             ...this.plugin.settings.customCommands.map(cmd => `${cmd.id}`),

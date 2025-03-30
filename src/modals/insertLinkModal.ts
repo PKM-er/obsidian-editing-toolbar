@@ -906,10 +906,7 @@ private async fetchRemoteTitle(url: string): Promise<string> {
     return UrlTitleFetcher.fetchRemoteTitle(url);
 }
 
-// 获取默认标题（保持原样供其他地方使用）
-private getFallbackTitle(url: string): string {
-    return UrlTitleFetcher.getFallbackTitle(url);
-}
+ 
     // 获取当前编辑器宽度
     private getImageDimensions(): { width: number; height: number } | null {
         const view = this.app.workspace.getActiveViewOfType(MarkdownView);

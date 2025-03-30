@@ -207,7 +207,23 @@ export default class editingToolbarPlugin extends Plugin {
 
     //   })
     // );
-
+    // 注册右键菜单
+    this.registerEvent(
+      this.app.workspace.on('editor-menu', (menu: Menu, editor: Editor, view: MarkdownView) => {
+        const cursor = editor.getCursor();
+        const lineText = editor.getLine(cursor.line);
+        // 判断光标是否在有序列表行（简单匹配数字开头）
+        if (/^\d+\.\s/.test(lineText)) {
+          menu.addItem((item) =>
+            item
+              .setSection("info")
+              .setTitle(t('Renumber List'))
+              .setIcon('list-restart')
+              .onClick(() => renumberSelection(editor))
+          );
+        }
+      })
+    );
     this.registerEvent(
       // @ts-ignore
       this.app.workspace.on('url-menu', (menu: Menu, url: string, view: MarkdownView) => {
@@ -287,6 +303,10 @@ export default class editingToolbarPlugin extends Plugin {
   }
 
   handleeditingToolbar = () => {
+
+    if (!this.formatBrushActive) {
+      activeDocument.body.classList.remove('format-brush-cursor');
+    }
     if (this.settings.cMenuVisibility == true) {
       const view = this.app.workspace.getActiveViewOfType(ItemView);
       let toolbar = isExistoolbar(this.app, this);
@@ -553,7 +573,7 @@ export default class editingToolbarPlugin extends Plugin {
           this.lastExecutedCommand = "editor:toggle-code";
           this.lastExecutedCommandName = "Code";
           detectedFormat = true;
-        }  else if (/^<font color=".*">.*<\/font>$/.test(selectedText)) {
+        } else if (/^<font color=".*">.*<\/font>$/.test(selectedText)) {
           // 字体颜色
           this.lastExecutedCommand = "editing-toolbar:change-font-color";
           this.lastExecutedCommandName = "Font Color";
@@ -902,6 +922,9 @@ export default class editingToolbarPlugin extends Plugin {
     this.formatBrushActive = !this.formatBrushActive;
 
     if (this.formatBrushActive) {
+
+
+      activeDocument.body.classList.add('format-brush-cursor');
       // 关闭其他格式刷
       this.EN_FontColor_Format_Brush = false;
       this.EN_BG_Format_Brush = false;
@@ -912,6 +935,7 @@ export default class editingToolbarPlugin extends Plugin {
       if (this.formatBrushNotice) this.formatBrushNotice.hide();
       this.formatBrushNotice = new Notice(t("Format brush ON! Select text to apply【") + this.lastExecutedCommandName + t("】format"), 0);
     } else {
+      activeDocument.body.classList.remove('format-brush-cursor');
       // 关闭通知
       if (this.formatBrushNotice) {
         this.formatBrushNotice.hide();
@@ -954,8 +978,9 @@ export default class editingToolbarPlugin extends Plugin {
     this.EN_FontColor_Format_Brush = false;
     this.EN_BG_Format_Brush = false;
     this.EN_Text_Format_Brush = false;
-
+    activeDocument.body.classList.remove('format-brush-cursor');
     if (this.formatBrushActive) {
+
       this.formatBrushActive = false;
       if (this.formatBrushNotice) {
         this.formatBrushNotice.hide();
