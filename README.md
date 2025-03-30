@@ -1,6 +1,9 @@
 ### [中文](./README-zh_cn.md) | English
 # obsidian-editing-toolbar Plugin
 
+> [!tip]
+> The 3.x version has been completely refactored with numerous new features. For advanced usage, please refer to: [Editing Toolbar Plugin Advanced Guide · PKM-er/obsidian-editing-toolbar · Discussion #217](https://github.com/PKM-er/obsidian-editing-toolbar/discussions/217)"
+
 ![](editing-toolbar-demo.gif)
 
 Thanks to the [cmenu](https://github.com/chetachiezikeuzor/cMenu-Plugin) plugin, which gave me a lot of inspiration, but this plugin has not been maintained for more than a year, so I re-modified it and added a lot of interesting features, including the top toolbar, cursor following, etc., so editing toolbar was created.
@@ -9,6 +12,8 @@ Thanks to the [cmenu](https://github.com/chetachiezikeuzor/cMenu-Plugin) plugin,
 This plugin was specifically designed for note-takers that want to have a simple text editor to aid in marking up their notes. It solves the issue of having to memorize numerous hotkeys and/or use multiple key presses to get the desired markup. A simple toolbar to improve your writing experience in Obsidian！
 
 > It is recommended to work with [Enhanced Editing Plugin](https://github.com/obsidian-canzi/Enhanced-editing), which can add more useful editing commands.
+
+
 
 
 ## TOC
