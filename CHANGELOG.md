@@ -1,5 +1,13 @@
 # Changelog
 
+## 3.1.14 (2025-05-12)
+### #220  fixed
+When the toolbar position is top, add an option to set whether the toolbar is full-width or centred.
+### Update README.md
+### Update README-zh_cn.md
+### Update manifest.json and CHANGELOG.md for version 3.1.13
+
+
 ## 3.1.13 (2025-03-30)
 ### 增加格式刷应用时光标特殊效果
 ### 优化格式刷命令，会自动识别光标所在格式
