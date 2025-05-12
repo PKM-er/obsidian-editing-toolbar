@@ -570,6 +570,9 @@ export function editingToolbarPopover(app: App, plugin: editingToolbarPlugin): v
           if (settings.autohide) {
             editingToolbar.className += " autohide";
           }
+          if (settings.Iscentered) {
+            editingToolbar.className += " centered";
+          }
         } else if (plugin.positionStyle == "following") {
           editingToolbar.style.visibility = "hidden"
         } else if (plugin.positionStyle == "fixed") {

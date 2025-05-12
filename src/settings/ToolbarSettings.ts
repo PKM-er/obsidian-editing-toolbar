@@ -8,6 +8,7 @@ export interface ToolbarSettings {
   cMenuNumRows: number;
   appendMethod: 'body' | 'workspace';
   autohide: boolean;
+  Iscentered:boolean;
   isLoadOnMobile: boolean;
   menuCommands: ToolbarCommand[];
   followingCommands: ToolbarCommand[];

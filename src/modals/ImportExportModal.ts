@@ -288,6 +288,9 @@ export class ImportExportModal extends Modal {
     if ('autohide' in exportContent && exportContent.autohide === undefined) {
       exportContent.autohide = false;
     }
+    if ('Iscentered' in exportContent && exportContent.Iscentered === undefined) {
+      exportContent.Iscentered = false;
+    }
     if ('isLoadOnMobile' in exportContent && exportContent.isLoadOnMobile === undefined) {
       exportContent.isLoadOnMobile = true;
     }
@@ -554,7 +557,7 @@ export class ImportExportModal extends Modal {
   // 导入一般设置
   importGeneralSettings(importData: any) {
     const generalSettings = [
-      'positionStyle', 'aestheticStyle', 'appendMethod', 'autohide',
+      'positionStyle', 'aestheticStyle', 'appendMethod', 'autohide','Iscentered',
       'isLoadOnMobile', 'cMenuNumRows', 'enableMultipleConfig',
       'custom_bg1', 'custom_bg2', 'custom_bg3', 'custom_bg4', 'custom_bg5',
       'custom_fc1', 'custom_fc2', 'custom_fc3', 'custom_fc4', 'custom_fc5',

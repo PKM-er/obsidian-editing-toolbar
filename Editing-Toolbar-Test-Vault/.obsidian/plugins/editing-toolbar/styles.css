@@ -722,7 +722,10 @@ button[class^=editingToolbarCommandsubItem]::after {
   transition: all 0.5s linear;
   -webkit-transition: all 0.5s linear;
 }
-
+#editingToolbarModalBar.top.centered {
+  max-width: var(--file-line-width) ;
+  align-self: center;
+}
 
 #editingToolbarModalBar.top.autohide:hover {
   opacity: 1;

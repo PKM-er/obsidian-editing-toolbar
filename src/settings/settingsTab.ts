@@ -315,6 +315,18 @@ export class editingToolbarSettingTab extends PluginSettingTab {
             this.plugin.saveSettings();
             this.triggerRefresh();
           }));
+          new Setting(appearanceSettingContainer)
+          .setName(t('Editing Toolbar Centred Display')
+          )
+          .setDesc(
+            t('Whether the toolbar is centred or full-width, the default is full-width.')
+          )
+          .addToggle(toggle => toggle.setValue(this.plugin.settings?.Iscentered)
+            .onChange((value) => {
+              this.plugin.settings.Iscentered = value;
+              this.plugin.saveSettings();
+              this.triggerRefresh();
+            }));
     }
     if (this.plugin.positionStyle == "fixed") {
       new Setting(appearanceSettingContainer)
