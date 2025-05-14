@@ -243,6 +243,7 @@ export function setFontcolor(color: string, editor?: Editor) {
   const selectText = editor.getSelection();
 
   if (!selectText || selectText.trim() === "") {
+    this.plugin.setLastExecutedCommand("editing-toolbar:change-font-color");
     return;
   }
 

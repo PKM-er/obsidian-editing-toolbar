@@ -39,7 +39,25 @@ import { InsertCalloutModal } from "src/modals/insertCalloutModal";
 
 let activeDocument: Document;
 
+export interface AdmonitionDefinition  {
+  type: string;
+    title?: string;
+    icon: string;
+    color: string;
+    command: boolean;
+    injectColor?: boolean;
+    noTitle: boolean;
+    copy?: boolean;
+}
+ 
+interface AdmonitionPluginPublic {
+  admonitions: Map<string, AdmonitionDefinition >; 
+  postprocessors: Map<string, any>;
 
+}
+// ... 常量定义 ...
+const ADMONITION_PLUGIN_ID = 'obsidian-admonition';
+ 
 export default class editingToolbarPlugin extends Plugin {
   app: App;
   settings: editingToolbarSettings;
@@ -49,6 +67,7 @@ export default class editingToolbarPlugin extends Plugin {
   public positionStyle: string;
   // 修改为公共属性
   commandsManager: CommandsManager;
+  public admonitionDefinitions: Record<string, AdmonitionDefinition> | null = null;
 
   // 添加缺失的属性定义
   IS_MORE_Button: boolean;
@@ -156,6 +175,10 @@ export default class editingToolbarPlugin extends Plugin {
       },
     );
 
+// 最好等待工作区布局准备好，确保所有插件都已加载
+this.app.workspace.onLayoutReady(async () => {
+  await this.tryGetAdmonitionTypes();
+});
 
 
     //////
@@ -261,6 +284,38 @@ export default class editingToolbarPlugin extends Plugin {
     );
   }
 
+
+  async tryGetAdmonitionTypes(retries = 0): Promise<void> {
+    // @ts-ignore
+    const admonitionPluginInstance = this.app.plugins?.getPlugin(ADMONITION_PLUGIN_ID);
+    if (admonitionPluginInstance) {
+       
+        this.processAdmonitionTypes(admonitionPluginInstance);
+    }  
+    }
+
+processAdmonitionTypes(pluginInstance: any) {
+
+  const admonitionPlugin = pluginInstance as { admonitions?: Record<string, AdmonitionDefinition> };
+
+  let registeredTypes: string[] | null = null;
+  let typesSource: string | null = null;
+ 
+  if (admonitionPlugin.admonitions &&
+      typeof admonitionPlugin.admonitions === 'object' &&
+      !Array.isArray(admonitionPlugin.admonitions) && // 确保不是数组
+      Object.keys(admonitionPlugin.admonitions).length > 0) {
+  
+      registeredTypes = Object.keys(admonitionPlugin.admonitions);
+      this.admonitionDefinitions = admonitionPlugin.admonitions;
+   
+  }  else {
+    console.warn('未能从 admonitionPlugin.admonitions (作为对象) 获取类型。');
+    this.admonitionDefinitions = null; 
+}
+  
+}
+ 
 
 
   isLoadMobile() {
