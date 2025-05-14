@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.1.15 (2025-05-14)
+### #219 fixed
+添加callout 支持 admonition 插件的自定义的callout类型
+### Update manifest.json and CHANGELOG.md for version 3.1.14
+
+
 ## 3.1.14 (2025-05-12)
 ### #220  fixed
 When the toolbar position is top, add an option to set whether the toolbar is full-width or centred.
