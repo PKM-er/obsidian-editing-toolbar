@@ -1,5 +1,12 @@
 # Changelog
 
+## 3.1.16 (2025-05-15)
+### Update manifest.json
+### Update commands.ts
+### 自定义命令 支持添加换行符等
+### Update manifest.json and CHANGELOG.md for version 3.1.15
+
+
 ## 3.1.15 (2025-05-14)
 ### #219 fixed
 添加callout 支持 admonition 插件的自定义的callout类型
