@@ -21,7 +21,6 @@ export class CommandsManager {
 
         if (editor) {
        
-
             await callback();
 
             editor.focus();
@@ -357,10 +356,10 @@ export class CommandsManager {
 
     public getActiveEditor(): any {
         // 首先尝试获取常规的 Markdown 视图
-        const markdownView = this.plugin.app.workspace.getActiveViewOfType(MarkdownView);
-        if (markdownView) {
-            return markdownView.editor;
-        }
+        // const markdownView = this.plugin.app.workspace.getActiveViewOfType(MarkdownView);
+        // if (markdownView) {
+        //     return markdownView.editor;
+        // }
 
         // @ts-ignore
         const activeEditor = this.plugin.app.workspace?.activeEditor;
@@ -373,7 +372,6 @@ export class CommandsManager {
         if (activeLeafEditor) {
             return activeLeafEditor;
         }
-
         return null;
     };
 
