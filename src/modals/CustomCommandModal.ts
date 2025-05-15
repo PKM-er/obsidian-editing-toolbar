@@ -60,7 +60,7 @@ export class CustomCommandModal extends Modal {
     switchButtonContainer.style.textAlign = 'center';
 
     const switchButton = switchButtonContainer.createEl('button', {
-      text: '切换到正则表达式命令'
+      text: t('Switch Regex Command Window')
     });
     switchButton.addClass('mod-cta');
     switchButton.addEventListener('click', () => {
@@ -100,47 +100,118 @@ export class CustomCommandModal extends Modal {
         .onChange(value => this.commandName = value)
       );
 
-    const prefixSetting = new Setting(contentEl)
-      .setName(t('Prefix'))
-      .setDesc(t('Add content before selected text'))
-      .addText(text => text
-        .setValue(this.prefix)
-        .onChange(value => {
-          this.prefix = value;
 
-          // 获取前缀的镜像文字作为后缀
-          const mirrorText = this.getMirrorText(value);
+// 定义特殊字符和占位符的映射
+const specialCharMap = {
+  '\n': '↵',  // 换行符
+  '\t': '⇥',  // 制表符
+};
+const reverseSpecialCharMap = Object.fromEntries(
+  Object.entries(specialCharMap).map(([key, value]) => [value, key])
+);
 
-          // 只有在找到有效的镜像文字时才更新后缀
-          if (mirrorText) {
-            this.suffix = mirrorText;
+// 将特殊字符转换为占位符（用于显示）
+function toDisplayText(text:string) {
+  let result = text;
+  for (const [char, placeholder] of Object.entries(specialCharMap)) {
+    result = result.replace(new RegExp(char.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), placeholder);
+  }
+  return result;
+}
 
-            // 更新后缀输入框的值
+// 将占位符转换为特殊字符（用于存储）
+function toStoredText(text:string) {
+  let result = text;
+  for (const [placeholder, char] of Object.entries(reverseSpecialCharMap)) {
+    result = result.replace(new RegExp(placeholder.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), char);
+  }
+  return result;
+}
 
-            this.suffixInput.setValue(mirrorText);
-           
-          }
+// 创建按钮标签
+const specialCharButtons = Object.entries(specialCharMap).map(([char, placeholder]) => {
+  let label = placeholder;
+  switch (char) {
+    case '\n': label += ' (New Line)'; break;
+    case '\t': label += ' (Tab)'; break;
+  }
+  return { placeholder, label };
+});
+// 插入特殊字符到文本框的辅助函数
+function insertSpecialChar(input:HTMLInputElement, placeholder:string) {
+  if (input instanceof HTMLInputElement) {
+    const start = input.selectionStart;
+    const end = input.selectionEnd;
+    const currentValue = input.value;
+    const newValue = currentValue.slice(0, start) + placeholder + currentValue.slice(end);
+    input.value = newValue;
+    input.focus();
+    input.setSelectionRange(start + placeholder.length, start + placeholder.length);
+    // 手动触发 change 事件，确保 onChange 回调被调用
+    const changeEvent = new Event('change', { bubbles: true });
+    input.dispatchEvent(changeEvent);
+    return newValue;
+  }
+  return '';
+}
 
-          // 设置光标位置偏移为前缀的字符长度
-          // this.char = value.length;
+// 为设置项添加特殊字符按钮
+function addSpecialCharButtons(setting:Setting, input:HTMLInputElement) {
+  const buttonContainer = setting.controlEl.createDiv({ cls: 'special-char-buttons' });
+  buttonContainer.style.display = 'flex';
+  buttonContainer.style.flexWrap = 'wrap';
+  buttonContainer.style.gap = '5px';
+  buttonContainer.style.marginTop = '5px';
+  specialCharButtons.forEach(({ placeholder, label }) => {
+    const button = buttonContainer.createEl('button', { text: label });
+    button.style.padding = '2px 6px';
+    button.style.fontSize = '12px';
+    button.style.minWidth = 'auto';
+    button.style.border = '1px solid var(--background-modifier-border)';
+ 
+    button.style.cursor = 'pointer';
+    button.addEventListener('click', () => {
+      insertSpecialChar(input, placeholder);
+    });
+  });
+}
+// 前缀设置
+const prefixSetting = new Setting(contentEl)
+  .setName(t('Prefix'))
+  .setDesc(t('Add content before selected text'))
+  .addText(text => text
+    .setValue(toDisplayText(this.prefix)) // 显示时转换特殊字符为占位符
+    .onChange(value => {
+      this.prefix = toStoredText(value); // 存储时转换占位符为特殊字符
 
-          // // 更新光标位置输入框的值
-          // const charInput = contentEl.querySelector('.setting-item:nth-child(6) input');
-          // if (charInput instanceof HTMLInputElement) {
-          //   charInput.value = value.length.toString();
-          //   this.char = value.length;
-          // }
-        })
-      );
+      // 获取前缀的镜像文字作为后缀
+      const mirrorText = this.getMirrorText(value);
 
-    const suffixSetting = new Setting(contentEl)
-      .setName(t('Suffix'))
-      .setDesc(t('Add content after selected text'))
-      .addText(text => {
-        this.suffixInput = text;
-        text.setValue(this.suffix)
-        .onChange(value => this.suffix = value)
+      // 只有在找到有效的镜像文字时才更新后缀
+      if (mirrorText) {
+        this.suffix = toStoredText(mirrorText);
+        // 更新后缀输入框的值
+        this.suffixInput.setValue(mirrorText);
+      }
+    })
+  )
+// 为前缀添加特殊字符按钮
+addSpecialCharButtons(prefixSetting, prefixSetting.controlEl.querySelector('input'));
+
+// 后缀设置
+const suffixSetting = new Setting(contentEl)
+  .setName(t('Suffix'))
+  .setDesc(t('Add content after selected text'))
+  .addText(text => {
+    this.suffixInput = text;
+    text.setValue(toDisplayText(this.suffix)) // 显示时转换特殊字符为占位符
+      .onChange(value => {
+        this.suffix = toStoredText(value); // 存储时转换占位符为特殊字符
       });
+  })
+ // 为后缀添加特殊字符按钮
+addSpecialCharButtons(suffixSetting, suffixSetting.controlEl.querySelector('input'));
+
 
     const charSetting = new Setting(contentEl)
       .setName(t('Cursor Position Offset'))
@@ -249,7 +320,7 @@ export class CustomCommandModal extends Modal {
               return;
             }
           }
-
+      
           // 创建命令对象
           const command = {
             id: commandId,
