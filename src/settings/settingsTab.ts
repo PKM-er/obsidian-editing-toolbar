@@ -1201,6 +1201,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
       delay: 800,
       delayOnTouchOnly: true,
       touchStartThreshold: 5,
+      filter: ".setting-item-control button",
       onChoose: function (evt) {
         const item = evt.item;
         item.classList.add('sortable-chosen-feedback');

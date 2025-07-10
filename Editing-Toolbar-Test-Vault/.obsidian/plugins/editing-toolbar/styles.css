@@ -415,9 +415,15 @@ button[class^=editingToolbarCommandsubItem]::after {
 }
 
 
-
-
-
+.hide-toolbar :is(#editingToolbarModalBar,#editingToolbarPopoverBar) {
+  display: none!important;
+}
+.workspace:has(.markdown-source-view.hide-toolbar) > .workspace-split>#editingToolbarModalBar {
+  display: none!important;
+}
+.workspace:has(.markdown-source-view.hide-toolbar) > .workspace-split>#editingToolbarPopoverBar {
+  display: none!important;
+}
 :is(#editingToolbarModalBar, #editingToolbarPopoverBar) button.editingToolbarCommandsubItem-font-color .triangle-icon {
   position: absolute;
   margin-left: 18px;
