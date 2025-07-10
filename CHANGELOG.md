@@ -1,5 +1,15 @@
 # Changelog
 
+## 3.1.18 (2025-07-10)
+### 国际化部分字段
+### 修复自定义正则命令，换行符\n无效
+修复自定义正则命令，换行符\n无效
+修复命令列表设置时 点击事件跟拖动列表事件冲突
+支持笔记属性增加 cssclasses:hide-toolbar 对某个笔记隐藏工具栏。
+### #226 fixed
+### Update manifest.json and CHANGELOG.md for version 3.1.16
+
+
 ## 3.1.16 (2025-05-15)
 ### Update manifest.json
 ### Update commands.ts
