@@ -403,4 +403,6 @@ export default {
   'Fetch Remote Title': '获取URL标题',
   'Please execute a format command or select format text first, then enable the format brush': '请先执行一个格式命令或选中带格式的文本，然后启用格式刷',
   'Confirm': '确认',
+  'Use \\n to represent line breaks': '使用\\n表示换行符',
+  'Use ↵ to represent line breaks': '使用↵表示换行符',
 };

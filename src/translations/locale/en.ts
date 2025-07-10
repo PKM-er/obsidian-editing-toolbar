@@ -397,5 +397,6 @@ export default {
 'Unable to detect editor width': 'Unable to detect editor width',
 'Fit Editor Width': 'Fit Editor Width',
 'Please execute a format command or select format text first, then enable the format brush': 'Please execute a format command or select format text first, then enable the format brush',
-
+'Use \\n to represent line breaks': 'Use \\n to represent line breaks',
+'Use ↵ to represent line breaks': 'Use ↵ to represent line breaks',
 }
