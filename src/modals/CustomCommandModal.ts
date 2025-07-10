@@ -138,47 +138,102 @@ const specialCharButtons = Object.entries(specialCharMap).map(([char, placeholde
   return { placeholder, label };
 });
 // 插入特殊字符到文本框的辅助函数
-function insertSpecialChar(input:HTMLInputElement, placeholder:string) {
-  if (input instanceof HTMLInputElement) {
-    const start = input.selectionStart;
-    const end = input.selectionEnd;
-    const currentValue = input.value;
-    const newValue = currentValue.slice(0, start) + placeholder + currentValue.slice(end);
-    input.value = newValue;
-    input.focus();
-    input.setSelectionRange(start + placeholder.length, start + placeholder.length);
-    // 手动触发 change 事件，确保 onChange 回调被调用
-    const changeEvent = new Event('change', { bubbles: true });
-    input.dispatchEvent(changeEvent);
-    return newValue;
-  }
-  return '';
-}
+// function insertSpecialChar(input:HTMLInputElement, placeholder:string) {
+//   if (input instanceof HTMLInputElement) {
+//     const start = input.selectionStart;
+//     const end = input.selectionEnd;
+//     const currentValue = input.value;
+//     const newValue = currentValue.slice(0, start) + placeholder + currentValue.slice(end);
+//     input.value = newValue;
+//     input.focus();
+//     input.setSelectionRange(start + placeholder.length, start + placeholder.length);
+//     // 手动触发 change 事件，确保 onChange 回调被调用
+//     const changeEvent = new Event('change', { bubbles: true });
+//     input.dispatchEvent(changeEvent);
+//     return newValue;
+//   }
+//   return '';
+// }
 
 // 为设置项添加特殊字符按钮
-function addSpecialCharButtons(setting:Setting, input:HTMLInputElement) {
+// 为设置项添加特殊字符只读组件
+function addSpecialCharButtons(setting: Setting, input: HTMLInputElement) {
+  // 将输入框设为只读
+  
+  // 添加复制提示
+  input.setAttribute('title', '点击可选择并复制文本');
+  
+  // 添加按钮容器
   const buttonContainer = setting.controlEl.createDiv({ cls: 'special-char-buttons' });
   buttonContainer.style.display = 'flex';
   buttonContainer.style.flexWrap = 'wrap';
   buttonContainer.style.gap = '5px';
   buttonContainer.style.marginTop = '5px';
+  
+  // 为每个特殊字符创建一个可复制的按钮
   specialCharButtons.forEach(({ placeholder, label }) => {
-    const button = buttonContainer.createEl('button', { text: label });
+    const charContainer = buttonContainer.createDiv({ cls: 'char-copy-container' });
+    charContainer.style.position = 'relative';
+    charContainer.style.display = 'inline-block';
+    
+    const button = charContainer.createEl('button', { text: label });
     button.style.padding = '2px 6px';
     button.style.fontSize = '12px';
     button.style.minWidth = 'auto';
     button.style.border = '1px solid var(--background-modifier-border)';
- 
     button.style.cursor = 'pointer';
-    button.addEventListener('click', () => {
-      insertSpecialChar(input, placeholder);
+    button.setAttribute('data-char', placeholder);
+    
+    // 添加复制功能
+    button.addEventListener('click', (e) => {
+      e.preventDefault();
+      navigator.clipboard.writeText(placeholder)
+        .then(() => {
+          // 显示复制成功提示
+          const tooltip = charContainer.createDiv({ cls: 'copy-tooltip' });
+          tooltip.style.position = 'absolute';
+          tooltip.style.bottom = '100%';
+          tooltip.style.left = '50%';
+          tooltip.style.transform = 'translateX(-50%)';
+          tooltip.style.backgroundColor = 'var(--background-modifier-success)';
+          tooltip.style.color = 'white';
+          tooltip.style.padding = '2px 6px';
+          tooltip.style.borderRadius = '4px';
+          tooltip.style.fontSize = '12px';
+          tooltip.style.pointerEvents = 'none';
+          tooltip.style.whiteSpace = 'nowrap';
+          tooltip.style.zIndex = '100';
+          tooltip.textContent = '已复制!';
+          
+          // 2秒后移除提示
+          setTimeout(() => {
+            tooltip.remove();
+          }, 2000);
+        })
+        .catch(err => {
+          console.error('无法复制文本: ', err);
+        });
+    });
+    
+    // 添加悬停效果
+    button.addEventListener('mouseenter', () => {
+      button.style.backgroundColor = 'var(--interactive-accent)';
+      button.style.color = 'var(--text-on-accent)';
+    });
+    
+    button.addEventListener('mouseleave', () => {
+      button.style.backgroundColor = '';
+      button.style.color = '';
     });
   });
+   
+  
+ 
 }
 // 前缀设置
 const prefixSetting = new Setting(contentEl)
   .setName(t('Prefix'))
-  .setDesc(t('Add content before selected text'))
+  .setDesc(t('Add content before selected text')+t('Use ↵ to represent line breaks'))
   .addText(text => text
     .setValue(toDisplayText(this.prefix)) // 显示时转换特殊字符为占位符
     .onChange(value => {

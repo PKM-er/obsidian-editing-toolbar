@@ -181,14 +181,16 @@ export class RegexCommandModal extends Modal {
     // 添加替换模式设置
     new Setting(regexContainer)
       .setName(t('Replacement pattern'))
-      .setDesc(t('Replacement pattern (use $1, $2, etc. to reference capture groups)'))
+      .setDesc(t('Replacement pattern (use $1, $2, etc. to reference capture groups)')+t('Use \\n to represent line breaks'))
       .addText(text =>
         this.regexReplacementInput = text
-          .setValue(this.regexReplacement)
-          .onChange(value => {
-            this.regexReplacement = value;
-            this.updatePreview();
-          })
+// 显示时，把真实换行符变成 \n
+      .setValue(this.regexReplacement.replace(/\n/g, '\\n'))
+      .onChange(value => {
+        // 保存时，把 \n 变成真实换行符
+        this.regexReplacement = value.replace(/\\n/g, '\n');
+        this.updatePreview();
+      })
       );
 
     // 添加正则表达式选项
@@ -551,7 +553,7 @@ export class RegexCommandModal extends Modal {
             useRegex: true,
             // 正则表达式相关属性
             regexPattern: this.regexPattern,
-            regexReplacement: this.regexReplacement,
+            regexReplacement: this.regexReplacement.replace(/\\n/g, '\n'),
             regexCaseInsensitive: this.regexCaseInsensitive,
             regexGlobal: this.regexGlobal,
             regexMultiline: this.regexMultiline,
@@ -611,7 +613,8 @@ export class RegexCommandModal extends Modal {
         if (this.regexMultiline) flags += 'm';
 
         const regex = new RegExp(this.regexPattern, flags);
-        result = sampleText.replace(regex, this.regexReplacement || '');
+        const replacement = this.regexReplacement.replace(/\\n/g, '\n');
+        result = sampleText.replace(regex, replacement);
 
         // 添加完整正则表达式代码显示
         this.showCompleteRegexCode(flags);
