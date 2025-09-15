@@ -49,15 +49,15 @@ export interface AdmonitionDefinition  {
     noTitle: boolean;
     copy?: boolean;
 }
- 
+
 interface AdmonitionPluginPublic {
-  admonitions: Map<string, AdmonitionDefinition >; 
+  admonitions: Map<string, AdmonitionDefinition >;
   postprocessors: Map<string, any>;
 
 }
 // ... 常量定义 ...
 const ADMONITION_PLUGIN_ID = 'obsidian-admonition';
- 
+
 export default class editingToolbarPlugin extends Plugin {
   app: App;
   settings: editingToolbarSettings;
@@ -289,9 +289,9 @@ this.app.workspace.onLayoutReady(async () => {
     // @ts-ignore
     const admonitionPluginInstance = this.app.plugins?.getPlugin(ADMONITION_PLUGIN_ID);
     if (admonitionPluginInstance) {
-       
+
         this.processAdmonitionTypes(admonitionPluginInstance);
-    }  
+    }
     }
 
 processAdmonitionTypes(pluginInstance: any) {
@@ -300,22 +300,22 @@ processAdmonitionTypes(pluginInstance: any) {
 
   let registeredTypes: string[] | null = null;
   let typesSource: string | null = null;
- 
+
   if (admonitionPlugin.admonitions &&
       typeof admonitionPlugin.admonitions === 'object' &&
       !Array.isArray(admonitionPlugin.admonitions) && // 确保不是数组
       Object.keys(admonitionPlugin.admonitions).length > 0) {
-  
+
       registeredTypes = Object.keys(admonitionPlugin.admonitions);
       this.admonitionDefinitions = admonitionPlugin.admonitions;
-   
+
   }  else {
     console.warn('未能从 admonitionPlugin.admonitions (作为对象) 获取类型。');
-    this.admonitionDefinitions = null; 
+    this.admonitionDefinitions = null;
 }
-  
+
 }
- 
+
 
 
   isLoadMobile() {
@@ -1068,24 +1068,22 @@ processAdmonitionTypes(pluginInstance: any) {
       this.handleTextSelection();
     }, 100);
 
-    // 中键双击跟踪
-    let lastMiddleClickTime = 0;
-
     // 统一的鼠标事件处理
     this.registerDomEvent(container, "mousedown", (e: MouseEvent) => {
       if (!this.isView() || !this.commandsManager.getActiveEditor()) return;
 
-      // 中键双击处理
+      const mouseDownTime = Date.now(); // 记录按下时间
       if (e.button === 1) {
-        const currentTime = new Date().getTime();
-        if (currentTime - lastMiddleClickTime < 300) {
-          this.handleMiddleClickToolbar(e);
-        }
-        lastMiddleClickTime = currentTime;
+          this.registerDomEvent(container, "mouseup", (e2: MouseEvent) => {
+              const mouseUpTime = Date.now(); // 记录释放时间
+              if (mouseUpTime - mouseDownTime < 300 && e2.button === 1) {
+                  this.handleMiddleClickToolbar(e2);
+              }
+          });
       }
 
       // 格式刷重置
-      this.resetFormatBrushIfActive(e);
+      this.resetFormatBrushIfActive(container, e);
     });
 
     // 跨平台选择处理
@@ -1122,8 +1120,12 @@ processAdmonitionTypes(pluginInstance: any) {
     }
   }
 
-  private resetFormatBrushIfActive(e: MouseEvent) {
-    if (e.button && this.isFormatBrushActive()) {
+  private resetFormatBrushIfActive(container: Document, e: MouseEvent) {
+    if (e.button === 2 && this.isFormatBrushActive()) {
+      this.registerDomEvent(container, "contextmenu", (e: MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+      }, {capture: true});
       quiteFormatbrushes(this);
     }
   }
