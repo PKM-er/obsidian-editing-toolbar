@@ -830,7 +830,7 @@ export function editingToolbarPopover(app: App, plugin: editingToolbarPlugin): v
             let button2 = new ButtonComponent(editingToolbar);
             button2
               .setClass("editingToolbarCommandsubItem-font-color")
-              .setTooltip(t("Background color"))
+              .setTooltip(t("Background Color"))
               .onClick(() => {
 
                 app.commands.executeCommandById(item.id);

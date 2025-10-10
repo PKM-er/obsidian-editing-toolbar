@@ -207,8 +207,8 @@ export class editingToolbarSettingTab extends PluginSettingTab {
           // 进入确认状态
           isConfirming = true;
           button
-            .setTooltip(t('Confirm delete?'))
-            .setButtonText(t('Confirm delete?'));
+            .setTooltip(t('Confirm Delete?'))
+            .setButtonText(t('Confirm Delete?'));
           button.buttonEl.addClass('mod-warning');
 
           // 5秒后重置按钮状态
@@ -1397,7 +1397,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
             .addButton((changename) => {
               changename
                 .setIcon("pencil")
-                .setTooltip(t("Change Command name"))
+                .setTooltip(t("Change Command Name"))
                 .setClass("editingToolbarSettingsButton")
                 .onClick(async () => {
                   new ChangeCmdname(this.app, this.plugin, subCommand, true, this.currentEditingConfig).open();
@@ -1432,7 +1432,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
           .addButton((changename) => {
             changename
               .setIcon("pencil")
-              .setTooltip(t("Change Command name"))
+              .setTooltip(t("Change Command Name"))
               .setClass("editingToolbarSettingsButton")
               .onClick(async () => {
                 new ChangeCmdname(this.app, this.plugin, newCommand, false, this.currentEditingConfig).open();
