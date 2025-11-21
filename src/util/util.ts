@@ -329,14 +329,14 @@ export function setBackgroundcolor(color: string, editor?: Editor) {
   }
 
   // Regex to match background color tags, with multiline support
-  const bgColorRegex = /<span\s+style=["']?background:(?:#[0-9a-fA-F]{3,6}|rgba?\([^)]+\))["']?>([\s\S]*?)<\/span>/g;
+  const bgColorRegex = /<mark\s+style=["']?background:(?:#[0-9a-fA-F]{3,6}|rgba?\([^)]+\))["']?>([\s\S]*?)<\/mark>/g;
   const hasColorTag = bgColorRegex.test(selectText);
 
   // Function to check if the text is already wrapped in the same background color
   const isAlreadyInSameColor = (text: string, targetColor: string): boolean => {
     // 转义正则表达式中的特殊字符，特别是对于rgba格式
     const escapedColor = targetColor.replace(/([()[{*+.$^\\|?])/g, '\\$1');
-    const cleanColorRegex = new RegExp(`^<span\\s+style=["']?background:${escapedColor}["']?>([\s\S]+)<\\/span>$`);
+    const cleanColorRegex = new RegExp(`^<mark\\s+style=["']?background:${escapedColor}["']?>([\s\S]+)<\\/mark>$`);
     return cleanColorRegex.test(text.trim());
   };
 
@@ -353,14 +353,14 @@ export function setBackgroundcolor(color: string, editor?: Editor) {
   } else {
     // 如果没有背景色标签，为每行添加背景色
     finalText = selectText.split('\n').map(line => 
-      line.trim() ? `<span style="background:${color}">${line}</span>` : line
+      line.trim() ? `<mark style="background:${color}">${line}</mark>` : line
     ).join('\n');
   }
 
   // Store the current selection
   const currentSelection = editor.listSelections();
   const adjustedSelections = currentSelection.map(sel => {
-    const tagLength = hasColorTag ? 0 : `<span style="background:${color}"></span>`.length;
+    const tagLength = hasColorTag ? 0 : `<mark style="background:${color}"></mark>`.length;
     const isForward = sel.anchor.line < sel.head.line || 
                       (sel.anchor.line === sel.head.line && sel.anchor.ch < sel.head.ch);
 

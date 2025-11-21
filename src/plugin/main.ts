@@ -633,7 +633,7 @@ processAdmonitionTypes(pluginInstance: any) {
           this.lastExecutedCommand = "editing-toolbar:change-font-color";
           this.lastExecutedCommandName = "Font Color";
           detectedFormat = true;
-        } else if (/^<span style="background:.*">.*<\/span>$/.test(selectedText)) {
+        } else if (/^<mark style="background:.*">.*<\/mark>$/.test(selectedText)) {
           // 背景颜色
           this.lastExecutedCommand = "editing-toolbar:change-background-color";
           this.lastExecutedCommandName = "Background Color";
@@ -904,7 +904,7 @@ processAdmonitionTypes(pluginInstance: any) {
 
         // 检测背景颜色
 
-        const bgColorRegex = /<span style="background:([^"]+)">([^<]+)<\/span>/g;
+        const bgColorRegex = /<mark style="background:([^"]+)">([^<]+)<\/mark>/g;
         while ((match = bgColorRegex.exec(lineText)) !== null) {
           const formatStart = match.index;
           const formatEnd = match.index + match[0].length;

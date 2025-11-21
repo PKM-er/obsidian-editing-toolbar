@@ -785,11 +785,11 @@ button[class^=editingToolbarCommandsubItem]::after {
   opacity: 0;
 }
 
-:is(.cm-line, p) span[style^="background:rgba"] {
+:is(.cm-line, p) mark[style^="background:rgba"] {
   color: var(--text-normal);
 }
 
-:is(.cm-line, p) span[style^="background:#"] {
+:is(.cm-line, p) mark[style^="background:#"] {
   color: black;
 }
 
