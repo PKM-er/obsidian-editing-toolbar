@@ -515,72 +515,65 @@ processAdmonitionTypes(pluginInstance: any) {
   }
 
   async loadSettings() {
-    // FIX: Ensure arrays are not shared references by deep cloning when loading
-    const loaded = await this.loadData();
-    // Use Object.assign to clone value objects. But for arrays, always clone by value:
-    function safeArray(arr: any) { return Array.isArray(arr) ? [...arr] : []; }
-    // Fallbacks for each array
-    this.settings = Object.assign({}, DEFAULT_SETTINGS, loaded);
+    this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
 
-    // Ensure each array is independent!
-    this.settings.menuCommands      = safeArray(this.settings.menuCommands);
-    this.settings.followingCommands = safeArray(this.settings.followingCommands);
-    this.settings.topCommands       = safeArray(this.settings.topCommands);
-    this.settings.fixedCommands     = safeArray(this.settings.fixedCommands);
-    this.settings.mobileCommands    = safeArray(this.settings.mobileCommands);
+    // 初始化多配置
+    // 如果是新安装或升级，初始化各个位置样式的命令配置
 
-    // 初始化多配置（no shared references now）
   }
 
   // 获取当前位置样式对应的命令配置
   getCurrentCommands(style?: string): any[] {
+
     if (!this.settings.enableMultipleConfig) {
-      // Always return a clone!
-      return [...this.settings.menuCommands];
+      return this.settings.menuCommands;
     }
     let currentstyle = style || this.positionStyle;
+    // 如果移动端模式开启且在移动设备上
     if (this.settings.isLoadOnMobile && Platform.isMobileApp) {
-      return [...this.settings.mobileCommands];
+      return this.settings.mobileCommands;
     }
+
     switch (currentstyle) {
       case 'following':
-        return [...this.settings.followingCommands];
+        return this.settings.followingCommands;
       case 'top':
-        return [...this.settings.topCommands];
+        return this.settings.topCommands;
       case 'fixed':
-        return [...this.settings.fixedCommands];
+        return this.settings.fixedCommands;
       default:
-        return [...this.settings.menuCommands];
+        return this.settings.menuCommands;
     }
   }
 
   // 更新当前位置样式对应的命令配置
-updateCurrentCommands(commands: any[]): void {
-  if (!this.settings.enableMultipleConfig) {
-    this.settings.menuCommands = [...commands];
-    return;
-  }
-  // Mobile stays the same, but clone it too
-  if (this.settings.isLoadOnMobile && Platform.isMobileApp) {
-    this.settings.mobileCommands = [...commands];
-    return;
-  }
-  switch (this.positionStyle) {
-    case 'following':
-      this.settings.followingCommands = [...commands];
-      break;
-    case 'top':
-      this.settings.topCommands = [...commands];
-      break;
-    case 'fixed':
-      this.settings.fixedCommands = [...commands];
-      break;
-    default:
-      this.settings.menuCommands = [...commands];
-  }
-}
+  updateCurrentCommands(commands: any[]): void {
+    if (!this.settings.enableMultipleConfig) {
+      this.settings.menuCommands = commands;
+      return;
+    }
 
-  
+    // 如果移动端模式开启且在移动设备上
+    if (this.settings.isLoadOnMobile && Platform.isMobileApp) {
+      this.settings.mobileCommands = commands;
+      return;
+    }
+
+    switch (this.positionStyle) {
+      case 'following':
+        this.settings.followingCommands = commands;
+        break;
+      case 'top':
+        this.settings.topCommands = commands;
+        break;
+      case 'fixed':
+        this.settings.fixedCommands = commands;
+        break;
+      default:
+        this.settings.menuCommands = commands;
+    }
+  }
+
   async saveSettings() {
     await this.saveData(this.settings);
   }
