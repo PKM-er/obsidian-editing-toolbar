@@ -547,32 +547,33 @@ processAdmonitionTypes(pluginInstance: any) {
   }
 
   // 更新当前位置样式对应的命令配置
-  updateCurrentCommands(commands: any[]): void {
-    if (!this.settings.enableMultipleConfig) {
-      this.settings.menuCommands = commands;
-      return;
-    }
-
-    // 如果移动端模式开启且在移动设备上
-    if (this.settings.isLoadOnMobile && Platform.isMobileApp) {
-      this.settings.mobileCommands = commands;
-      return;
-    }
-
-    switch (this.positionStyle) {
-      case 'following':
-        this.settings.followingCommands = commands;
-        break;
-      case 'top':
-        this.settings.topCommands = commands;
-        break;
-      case 'fixed':
-        this.settings.fixedCommands = commands;
-        break;
-      default:
-        this.settings.menuCommands = commands;
-    }
+updateCurrentCommands(commands: any[]): void {
+  if (!this.settings.enableMultipleConfig) {
+    this.settings.menuCommands = [...commands];
+    return;
   }
+
+  // Mobile stays the same, but clone it too
+  if (this.settings.isLoadOnMobile && Platform.isMobileApp) {
+    this.settings.mobileCommands = [...commands];
+    return;
+  }
+
+  switch (this.positionStyle) {
+    case 'following':
+      this.settings.followingCommands = [...commands];
+      break;
+    case 'top':
+      this.settings.topCommands = [...commands];
+      break;
+    case 'fixed':
+      this.settings.fixedCommands = [...commands];
+      break;
+    default:
+      this.settings.menuCommands = [...commands];
+  }
+}
+
 
   async saveSettings() {
     await this.saveData(this.settings);
