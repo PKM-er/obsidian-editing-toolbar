@@ -546,33 +546,42 @@ processAdmonitionTypes(pluginInstance: any) {
     }
   }
 
-  // 更新当前位置样式对应的命令配置
-  updateCurrentCommands(commands: any[]): void {
-    if (!this.settings.enableMultipleConfig) {
-      this.settings.menuCommands = commands;
-      return;
-    }
+  // 更新指定样式对应的命令配置（设置页可以显式指定样式）
+updateCurrentCommands(commands: any[], style?: string): void {
+  // 单一配置模式：一直使用 menuCommands
+  if (!this.settings.enableMultipleConfig) {
+    this.settings.menuCommands = commands;
+    return;
+  }
 
-    // 如果移动端模式开启且在移动设备上
+  // 如果没有显式传入 style，则保持旧逻辑：根据当前环境决定目标样式
+  let targetStyle = style;
+
+  if (!targetStyle) {
     if (this.settings.isLoadOnMobile && Platform.isMobileApp) {
-      this.settings.mobileCommands = commands;
-      return;
-    }
-
-    switch (this.positionStyle) {
-      case 'following':
-        this.settings.followingCommands = commands;
-        break;
-      case 'top':
-        this.settings.topCommands = commands;
-        break;
-      case 'fixed':
-        this.settings.fixedCommands = commands;
-        break;
-      default:
-        this.settings.menuCommands = commands;
+      targetStyle = 'mobile';
+    } else {
+      targetStyle = this.positionStyle;
     }
   }
+
+  switch (targetStyle) {
+    case 'following':
+      this.settings.followingCommands = commands;
+      break;
+    case 'top':
+      this.settings.topCommands = commands;
+      break;
+    case 'fixed':
+      this.settings.fixedCommands = commands;
+      break;
+    case 'mobile':
+      this.settings.mobileCommands = commands;
+      break;
+    default:
+      this.settings.menuCommands = commands;
+  }
+}
 
   async saveSettings() {
     await this.saveData(this.settings);
