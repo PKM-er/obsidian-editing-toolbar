@@ -1266,7 +1266,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
           })
           .addButton((deleteButton) => this.createDeleteButton(deleteButton, async () => {
             currentCommands.remove(newCommand);
-            this.plugin.updateCurrentCommands(currentCommands);
+            this.plugin.updateCurrentCommands(currentCommands, this.currentEditingConfig);
             await this.plugin.saveSettings();
             this.display();
             this.triggerRefresh();
@@ -1321,7 +1321,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
                 const [removed] = subresult.splice(command.oldIndex, 1);
                 subresult.splice(command.newIndex, 0, removed);
                 // 使用updateCurrentCommands更新当前命令配置
-                this.plugin.updateCurrentCommands(arrayResult);
+                this.plugin.updateCurrentCommands(arrayResult, this.currentEditingConfig);
                 this.plugin.saveSettings();
               }
             } else if (command.to.className === "editingToolbarSettingsTabsContainer") {
@@ -1338,7 +1338,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
                 const [removed] = subresult.splice(command.oldIndex, 1);
                 arrayResult.splice(command.newIndex, 0, removed);
                 // 使用updateCurrentCommands更新当前命令配置
-                this.plugin.updateCurrentCommands(arrayResult);
+                this.plugin.updateCurrentCommands(arrayResult, this.currentEditingConfig);
                 this.plugin.saveSettings();
 
               } else {
@@ -1365,7 +1365,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
                 const [removed] = arrayResult.splice(command.oldIndex, 1);
                 subresult.splice(command.newIndex, 0, removed);
                 // 使用updateCurrentCommands更新当前命令配置
-                this.plugin.updateCurrentCommands(arrayResult);
+                this.plugin.updateCurrentCommands(arrayResult, this.currentEditingConfig);
                 this.plugin.saveSettings();
 
               } else {
@@ -1455,7 +1455,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
                 const currentCommands = commandsToEdit;
                 currentCommands.splice(index + 1, 0, submenuCommand);
                 // 使用updateCurrentCommands更新当前命令配置
-                this.plugin.updateCurrentCommands(currentCommands);
+                this.plugin.updateCurrentCommands(currentCommands, this.currentEditingConfig);
                 await this.plugin.saveSettings();
                 this.display();
                 this.triggerRefresh();
@@ -1475,7 +1475,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
                 const currentCommands = commandsToEdit;
                 currentCommands.splice(index + 1, 0, dividermenu);
                 // 使用updateCurrentCommands更新当前命令配置
-                this.plugin.updateCurrentCommands(currentCommands);
+                this.plugin.updateCurrentCommands(currentCommands, this.currentEditingConfig);
                 await this.plugin.saveSettings();
                 this.display();
                 this.triggerRefresh();
@@ -1484,7 +1484,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
           })
           .addButton((deleteButton) => this.createDeleteButton(deleteButton, async () => {
             currentCommands.remove(newCommand);
-            this.plugin.updateCurrentCommands(currentCommands);
+            this.plugin.updateCurrentCommands(currentCommands, this.currentEditingConfig);
             await this.plugin.saveSettings();
             this.display();
             this.triggerRefresh();
