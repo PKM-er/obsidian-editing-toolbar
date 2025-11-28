@@ -72,7 +72,14 @@ export interface editingToolbarSettings {
   toolbarBackgroundColor: string;
   toolbarIconColor: string;
   toolbarIconSize: number;
-  
+  appearanceByStyle?: {
+    [style: string]: {
+      toolbarBackgroundColor?: string;
+      toolbarIconColor?: string;
+      toolbarIconSize?: number;
+      aestheticStyle?: string;
+    };
+  };
 }
 
 export const DEFAULT_SETTINGS: editingToolbarSettings = {
@@ -402,12 +409,4 @@ export const DEFAULT_SETTINGS: editingToolbarSettings = {
     "toolbarBackgroundColor": "rgba(var(--background-secondary-rgb), 0.7)",
     "toolbarIconColor": "var(--text-normal)",
     "toolbarIconSize": 18
-    appearanceByStyle?: {
-      [style: string]: {
-        toolbarBackgroundColor?: string;
-        toolbarIconColor?: string;
-        toolbarIconSize?: number;
-        aestheticStyle?: string;
-      };
-    };
   }
