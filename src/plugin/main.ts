@@ -346,31 +346,30 @@ this.app.workspace.onLayoutReady(async () => {
     // @ts-ignore
     const admonitionPluginInstance = this.app.plugins?.getPlugin(ADMONITION_PLUGIN_ID);
     if (admonitionPluginInstance) {
-       
         this.processAdmonitionTypes(admonitionPluginInstance);
     }  
-    }
+  }
 
 processAdmonitionTypes(pluginInstance: any) {
 
-  const admonitionPlugin = pluginInstance as { admonitions?: Record<string, AdmonitionDefinition> };
+  const admonitionPlugin = pluginInstance as {
+    admonitions?: Record<string, AdmonitionDefinition> };
 
   let registeredTypes: string[] | null = null;
   let typesSource: string | null = null;
  
   if (admonitionPlugin.admonitions &&
       typeof admonitionPlugin.admonitions === 'object' &&
-      !Array.isArray(admonitionPlugin.admonitions) && // 确保不是数组
-      Object.keys(admonitionPlugin.admonitions).length > 0) {
-  
-      registeredTypes = Object.keys(admonitionPlugin.admonitions);
+    !Array.isArray(admonitionPlugin.admonitions) && // 确保不是数组
+      Object.keys(admonitionPlugin.admonitions).length > 0
+  ) {
+    registeredTypes = Object.keys(admonitionPlugin.admonitions);
       this.admonitionDefinitions = admonitionPlugin.admonitions;
    
-  }  else {
+  } else {
     console.warn('未能从 admonitionPlugin.admonitions (作为对象) 获取类型。');
     this.admonitionDefinitions = null; 
-}
-  
+  }
 }
  
 
