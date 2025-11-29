@@ -1330,50 +1330,52 @@ updateCurrentCommands(commands: any[], style?: string): void {
     }
   }
 
-
+  
   public onPositionStyleChange(newStyle: string): void {
-    // Track the new style both in-memory and in settings
-    this.positionStyle = newStyle;
-    this.settings.positionStyle = newStyle;
-
-    // If multi-config is enabled, ensure the command arrays for this style exist
+    // Normalise the incoming style; fall back to "top" if something unexpected is passed
+    const style = (newStyle || "top") as ToolbarStyleKey;
+  
+    // 1. Track the new style both in-memory and in settings
+    this.positionStyle = style;
+    this.settings.positionStyle = style;
+  
+    // 2. If multi-config is enabled, lazily initialise the command arrays for this style
     if (this.settings.enableMultipleConfig) {
-      switch (newStyle) {
+      switch (style) {
         case "following":
           if (!this.settings.followingCommands || this.settings.followingCommands.length === 0) {
             this.settings.followingCommands = [...this.settings.menuCommands];
-            this.saveSettings();
             new Notice(t("Following style commands successfully initialized"));
           }
           break;
+  
         case "top":
           if (!this.settings.topCommands || this.settings.topCommands.length === 0) {
             this.settings.topCommands = [...this.settings.menuCommands];
-            this.saveSettings();
             new Notice(t("Top style commands successfully initialized"));
           }
           break;
+  
         case "fixed":
           if (!this.settings.fixedCommands || this.settings.fixedCommands.length === 0) {
             this.settings.fixedCommands = [...this.settings.menuCommands];
-            this.saveSettings();
             new Notice(t("Fixed style commands successfully initialized"));
           }
           break;
+  
         case "mobile":
           if (!this.settings.mobileCommands || this.settings.mobileCommands.length === 0) {
             this.settings.mobileCommands = [...this.settings.menuCommands];
-            this.saveSettings();
             new Notice(t("Mobile style commands successfully initialized"));
           }
           break;
       }
     }
-
-    // Keep the in-memory size in sync with the active style
+  
+    // 3. Keep the in-memory icon size in sync with the active style's appearance
     this.toolbarIconSize = this.settings.toolbarIconSize;
-
-    // Refresh the global CSS variables from the active style's appearance
+  
+    // 4. Refresh the global CSS variables from the active style's appearance
     const doc = activeDocument ?? document;
     if (doc && doc.documentElement) {
       doc.documentElement.style.setProperty(
@@ -1389,9 +1391,11 @@ updateCurrentCommands(commands: any[], style?: string): void {
         `${this.settings.toolbarIconSize}px`
       );
     }
-
-    // For now we keep the existing behaviour: changing the dropdown regenerates the toolbar DOM.
-    // (We will deliberately remove this in the patch v4 step once the toggles are wired up.)
-    dispatchEvent(new Event("editingToolbar-NewCommand"));
+  
+    // 5. Persist the new style + any lazy-initialised command arrays
+    this.saveSettings();
+    // IMPORTANT: we deliberately do NOT dispatch "editingToolbar-NewCommand" here anymore.
+    // The dropdown now only changes which style's configuration/appearance you're editing,
+    // without regenerating or moving the toolbar DOM.
   }
 }
