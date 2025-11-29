@@ -40,7 +40,7 @@ import { InsertCalloutModal } from "src/modals/insertCalloutModal";
 let activeDocument: Document;
 
 // ---- Per-style appearance support (patch v3, integrated) ----
-import type { AppearanceByStyle, ToolbarStyleKey, StyleAppearanceSettings, editingToolbarSettings } from "src/settings/settingsData";
+import type { AppearanceByStyle, ToolbarStyleKey, StyleAppearanceSettings} from "src/settings/settingsData";
 
 const STYLE_KEYS: ToolbarStyleKey[] = ["top", "following", "fixed", "mobile"];
 
