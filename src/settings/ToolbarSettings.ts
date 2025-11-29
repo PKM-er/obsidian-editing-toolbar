@@ -54,14 +54,5 @@ export interface editingToolbarSettings {
   toolbarBackgroundColor: string;
   toolbarIconColor: string;
   toolbarIconSize: number;
-  appearanceByStyle?: {
-    [style: string]: {
-      toolbarBackgroundColor?: string;
-      toolbarIconColor?: string;
-      toolbarIconSize?: number;
-      aestheticStyle?: string;
-    };
-  };
   [key: string]: any;
-
 }
