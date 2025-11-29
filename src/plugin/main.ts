@@ -109,6 +109,10 @@ export default class editingToolbarPlugin extends Plugin {
   statusBar: StatusBar;
   public toolbarIconSize: number; // 新增全局变量
   public positionStyle: string;
+  
+  // NEW: which style's appearance is being edited in the settings UI
+  public appearanceEditStyle: ToolbarStyleKey | null = null;
+  
   // 修改为公共属性
   commandsManager: CommandsManager;
   public admonitionDefinitions: Record<string, AdmonitionDefinition> | null = null;
@@ -143,9 +147,16 @@ export default class editingToolbarPlugin extends Plugin {
     const store = settings.appearanceByStyle as AppearanceByStyle;
 
     const getCurrentStyle = (): ToolbarStyleKey => {
-      // Prefer the in-memory positionStyle, fall back to stored settings, then 'top'
-      const raw = (this.positionStyle || settings.positionStyle || "top") as string;
-      return STYLE_KEYS.includes(raw as ToolbarStyleKey) ? (raw as ToolbarStyleKey) : "top";
+      const raw = (
+        this.appearanceEditStyle ||       // when editing settings, use this
+        this.positionStyle ||             // otherwise, use the runtime style
+        settings.positionStyle ||         // or the stored setting
+        "top"
+      ) as string;
+    
+      return STYLE_KEYS.includes(raw as ToolbarStyleKey)
+        ? (raw as ToolbarStyleKey)
+        : "top";
     };
 
     APPEARANCE_KEYS.forEach((key) => {
@@ -1331,11 +1342,15 @@ updateCurrentCommands(commands: any[], style?: string): void {
   }
 
 
-  public onPositionStyleChange(newStyle: string): void {
+  onPositionStyleChange(newStyle: string): void {
+    // Temporarily ignore any "editing style" override while we update the live toolbar
+    const previousEditStyle = this.appearanceEditStyle;
+    this.appearanceEditStyle = null;
+  
     // Track the new style both in-memory and in settings
     this.positionStyle = newStyle;
     this.settings.positionStyle = newStyle;
-
+  
     // If multi-config is enabled, ensure the command arrays for this style exist
     if (this.settings.enableMultipleConfig) {
       switch (newStyle) {
@@ -1369,11 +1384,11 @@ updateCurrentCommands(commands: any[], style?: string): void {
           break;
       }
     }
-
+  
     // Keep the in-memory size in sync with the active style
     this.toolbarIconSize = this.settings.toolbarIconSize;
-
-    // Refresh the global CSS variables from the active style's appearance
+  
+    // Refresh the global CSS variables from the *active* style's appearance
     const doc = activeDocument ?? document;
     if (doc && doc.documentElement) {
       doc.documentElement.style.setProperty(
@@ -1389,9 +1404,10 @@ updateCurrentCommands(commands: any[], style?: string): void {
         `${this.settings.toolbarIconSize}px`
       );
     }
-
-    // For now we keep the existing behaviour: changing the dropdown regenerates the toolbar DOM.
-    // (We will deliberately remove this in the patch v4 step once the toggles are wired up.)
+  
     dispatchEvent(new Event("editingToolbar-NewCommand"));
+  
+    // Restore whatever the settings UI was editing
+    this.appearanceEditStyle = previousEditStyle;
   }
 }
