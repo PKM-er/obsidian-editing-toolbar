@@ -261,6 +261,51 @@ export class editingToolbarSettingTab extends PluginSettingTab {
         })
       );
 
+    new Setting(generalSettingContainer)
+      .setName(t('Top Toolbar'))
+      .setDesc(t('Enable the toolbar positioned at the top.'))
+      .addToggle(toggle => toggle
+        .setValue(this.plugin.settings.enableTopToolbar || false)
+        .onChange(async (value) => {
+          this.plugin.settings.enableTopToolbar = value;
+          //只初始化当前配置
+          this.plugin.onPositionStyleChange(this.plugin.positionStyle);
+
+          await this.plugin.saveSettings();
+          this.display();
+        })
+      );
+
+    new Setting(generalSettingContainer)
+      .setName(t('Following Toolbar'))
+      .setDesc(t('Enable the toolbar that appears upon text selection.'))
+      .addToggle(toggle => toggle
+        .setValue(this.plugin.settings.enableFollowingToolbar || false)
+        .onChange(async (value) => {
+          this.plugin.settings.enableFollowingToolbar = value;
+          //只初始化当前配置
+          this.plugin.onPositionStyleChange(this.plugin.positionStyle);
+
+          await this.plugin.saveSettings();
+          this.display();
+        })
+      );
+
+    new Setting(generalSettingContainer)
+      .setName(t('Fixed Toolbar'))
+      .setDesc(t('Enable the toolbar whoose position may be fixed where you please.'))
+      .addToggle(toggle => toggle
+        .setValue(this.plugin.settings.enableFixedToolbar || false)
+        .onChange(async (value) => {
+          this.plugin.settings.enableFixedToolbar = value;
+          //只初始化当前配置
+          this.plugin.onPositionStyleChange(this.plugin.positionStyle);
+
+          await this.plugin.saveSettings();
+          this.display();
+        })
+      );
+
     // Mobile setting
     new Setting(generalSettingContainer)
       .setName(t('Mobile enabled or not'))
