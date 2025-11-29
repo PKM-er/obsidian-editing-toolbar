@@ -1044,9 +1044,6 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     previewContainer.addClass('toolbar-preview-section');
     previewContainer.style.marginTop = '20px';
 
-    // IMPORTANT: Make Fixed preview absolute *inside* this container
-    previewContainer.style.position = "relative";
-
     const previewLabel = previewContainer.createEl('h3', {
       text: t('Toolbar preview')
     });
@@ -1057,16 +1054,16 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     editingToolbar.setAttribute("id", "editingToolbarModalBar");
     this.applyAestheticStyle(editingToolbar, this.plugin.settings.aestheticStyle, this.plugin.positionStyle);
     // 根据当前美观风格设置类
+
     if (this.plugin.positionStyle == "fixed") {
-    
+
       let Rowsize = this.plugin.settings.toolbarIconSize || 18;
-      editingToolbar.setAttribute(
-        "style",
+      editingToolbar.setAttribute("style",
         `left: calc(50% - calc(${this.plugin.settings.cMenuNumRows * (Rowsize + 10)}px / 2));
-     top: 0.5em;
-     grid-template-columns: repeat(${this.plugin.settings.cMenuNumRows}, ${Rowsize + 10}px);
-     gap: ${(Rowsize - 18) / 4}px;
-     position: relative;`
+   bottom: 4.25em; 
+   grid-template-columns: repeat(${this.plugin.settings.cMenuNumRows}, ${Rowsize + 10}px);
+   gap: ${(Rowsize - 18) / 4}px;
+   position:absolute;`
       );
     }
 
@@ -1677,5 +1674,4 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     }
   }
 }
-
 
