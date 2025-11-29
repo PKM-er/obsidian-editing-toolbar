@@ -1050,7 +1050,12 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     previewLabel.style.marginBottom = '10px';
 
     // 创建预览工具栏 - 使用类似 generateMenu 的方式
-    const editingToolbar = previewContainer.createDiv();
+    const wrapper = previewContainer.createDiv();
+    wrapper.classList.add("preview-toolbar-wrapper");
+    
+    const editingToolbar = wrapper.createDiv();
+    editingToolbar.classList.add("editing-toolbar-preview");
+    
     editingToolbar.setAttribute("id", "editingToolbarModalBar");
     this.applyAestheticStyle(editingToolbar, this.plugin.settings.aestheticStyle, this.plugin.positionStyle);
     // 根据当前美观风格设置类
