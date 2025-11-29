@@ -88,6 +88,74 @@ export default class editingToolbarPlugin extends Plugin {
   // 添加设置标签页引用
   settingTab: editingToolbarSettingTab;
 
+    // 外观设置相关的工具方法
+  private ensureAppearanceStore(): void {
+    const s: any = this.settings;
+    if (!s.appearanceByStyle || typeof s.appearanceByStyle !== 'object') {
+      s.appearanceByStyle = {};
+    }
+
+    const styles = ['top', 'following', 'fixed', 'mobile'];
+
+    styles.forEach((style) => {
+      if (!s.appearanceByStyle[style] || typeof s.appearanceByStyle[style] !== 'object') {
+        s.appearanceByStyle[style] = {};
+      }
+
+      const bucket = s.appearanceByStyle[style];
+
+      if (bucket.toolbarBackgroundColor === undefined) {
+        bucket.toolbarBackgroundColor = s.toolbarBackgroundColor;
+      }
+      if (bucket.toolbarIconColor === undefined) {
+        bucket.toolbarIconColor = s.toolbarIconColor;
+      }
+      if (bucket.toolbarIconSize === undefined) {
+        bucket.toolbarIconSize = s.toolbarIconSize;
+      }
+      if (bucket.aestheticStyle === undefined) {
+        bucket.aestheticStyle = s.aestheticStyle;
+      }
+    });
+  }
+
+  private applyAppearanceForStyle(style: string): void {
+    const s: any = this.settings;
+    this.ensureAppearanceStore();
+
+    const bucket = s.appearanceByStyle[style] ?? {};
+
+    if (bucket.toolbarBackgroundColor !== undefined) {
+      s.toolbarBackgroundColor = bucket.toolbarBackgroundColor;
+    }
+    if (bucket.toolbarIconColor !== undefined) {
+      s.toolbarIconColor = bucket.toolbarIconColor;
+    }
+    if (bucket.toolbarIconSize !== undefined) {
+      s.toolbarIconSize = bucket.toolbarIconSize;
+    }
+    if (bucket.aestheticStyle !== undefined) {
+      s.aestheticStyle = bucket.aestheticStyle;
+    }
+
+    this.toolbarIconSize = s.toolbarIconSize;
+
+    if (activeDocument && activeDocument.documentElement) {
+      activeDocument.documentElement.style.setProperty(
+        '--editing-toolbar-background-color',
+        s.toolbarBackgroundColor
+      );
+      activeDocument.documentElement.style.setProperty(
+        '--editing-toolbar-icon-color',
+        s.toolbarIconColor
+      );
+      activeDocument.documentElement.style.setProperty(
+        '--toolbar-icon-size',
+        `${s.toolbarIconSize}px`
+      );
+    }
+  }
+
   async onload(): Promise<void> {
     const currentVersion = this.manifest.version; // 设置当前版本号
     console.log("editingToolbar v" + currentVersion + " loaded");
@@ -264,24 +332,13 @@ this.app.workspace.onLayoutReady(async () => {
       })
 
 
+
     );
     // 初始化图标
     addIcons();
-    this.toolbarIconSize = this.settings.toolbarIconSize;
-    this.positionStyle = this.settings.positionStyle;
-    // 初始化 CSS 变量
-    activeDocument.documentElement.style.setProperty(
-      '--editing-toolbar-background-color',
-      this.settings.toolbarBackgroundColor
-    );
-    activeDocument.documentElement.style.setProperty(
-      '--editing-toolbar-icon-color',
-      this.settings.toolbarIconColor
-    );
-    activeDocument.documentElement.style.setProperty(
-      '--toolbar-icon-size',
-      `${this.settings.toolbarIconSize}px`
-    );
+
+    // 使用统一入口，根据当前 positionStyle 应用外观（不重建 DOM）
+    this.onPositionStyleChange(this.settings.positionStyle || 'top');
   }
 
 
@@ -1240,42 +1297,43 @@ updateCurrentCommands(commands: any[], style?: string): void {
 
 
   public onPositionStyleChange(newStyle: string): void {
-    this.positionStyle = newStyle;
+    const style = newStyle || 'top';
+
+    this.positionStyle = style;
+    this.settings.positionStyle = style;
+
     // 如果启用了多配置模式，检查对应样式的配置是否存在
     if (this.settings.enableMultipleConfig) {
-      switch (newStyle) {
+      switch (style) {
         case 'following':
           if (!this.settings.followingCommands || this.settings.followingCommands.length === 0) {
             this.settings.followingCommands = [...this.settings.menuCommands];
-            this.saveSettings();
             new Notice(t('Following style commands successfully initialized'));
           }
           break;
         case 'top':
           if (!this.settings.topCommands || this.settings.topCommands.length === 0) {
             this.settings.topCommands = [...this.settings.menuCommands];
-            this.saveSettings();
             new Notice(t('Top style commands successfully initialized'));
           }
           break;
         case 'fixed':
           if (!this.settings.fixedCommands || this.settings.fixedCommands.length === 0) {
             this.settings.fixedCommands = [...this.settings.menuCommands];
-            this.saveSettings();
             new Notice(t('Fixed style commands successfully initialized'));
           }
           break;
         case 'mobile':
           if (!this.settings.mobileCommands || this.settings.mobileCommands.length === 0) {
             this.settings.mobileCommands = [...this.settings.menuCommands];
-            this.saveSettings();
             new Notice(t('Mobile style commands successfully initialized'));
           }
           break;
       }
     }
 
-    // 重新加载工具栏
-    dispatchEvent(new Event("editingToolbar-NewCommand"));
+    // 应用该样式的外观，但不重建 / 移动 DOM
+    this.applyAppearanceForStyle(style);
+    this.saveSettings();
   }
 }
