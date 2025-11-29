@@ -914,22 +914,13 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     });
 
     titleContainer.createEl("h1", {
-      text: "Obsidian Editing Toolbar:" + this.plugin.manifest.version,
+      text: "Obsidian Editing Toolbar: " + this.plugin.manifest.version,
       cls: "editing-toolbar-title"
     });
 
     // 创建右侧信息容器
     const infoContainer = headerContainer.createEl("div", {
       cls: "editing-toolbar-info"
-    });
-
-    infoContainer.createEl("span", { text: "作者：" }).createEl("a", {
-      text: "Cuman ✨",
-      href: "https://github.com/cumany",
-    });
-    infoContainer.createEl("span", { text: "  教程：" }).createEl("a", {
-      text: "pkmer.cn",
-      href: "https://pkmer.cn/show/20230329145815",
     });
 
     // 添加修复按钮
