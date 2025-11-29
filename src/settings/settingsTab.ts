@@ -1066,7 +1066,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
      top: 0.5em;
      grid-template-columns: repeat(${this.plugin.settings.cMenuNumRows}, ${Rowsize + 10}px);
      gap: ${(Rowsize - 18) / 4}px;
-     position: absolute;`
+     position: relative;`
       );
     }
 
