@@ -399,18 +399,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
         }));
   }
 
-    private displayAppearanceSettings(containerEl: HTMLElement): void {
-  
-      const appearanceSettingContainer = containerEl.createDiv('appearanceSetting-container');
-      appearanceSettingContainer.style.padding = '16px';
-      appearanceSettingContainer.style.borderRadius = '8px';
-      appearanceSettingContainer.style.backgroundColor = 'var(--background-secondary)';
-      appearanceSettingContainer.style.marginBottom = '20px';
-      // Aesthetic style setting
-  
-  
-      private displayAppearanceSettings(containerEl: HTMLElement): void {
-  
+  private displayAppearanceSettings(containerEl: HTMLElement): void {
     const appearanceSettingContainer = containerEl.createDiv('appearanceSetting-container');
     appearanceSettingContainer.style.padding = '16px';
     appearanceSettingContainer.style.borderRadius = '8px';
