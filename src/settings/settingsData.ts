@@ -54,6 +54,9 @@ export interface editingToolbarSettings {
   fixedCommands: Command[];
   mobileCommands: Command[];
   enableMultipleConfig: boolean;
+  enableTopToolbar: boolean;
+  enableFollowingToolbar: boolean;
+  enableFixedToolbar: boolean;
   appendMethod: string;
   shouldShowMenuOnSelect: boolean;
   cMenuVisibility: boolean;
@@ -390,6 +393,9 @@ export const DEFAULT_SETTINGS: editingToolbarSettings = {
     "fixedCommands": [],
     "mobileCommands": [],
     "enableMultipleConfig": false,
+    "enableTopToolbar": false;
+    "enableFollowingToolbar": false;
+    "enableFixedToolbar": false;
     "appendMethod": "workspace",
     "shouldShowMenuOnSelect": false,
     "cMenuVisibility": true,
