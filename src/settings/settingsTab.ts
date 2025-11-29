@@ -1044,6 +1044,9 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     previewContainer.addClass('toolbar-preview-section');
     previewContainer.style.marginTop = '20px';
 
+    // IMPORTANT: Make Fixed preview absolute *inside* this container
+    previewContainer.style.position = "relative";
+
     const previewLabel = previewContainer.createEl('h3', {
       text: t('Toolbar preview')
     });
