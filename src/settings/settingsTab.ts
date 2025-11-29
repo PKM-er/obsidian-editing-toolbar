@@ -1052,6 +1052,8 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     // 创建预览工具栏 - 使用类似 generateMenu 的方式
     const wrapper = previewContainer.createDiv();
     wrapper.classList.add("preview-toolbar-wrapper");
+    wrapper.classList.add(`preview-${this.plugin.positionStyle}`);
+
     
     const editingToolbar = wrapper.createDiv();
     editingToolbar.classList.add("editing-toolbar-preview");
