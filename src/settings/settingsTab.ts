@@ -1054,17 +1054,20 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     editingToolbar.setAttribute("id", "editingToolbarModalBar");
     this.applyAestheticStyle(editingToolbar, this.plugin.settings.aestheticStyle, this.plugin.positionStyle);
     // 根据当前美观风格设置类
-
     if (this.plugin.positionStyle == "fixed") {
-
       let Rowsize = this.plugin.settings.toolbarIconSize || 18;
-      editingToolbar.setAttribute("style",
-        `left: calc(50% - calc(${this.plugin.settings.cMenuNumRows * (Rowsize + 10)}px / 2));
-   bottom: 4.25em; 
-   grid-template-columns: repeat(${this.plugin.settings.cMenuNumRows}, ${Rowsize + 10}px);
-   gap: ${(Rowsize - 18) / 4}px;
-   position:absolute;`
-      );
+    
+      editingToolbar.style.position = "relative";   // <<< important: NOT absolute
+      editingToolbar.style.left = "0";
+      editingToolbar.style.bottom = "0";
+    
+      editingToolbar.style.display = "grid";
+      editingToolbar.style.gridTemplateColumns =
+        `repeat(${this.plugin.settings.cMenuNumRows}, ${Rowsize + 10}px)`;
+    
+      editingToolbar.style.gap = `${(Rowsize - 18) / 4}px`;
+    
+      editingToolbar.style.marginTop = "10px";      // <<< ensures spacing under heading
     }
 
 
