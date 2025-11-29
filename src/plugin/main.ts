@@ -24,9 +24,7 @@ import addIcons, {
   // addBoxIcons
 } from "src/icons/customIcons";
 
-
 import { setFontcolor, setBackgroundcolor, renumberSelection } from "src/util/util";
-
 
 import { ViewUtils } from 'src/util/viewUtils';
 import { UpdateNoticeModal } from "src/modals/updateModal";
