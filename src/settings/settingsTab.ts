@@ -3,6 +3,7 @@ import { CommandPicker, ChooseFromIconList, openSlider, ChangeCmdname } from "sr
 
 import { App, Setting, PluginSettingTab, Command, Notice, setIcon } from "obsidian";
 import { APPEND_METHODS, AESTHETIC_STYLES, POSITION_STYLES } from "src/settings/settingsData";
+import type { ToolbarStyleKey } from "src/settings/settingsData";
 import { selfDestruct, editingToolbarPopover, checkHtml } from "src/modals/editingToolbarModal";
 import Sortable from "sortablejs";
 import { debounce } from "obsidian";
