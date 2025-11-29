@@ -1057,7 +1057,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     if (this.plugin.positionStyle == "fixed") {
       let Rowsize = this.plugin.settings.toolbarIconSize || 18;
     
-      editingToolbar.style.position = "relative";   // <<< important: NOT absolute
+      editingToolbar.style.position = "relative";
       editingToolbar.style.left = "0";
       editingToolbar.style.bottom = "0";
     
@@ -1067,7 +1067,10 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     
       editingToolbar.style.gap = `${(Rowsize - 18) / 4}px`;
     
-      editingToolbar.style.marginTop = "10px";      // <<< ensures spacing under heading
+      editingToolbar.style.marginTop = "10px";
+    
+      // Center the preview container
+      editingToolbar.style.margin = "10px auto 0 auto";
     }
 
 
