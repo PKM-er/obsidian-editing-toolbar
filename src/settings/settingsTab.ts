@@ -936,8 +936,6 @@ export class editingToolbarSettingTab extends PluginSettingTab {
               break;
           }
 
-          this.updateAppearanceBucketFromCurrent();
-
           // 更新CSS变量
           this.plugin.toolbarIconSize = this.plugin.settings.toolbarIconSize;
           document.documentElement.style.setProperty('--editing-toolbar-background-color', this.plugin.settings.toolbarBackgroundColor);
@@ -1035,7 +1033,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
             document.documentElement.style.setProperty('--toolbar-icon-size', `${value}px`);
             // 更新预览区域   
             this.plugin.settings.aestheticStyle = 'custom';
-            this.updateAppearanceBucketFromCurrent();
+
             await this.plugin.saveSettings();
 
           });
@@ -1499,28 +1497,10 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     });
   }
 
-  private updateAppearanceBucketFromCurrent(): void {
-    // Appearance should follow the style selected in the "Editing Toolbar position" dropdown
-    const style = this.plugin.settings.positionStyle || 'top';
-  
-    const s: any = this.plugin.settings;
-  
-    if (!s.appearanceByStyle) s.appearanceByStyle = {};
-    if (!s.appearanceByStyle[style]) s.appearanceByStyle[style] = {};
-  
-    const bucket = s.appearanceByStyle[style];
-  
-    bucket.toolbarBackgroundColor = s.toolbarBackgroundColor;
-    bucket.toolbarIconColor = s.toolbarIconColor;
-    bucket.toolbarIconSize = s.toolbarIconSize;
-    bucket.aestheticStyle = s.aestheticStyle;
-  }
-
   private setupPickrEvents(pickr: any, settingKey: string, cssProperty: string) {
     pickr.on('save', (color: any) => {
       const hexColor = color.toHEXA().toString();
       (this.plugin.settings as any)[settingKey] = hexColor;
-      this.updateAppearanceBucketFromCurrent();
       document.documentElement.style.setProperty(`--editing-toolbar-${cssProperty}`, hexColor);
       this.plugin.saveSettings();
 
@@ -1694,6 +1674,5 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     }
   }
 }
-
 
 
