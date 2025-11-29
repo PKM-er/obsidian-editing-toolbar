@@ -16,6 +16,9 @@ export interface ToolbarSettings {
   fixedCommands: ToolbarCommand[];
   mobileCommands: ToolbarCommand[];
   enableMultipleConfig: boolean;
+  enableTopToolbar: boolean;
+  enableFollowingToolbar: boolean;
+  enableFixedToolbar: boolean;
   custom_bg1: string;
   custom_bg2: string;
   custom_bg3: string;
@@ -57,4 +60,5 @@ export interface editingToolbarSettings {
   toolbarIconSize: number;
   [key: string]: any;
 }
+
 
