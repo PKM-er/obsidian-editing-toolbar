@@ -338,8 +338,6 @@ this.app.workspace.onLayoutReady(async () => {
     
     // REPLACE the CSS vars + position assignment with:
     this.onPositionStyleChange(this.settings.positionStyle || 'top');
-    }
-  }
 
 
   async tryGetAdmonitionTypes(retries = 0): Promise<void> {
