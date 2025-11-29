@@ -39,6 +39,52 @@ import { InsertCalloutModal } from "src/modals/insertCalloutModal";
 
 let activeDocument: Document;
 
+// ---- Per-style appearance support (patch v3, integrated) ----
+import type { AppearanceByStyle, ToolbarStyleKey, StyleAppearanceSettings, editingToolbarSettings } from "src/settings/settingsData";
+
+const STYLE_KEYS: ToolbarStyleKey[] = ["top", "following", "fixed", "mobile"];
+
+const APPEARANCE_KEYS: Array<keyof StyleAppearanceSettings> = [
+  "toolbarBackgroundColor",
+  "toolbarIconColor",
+  "toolbarIconSize",
+  "aestheticStyle",
+];
+
+function ensureAppearanceStore(
+  settings: editingToolbarSettings,
+  migratingFromGlobal: boolean
+): void {
+  if (!settings.appearanceByStyle || typeof settings.appearanceByStyle !== "object") {
+    settings.appearanceByStyle = {};
+  }
+
+  const store = settings.appearanceByStyle as AppearanceByStyle;
+
+  // Ensure bucket objects exist for each style
+  STYLE_KEYS.forEach((style) => {
+    if (!store[style] || typeof store[style] !== "object") {
+      store[style] = {};
+    }
+  });
+
+  // On first migration: seed all style buckets from the legacy/global fields
+  if (migratingFromGlobal) {
+    APPEARANCE_KEYS.forEach((key) => {
+      const legacyValue = (settings as any)[key];
+      if (legacyValue === undefined) return;
+
+      STYLE_KEYS.forEach((style) => {
+        const bucket = store[style]!;
+        if (!(key in bucket)) {
+          (bucket as any)[key] = legacyValue;
+        }
+      });
+    });
+  }
+}
+// ---- end per-style appearance helpers ----
+
 export interface AdmonitionDefinition  {
   type: string;
     title?: string;
@@ -88,13 +134,61 @@ export default class editingToolbarPlugin extends Plugin {
   // 添加设置标签页引用
   settingTab: editingToolbarSettingTab;
 
+    // Initialise per-style appearance (patch v3 logic, but limited to this plugin)
+  private initPerStyleAppearance(): void {
+    const settings = this.settings;
+    if (!settings) return;
+
+    const migratingFromGlobal = !settings.appearanceByStyle;
+    ensureAppearanceStore(settings, migratingFromGlobal);
+
+    const store = settings.appearanceByStyle as AppearanceByStyle;
+
+    const getCurrentStyle = (): ToolbarStyleKey => {
+      // Prefer the in-memory positionStyle, fall back to stored settings, then 'top'
+      const raw = (this.positionStyle || settings.positionStyle || "top") as string;
+      return STYLE_KEYS.includes(raw as ToolbarStyleKey) ? (raw as ToolbarStyleKey) : "top";
+    };
+
+    APPEARANCE_KEYS.forEach((key) => {
+      // Only patch properties that actually exist on settings
+      if (!(key in settings)) return;
+
+      const initialGlobal = (settings as any)[key];
+
+      Object.defineProperty(settings, key, {
+        configurable: true,
+        enumerable: true,
+        get() {
+          const style = getCurrentStyle();
+          const bucket = store[style];
+          if (bucket && Object.prototype.hasOwnProperty.call(bucket, key)) {
+            return (bucket as any)[key];
+          }
+          // Fallback to the original global value
+          return initialGlobal;
+        },
+        set(value: any) {
+          const style = getCurrentStyle();
+          ensureAppearanceStore(settings, false);
+          const bucket = (settings.appearanceByStyle as AppearanceByStyle)[style]!;
+          (bucket as any)[key] = value;
+        },
+      });
+    });
+  }
+
   async onload(): Promise<void> {
     const currentVersion = this.manifest.version; // 设置当前版本号
     console.log("editingToolbar v" + currentVersion + " loaded");
-
-
+  
     requireApiVersion("0.15.0") ? activeDocument = activeWindow.document : activeDocument = window.document;
+  
     await this.loadSettings();
+  
+    // IMPORTANT: wire up per-style getters/setters before we start using appearance fields
+    this.initPerStyleAppearance();
+  
     this.settingTab = new editingToolbarSettingTab(this.app, this);
     this.addSettingTab(this.settingTab);
 
@@ -1240,42 +1334,66 @@ updateCurrentCommands(commands: any[], style?: string): void {
 
 
   public onPositionStyleChange(newStyle: string): void {
+    // Track the new style both in-memory and in settings
     this.positionStyle = newStyle;
-    // 如果启用了多配置模式，检查对应样式的配置是否存在
+    this.settings.positionStyle = newStyle;
+
+    // If multi-config is enabled, ensure the command arrays for this style exist
     if (this.settings.enableMultipleConfig) {
       switch (newStyle) {
-        case 'following':
+        case "following":
           if (!this.settings.followingCommands || this.settings.followingCommands.length === 0) {
             this.settings.followingCommands = [...this.settings.menuCommands];
             this.saveSettings();
-            new Notice(t('Following style commands successfully initialized'));
+            new Notice(t("Following style commands successfully initialized"));
           }
           break;
-        case 'top':
+        case "top":
           if (!this.settings.topCommands || this.settings.topCommands.length === 0) {
             this.settings.topCommands = [...this.settings.menuCommands];
             this.saveSettings();
-            new Notice(t('Top style commands successfully initialized'));
+            new Notice(t("Top style commands successfully initialized"));
           }
           break;
-        case 'fixed':
+        case "fixed":
           if (!this.settings.fixedCommands || this.settings.fixedCommands.length === 0) {
             this.settings.fixedCommands = [...this.settings.menuCommands];
             this.saveSettings();
-            new Notice(t('Fixed style commands successfully initialized'));
+            new Notice(t("Fixed style commands successfully initialized"));
           }
           break;
-        case 'mobile':
+        case "mobile":
           if (!this.settings.mobileCommands || this.settings.mobileCommands.length === 0) {
             this.settings.mobileCommands = [...this.settings.menuCommands];
             this.saveSettings();
-            new Notice(t('Mobile style commands successfully initialized'));
+            new Notice(t("Mobile style commands successfully initialized"));
           }
           break;
       }
     }
 
-    // 重新加载工具栏
+    // Keep the in-memory size in sync with the active style
+    this.toolbarIconSize = this.settings.toolbarIconSize;
+
+    // Refresh the global CSS variables from the active style's appearance
+    const doc = activeDocument ?? document;
+    if (doc && doc.documentElement) {
+      doc.documentElement.style.setProperty(
+        "--editing-toolbar-background-color",
+        this.settings.toolbarBackgroundColor
+      );
+      doc.documentElement.style.setProperty(
+        "--editing-toolbar-icon-color",
+        this.settings.toolbarIconColor
+      );
+      doc.documentElement.style.setProperty(
+        "--toolbar-icon-size",
+        `${this.settings.toolbarIconSize}px`
+      );
+    }
+
+    // For now we keep the existing behaviour: changing the dropdown regenerates the toolbar DOM.
+    // (We will deliberately remove this in the patch v4 step once the toggles are wired up.)
     dispatchEvent(new Event("editingToolbar-NewCommand"));
   }
 }
