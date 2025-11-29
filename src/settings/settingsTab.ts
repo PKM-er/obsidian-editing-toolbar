@@ -1500,10 +1500,8 @@ export class editingToolbarSettingTab extends PluginSettingTab {
   }
 
   private updateAppearanceBucketFromCurrent(): void {
-    const style =
-      this.currentEditingConfig ||
-      this.plugin.settings.positionStyle ||
-      'top';
+    // Appearance should follow the style selected in the "Editing Toolbar position" dropdown
+    const style = this.plugin.settings.positionStyle || 'top';
   
     const s: any = this.plugin.settings;
   
@@ -1517,7 +1515,6 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     bucket.toolbarIconSize = s.toolbarIconSize;
     bucket.aestheticStyle = s.aestheticStyle;
   }
-
 
   private setupPickrEvents(pickr: any, settingKey: string, cssProperty: string) {
     pickr.on('save', (color: any) => {
