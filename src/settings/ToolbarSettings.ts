@@ -36,6 +36,7 @@ export interface ToolbarCommand {
   SubmenuCommands?: ToolbarCommand[];
 }
 
+
 export interface editingToolbarSettings {
   enabled?: boolean;
   positionStyle: 'following' | 'top' | 'fixed';
@@ -56,3 +57,4 @@ export interface editingToolbarSettings {
   toolbarIconSize: number;
   [key: string]: any;
 }
+
