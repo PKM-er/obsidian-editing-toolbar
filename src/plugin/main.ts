@@ -1392,8 +1392,9 @@ updateCurrentCommands(commands: any[], style?: string): void {
       );
     }
   
-    // 5. Persist the new style + any lazy-initialised command arrays
+    // 5. Persist the new style + any lazily-initialised command arrays
     this.saveSettings();
+  
     // IMPORTANT: we deliberately do NOT dispatch "editingToolbar-NewCommand" here anymore.
     // The dropdown now only changes which style's configuration/appearance you're editing,
     // without regenerating or moving the toolbar DOM.
