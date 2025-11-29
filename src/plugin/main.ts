@@ -88,73 +88,6 @@ export default class editingToolbarPlugin extends Plugin {
   // 添加设置标签页引用
   settingTab: editingToolbarSettingTab;
 
-  private ensureAppearanceStore(): void {
-    const s: any = this.settings;
-    if (!s.appearanceByStyle || typeof s.appearanceByStyle !== 'object') {
-      s.appearanceByStyle = {};
-    }
-
-    const styles = ['top', 'following', 'fixed', 'mobile'];
-
-    styles.forEach((style) => {
-      if (!s.appearanceByStyle[style] || typeof s.appearanceByStyle[style] !== 'object') {
-        s.appearanceByStyle[style] = {};
-      }
-
-      const bucket = s.appearanceByStyle[style];
-  
-      if (bucket.toolbarBackgroundColor === undefined) {
-        bucket.toolbarBackgroundColor = s.toolbarBackgroundColor;
-      }
-      if (bucket.toolbarIconColor === undefined) {
-        bucket.toolbarIconColor = s.toolbarIconColor;
-      }
-      if (bucket.toolbarIconSize === undefined) {
-        bucket.toolbarIconSize = s.toolbarIconSize;
-      }
-      if (bucket.aestheticStyle === undefined) {
-        bucket.aestheticStyle = s.aestheticStyle;
-      }
-    });
-  }
-
-  private applyAppearanceForStyle(style: string): void {
-    const s: any = this.settings;
-    this.ensureAppearanceStore();
-  
-    const bucket = s.appearanceByStyle[style] ?? {};
-  
-    if (bucket.toolbarBackgroundColor !== undefined) {
-      s.toolbarBackgroundColor = bucket.toolbarBackgroundColor;
-    }
-    if (bucket.toolbarIconColor !== undefined) {
-      s.toolbarIconColor = bucket.toolbarIconColor;
-    }
-    if (bucket.toolbarIconSize !== undefined) {
-      s.toolbarIconSize = bucket.toolbarIconSize;
-    }
-    if (bucket.aestheticStyle !== undefined) {
-      s.aestheticStyle = bucket.aestheticStyle;
-    }
-  
-    this.toolbarIconSize = s.toolbarIconSize;
-  
-    if (document && document.documentElement) {
-      document.documentElement.style.setProperty(
-        '--editing-toolbar-background-color',
-        s.toolbarBackgroundColor
-      );
-      document.documentElement.style.setProperty(
-        '--editing-toolbar-icon-color',
-        s.toolbarIconColor
-      );
-      document.documentElement.style.setProperty(
-        '--toolbar-icon-size',
-        `${s.toolbarIconSize}px`
-      );
-    }
-  }
-
   async onload(): Promise<void> {
     const currentVersion = this.manifest.version; // 设置当前版本号
     console.log("editingToolbar v" + currentVersion + " loaded");
@@ -329,45 +262,58 @@ this.app.workspace.onLayoutReady(async () => {
             })
         );
       })
-    );
 
+
+    );
     // 初始化图标
     addIcons();
     this.toolbarIconSize = this.settings.toolbarIconSize;
     this.positionStyle = this.settings.positionStyle;
-    
-    // REPLACE the CSS vars + position assignment with:
-    this.onPositionStyleChange(this.settings.positionStyle || 'top');
+    // 初始化 CSS 变量
+    activeDocument.documentElement.style.setProperty(
+      '--editing-toolbar-background-color',
+      this.settings.toolbarBackgroundColor
+    );
+    activeDocument.documentElement.style.setProperty(
+      '--editing-toolbar-icon-color',
+      this.settings.toolbarIconColor
+    );
+    activeDocument.documentElement.style.setProperty(
+      '--toolbar-icon-size',
+      `${this.settings.toolbarIconSize}px`
+    );
+  }
 
 
   async tryGetAdmonitionTypes(retries = 0): Promise<void> {
     // @ts-ignore
     const admonitionPluginInstance = this.app.plugins?.getPlugin(ADMONITION_PLUGIN_ID);
     if (admonitionPluginInstance) {
+       
         this.processAdmonitionTypes(admonitionPluginInstance);
     }  
-  }
+    }
 
 processAdmonitionTypes(pluginInstance: any) {
 
-  const admonitionPlugin = pluginInstance as {
-    admonitions?: Record<string, AdmonitionDefinition> };
+  const admonitionPlugin = pluginInstance as { admonitions?: Record<string, AdmonitionDefinition> };
 
   let registeredTypes: string[] | null = null;
   let typesSource: string | null = null;
  
   if (admonitionPlugin.admonitions &&
       typeof admonitionPlugin.admonitions === 'object' &&
-    !Array.isArray(admonitionPlugin.admonitions) && // 确保不是数组
-      Object.keys(admonitionPlugin.admonitions).length > 0
-  ) {
-    registeredTypes = Object.keys(admonitionPlugin.admonitions);
+      !Array.isArray(admonitionPlugin.admonitions) && // 确保不是数组
+      Object.keys(admonitionPlugin.admonitions).length > 0) {
+  
+      registeredTypes = Object.keys(admonitionPlugin.admonitions);
       this.admonitionDefinitions = admonitionPlugin.admonitions;
    
-  } else {
+  }  else {
     console.warn('未能从 admonitionPlugin.admonitions (作为对象) 获取类型。');
     this.admonitionDefinitions = null; 
-  }
+}
+  
 }
  
 
@@ -1294,37 +1240,42 @@ updateCurrentCommands(commands: any[], style?: string): void {
 
 
   public onPositionStyleChange(newStyle: string): void {
-    const style = newStyle || 'top';
-  
-    this.positionStyle = style;
-    this.settings.positionStyle = style;
-  
+    this.positionStyle = newStyle;
+    // 如果启用了多配置模式，检查对应样式的配置是否存在
     if (this.settings.enableMultipleConfig) {
-      switch (style) {
+      switch (newStyle) {
         case 'following':
-          if (!this.settings.followingCommands?.length) {
+          if (!this.settings.followingCommands || this.settings.followingCommands.length === 0) {
             this.settings.followingCommands = [...this.settings.menuCommands];
+            this.saveSettings();
+            new Notice(t('Following style commands successfully initialized'));
           }
           break;
         case 'top':
-          if (!this.settings.topCommands?.length) {
+          if (!this.settings.topCommands || this.settings.topCommands.length === 0) {
             this.settings.topCommands = [...this.settings.menuCommands];
+            this.saveSettings();
+            new Notice(t('Top style commands successfully initialized'));
           }
           break;
         case 'fixed':
-          if (!this.settings.fixedCommands?.length) {
+          if (!this.settings.fixedCommands || this.settings.fixedCommands.length === 0) {
             this.settings.fixedCommands = [...this.settings.menuCommands];
+            this.saveSettings();
+            new Notice(t('Fixed style commands successfully initialized'));
           }
           break;
         case 'mobile':
-          if (!this.settings.mobileCommands?.length) {
+          if (!this.settings.mobileCommands || this.settings.mobileCommands.length === 0) {
             this.settings.mobileCommands = [...this.settings.menuCommands];
+            this.saveSettings();
+            new Notice(t('Mobile style commands successfully initialized'));
           }
           break;
       }
     }
-  
-    this.applyAppearanceForStyle(style);
-    this.saveSettings();
+
+    // 重新加载工具栏
+    dispatchEvent(new Event("editingToolbar-NewCommand"));
   }
 }
