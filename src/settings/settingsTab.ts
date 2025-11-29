@@ -262,8 +262,8 @@ export class editingToolbarSettingTab extends PluginSettingTab {
       );
 
     new Setting(generalSettingContainer)
-      .setName(t('Top Toolbar'))
-      .setDesc(t('Enable the toolbar positioned at the top.'))
+      .setName('Top Toolbar')
+      .setDesc('Enable the toolbar positioned at the top.')
       .addToggle(toggle => toggle
         .setValue(this.plugin.settings.enableTopToolbar || false)
         .onChange(async (value) => {
@@ -277,8 +277,8 @@ export class editingToolbarSettingTab extends PluginSettingTab {
       );
 
     new Setting(generalSettingContainer)
-      .setName(t('Following Toolbar'))
-      .setDesc(t('Enable the toolbar that appears upon text selection.'))
+      .setName('Following Toolbar')
+      .setDesc('Enable the toolbar that appears upon text selection.')
       .addToggle(toggle => toggle
         .setValue(this.plugin.settings.enableFollowingToolbar || false)
         .onChange(async (value) => {
@@ -292,8 +292,8 @@ export class editingToolbarSettingTab extends PluginSettingTab {
       );
 
     new Setting(generalSettingContainer)
-      .setName(t('Fixed Toolbar'))
-      .setDesc(t('Enable the toolbar whoose position may be fixed where you please.'))
+      .setName('Fixed Toolbar')
+      .setDesc('Enable the toolbar whoose position may be fixed where you please.')
       .addToggle(toggle => toggle
         .setValue(this.plugin.settings.enableFixedToolbar || false)
         .onChange(async (value) => {
