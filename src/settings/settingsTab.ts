@@ -1055,6 +1055,8 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     
     const editingToolbar = wrapper.createDiv();
     editingToolbar.classList.add("editing-toolbar-preview");
+    editingToolbar.classList.add(`preview-${this.plugin.positionStyle}`);
+
     
     editingToolbar.setAttribute("id", "editingToolbarModalBar");
     this.applyAestheticStyle(editingToolbar, this.plugin.settings.aestheticStyle, this.plugin.positionStyle);
@@ -1143,6 +1145,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     previewCommands.forEach(item => {
       const button = new ButtonComponent(editingToolbar);
       button.setClass("editingToolbarCommandItem");
+      button.buttonEl.classList.add("preview-button");
       button.setTooltip(item.name);
 
       // 设置图标
