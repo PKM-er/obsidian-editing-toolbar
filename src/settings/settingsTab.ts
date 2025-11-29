@@ -399,74 +399,77 @@ export class editingToolbarSettingTab extends PluginSettingTab {
         }));
   }
 
-  private displayAppearanceSettings(containerEl: HTMLElement): void {
-
+    private displayAppearanceSettings(containerEl: HTMLElement): void {
+  
+      const appearanceSettingContainer = containerEl.createDiv('appearanceSetting-container');
+      appearanceSettingContainer.style.padding = '16px';
+      appearanceSettingContainer.style.borderRadius = '8px';
+      appearanceSettingContainer.style.backgroundColor = 'var(--background-secondary)';
+      appearanceSettingContainer.style.marginBottom = '20px';
+      // Aesthetic style setting
+  
+  
+      private displayAppearanceSettings(containerEl: HTMLElement): void {
+  
     const appearanceSettingContainer = containerEl.createDiv('appearanceSetting-container');
     appearanceSettingContainer.style.padding = '16px';
     appearanceSettingContainer.style.borderRadius = '8px';
     appearanceSettingContainer.style.backgroundColor = 'var(--background-secondary)';
     appearanceSettingContainer.style.marginBottom = '20px';
-    // Aesthetic style setting
-
-
-    // Position style setting
+  
+    // Ensure the plugin knows which style we're editing
+    this.plugin.appearanceEditStyle = (this.plugin.settings.positionStyle as ToolbarStyleKey) || "top";
+  
+    // Toolbar Settings – choose which style's settings to edit
     new Setting(appearanceSettingContainer)
       .setName('Toolbar Settings')
       .setDesc("Configure the fixed position, cursor following, or top mode toolbar's settings.")
       .addDropdown((dropdown) => {
         const positions: Record<string, string> = {};
         POSITION_STYLES.map((position) => (positions[position] = position));
-
+  
         dropdown
           .addOptions(positions)
           .setValue(this.plugin.settings.positionStyle)
           .onChange(async (value) => {
-            // Only change which style's settings are being edited.
             this.plugin.settings.positionStyle = value;
+            this.plugin.appearanceEditStyle = value as ToolbarStyleKey;
             await this.plugin.saveSettings();
             this.display();
           });
       });
-
-    // Use the selected settings style (not the active toolbar mode) to decide which controls to show
-    const settingsStyle = this.plugin.settings.positionStyle || 'top';
-
-    if (settingsStyle === 'top') {
-
+  
+    // Use the style we're *editing* to decide which controls to show
+    const settingsStyle = (this.plugin.appearanceEditStyle as ToolbarStyleKey) || "top";
+  
+    if (settingsStyle === "top") {
       new Setting(appearanceSettingContainer)
-        .setName('Editing Toolbar Auto-hide'
-        )
-        .setDesc(
-          'The toolbar is displayed when the mouse moves over it, otherwise it is automatically hidden.'
-        )
-        .addToggle(toggle => toggle.setValue(this.plugin.settings?.autohide)
+        .setName('Editing Toolbar Auto-hide')
+        .setDesc('The toolbar is displayed when the mouse moves over it, otherwise it is automatically hidden.')
+        .addToggle(toggle => toggle
+          .setValue(this.plugin.settings?.autohide)
           .onChange((value) => {
             this.plugin.settings.autohide = value;
             this.plugin.saveSettings();
             this.triggerRefresh();
           }));
-
+  
       new Setting(appearanceSettingContainer)
-        .setName('Editing Toolbar Centred Display'
-        )
-        .setDesc(
-          'Whether the toolbar is centred or full-width, the default is full-width.'
-        )
-        .addToggle(toggle => toggle.setValue(this.plugin.settings?.Iscentered)
+        .setName('Editing Toolbar Centred Display')
+        .setDesc('Whether the toolbar is centred or full-width, the default is full-width.')
+        .addToggle(toggle => toggle
+          .setValue(this.plugin.settings?.Iscentered)
           .onChange((value) => {
             this.plugin.settings.Iscentered = value;
             this.plugin.saveSettings();
             this.triggerRefresh();
           }));
     }
-
-    if (settingsStyle === 'fixed') {
+  
+    if (settingsStyle === "fixed") {
       new Setting(appearanceSettingContainer)
-        .setName('Editing Toolbar Columns'
-        )
-        .setDesc(
-          'Choose the number of columns per row to display on Editing Toolbar.'
-        )
+        .setName('Editing Toolbar Columns')
+        .setDesc('Choose the number of columns per row to display on Editing Toolbar.')
         .addSlider((slider) => {
           slider
             .setLimits(1, 32, 1)
@@ -484,6 +487,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
             )
             .setDynamicTooltip();
         });
+  
       new Setting(appearanceSettingContainer)
         .setName('Fixed Position Offset')
         .setDesc('Choose the offset of the Editing Toolbar in the fixed position.')
@@ -494,9 +498,10 @@ export class editingToolbarSettingTab extends PluginSettingTab {
           }));
     }
 
-    // Color settings
+    // Color / paintbrush settings remain as you have them
     this.createColorSettings(containerEl);
   }
+
 
   private displayCommandSettings(containerEl: HTMLElement): void {
     const commandSettingContainer = containerEl.createDiv('commandSetting-container');
