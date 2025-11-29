@@ -72,14 +72,7 @@ export interface editingToolbarSettings {
   toolbarBackgroundColor: string;
   toolbarIconColor: string;
   toolbarIconSize: number;
-  appearanceByStyle?: {
-    [style: string]: {
-      toolbarBackgroundColor?: string;
-      toolbarIconColor?: string;
-      toolbarIconSize?: number;
-      aestheticStyle?: string;
-    };
-  };
+  
 }
 
 export const DEFAULT_SETTINGS: editingToolbarSettings = {
