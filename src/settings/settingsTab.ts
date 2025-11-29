@@ -1682,4 +1682,3 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     }
   }
 }
-
