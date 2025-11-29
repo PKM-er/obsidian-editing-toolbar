@@ -261,50 +261,131 @@ export class editingToolbarSettingTab extends PluginSettingTab {
         })
       );
 
+    // Top toolbar toggle
     new Setting(generalSettingContainer)
       .setName('Top Toolbar')
       .setDesc('Enable the toolbar positioned at the top.')
-      .addToggle(toggle => toggle
-        .setValue(this.plugin.settings.enableTopToolbar || false)
-        .onChange(async (value) => {
-          this.plugin.settings.enableTopToolbar = value;
-          //只初始化当前配置
-          this.plugin.onPositionStyleChange(this.plugin.positionStyle);
+      .addToggle(toggle => {
+        toggle
+          .setValue(this.plugin.settings.enableTopToolbar || false)
+          .onChange(async (value) => {
+            const s = this.plugin.settings;
+            const prevStyle = this.plugin.positionStyle;
 
-          await this.plugin.saveSettings();
-          this.display();
-        })
-      );
+            s.enableTopToolbar = value;
 
+            let nextStyle: string | null = null;
+
+            if (value) {
+              // Turning Top ON → it becomes the only active style
+              s.enableFollowingToolbar = false;
+              s.enableFixedToolbar = false;
+              nextStyle = 'top';
+            } else {
+              // Turning Top OFF
+              const anyOtherEnabled = s.enableFollowingToolbar || s.enableFixedToolbar;
+
+              if (!anyOtherEnabled) {
+                // Do not allow all three to be OFF; keep Top enabled
+                s.enableTopToolbar = true;
+                nextStyle = 'top';
+              } else if (prevStyle === 'top') {
+                // Top was the active style → move to another enabled style
+                if (s.enableFollowingToolbar) nextStyle = 'following';
+                else if (s.enableFixedToolbar) nextStyle = 'fixed';
+              }
+            }
+
+            if (nextStyle && nextStyle !== prevStyle) {
+              this.plugin.onPositionStyleChange(nextStyle);
+            }
+
+            await this.plugin.saveSettings();
+            this.display();
+          });
+      });
+
+    // Following toolbar toggle
     new Setting(generalSettingContainer)
       .setName('Following Toolbar')
       .setDesc('Enable the toolbar that appears upon text selection.')
-      .addToggle(toggle => toggle
-        .setValue(this.plugin.settings.enableFollowingToolbar || false)
-        .onChange(async (value) => {
-          this.plugin.settings.enableFollowingToolbar = value;
-          //只初始化当前配置
-          this.plugin.onPositionStyleChange(this.plugin.positionStyle);
+      .addToggle(toggle => {
+        toggle
+          .setValue(this.plugin.settings.enableFollowingToolbar || false)
+          .onChange(async (value) => {
+            const s = this.plugin.settings;
+            const prevStyle = this.plugin.positionStyle;
 
-          await this.plugin.saveSettings();
-          this.display();
-        })
-      );
+            s.enableFollowingToolbar = value;
 
+            let nextStyle: string | null = null;
+
+            if (value) {
+              // Turning Following ON → it becomes the only active style
+              s.enableTopToolbar = false;
+              s.enableFixedToolbar = false;
+              nextStyle = 'following';
+            } else {
+              const anyOtherEnabled = s.enableTopToolbar || s.enableFixedToolbar;
+
+              if (!anyOtherEnabled) {
+                s.enableFollowingToolbar = true;
+                nextStyle = 'following';
+              } else if (prevStyle === 'following') {
+                if (s.enableTopToolbar) nextStyle = 'top';
+                else if (s.enableFixedToolbar) nextStyle = 'fixed';
+              }
+            }
+
+            if (nextStyle && nextStyle !== prevStyle) {
+              this.plugin.onPositionStyleChange(nextStyle);
+            }
+
+            await this.plugin.saveSettings();
+            this.display();
+          });
+      });
+
+    // Fixed toolbar toggle
     new Setting(generalSettingContainer)
       .setName('Fixed Toolbar')
       .setDesc('Enable the toolbar whoose position may be fixed where you please.')
-      .addToggle(toggle => toggle
-        .setValue(this.plugin.settings.enableFixedToolbar || false)
-        .onChange(async (value) => {
-          this.plugin.settings.enableFixedToolbar = value;
-          //只初始化当前配置
-          this.plugin.onPositionStyleChange(this.plugin.positionStyle);
+      .addToggle(toggle => {
+        toggle
+          .setValue(this.plugin.settings.enableFixedToolbar || false)
+          .onChange(async (value) => {
+            const s = this.plugin.settings;
+            const prevStyle = this.plugin.positionStyle;
 
-          await this.plugin.saveSettings();
-          this.display();
-        })
-      );
+            s.enableFixedToolbar = value;
+
+            let nextStyle: string | null = null;
+
+            if (value) {
+              // Turning Fixed ON → it becomes the only active style
+              s.enableTopToolbar = false;
+              s.enableFollowingToolbar = false;
+              nextStyle = 'fixed';
+            } else {
+              const anyOtherEnabled = s.enableTopToolbar || s.enableFollowingToolbar;
+
+              if (!anyOtherEnabled) {
+                s.enableFixedToolbar = true;
+                nextStyle = 'fixed';
+              } else if (prevStyle === 'fixed') {
+                if (s.enableTopToolbar) nextStyle = 'top';
+                else if (s.enableFollowingToolbar) nextStyle = 'following';
+              }
+            }
+
+            if (nextStyle && nextStyle !== prevStyle) {
+              this.plugin.onPositionStyleChange(nextStyle);
+            }
+
+            await this.plugin.saveSettings();
+            this.display();
+          });
+      });
 
     // Mobile setting
     new Setting(generalSettingContainer)
@@ -333,20 +414,24 @@ export class editingToolbarSettingTab extends PluginSettingTab {
       .setName('Toolbar Settings')
       .setDesc("Configure the fixed position, cursor following, or top mode toolbar's settings.")
       .addDropdown((dropdown) => {
-        let positions: Record<string, string> = {};
+        const positions: Record<string, string> = {};
         POSITION_STYLES.map((position) => (positions[position] = position));
+
         dropdown
           .addOptions(positions)
           .setValue(this.plugin.settings.positionStyle)
           .onChange(async (value) => {
+            // Only change which style's settings are being edited.
             this.plugin.settings.positionStyle = value;
             await this.plugin.saveSettings();
-            // 调用插件的公共方法
-            this.plugin.onPositionStyleChange(value);
             this.display();
           });
       });
-    if (this.plugin.positionStyle == "top") {
+
+    // Use the selected settings style (not the active toolbar mode) to decide which controls to show
+    const settingsStyle = this.plugin.settings.positionStyle || 'top';
+
+    if (settingsStyle === 'top') {
 
       new Setting(appearanceSettingContainer)
         .setName('Editing Toolbar Auto-hide'
@@ -360,20 +445,22 @@ export class editingToolbarSettingTab extends PluginSettingTab {
             this.plugin.saveSettings();
             this.triggerRefresh();
           }));
-          new Setting(appearanceSettingContainer)
-          .setName('Editing Toolbar Centred Display'
-          )
-          .setDesc(
-            'Whether the toolbar is centred or full-width, the default is full-width.'
-          )
-          .addToggle(toggle => toggle.setValue(this.plugin.settings?.Iscentered)
-            .onChange((value) => {
-              this.plugin.settings.Iscentered = value;
-              this.plugin.saveSettings();
-              this.triggerRefresh();
-            }));
+
+      new Setting(appearanceSettingContainer)
+        .setName('Editing Toolbar Centred Display'
+        )
+        .setDesc(
+          'Whether the toolbar is centred or full-width, the default is full-width.'
+        )
+        .addToggle(toggle => toggle.setValue(this.plugin.settings?.Iscentered)
+          .onChange((value) => {
+            this.plugin.settings.Iscentered = value;
+            this.plugin.saveSettings();
+            this.triggerRefresh();
+          }));
     }
-    if (this.plugin.positionStyle == "fixed") {
+
+    if (settingsStyle === 'fixed') {
       new Setting(appearanceSettingContainer)
         .setName('Editing Toolbar Columns'
         )
@@ -406,6 +493,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
             new openSlider(this.app, this.plugin).open();
           }));
     }
+
     // Color settings
     this.createColorSettings(containerEl);
   }
