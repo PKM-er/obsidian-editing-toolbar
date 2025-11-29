@@ -1065,16 +1065,31 @@ export class editingToolbarSettingTab extends PluginSettingTab {
               break;
           }
 
-          // 更新CSS变量
+          // Sync the in-memory size
           this.plugin.toolbarIconSize = this.plugin.settings.toolbarIconSize;
-          document.documentElement.style.setProperty('--editing-toolbar-background-color', this.plugin.settings.toolbarBackgroundColor);
-          document.documentElement.style.setProperty('--editing-toolbar-icon-color', this.plugin.settings.toolbarIconColor);
-          document.documentElement.style.setProperty('--toolbar-icon-size', `${this.plugin.settings.toolbarIconSize}px`);
-
-          // 更新颜色选择器显示
+        
+          // Only update the live toolbar if the style being edited is the active one
+          const activeStyle = this.plugin.positionStyle;
+          const editingStyle = this.plugin.appearanceEditStyle ?? activeStyle;
+        
+          if (activeStyle === editingStyle) {
+            document.documentElement.style.setProperty(
+              '--editing-toolbar-background-color',
+              this.plugin.settings.toolbarBackgroundColor
+            );
+            document.documentElement.style.setProperty(
+              '--editing-toolbar-icon-color',
+              this.plugin.settings.toolbarIconColor
+            );
+            document.documentElement.style.setProperty(
+              '--toolbar-icon-size',
+              `${this.plugin.settings.toolbarIconSize}px`
+            );
+          }
+        
           this.destroyPickrs();
           this.display();
-
+        
           await this.plugin.saveSettings();
           this.triggerRefresh();
         });
@@ -1140,14 +1155,27 @@ export class editingToolbarSettingTab extends PluginSettingTab {
           .setLimits(12, 32, 1)
           .setDynamicTooltip()
           .onChange(async (value) => {
+            // This still writes into the *current style's* bucket,
+            // because of the property descriptor in main.ts
             this.plugin.settings.toolbarIconSize = value;
             this.plugin.toolbarIconSize = value;
-            document.documentElement.style.setProperty('--toolbar-icon-size', `${value}px`);
-            // 更新预览区域   
+    
+            // Decide whether we should touch the live CSS vars
+            const activeStyle = this.plugin.positionStyle;
+            const editingStyle = this.plugin.appearanceEditStyle ?? activeStyle;
+    
+            // Only update the CSS variable if we’re editing the active style
+            if (activeStyle === editingStyle) {
+              document.documentElement.style.setProperty(
+                '--toolbar-icon-size',
+                `${value}px`
+              );
+            }
+    
+            // Mark this style as "custom" (this is per-style as well)
             this.plugin.settings.aestheticStyle = 'custom';
-
+    
             await this.plugin.saveSettings();
-
           });
       });
 
@@ -1621,19 +1649,29 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     pickr.on('save', (color: any) => {
       const hexColor = color.toHEXA().toString();
       (this.plugin.settings as any)[settingKey] = hexColor;
-      document.documentElement.style.setProperty(`--editing-toolbar-${cssProperty}`, hexColor);
+  
+      // Only push the CSS variable to the *live* toolbar if we're
+      // editing the currently active style.
+      const activeStyle = this.plugin.positionStyle;
+      const editingStyle = this.plugin.appearanceEditStyle ?? activeStyle;
+  
+      if (activeStyle === editingStyle) {
+        document.documentElement.style.setProperty(
+          `--editing-toolbar-${cssProperty}`,
+          hexColor,
+        );
+      }
+  
       this.plugin.saveSettings();
-
-
-      // 当修改颜色时，切换到 custom 样式
+  
+      // 当修改颜色时，切换到 custom 样式（作用在当前正在编辑的样式上）
       if (this.plugin.settings.aestheticStyle !== 'custom') {
         this.plugin.settings.aestheticStyle = 'custom';
         this.plugin.saveSettings();
-        // 更新预览工具栏的样式
-
       }
     });
   }
+
 
   private destroyPickrs() {
     this.pickrs.forEach(pickr => {
