@@ -393,9 +393,9 @@ export const DEFAULT_SETTINGS: editingToolbarSettings = {
     "fixedCommands": [],
     "mobileCommands": [],
     "enableMultipleConfig": false,
-    "enableTopToolbar": false;
-    "enableFollowingToolbar": false;
-    "enableFixedToolbar": false;
+    "enableTopToolbar": false,
+    "enableFollowingToolbar": false,
+    "enableFixedToolbar": false,
     "appendMethod": "workspace",
     "shouldShowMenuOnSelect": false,
     "cMenuVisibility": true,
