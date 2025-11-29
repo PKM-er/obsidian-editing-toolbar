@@ -17,7 +17,6 @@ export interface AppearanceByStyle {
 }
 
 
-
 declare module 'obsidian' {
   export interface Command {
     SubmenuCommands?: Command[];
