@@ -1,3 +1,0 @@
-// język polski
-
-export default {};

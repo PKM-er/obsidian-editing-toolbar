@@ -1,3 +1,0 @@
-// Deutsch
-
-export default {};
