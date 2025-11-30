@@ -1,6 +1,5 @@
 import type editingToolbarPlugin from "src/plugin/main";
 import { CommandPicker, ChooseFromIconList, openSlider, ChangeCmdname } from "src/modals/suggesterModals";
-
 import { App, Setting, PluginSettingTab, Command, Notice, setIcon } from "obsidian";
 import { APPEND_METHODS, AESTHETIC_STYLES, POSITION_STYLES } from "src/settings/settingsData";
 import type { ToolbarStyleKey, StyleAppearanceSettings, AppearanceByStyle } from "src/settings/settingsData";
