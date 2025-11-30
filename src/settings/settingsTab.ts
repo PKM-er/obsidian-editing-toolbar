@@ -1688,11 +1688,6 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     });
   }
 
-  private triggerRefresh(): void {
-    // Rebuild the live toolbar after a settings change
-    dispatchEvent(new Event("editingToolbar-NewCommand"));
-  }
-
   private setupPickrEvents(
     pickr: any,
     settingKey: string,
@@ -1713,7 +1708,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
         settingKey === "toolbarBackgroundColor" ||
         settingKey === "toolbarIconColor"
       ) {
-        const bucket = this.getAppearanceBucket(editingStyle);
+        const bucket = this.getAppearanceBucket(editingStyle as ToolbarStyleKey);
         (bucket as any)[settingKey] = hexColor;
   
         // Only push CSS variables if we're editing the active style
