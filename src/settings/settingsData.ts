@@ -2,7 +2,6 @@ import type { Command } from "obsidian";
 export const APPEND_METHODS = ["body", "workspace"];
 export const AESTHETIC_STYLES = ["default", "tiny", "glass", "custom"];
 export const POSITION_STYLES = ["following", "top", "fixed"];
-
 export type ToolbarStyleKey = "top" | "following" | "fixed" | "mobile";
 
 export interface StyleAppearanceSettings {
