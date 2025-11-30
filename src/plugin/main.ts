@@ -145,12 +145,11 @@ export default class editingToolbarPlugin extends Plugin {
     ensureAppearanceStore(settings, migratingFromGlobal);
 
     const store = settings.appearanceByStyle as AppearanceByStyle;
-
+    
     const getCurrentStyle = (): ToolbarStyleKey => {
       const raw = (
-        this.appearanceEditStyle ||       // when editing settings, use this
-        this.positionStyle ||             // otherwise, use the runtime style
-        settings.positionStyle ||         // or the stored setting
+        this.positionStyle ||             // primary: the live toolbar style
+        settings.positionStyle ||         // fallback: whatever is stored in settings
         "top"
       ) as string;
     
