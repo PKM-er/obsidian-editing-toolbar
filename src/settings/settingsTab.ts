@@ -3,7 +3,7 @@ import { CommandPicker, ChooseFromIconList, openSlider, ChangeCmdname } from "sr
 
 import { App, Setting, PluginSettingTab, Command, Notice, setIcon } from "obsidian";
 import { APPEND_METHODS, AESTHETIC_STYLES, POSITION_STYLES } from "src/settings/settingsData";
-import type { ToolbarStyleKey } from "src/settings/settingsData";
+import type { ToolbarStyleKey, StyleAppearanceSettings, AppearanceByStyle } from "src/settings/settingsData";
 import { selfDestruct, editingToolbarPopover, checkHtml } from "src/modals/editingToolbarModal";
 import Sortable from "sortablejs";
 import { debounce } from "obsidian";
@@ -408,16 +408,20 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     appearanceSettingContainer.style.marginBottom = '20px';
   
     // Ensure the plugin knows which style we're editing
-    this.plugin.appearanceEditStyle = (this.plugin.settings.positionStyle as ToolbarStyleKey) || "top";
-  
+    const editingStyle =
+      (this.plugin.settings.positionStyle as ToolbarStyleKey) || "top";
+    this.plugin.appearanceEditStyle = editingStyle;
+    
     // Toolbar Settings – choose which style's settings to edit
     new Setting(appearanceSettingContainer)
-      .setName('Toolbar Settings')
-      .setDesc("Configure the fixed position, cursor following, or top mode toolbar's settings.")
+      .setName("Toolbar Settings")
+      .setDesc("Choose which toolbar style’s appearance you want to edit.")
       .addDropdown((dropdown) => {
         const positions: Record<string, string> = {};
-        POSITION_STYLES.map((position) => (positions[position] = position));
-  
+        POSITION_STYLES.forEach((style) => {
+          positions[style] = style[0].toUpperCase() + style.slice(1);
+        });
+    
         dropdown
           .addOptions(positions)
           .setValue(this.plugin.settings.positionStyle)
@@ -428,9 +432,10 @@ export class editingToolbarSettingTab extends PluginSettingTab {
             this.display();
           });
       });
-  
+    
     // Use the style we're *editing* to decide which controls to show
-    const settingsStyle = (this.plugin.appearanceEditStyle as ToolbarStyleKey) || "top";
+    const settingsStyle = editingStyle;
+
   
     if (settingsStyle === "top") {
       new Setting(appearanceSettingContainer)
@@ -926,7 +931,28 @@ export class editingToolbarSettingTab extends PluginSettingTab {
       });
   }
 
+  private getAppearanceBucket(style: ToolbarStyleKey): StyleAppearanceSettings {
+    const settings = this.plugin.settings;
+  
+    if (!settings.appearanceByStyle || typeof settings.appearanceByStyle !== "object") {
+      settings.appearanceByStyle = {} as AppearanceByStyle;
+    }
+  
+    const store = settings.appearanceByStyle as AppearanceByStyle;
+  
+    if (!store[style] || typeof store[style] !== "object") {
+      store[style] = {};
+    }
+  
+    return store[style]!;
+  }
+
   private createColorSettings(containerEl: HTMLElement): void {
+    const editingStyle =
+      (this.plugin.appearanceEditStyle as ToolbarStyleKey) ||
+      (this.plugin.settings.positionStyle as ToolbarStyleKey) ||
+      "top";
+    const appearanceBucket = this.getAppearanceBucket(editingStyle);
     const paintbrushContainer = containerEl.createDiv('custom-paintbrush-container');
     paintbrushContainer.style.padding = '16px';
     paintbrushContainer.style.borderRadius = '8px';
@@ -1004,86 +1030,107 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     // 添加主题选择下拉框
     new Setting(toolbarContainer)
       .setName("Toolbar Theme")
-      .setDesc("Select a preset toolbar theme, automatically setting the background colour, icon colour, and size.")
-      .addDropdown(dropdown => {
-        let aesthetics: Record<string, string> = {};
-        AESTHETIC_STYLES.map((aesthetic) => (aesthetic == 'custom' ? aesthetics[aesthetic] = 'Custom theme' : aesthetics[aesthetic] = aesthetic));
+      .setDesc("Select a preset toolbar theme; it updates background, icon colour, and size for the selected style.")
+      .addDropdown((dropdown) => {
+        const aesthetics: Record<string, string> = {};
+        AESTHETIC_STYLES.forEach((aesthetic) => {
+          aesthetics[aesthetic] =
+            aesthetic === "custom" ? "Custom theme" : aesthetic;
+        });
+    
         dropdown.addOptions(aesthetics);
-        dropdown.selectEl.options[3].disabled = true; // 禁用第一个选项
-        dropdown.addOption('light', '┌ Light');
-        dropdown.addOption('dark', '├ Dark');
-        dropdown.addOption('vibrant', '├ Vibrant');
-        dropdown.addOption('minimal', '├ Minimal');
-        dropdown.addOption('elegant', '└ Elegant');
-
-        dropdown.setValue(this.plugin.settings.aestheticStyle)
+        dropdown.selectEl.options[3].disabled = true; // disable the raw "custom" option
+        dropdown.addOption("light", "┌ Light");
+        dropdown.addOption("dark", "├ Dark");
+        dropdown.addOption("vibrant", "├ Vibrant");
+        dropdown.addOption("minimal", "├ Minimal");
+        dropdown.addOption("elegant", "└ Elegant");
+    
+        // Use the bucket for the currently edited style
+        dropdown.setValue(
+          (appearanceBucket.aestheticStyle as string) ??
+            this.plugin.settings.aestheticStyle
+        );
+    
         dropdown.onChange(async (value) => {
-          if (value in aesthetics) {
-            this.plugin.settings.aestheticStyle = value;
-            this.plugin.settings.toolbarIconSize = 18;
-          } else {
-            this.plugin.settings.aestheticStyle = 'custom';
-          }
-
-          // 根据选择的主题设置颜色和大小
-          switch (value) {
-
-            case 'light':
-              this.plugin.settings.toolbarBackgroundColor = '#F5F8FA';
-              this.plugin.settings.toolbarIconColor = '#4A5568';
-              this.plugin.settings.toolbarIconSize = 18;
-              break;
-            case 'dark':
-              this.plugin.settings.toolbarBackgroundColor = '#2D3033';
-              this.plugin.settings.toolbarIconColor = '#E2E8F0';
-              this.plugin.settings.toolbarIconSize = 18;
-              break;
-            case 'vibrant':
-              this.plugin.settings.toolbarBackgroundColor = '#7E57C2';
-              this.plugin.settings.toolbarIconColor = '#FFFFFF';
-              this.plugin.settings.toolbarIconSize = 20;
-              break;
-            case 'minimal':
-              this.plugin.settings.toolbarBackgroundColor = '#F8F9FA';
-              this.plugin.settings.toolbarIconColor = '#6B7280';
-              this.plugin.settings.toolbarIconSize = 16;
-              break;
-            case 'elegant':
-              this.plugin.settings.toolbarBackgroundColor = '#1A2F28';
-              this.plugin.settings.toolbarIconColor = '#D4AF37';
-              this.plugin.settings.toolbarIconSize = 19;
-              break;
-          }
-
-          // Sync the in-memory size
-          this.plugin.toolbarIconSize = this.plugin.settings.toolbarIconSize;
-        
-          // Only update the live toolbar if the style being edited is the active one
           const activeStyle = this.plugin.positionStyle;
-          const editingStyle = this.plugin.appearanceEditStyle ?? activeStyle;
-        
-          if (activeStyle === editingStyle) {
-            document.documentElement.style.setProperty(
-              '--editing-toolbar-background-color',
-              this.plugin.settings.toolbarBackgroundColor
-            );
-            document.documentElement.style.setProperty(
-              '--editing-toolbar-icon-color',
-              this.plugin.settings.toolbarIconColor
-            );
-            document.documentElement.style.setProperty(
-              '--toolbar-icon-size',
-              `${this.plugin.settings.toolbarIconSize}px`
-            );
+          const style =
+            (this.plugin.appearanceEditStyle as ToolbarStyleKey) ||
+            (this.plugin.settings.positionStyle as ToolbarStyleKey) ||
+            "top";
+          const bucket = this.getAppearanceBucket(style);
+    
+          if (value in aesthetics) {
+            bucket.aestheticStyle = value;
+            bucket.toolbarIconSize = 18;
+          } else {
+            // custom presets all map to "custom" aestheticStyle
+            bucket.aestheticStyle = "custom";
           }
-        
+    
+          // Set colours/sizes in the per-style bucket
+          switch (value) {
+            case "light":
+              bucket.toolbarBackgroundColor = "#F5F8FA";
+              bucket.toolbarIconColor = "#4A5568";
+              bucket.toolbarIconSize = 18;
+              break;
+            case "dark":
+              bucket.toolbarBackgroundColor = "#2D3033";
+              bucket.toolbarIconColor = "#E2E8F0";
+              bucket.toolbarIconSize = 18;
+              break;
+            case "vibrant":
+              bucket.toolbarBackgroundColor = "#7E57C2";
+              bucket.toolbarIconColor = "#FFFFFF";
+              bucket.toolbarIconSize = 20;
+              break;
+            case "minimal":
+              bucket.toolbarBackgroundColor = "#F8F9FA";
+              bucket.toolbarIconColor = "#6B7280";
+              bucket.toolbarIconSize = 16;
+              break;
+            case "elegant":
+              bucket.toolbarBackgroundColor = "#1A2F28";
+              bucket.toolbarIconColor = "#D4AF37";
+              bucket.toolbarIconSize = 19;
+              break;
+          }
+    
+          // If we're editing the *active* style, push the change to the live toolbar
+          if (activeStyle === style) {
+            const bg =
+              bucket.toolbarBackgroundColor ??
+              this.plugin.settings.toolbarBackgroundColor;
+            const icon =
+              bucket.toolbarIconColor ??
+              this.plugin.settings.toolbarIconColor;
+            const size = bucket.toolbarIconSize ?? 18;
+    
+            document.documentElement.style.setProperty(
+              "--editing-toolbar-background-color",
+              bg
+            );
+            document.documentElement.style.setProperty(
+              "--editing-toolbar-icon-color",
+              icon
+            );
+            document.documentElement.style.setProperty(
+              "--toolbar-icon-size",
+              `${size}px`
+            );
+    
+            this.plugin.toolbarIconSize = size;
+          }
+    
           this.destroyPickrs();
           this.display();
-        
+    
           await this.plugin.saveSettings();
           this.triggerRefresh();
         });
       });
+
     new Setting(toolbarContainer)
       .setName("Toolbar Background Colour")
       .setDesc("Set the background colour of the toolbar.")
@@ -1099,7 +1146,9 @@ export class editingToolbarSettingTab extends PluginSettingTab {
             containerEl: pickerContainer,
             swatches: ['#F5F8FA', '#F4F1E8', '#2D3033', '#1A2F28', '#2A1D3B'],
             opacity: true,
-            defaultColor: this.plugin.settings.toolbarBackgroundColor
+            defaultColor:
+              appearanceBucket.toolbarBackgroundColor ??
+              this.plugin.settings.toolbarBackgroundColor,
           })
         );
 
@@ -1138,32 +1187,36 @@ export class editingToolbarSettingTab extends PluginSettingTab {
 
     new Setting(toolbarContainer)
       .setName("Toolbar Icon Size")
-      .setDesc("Set the size of the toolbar icon (px) default 18px.")
+      .setDesc("Set the size of the toolbar icon (px), default 18px.")
       .addSlider((slider) => {
+        const initialSize =
+          appearanceBucket.toolbarIconSize ??
+          this.plugin.settings.toolbarIconSize;
+    
         slider
-          .setValue(this.plugin.settings.toolbarIconSize)
+          .setValue(initialSize)
           .setLimits(12, 32, 1)
           .setDynamicTooltip()
           .onChange(async (value) => {
-            // This still writes into the *current style's* bucket,
-            // because of the property descriptor in main.ts
-            this.plugin.settings.toolbarIconSize = value;
-            this.plugin.toolbarIconSize = value;
-    
-            // Decide whether we should touch the live CSS vars
             const activeStyle = this.plugin.positionStyle;
-            const editingStyle = this.plugin.appearanceEditStyle ?? activeStyle;
+            const style =
+              (this.plugin.appearanceEditStyle as ToolbarStyleKey) ||
+              (this.plugin.settings.positionStyle as ToolbarStyleKey) ||
+              "top";
+            const bucket = this.getAppearanceBucket(style);
     
-            // Only update the CSS variable if we’re editing the active style
-            if (activeStyle === editingStyle) {
+            // Per-style value
+            bucket.toolbarIconSize = value;
+            bucket.aestheticStyle = "custom";
+    
+            // Only touch the live toolbar when editing the active style
+            if (activeStyle === style) {
+              this.plugin.toolbarIconSize = value;
               document.documentElement.style.setProperty(
-                '--toolbar-icon-size',
+                "--toolbar-icon-size",
                 `${value}px`
               );
             }
-    
-            // Mark this style as "custom" (this is per-style as well)
-            this.plugin.settings.aestheticStyle = 'custom';
     
             await this.plugin.saveSettings();
           });
@@ -1635,30 +1688,52 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     });
   }
 
-  private setupPickrEvents(pickr: any, settingKey: string, cssProperty: string) {
-    pickr.on('save', (color: any) => {
+  private triggerRefresh(): void {
+    // Rebuild the live toolbar after a settings change
+    dispatchEvent(new Event("editingToolbar-NewCommand"));
+  }
+
+  private setupPickrEvents(
+    pickr: any,
+    settingKey: string,
+    cssProperty: string
+  ) {
+    pickr.on("save", (color: any) => {
       const hexColor = color.toHEXA().toString();
-      (this.plugin.settings as any)[settingKey] = hexColor;
   
-      // Only push the CSS variable to the *live* toolbar if we're
-      // editing the currently active style.
       const activeStyle = this.plugin.positionStyle;
-      const editingStyle = this.plugin.appearanceEditStyle ?? activeStyle;
+      const editingStyle =
+        (this.plugin.appearanceEditStyle as ToolbarStyleKey) ||
+        (this.plugin.settings.positionStyle as ToolbarStyleKey) ||
+        activeStyle ||
+        "top";
   
-      if (activeStyle === editingStyle) {
-        document.documentElement.style.setProperty(
-          `--editing-toolbar-${cssProperty}`,
-          hexColor,
-        );
+      // For the main toolbar colour fields, use the per-style bucket.
+      if (
+        settingKey === "toolbarBackgroundColor" ||
+        settingKey === "toolbarIconColor"
+      ) {
+        const bucket = this.getAppearanceBucket(editingStyle);
+        (bucket as any)[settingKey] = hexColor;
+  
+        // Only push CSS variables if we're editing the active style
+        if (activeStyle === editingStyle) {
+          document.documentElement.style.setProperty(
+            `--editing-toolbar-${cssProperty}`,
+            hexColor
+          );
+        }
+  
+        // Changing a colour implies a custom aesthetic for this style
+        if (bucket.aestheticStyle !== "custom") {
+          bucket.aestheticStyle = "custom";
+        }
+      } else {
+        // All other keys (custom_bgX/custom_fcX) stay as global settings
+        (this.plugin.settings as any)[settingKey] = hexColor;
       }
   
       this.plugin.saveSettings();
-  
-      // 当修改颜色时，切换到 custom 样式（作用在当前正在编辑的样式上）
-      if (this.plugin.settings.aestheticStyle !== 'custom') {
-        this.plugin.settings.aestheticStyle = 'custom';
-        this.plugin.saveSettings();
-      }
     });
   }
 
