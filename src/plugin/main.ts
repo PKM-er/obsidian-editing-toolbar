@@ -18,6 +18,7 @@ import {
 import { editingToolbarSettingTab } from '../settings/settingsTab';
 import { selfDestruct, editingToolbarPopover, quiteFormatbrushes, createFollowingbar, setFormateraser, isExistoolbar, resetToolbar } from "src/modals/editingToolbarModal";
 import { editingToolbarSettings, DEFAULT_SETTINGS } from "src/settings/settingsData";
+import { t } from 'src/translations/helper';
 import addIcons, {
   // addFeatherIcons,
   // addRemixIcons
