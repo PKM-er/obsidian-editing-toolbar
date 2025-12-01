@@ -41,115 +41,102 @@ export function getRootSplits(): WorkspaceParentExt[] {
 }
 
 export function resetToolbar() {
-  requireApiVersion("0.15.0") ? activeDocument = activeWindow.document : activeDocument = window.document;
-  let currentleaf = activeDocument;
-  let editingToolbarModalBar = currentleaf.querySelectorAll(
-    "#editingToolbarModalBar"
-  );
-  let editingToolbarPopoverBar = currentleaf.querySelectorAll(
-    "#editingToolbarPopoverBar"
-  );
-  editingToolbarModalBar.forEach(element => {
-    if (element) {
-      if (element.firstChild) {
-        element.removeChild(element.firstChild);
-      }
-      element.remove();
-    }
+  requireApiVersion("0.15.0")
+    ? (activeDocument = activeWindow.document)
+    : (activeDocument = window.document);
 
-  });
-  editingToolbarPopoverBar.forEach(element => {
-    if (element) {
-      if (element.firstChild) {
-        element.removeChild(element.firstChild);
-      }
-      element.remove();
-    }
+  const currentDoc = activeDocument;
 
+  const toolbars = currentDoc.querySelectorAll(".editingToolbarModalBar");
+  const popovers = currentDoc.querySelectorAll(".editingToolbarPopoverBar");
+
+  toolbars.forEach((element) => {
+    if (element.firstChild) {
+      element.removeChild(element.firstChild);
+    }
+    element.remove();
   });
 
+  popovers.forEach((element) => {
+    if (element.firstChild) {
+      element.removeChild(element.firstChild);
+    }
+    element.remove();
+  });
 }
 
 export function selfDestruct() {
-  requireApiVersion("0.15.0") ? activeDocument = activeWindow.document : activeDocument = window.document;
-  const toolBarElement = activeDocument.getElementById("editingToolbarModalBar");
-  if (toolBarElement) toolBarElement.remove();
+  requireApiVersion("0.15.0")
+    ? (activeDocument = activeWindow.document)
+    : (activeDocument = window.document);
+
   const rootSplits = getRootSplits();
-  const clearToolbar = (leaf: HTMLElement) => {
 
-    let editingToolbarModalBar = leaf.querySelectorAll(
-      "#editingToolbarModalBar"
-    );
-    let editingToolbarPopoverBar = leaf.querySelectorAll(
-      "#editingToolbarPopoverBar"
-    );
+  const clearToolbar = (root: ParentNode) => {
+    const toolbars = root.querySelectorAll(".editingToolbarModalBar");
+    const popovers = root.querySelectorAll(".editingToolbarPopoverBar");
 
-    editingToolbarModalBar.forEach(element => {
-      if (element) {
-        if (element.firstChild) {
-          element.removeChild(element.firstChild);
-        }
-        element.remove();
+    toolbars.forEach((element) => {
+      if (element.firstChild) {
+        element.removeChild(element.firstChild);
       }
-
-    });
-    editingToolbarPopoverBar.forEach(element => {
-      if (element) {
-        if (element.firstChild) {
-          element.removeChild(element.firstChild);
-        }
-        element.remove();
-      }
-
+      element.remove();
     });
 
+    popovers.forEach((element) => {
+      if (element.firstChild) {
+        element.removeChild(element.firstChild);
+      }
+      element.remove();
+    });
+  };
 
-  }
-  if (rootSplits)
+  // 清理主文档中的工具栏
+  clearToolbar(activeDocument);
+
+  // 清理各个 root split 容器中的工具栏
+  if (rootSplits) {
     rootSplits.forEach((rootSplit: WorkspaceParentExt) => {
-      if (rootSplit?.containerEl)
-        clearToolbar(rootSplit?.containerEl)
+      if (rootSplit?.containerEl) {
+        clearToolbar(rootSplit.containerEl);
+      }
     });
-
+  }
 }
 
 export function isExistoolbar(
   app: App,
   plugin: editingToolbarPlugin,
   style?: ToolbarStyleKey
-): HTMLElement | null {
+): HTMLElement {
   requireApiVersion("0.15.0")
     ? (activeDocument = activeWindow.document)
     : (activeDocument = window.document);
 
-  // Decide which style we are looking for.
-  // If not provided, fall back to the legacy single-style behaviour.
+  // 决定要查找的样式；未显式传入时，保持原有行为
   const targetStyle: ToolbarStyleKey =
     (style ||
       (plugin.positionStyle as ToolbarStyleKey) ||
       (plugin.settings.positionStyle as ToolbarStyleKey) ||
       "top") as ToolbarStyleKey;
 
-  // This assumes Step 1 is in place: each toolbar has
-  // class "editingToolbarModalBar" + data-toolbar-style="<style>"
   const selector = `.editingToolbarModalBar[data-toolbar-style="${targetStyle}"]`;
 
   let container: HTMLElement | null = null;
 
   if (targetStyle === "top") {
-    // Top toolbar lives inside the active leaf’s container
+    // top 样式的工具栏挂在当前活动 leaf 容器下
     container =
       (app.workspace.activeLeaf?.view.containerEl?.querySelector(
         selector
       ) as HTMLElement) || null;
   } else {
-    // Following / fixed toolbars are global in the document
+    // 其它样式的工具栏在整个文档范围查找
     container = activeDocument.querySelector(selector) as HTMLElement;
   }
 
-  return container ?? null;
+  return container ? (container as HTMLElement) : null;
 }
-
 
 const getNestedObject = (nestedObj: any, pathArr: any[]) => {
   return pathArr.reduce((obj, key) =>
@@ -638,9 +625,10 @@ export function editingToolbarPopover(
         buttonWidth = plugin.toolbarIconSize + 8;
       }
     
+      // 主工具栏容器
       let editingToolbar = createEl("div");
       if (editingToolbar) {
-        // NEW: give every toolbar a shared class and a style marker
+        // 标记为编辑工具栏，并带上样式信息
         editingToolbar.addClass("editingToolbarModalBar");
         editingToolbar.setAttribute("data-toolbar-style", effectiveStyle);
     
@@ -653,21 +641,20 @@ export function editingToolbarPopover(
             editingToolbar.className += " centered";
           }
         } else if (effectiveStyle === "following") {
-          // For the following toolbar, start hidden; it will be positioned and shown when text is selected.
+          // following 工具栏初始隐藏，待选中文本后定位并显示
           editingToolbar.style.visibility = "hidden";
         } else if (effectiveStyle === "fixed") {
           const Rowsize = settings.toolbarIconSize || 18;
           editingToolbar.setAttribute(
             "style",
             `left: calc(50% - calc(${settings.cMenuNumRows * (Rowsize + 10)}px / 2));
-       bottom: 4.25em; 
-       grid-template-columns: repeat(${settings.cMenuNumRows}, ${Rowsize + 10}px);
-       gap: ${(Rowsize - 18) / 4}px`
+           bottom: 4.25em; 
+           grid-template-columns: repeat(${settings.cMenuNumRows}, ${Rowsize + 10}px);
+           gap: ${(Rowsize - 18) / 4}px`
           );
         }
       }
-    
-      // Keep the old id so existing CSS keeps working
+      // 继续保留旧的 id，以兼容当前 CSS
       editingToolbar.setAttribute("id", "editingToolbarModalBar");
     
       // 二级弹出菜单
@@ -675,24 +662,20 @@ export function editingToolbarPopover(
       PopoverMenu.addClass("editingToolbarpopover");
       PopoverMenu.addClass("editingToolbarTinyAesthetic");
     
-      // NEW: shared class + style marker for popover as well
+      // 标记为 Popover 工具栏，并带上样式信息
       PopoverMenu.addClass("editingToolbarPopoverBar");
       PopoverMenu.setAttribute("data-toolbar-style", effectiveStyle);
     
-      // Keep the old id so existing CSS keeps working
+      // 继续保留旧的 id，以兼容当前 CSS
       PopoverMenu.setAttribute("id", "editingToolbarPopoverBar");
     
       PopoverMenu.style.visibility = "hidden";
       PopoverMenu.style.height = "0";
-
-
+    
       // 在生成工具栏时应用样式
       applyAestheticStyle(editingToolbar, settings.aestheticStyle);
-      // 在生成工具栏时应用样式
+      // 在生成 Popover 时应用样式
       applyAestheticStyle(PopoverMenu, settings.aestheticStyle);
-      //  if (settings.positionStyle == "following") {
-      //    editingToolbar.style.visibility = "hidden";
-      // }
 
       if (effectiveStyle === "top") {
         let currentleaf = app.workspace.activeLeaf.view.containerEl;
