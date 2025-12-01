@@ -1,6 +1,5 @@
 import { App, Modal, Setting, setIcon, DropdownComponent, Platform } from "obsidian";
 import editingToolbarPlugin, { AdmonitionDefinition } from "src/plugin/main";
-import { t } from "src/translations/helper";
 interface BuiltInCalloutType {
     type: string;
     aliases: string[];
@@ -370,4 +369,5 @@ export class InsertCalloutModal extends Modal {
     }
 
 }
+
 
