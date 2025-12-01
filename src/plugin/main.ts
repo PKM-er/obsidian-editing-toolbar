@@ -1226,26 +1226,6 @@ updateCurrentCommands(commands: any[], style?: string): void {
       this.formatBrushActive;
   }
 
-  private isFollowingToolbarActive(): boolean {
-    // New multi-toolbar setting: explicitly enable the following toolbar
-    if (this.settings.enableFollowingToolbar) {
-      return true;
-    }
-
-    // Backwards compatibility:
-    // if neither top nor fixed have been explicitly enabled, and the
-    // global positionStyle is "following", behave as the old single-mode
-    if (
-      !this.settings.enableTopToolbar &&
-      !this.settings.enableFixedToolbar &&
-      this.positionStyle === "following"
-    ) {
-      return true;
-    }
-
-    return false;
-  }
-
   private handleKeyboardSelection = (e: KeyboardEvent) => {
     const selectionKeys = [
       "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight",
