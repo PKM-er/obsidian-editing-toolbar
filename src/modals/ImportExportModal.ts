@@ -26,26 +26,26 @@ export class ImportExportModal extends Modal {
     contentEl.addClass('editing-toolbar-import-export-modal');
 
     contentEl.createEl('h2', {
-      text: this.mode === 'import' ? t('Import Configuration') : t('Export Configuration'),
+      text: this.mode === 'import' ? 'Import Configuration' : 'Export Configuration',
       cls: 'import-export-title'
     });
 
     if (this.mode === 'export') {
       // 导出模式 - 选择导出内容
       new Setting(contentEl)
-        .setName(t('Export Type'))
-        .setDesc(t('Choose what to export'))
+        .setName('Export Type')
+        .setDesc('Choose what to export')
         .addDropdown(dropdown => {
           dropdown
-            .addOption('all', t('All Settings'))
-            .addOption('All commands', t('All Toolbar Commands'))
-            .addOption('custom', t('Custom Commands Only'))
+            .addOption('all', 'All Settings')
+            .addOption('All commands', 'All Toolbar Commands')
+            .addOption('custom', 'Custom Commands Only')
           if (this.plugin.settings.enableMultipleConfig) {
             dropdown
-              .addOption('following', t('Following Style Only'))
-              .addOption('top', t('Top Style Only'))
-              .addOption('fixed', t('Fixed Style Only'))
-              .addOption('mobile', t('Mobile Style Only'))
+              .addOption('following', 'Following Style Only')
+              .addOption('top', 'Top Style Only')
+              .addOption('fixed', 'Fixed Style Only')
+              .addOption('mobile', 'Mobile Style Only')
           }
 
           dropdown.setValue(this.exportType)
@@ -65,7 +65,7 @@ export class ImportExportModal extends Modal {
       this.textArea = new TextAreaComponent(exportContainer);
       this.textArea
         .setValue('')
-        .setPlaceholder(t('Loading...'))
+        .setPlaceholder('Loading...')
         .then(textArea => {
           textArea.inputEl.style.width = '100%';
           textArea.inputEl.style.height = '200px';
@@ -86,18 +86,18 @@ export class ImportExportModal extends Modal {
       buttonContainer.style.marginTop = '16px';
 
       const copyButton = buttonContainer.createEl('button', {
-        text: t('Copy to Clipboard'),
+        text: 'Copy to Clipboard',
         cls: 'mod-cta'
       });
 
       copyButton.addEventListener('click', () => {
         navigator.clipboard.writeText(this.textArea.getValue())
           .then(() => {
-            new Notice(t('Configuration copied to clipboard'));
+            new Notice('Configuration copied to clipboard';
           })
           .catch(err => {
             console.error('Failed to copy: ', err);
-            new Notice(t('Failed to copy configuration'));
+            new Notice('Failed to copy configuration';
           });
       });
     } else {
@@ -105,17 +105,17 @@ export class ImportExportModal extends Modal {
 
       // 添加导入模式选择
       const importModeSetting = new Setting(contentEl)
-        .setName(t('Import Mode'))
-        .setDesc(t('Choose how to import the configuration'))
+        .setName('Import Mode'
+        .setDesc('Choose how to import the configuration'
         .addDropdown(dropdown => {
           dropdown
-            .addOption('update', t('Update Mode (Add new items and update existing ones)'))
-            .addOption('overwrite', t('Overwrite Mode (Replace settings with imported ones)'))
+            .addOption('update', 'Update Mode (Add new items and update existing ones)'
+            .addOption('overwrite', 'Overwrite Mode (Replace settings with imported ones)'
             .setValue(this.importMode)
             .onChange(value => {
               this.importMode = value as 'overwrite' | 'update';
-              this.importButton.setButtonText(this.importMode === 'overwrite' ? t('Overwrite Import') : t('Update Import'));
-              this.warningContent.setText(this.importMode === 'overwrite' ? t('Warning: Overwrite mode will replace existing settings with imported ones.') : t('Warning: Update mode will add new items and update existing ones.'));
+              this.importButton.setButtonText(this.importMode === 'overwrite' ? 'Overwrite Import' : 'Update Import');
+              this.warningContent.setText(this.importMode === 'overwrite' ? 'Warning: Overwrite mode will replace existing settings with imported ones.' : 'Warning: Update mode will add new items and update existing ones.');
             });
         });
       const importContainer = contentEl.createDiv('import-container');
@@ -127,7 +127,7 @@ export class ImportExportModal extends Modal {
       this.textArea = new TextAreaComponent(importContainer);
       this.textArea
         .setValue('')
-        .setPlaceholder(t('Paste configuration here...'))
+        .setPlaceholder('Paste configuration here...')
         .then(textArea => {
           textArea.inputEl.style.width = '100%';
           textArea.inputEl.style.height = '200px';
@@ -151,7 +151,7 @@ export class ImportExportModal extends Modal {
         .addButton(button => {
           this.importButton = button
             .setIcon('import')
-            .setButtonText(t('Import Configuration'))
+            .setButtonText('Import Configuration'
             .onClick(() => {
               this.importConfiguration();
             });
@@ -167,7 +167,7 @@ export class ImportExportModal extends Modal {
       warningDiv.style.border = '1px solid rgba(var(--color-red-rgb), 0.3)';
 
       const warningParagraph = warningDiv.createEl('p', {
-        text: t('Warning: Update mode will add new items and update existing ones.'),
+        text: 'Warning: Update mode will add new items and update existing ones.',
         cls: 'warning-text'
       });
       warningParagraph.style.margin = '0';
@@ -315,7 +315,7 @@ export class ImportExportModal extends Modal {
     try {
       const importText = this.textArea.getValue();
       if (!importText.trim()) {
-        new Notice(t('Please paste configuration data first'));
+        new Notice('Please paste configuration data first');
         return;
       }
 
@@ -323,7 +323,7 @@ export class ImportExportModal extends Modal {
 
       // 基本验证
       if (!importData || typeof importData !== 'object') {
-        new Notice(t('Invalid import data format'));
+        new Notice('Invalid import data format');
         return;
       }
 
@@ -355,33 +355,33 @@ export class ImportExportModal extends Modal {
       const emptyMobileCommands = containsMobileCommands && (!Array.isArray(importData.mobileCommands) || importData.mobileCommands.length === 0);
 
       // 构建导入内容摘要
-      let importSummary = t('This import will:') + '\n';
+      let importSummary = 'This import will:' + '\n';
 
       // 添加更新内容
-      if (containsGeneralSettings) importSummary += '• ' + t('Update general settings') + '\n';
-      if (hasMenuCommands) importSummary += '• ' + t('Update Main Menu Commands') + ' (' + importData.menuCommands.length + ' ' + ')\n';
-      if (hasCustomCommands) importSummary += '• ' + t('Update Custom Commands') + ' (' + importData.customCommands.length + ' ' + ')\n';
-      if (hasFollowingCommands) importSummary += '• ' + t('Update Following Style Commands') + ' (' + importData.followingCommands.length + ' ' + ')\n';
-      if (hasTopCommands) importSummary += '• ' + t('Update Top Style Commands') + ' (' + importData.topCommands.length + ' ' + ')\n';
-      if (hasFixedCommands) importSummary += '• ' + t('Update Fixed Style Commands') + ' (' + importData.fixedCommands.length + ' ' + ')\n';
-      if (hasMobileCommands) importSummary += '• ' + t('Update Mobile Style Commands') + ' (' + importData.mobileCommands.length + ' ' + ')\n';
+      if (containsGeneralSettings) importSummary += '• ' + 'Update general settings' + '\n';
+      if (hasMenuCommands) importSummary += '• ' + 'Update Main Menu Commands' + ' (' + importData.menuCommands.length + ' ' + ')\n';
+      if (hasCustomCommands) importSummary += '• ' + 'Update Custom Commands' + ' (' + importData.customCommands.length + ' ' + ')\n';
+      if (hasFollowingCommands) importSummary += '• ' + 'Update Following Style Commands' + ' (' + importData.followingCommands.length + ' ' + ')\n';
+      if (hasTopCommands) importSummary += '• ' + 'Update Top Style Commands' + ' (' + importData.topCommands.length + ' ' + ')\n';
+      if (hasFixedCommands) importSummary += '• ' + 'Update Fixed Style Commands' + ' (' + importData.fixedCommands.length + ' ' + ')\n';
+      if (hasMobileCommands) importSummary += '• ' + 'Update Mobile Style Commands' + ' (' + importData.mobileCommands.length + ' ' + ')\n';
       if (this.importMode === 'overwrite') {
         // 添加清空内容
-        if (emptyMenuCommands) importSummary += '• ' + t('Clear all Main Menu Commands') + ' ⚠️\n';
-        if (emptyCustomCommands) importSummary += '• ' + t('Clear all Custom Commands') + ' ⚠️\n';
-        if (emptyFollowingCommands) importSummary += '• ' + t('Clear all Following Style Commands') + ' ⚠️\n';
-        if (emptyTopCommands) importSummary += '• ' + t('Clear all Top Style Commands') + ' ⚠️\n';
-        if (emptyFixedCommands) importSummary += '• ' + t('Clear all Fixed Style Commands') + ' ⚠️\n';
-        if (emptyMobileCommands) importSummary += '• ' + t('Clear all Mobile Style Commands') + ' ⚠️\n';
+        if (emptyMenuCommands) importSummary += '• ' + 'Clear all Main Menu Commands' + ' ⚠️\n';
+        if (emptyCustomCommands) importSummary += '• ' + 'Clear all Custom Commands' + ' ⚠️\n';
+        if (emptyFollowingCommands) importSummary += '• ' + 'Clear all Following Style Commands' + ' ⚠️\n';
+        if (emptyTopCommands) importSummary += '• ' + 'Clear all Top Style Commands' + ' ⚠️\n';
+        if (emptyFixedCommands) importSummary += '• ' + 'Clear all Fixed Style Commands' + ' ⚠️\n';
+        if (emptyMobileCommands) importSummary += '• ' + 'Clear all Mobile Style Commands' + ' ⚠️\n';
       }
       // 添加其他设置信息
       if (containsEnableMultipleConfig) {
-        const multiConfigStatus = importData.enableMultipleConfig ? t('Enable') : t('Disable');
-        importSummary += '• ' + t('Set Multiple Config to:') + ' ' + multiConfigStatus + '\n';
+        const multiConfigStatus = importData.enableMultipleConfig ? 'Enable' : 'Disable';
+        importSummary += '• ' + 'Set Multiple Config to:' + ' ' + multiConfigStatus + '\n';
       }
 
       if (positionStyle) {
-        importSummary += '• ' + t('Set Position Style to:') + ' ' + this.getPositionStyleName(positionStyle) + '\n';
+        importSummary += '• ' + 'Set Position Style to:' + ' ' + this.getPositionStyleName(positionStyle) + '\n';
       }
 
       // 如果没有找到任何有效配置
@@ -390,20 +390,20 @@ export class ImportExportModal extends Modal {
         !emptyMenuCommands && !emptyCustomCommands && !emptyFollowingCommands &&
         !emptyTopCommands && !emptyFixedCommands && !emptyMobileCommands &&
         !containsGeneralSettings && !containsEnableMultipleConfig) {
-        new Notice(t('No valid configuration found in import data'));
+        new Notice('No valid configuration found in import data');
         return;
       }
 
       // 添加导入模式提示
       if (this.importMode === 'overwrite') {
-        importSummary += '\n' + t('⚠️ Overwrite mode will replace existing settings with imported ones.');
+        importSummary += '\n' + '⚠️ Overwrite mode will replace existing settings with imported ones.';
       } else {
-        importSummary += '\n' + t('ℹ️ Update mode will merge imported settings with existing ones.');
+        importSummary += '\n' + 'ℹ️ Update mode will merge imported settings with existing ones.';
       }
 
       // 显示确认对话框
       ConfirmModal.show(this.app, {
-        message: importSummary + '\n' + t('Do you want to continue?'),
+        message: importSummary + '\n' + 'Do you want to continue?',
         onConfirm: async () => {
 
 
@@ -440,7 +440,7 @@ export class ImportExportModal extends Modal {
             // 触发工具栏更新
             dispatchEvent(new Event("editingToolbar-NewCommand"));
 
-            new Notice(t('Configuration imported successfully'));
+            new Notice('Configuration imported successfully');
             this.close();
           } catch (error) {
             // 导入失败，恢复备份
@@ -454,7 +454,7 @@ export class ImportExportModal extends Modal {
 
     } catch (error) {
       console.error('Import error:', error);
-      new Notice(t('Error:') + ' ' + error.message);
+      new Notice('Error:' + ' ' + error.message);
     }
 
 
@@ -630,14 +630,15 @@ export class ImportExportModal extends Modal {
   getPositionStyleName(style: string): string {
     switch (style) {
       case 'following':
-        return t('Following Style');
+        return 'Following Style';
       case 'top':
-        return t('Top Style');
+        return 'Top Style';
       case 'fixed':
-        return t('Fixed Style');
+        return 'Fixed Style';
       default:
         return style;
     }
   }
 
 } 
+
