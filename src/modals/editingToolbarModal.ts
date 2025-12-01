@@ -737,8 +737,8 @@ export function editingToolbarPopover(
       let editingToolbarPopoverBar = app.workspace.activeLeaf.view.containerEl
         ?.querySelector("#editingToolbarPopoverBar") as HTMLElement;
 
-      // 使用plugin.getCurrentCommands()获取当前位置样式对应的命令配置
-      const currentCommands = plugin.getCurrentCommands();
+      // Use per-style commands based on the toolbar we are rendering
+      const currentCommands = plugin.getCurrentCommands(effectiveStyle);
 
       currentCommands.forEach((item, index) => {
         let tip;
