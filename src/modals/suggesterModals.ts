@@ -25,7 +25,7 @@ export class ChooseFromIconList extends FuzzySuggestModal<string> {
     this.command = command;
     this.issub = issub;
     this.customCallback = callback || null;
-    this.setPlaceholder(t("Choose an icon"));
+    this.setPlaceholder("Choose an icon");
     this.currentEditingConfig = currentEditingConfig || "";
   }
 
@@ -151,7 +151,7 @@ export class CustomIcon extends Modal {
 
   onOpen() {
     const { contentEl } = this;
-    contentEl.createEl("b", { text: t("Enter the icon code, format as <svg>.... </svg>") });
+    contentEl.createEl("b", { text: "Enter the icon code, format as <svg>.... </svg>" });
     
     const textComponent = document.createElement("textarea");
     textComponent.className = "wideInputPromptInputEl";
@@ -217,7 +217,7 @@ export class CommandPicker extends FuzzySuggestModal<Command> {
   constructor(private plugin: editingToolbarPlugin,currentEditingConfig?:string) {
     super(plugin.app);
     this.app;
-    this.setPlaceholder(t("Choose a command"));
+    this.setPlaceholder("Choose a command");
     this.currentEditingConfig = currentEditingConfig || "";
   }
 
@@ -239,7 +239,7 @@ export class CommandPicker extends FuzzySuggestModal<Command> {
 
     if (index > -1) // 命令已存在
     {
-      new Notice(t("The command") + item.name + t("already exists"), 3000);
+      new Notice("The command" + item.name + "already exists", 3000);
       return;
     } else {
       if (item.icon) {
@@ -283,7 +283,7 @@ export class ChangeCmdname extends Modal {
   }
   onOpen() {
     const { contentEl } = this;
-    contentEl.createEl("b", { text: t("Please enter a new name：") });
+    contentEl.createEl("b", { text: "Please enter a new name：" });
 
     const textComponent = new TextComponent(contentEl);
     textComponent.inputEl.classList.add('InputPromptInputEl');
@@ -340,21 +340,21 @@ export class openSlider extends Modal {
 
   onOpen() {
     const { contentEl } = this;
-    contentEl.createEl("p", { text: t("Drag the slider to move the position") });
+    contentEl.createEl("p", { text: "Drag the slider to move the position" });
 
     // 创建一个容器来放置滑动条和按钮
     const containerEl = contentEl.createDiv({ cls: "slider-container" });
 
     // 创建垂直位置控制区域
     const verticalContainer = containerEl.createDiv({ cls: "vertical-slider-container" });
-    verticalContainer.createEl("p", { text: t("Vertical Position") });
+    verticalContainer.createEl("p", { text: "Vertical Position" });
 
     // 创建水平位置控制区域
     const horizontalContainer = containerEl.createDiv({ cls: "horizontal-slider-container" });
-    horizontalContainer.createEl("p", { text: t("Horizontal Position") });
+    horizontalContainer.createEl("p", { text: "Horizontal Position" });
       // 添加列数控制区域
       const columnsContainer = containerEl.createDiv({ cls: "columns-slider-container" });
-      columnsContainer.createEl("p", { text: t("Editing Toolbar columns") });
+      columnsContainer.createEl("p", { text: "Editing Toolbar columns" });
     // 获取body容器的高度和宽度
     const bodyHeight = document.body.clientHeight;
     const bodyWidth = document.body.clientWidth;
@@ -405,7 +405,7 @@ export class openSlider extends Modal {
 
     // 复位按钮
     resetContainer.createEl("button", {
-      text: t("Reset"),
+      text: "Reset",
       cls: "reset-button"
     }).addEventListener("click", () => {
       this.needSave = true;
