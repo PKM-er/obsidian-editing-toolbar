@@ -1,7 +1,6 @@
 import type editingToolbarPlugin from "src/plugin/main";
 import { App, Notice, requireApiVersion, ItemView, MarkdownView, ButtonComponent, WorkspaceParent, WorkspaceWindow, WorkspaceParentExt } from "obsidian";
 import { backcolorpicker, colorpicker } from "src/util/util";
-import { t } from "src/translations/helper";
 import { editingToolbarSettings, ToolbarStyleKey } from "src/settings/settingsData";
 import { ViewUtils } from 'src/util/viewUtils';
 import { setBottomValue, setHorizontalValue } from "src/util/statusBarConstants";
