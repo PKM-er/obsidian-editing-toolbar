@@ -1,5 +1,4 @@
 import { Modal, App, ButtonComponent } from 'obsidian';
-import { t } from 'src/translations/helper';
 
 interface ConfirmModalOptions {
     title?: string;
@@ -62,4 +61,5 @@ export class ConfirmModal extends Modal {
     static show(app: App, options: ConfirmModalOptions) {
         new ConfirmModal(app, options).open();
     }
+
 }
