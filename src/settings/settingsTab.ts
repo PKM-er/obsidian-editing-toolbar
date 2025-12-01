@@ -7,7 +7,6 @@ import { selfDestruct, editingToolbarPopover, checkHtml } from "src/modals/editi
 import Sortable from "sortablejs";
 import { debounce } from "obsidian";
 import { GenNonDuplicateID } from "src/util/util";
-import { t } from 'src/translations/helper';
 import { ToolbarCommand } from './ToolbarSettings';
 import { UpdateNoticeModal } from "src/modals/updateModal";
 import Pickr from "@simonwep/pickr";
