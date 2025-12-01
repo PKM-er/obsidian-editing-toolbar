@@ -129,7 +129,7 @@ export class InsertCalloutModal extends Modal {
         // Ensure iconContainerEl is created fresh each time display is called
         this.iconContainerEl = typeContainer.createDiv("callout-icon-container");
         new Setting(typeContainer)
-            .setName(t("Callout Type"))
+            .setName("Callout Type")
             .addDropdown((dropdown: DropdownComponent) => {
                 // Populate built-in types first
                 const builtIns = this.allCalloutOptions.filter(opt => !opt.isAdmonition);
@@ -171,10 +171,10 @@ export class InsertCalloutModal extends Modal {
 
         // 标题输入
         const titleSetting = new Setting(contentEl)
-            .setName(t("Title"))
-            .setDesc(t("Optional, leave blank for default title"))
+            .setName("Title")
+            .setDesc("Optional, leave blank for default title")
             .addText((text) => {
-                text.setPlaceholder(t("Input title"))
+                text.setPlaceholder("Input title")
                     .setValue(this.title)
                     .onChange((value) => {
                         this.title = value;
@@ -183,12 +183,12 @@ export class InsertCalloutModal extends Modal {
 
         // 折叠选项
         new Setting(contentEl)
-            .setName(t("Collapse State"))
+            .setName("Collapse State")
             .addDropdown((dropdown) => {
                 dropdown
-                    .addOption("none", t("Default"))
-                    .addOption("open", t("Open"))
-                    .addOption("closed", t("Closed"))
+                    .addOption("none", "Default")
+                    .addOption("open", "Open")
+                    .addOption("closed", "Closed")
                     .setValue(this.collapse)
                     .onChange((value: "none" | "open" | "closed") => {
                         this.collapse = value;
@@ -197,9 +197,9 @@ export class InsertCalloutModal extends Modal {
 
         // 内容输入
         const contentSetting = new Setting(contentEl)
-            .setName(t("Content"))
+            .setName("Content")
             .addTextArea((text) => {
-                text.setPlaceholder(t("Input content"))
+                text.setPlaceholder("Input content")
                     .setValue(this.content)
                     .onChange((value) => {
                         this.content = value;
@@ -211,7 +211,7 @@ export class InsertCalloutModal extends Modal {
 
         // 添加快捷键提示
         const shortcutHint = contentEl.createDiv("shortcut-hint");
-        shortcutHint.setText(`${Platform.isMacOS ? "⌘" : "Ctrl"} + Enter ${t("to insert")}`);
+        shortcutHint.setText(`${Platform.isMacOS ? "⌘" : "Ctrl"} + Enter ${"to insert"}`);
         shortcutHint.style.textAlign = "right";
         shortcutHint.style.fontSize = "0.8em";
         shortcutHint.style.opacity = "0.7";
@@ -221,7 +221,7 @@ export class InsertCalloutModal extends Modal {
         new Setting(contentEl)
             .addButton((btn) => {
                 btn
-                    .setButtonText(t("Insert"))
+                    .setButtonText("Insert")
                     .setCta()
                     .onClick(() => {
                         this.insertCallout();
@@ -231,8 +231,8 @@ export class InsertCalloutModal extends Modal {
                 return btn;
             })
             .addButton((btn) => {
-                btn.setButtonText(t("Cancel"))
-                    .setTooltip(t("Cancel"))
+                btn.setButtonText("Cancel")
+                    .setTooltip("Cancel")
                     .onClick(() => this.close());
                 return btn;
             });
@@ -369,5 +369,6 @@ export class InsertCalloutModal extends Modal {
     }
 
 }
+
 
 
