@@ -10,7 +10,6 @@ import {
 } from "obsidian";
 import type editingToolbarPlugin from "src/plugin/main";
 import { DEFAULT_SETTINGS } from "src/settings/settingsData";
-import { t } from "src/translations/helper";
 import { ConfirmModal } from "src/modals/ConfirmModal";
 
 interface Command {
@@ -396,3 +395,4 @@ export class UpdateNoticeModal extends Modal {
         contentEl.empty();
     }
 }
+
