@@ -112,13 +112,42 @@ export function selfDestruct() {
 
 }
 
-export function isExistoolbar(app: App, plugin: editingToolbarPlugin): HTMLElement {
-  requireApiVersion("0.15.0") ? activeDocument = activeWindow.document : activeDocument = window.document;
-  let container = plugin.positionStyle == "top" ? app.workspace.activeLeaf?.view.containerEl?.querySelector("#editingToolbarModalBar")
-    : activeDocument.getElementById("editingToolbarModalBar");
-  return (container) ? container as HTMLElement : null;
-}
+export function isExistoolbar(
+  app: App,
+  plugin: editingToolbarPlugin,
+  style?: ToolbarStyleKey
+): HTMLElement | null {
+  requireApiVersion("0.15.0")
+    ? (activeDocument = activeWindow.document)
+    : (activeDocument = window.document);
 
+  // Decide which style we are looking for.
+  // If not provided, fall back to the legacy single-style behaviour.
+  const targetStyle: ToolbarStyleKey =
+    (style ||
+      (plugin.positionStyle as ToolbarStyleKey) ||
+      (plugin.settings.positionStyle as ToolbarStyleKey) ||
+      "top") as ToolbarStyleKey;
+
+  // This assumes Step 1 is in place: each toolbar has
+  // class "editingToolbarModalBar" + data-toolbar-style="<style>"
+  const selector = `.editingToolbarModalBar[data-toolbar-style="${targetStyle}"]`;
+
+  let container: HTMLElement | null = null;
+
+  if (targetStyle === "top") {
+    // Top toolbar lives inside the active leaf’s container
+    container =
+      (app.workspace.activeLeaf?.view.containerEl?.querySelector(
+        selector
+      ) as HTMLElement) || null;
+  } else {
+    // Following / fixed toolbars are global in the document
+    container = activeDocument.querySelector(selector) as HTMLElement;
+  }
+
+  return container ?? null;
+}
 
 
 const getNestedObject = (nestedObj: any, pathArr: any[]) => {
@@ -387,13 +416,17 @@ export function setFormateraser(plugin: editingToolbarPlugin, editor: Editor) {
 
 
   //app.commands.executeCommandById("editor:clear-formatting");
-
-
 }
 
-export function createFollowingbar(app: App, iconSize: number, plugin: editingToolbarPlugin, editor: Editor, forceShow: boolean = false) {
-  // 获取或创建工具栏
-  let editingToolbarModalBar = isExistoolbar(app, plugin);
+export function createFollowingbar(
+  app: App,
+  iconSize: number,
+  plugin: editingToolbarPlugin,
+  editor: Editor,
+  forceShow: boolean = false
+) {
+  // 获取或创建“following”样式的工具栏
+  let editingToolbarModalBar = isExistoolbar(app, plugin, "following");
 
   // 检查视图类型
   const view = app.workspace.getActiveViewOfType(ItemView);
@@ -404,16 +437,26 @@ export function createFollowingbar(app: App, iconSize: number, plugin: editingTo
     return;
   }
 
-  // 仅处理 following 样式
-  if (plugin.positionStyle !== "following") return;
+  // 仅处理 following 样式（支持新开关 & 向后兼容）
+  const followingEnabled =
+    // New multi-toolbar toggle
+    plugin.settings.enableFollowingToolbar ||
+    // Legacy single-style behaviour: no other style is explicitly enabled
+    (!plugin.settings.enableTopToolbar &&
+      !plugin.settings.enableFixedToolbar &&
+      plugin.positionStyle === "following");
+
+  if (!followingEnabled) return;
 
   const viewType = view?.getViewType();
-  const isMarkdownView = viewType === 'markdown';
+  const isMarkdownView = viewType === "markdown";
 
   let height = 30;
   if (plugin.settings.aestheticStyle === "tiny") {
     height = 30;
-  } else height = iconSize + 14;
+  } else {
+    height = iconSize + 14;
+  }
 
   if (isMarkdownView) {
     // 处理 Markdown 视图
