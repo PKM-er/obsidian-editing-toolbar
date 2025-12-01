@@ -578,16 +578,37 @@ export function editingToolbarPopover(
   style?: ToolbarStyleKey
 ): void {
   const settings = plugin.settings;
-  requireApiVersion("0.15.0") ? activeDocument = activeWindow.document : activeDocument = window.document;
+  requireApiVersion("0.15.0")
+    ? (activeDocument = activeWindow.document)
+    : (activeDocument = window.document);
 
-  // Decide which toolbar style this render is for.
-  // For now, if no style is passed in, we fall back to the "old" behaviour:
-  // use plugin.positionStyle / settings.positionStyle.
-  const effectiveStyle: ToolbarStyleKey =
-    (style ||
-      (plugin.positionStyle as ToolbarStyleKey) ||
-      (plugin.settings.positionStyle as ToolbarStyleKey) ||
-      "top") as ToolbarStyleKey;
+  // NEW: if no explicit style is provided, render toolbars for all enabled styles.
+  if (!style) {
+    const stylesToRender: ToolbarStyleKey[] = [];
+
+    if (settings.enableTopToolbar) stylesToRender.push("top");
+    if (settings.enableFollowingToolbar) stylesToRender.push("following");
+    if (settings.enableFixedToolbar) stylesToRender.push("fixed");
+
+    // Fallback to legacy single-style behaviour if nothing is explicitly enabled
+    if (stylesToRender.length === 0) {
+      const legacyStyle =
+        (plugin.positionStyle as ToolbarStyleKey) ||
+        (plugin.settings.positionStyle as ToolbarStyleKey) ||
+        "top";
+      stylesToRender.push(legacyStyle);
+    }
+
+    stylesToRender.forEach((styleKey) => {
+      // Each call below runs the rest of this function with an explicit style.
+      editingToolbarPopover(app, plugin, styleKey);
+    });
+
+    return;
+  }
+
+  // From here on, we are rendering a single toolbar instance for a specific style
+  const effectiveStyle: ToolbarStyleKey = style as ToolbarStyleKey;
 
   const aestheticStyleMap: { [key: string]: string } = {
     default: "editingToolbarDefaultAesthetic",
@@ -672,7 +693,7 @@ export function editingToolbarPopover(
       //    editingToolbar.style.visibility = "hidden";
       // }
 
-      if (plugin.positionStyle == "top") {
+      if (effectiveStyle === "top") {
         let currentleaf = app.workspace.activeLeaf.view.containerEl;
 
         // 确定要插入工具栏的目标元素
@@ -752,7 +773,7 @@ export function editingToolbarPopover(
             _btn.setClass("editingToolbarSecond");
           }
           else {
-            if (plugin.positionStyle != "top")
+            if (effectiveStyle !== "top")
               _btn.buttonEl.setAttribute('aria-label-position', 'top')
           }
 
@@ -797,7 +818,7 @@ export function editingToolbarPopover(
 
                   });
                 if (index < settings.cMenuNumRows) {
-                  if (plugin.positionStyle != "top")
+                  if (effectiveStyle !== "top")
                     sub_btn.buttonEl.setAttribute('aria-label-position', 'top')
                 }
                 if (subitem.id == "editingToolbar-Divider-Line")
