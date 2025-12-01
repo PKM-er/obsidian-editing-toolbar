@@ -2,7 +2,6 @@ import { App, Modal, Setting, Notice, setIcon, TextComponent } from "obsidian";
 import editingToolbarPlugin from "src/plugin/main";
 import { ChooseFromIconList } from "src/modals/suggesterModals";
 import { RegexCommandModal } from "src/modals/RegexCommandModal";
-import { t } from 'src/translations/helper';
 export class CustomCommandModal extends Modal {
   private plugin: editingToolbarPlugin;
   private commandIndex: number | null;
@@ -504,4 +503,5 @@ addSpecialCharButtons(suffixSetting, suffixSetting.controlEl.querySelector('inpu
     // 如果没有找到对应的镜像，返回空字符串
     return '';
   }
+
 } 
