@@ -14,7 +14,6 @@ import {
   debounce,
   View
 } from "obsidian";
-
 import { editingToolbarSettingTab } from '../settings/settingsTab';
 import { selfDestruct, editingToolbarPopover, quiteFormatbrushes, createFollowingbar, setFormateraser, isExistoolbar, resetToolbar } from "src/modals/editingToolbarModal";
 import { editingToolbarSettings, DEFAULT_SETTINGS } from "src/settings/settingsData";
@@ -24,7 +23,6 @@ import addIcons, {
   // addRemixIcons
   // addBoxIcons
 } from "src/icons/customIcons";
-
 import { setFontcolor, setBackgroundcolor, renumberSelection } from "src/util/util";
 import { ViewUtils } from 'src/util/viewUtils';
 import { UpdateNoticeModal } from "src/modals/updateModal";
@@ -81,7 +79,6 @@ function ensureAppearanceStore(
   }
 }
 // ---- end per-style appearance helpers ----
-
 export interface AdmonitionDefinition  {
   type: string;
     title?: string;
@@ -272,7 +269,6 @@ export default class editingToolbarPlugin extends Plugin {
             }
           }
         }
-
       },
     );
 
@@ -281,15 +277,10 @@ this.app.workspace.onLayoutReady(async () => {
   await this.tryGetAdmonitionTypes();
 });
 
-
-    //////
-
-
     // // 注册右键菜单
     // this.registerEvent(
     //   this.app.workspace.on('editor-menu', (menu: Menu, editor: Editor, view: MarkdownView) => {
     //     const selection = editor.getSelection();
-
     //     if (selection) {
     //       // 检查是否为链接或图片（包括带大小参数的图片）
     //       if (/(!)?\[.*(?:\|(?:\d+x\d+|\d+))?\]\([a-zA-Z]+:\/\/[^\s)]+(?:\s+["'][^"']*["'])?\)/.test(selection.trim())) {
@@ -302,20 +293,16 @@ this.app.workspace.onLayoutReady(async () => {
     //       }
     //       return; // 有选中文本时，不继续检查光标周围
     //     }
-
     //     // 如果没有选中文本，检查光标周围是否为链接或图片
     //     const cursor = editor.getCursor();
     //     const lineText = editor.getLine(cursor.line);
     //     const cursorPos = cursor.ch;
-
     //     // 使用合并的正则表达式，同时匹配链接和图片
     //     const combinedRegex = /(!)?\[([^\]]+)(?:\|(\d+x\d+|\d+))?\]\(([a-zA-Z]+:\/\/[^\s)]+)(?:\s+["'][^"']*["'])?\)/g;
     //     let match;
-
     //     while ((match = combinedRegex.exec(lineText)) !== null) {
     //       const linkStart = match.index;
     //       const linkEnd = match.index + match[0].length;
-
     //       // 检查光标是否在链接或图片范围内（包括边缘）
     //       if (cursorPos >= linkStart && cursorPos <= linkEnd) {
     //         menu.addItem((item) =>
@@ -327,8 +314,6 @@ this.app.workspace.onLayoutReady(async () => {
     //         break; // 找到匹配后退出
     //       }
     //     }
-
-
     //   })
     // );
     // 注册右键菜单
@@ -363,8 +348,6 @@ this.app.workspace.onLayoutReady(async () => {
             })
         );
       })
-
-
     );
     // 初始化图标
     addIcons();
@@ -385,14 +368,13 @@ this.app.workspace.onLayoutReady(async () => {
     );
   }
 
-
   async tryGetAdmonitionTypes(retries = 0): Promise<void> {
     // @ts-ignore
     const admonitionPluginInstance = this.app.plugins?.getPlugin(ADMONITION_PLUGIN_ID);
     if (admonitionPluginInstance) {
        
         this.processAdmonitionTypes(admonitionPluginInstance);
-    }  
+      }  
     }
 
 processAdmonitionTypes(pluginInstance: any) {
@@ -413,11 +395,8 @@ processAdmonitionTypes(pluginInstance: any) {
   }  else {
     console.warn('未能从 admonitionPlugin.admonitions (作为对象) 获取类型。');
     this.admonitionDefinitions = null; 
+  }
 }
-  
-}
- 
-
 
   isLoadMobile() {
     let screenWidth = window.innerWidth > 0 ? window.innerWidth : screen.width;
@@ -620,7 +599,6 @@ processAdmonitionTypes(pluginInstance: any) {
 
     // 初始化多配置
     // 如果是新安装或升级，初始化各个位置样式的命令配置
-
   }
 
   // 获取当前位置样式对应的命令配置
@@ -931,7 +909,6 @@ updateCurrentCommands(commands: any[], style?: string): void {
           }
         }
 
-
         // 检测光标是否在粗体中
         const boldRegex = /\*\*([^*]+)\*\*/g;
 
@@ -947,9 +924,7 @@ updateCurrentCommands(commands: any[], style?: string): void {
           }
         }
 
-
         // 检测删除线
-
         const strikeRegex = /~~([^~]+)~~/g;
         while ((match = strikeRegex.exec(lineText)) !== null) {
           const formatStart = match.index;
@@ -963,9 +938,7 @@ updateCurrentCommands(commands: any[], style?: string): void {
           }
         }
 
-
         // 检测高亮
-
         const highlightRegex = /==([^=]+)==/g;
         while ((match = highlightRegex.exec(lineText)) !== null) {
           const formatStart = match.index;
@@ -979,9 +952,7 @@ updateCurrentCommands(commands: any[], style?: string): void {
           }
         }
 
-
         // 检测代码
-
         const codeRegex = /`([^`]+)`/g;
         while ((match = codeRegex.exec(lineText)) !== null) {
           const formatStart = match.index;
@@ -995,9 +966,7 @@ updateCurrentCommands(commands: any[], style?: string): void {
           }
         }
 
-
         // 检测字体颜色
-
         const fontColorRegex = /<font color="([^"]+)">([^<]+)<\/font>/g;
         while ((match = fontColorRegex.exec(lineText)) !== null) {
           const formatStart = match.index;
@@ -1011,9 +980,7 @@ updateCurrentCommands(commands: any[], style?: string): void {
           }
         }
 
-
         // 检测背景颜色
-
         const bgColorRegex = /<span style="background:([^"]+)">([^<]+)<\/span>/g;
         while ((match = bgColorRegex.exec(lineText)) !== null) {
           const formatStart = match.index;
@@ -1087,7 +1054,6 @@ updateCurrentCommands(commands: any[], style?: string): void {
     this.formatBrushActive = !this.formatBrushActive;
 
     if (this.formatBrushActive) {
-
 
       activeDocument.body.classList.add('format-brush-cursor');
       // 关闭其他格式刷
@@ -1168,7 +1134,6 @@ updateCurrentCommands(commands: any[], style?: string): void {
     this.commandsManager.reloadCustomCommands();
   }
 
-
   init_evt(container: Document, editor: Editor) {
     // 重置状态
     this.resetFormatBrushStates();
@@ -1243,6 +1208,26 @@ updateCurrentCommands(commands: any[], style?: string): void {
       this.EN_BG_Format_Brush ||
       this.EN_Text_Format_Brush ||
       this.formatBrushActive;
+  }
+
+  private isFollowingToolbarActive(): boolean {
+    // New multi-toolbar setting: explicitly enable the following toolbar
+    if (this.settings.enableFollowingToolbar) {
+      return true;
+    }
+
+    // Backwards compatibility:
+    // if neither top nor fixed have been explicitly enabled, and the
+    // global positionStyle is "following", behave as the old single-mode
+    if (
+      !this.settings.enableTopToolbar &&
+      !this.settings.enableFixedToolbar &&
+      this.positionStyle === "following"
+    ) {
+      return true;
+    }
+
+    return false;
   }
 
   private handleKeyboardSelection = (e: KeyboardEvent) => {
@@ -1325,20 +1310,23 @@ updateCurrentCommands(commands: any[], style?: string): void {
 
   // 抽取显示工具栏的逻辑
   private showFollowingToolbar(editor: Editor) {
-    const editingToolbarModalBar = isExistoolbar(this.app, this);
+    // Only act if the following toolbar is actually considered active
+    if (!this.isFollowingToolbarActive()) return;
+
+    const editingToolbarModalBar = isExistoolbar(this.app, this, "following");
 
     if (editingToolbarModalBar) {
       editingToolbarModalBar.style.visibility = "visible";
       editingToolbarModalBar.classList.add("editingToolbarFlex");
       editingToolbarModalBar.classList.remove("editingToolbarGrid");
 
-      // 直接使用createFollowingbar的定位逻辑
+      // 直接使用 createFollowingbar 的定位逻辑
       createFollowingbar(this.app, this.toolbarIconSize, this, editor, true);
     } else {
+      // 如果还没有 following 工具栏实例，则创建一个
       createFollowingbar(this.app, this.toolbarIconSize, this, editor, true);
     }
   }
-
 
   onPositionStyleChange(newStyle: string): void {
     // Temporarily ignore any "editing style" override while we update the live toolbar
