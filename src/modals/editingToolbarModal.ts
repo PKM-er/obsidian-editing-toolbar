@@ -1052,23 +1052,20 @@ export function editingToolbarPopover(
     if (!plugin.isLoadMobile()) return;
     const view = app.workspace.getActiveViewOfType(ItemView);
     if (ViewUtils.isAllowedViewType(view)) {
-      //  let Markdown = app.workspace.getActiveViewOfType(MarkdownView);
-      // if (Markdown) {
-      if (isExistoolbar(app, plugin)) return;
+      // Guard per-style: if this style already has a toolbar, don’t recreate it
+      if (isExistoolbar(app, plugin, effectiveStyle)) return;
 
       generateMenu();
 
       setHorizontalValue(plugin.settings);
       setBottomValue(plugin.settings);
-      setsvgColor(settings.cMenuFontColor, settings.cMenuBackgroundColor)
+      setsvgColor(settings.cMenuFontColor, settings.cMenuBackgroundColor);
 
     } else {
       //  selfDestruct();
       return;
     }
-
   }
-
   createMenu();
 }
 
