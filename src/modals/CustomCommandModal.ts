@@ -51,7 +51,7 @@ export class CustomCommandModal extends Modal {
     const { contentEl } = this;
     this.modalEl.addClass('custom-commands-modal');
     contentEl.empty();
-    contentEl.createEl('h2', { text: this.commandIndex !== null ? t('Edit Custom Command') : t('Add Custom Command') });
+    contentEl.createEl('h2', { text: this.commandIndex !== null ? 'Edit Custom Command' : 'Add Custom Command' });
 
     // 添加切换到正则表达式命令的按钮
     const switchButtonContainer = contentEl.createDiv('switch-to-regex-container');
@@ -59,7 +59,7 @@ export class CustomCommandModal extends Modal {
     switchButtonContainer.style.textAlign = 'center';
 
     const switchButton = switchButtonContainer.createEl('button', {
-      text: t('Switch Regex Command Window')
+      text: 'Switch Regex Command Window'
     });
     switchButton.addClass('mod-cta');
     switchButton.addEventListener('click', () => {
@@ -68,8 +68,8 @@ export class CustomCommandModal extends Modal {
     });
 
     const commandIdSetting = new Setting(contentEl)
-      .setName(t('Command ID'))
-      .setDesc(t('Unique identifier, no spaces, e.g.: "my-custom-format"'))
+      .setName( 'Command ID')
+      .setDesc( 'Unique identifier, no spaces, e.g.: "my-custom-format"')
       .addText(text => {
         this.commandIdInput = text;
         text.setValue(this.commandId);
@@ -92,8 +92,8 @@ export class CustomCommandModal extends Modal {
       });
 
     const commandNameSetting = new Setting(contentEl)
-      .setName(t('Command Name'))
-      .setDesc(t('Displayed name in toolbar and menu'))
+      .setName('Command Name')
+      .setDesc('Displayed name in toolbar and menu')
       .addText(text => this.commandNameInput = text
         .setValue(this.commandName)
         .onChange(value => this.commandName = value)
@@ -231,8 +231,8 @@ function addSpecialCharButtons(setting: Setting, input: HTMLInputElement) {
 }
 // 前缀设置
 const prefixSetting = new Setting(contentEl)
-  .setName(t('Prefix'))
-  .setDesc(t('Add content before selected text')+t('Use ↵ to represent line breaks'))
+  .setName('Prefix')
+  .setDesc( 'Add content before selected text'+ 'Use ↵ to represent line breaks')
   .addText(text => text
     .setValue(toDisplayText(this.prefix)) // 显示时转换特殊字符为占位符
     .onChange(value => {
@@ -254,8 +254,8 @@ addSpecialCharButtons(prefixSetting, prefixSetting.controlEl.querySelector('inpu
 
 // 后缀设置
 const suffixSetting = new Setting(contentEl)
-  .setName(t('Suffix'))
-  .setDesc(t('Add content after selected text'))
+  .setName( 'Suffix')
+  .setDesc( 'Add content after selected text')
   .addText(text => {
     this.suffixInput = text;
     text.setValue(toDisplayText(this.suffix)) // 显示时转换特殊字符为占位符
@@ -268,24 +268,24 @@ addSpecialCharButtons(suffixSetting, suffixSetting.controlEl.querySelector('inpu
 
 
     const charSetting = new Setting(contentEl)
-      .setName(t('Cursor Position Offset'))
-      .setDesc(t('Default 0, format will keep the text selected'))
+      .setName( 'Cursor Position Offset')
+      .setDesc( 'Default 0, format will keep the text selected')
       .addText(text => text
         .setValue(this.char.toString())
         .onChange(value => this.char = parseInt(value) || 0)
       );
 
     const lineSetting = new Setting(contentEl)
-      .setName(t('Line Offset'))
-      .setDesc(t('Line offset of cursor after formatting'))
+      .setName( 'Line Offset')
+      .setDesc( 'Line offset of cursor after formatting')
       .addText(text => text
         .setValue(this.line.toString())
         .onChange(value => this.line = parseInt(value) || 0)
       );
 
     new Setting(contentEl)
-      .setName(t('Line Head Format'))
-      .setDesc(t('Whether to insert at the beginning of the next line'))
+      .setName( 'Line Head Format')
+      .setDesc( 'Whether to insert at the beginning of the next line')
       .addToggle(toggle => toggle
         .setValue(this.islinehead)
         .onChange(value => this.islinehead = value)
@@ -293,8 +293,8 @@ addSpecialCharButtons(suffixSetting, suffixSetting.controlEl.querySelector('inpu
 
     // 创建图标选择设置
     const iconSetting = new Setting(contentEl)
-      .setName(t('Icon'))
-      .setDesc(t('Command icon (click to select)'));
+      .setName( 'Icon')
+      .setDesc( 'Command icon (click to select)');
 
     // 添加图标预览
     this.iconDisplay = iconSetting.controlEl.createDiv('editingToolbarSettingsIcon');
@@ -310,7 +310,7 @@ addSpecialCharButtons(suffixSetting, suffixSetting.controlEl.querySelector('inpu
 
     // 添加选择图标按钮
     iconSetting.addButton(button => button
-      .setButtonText(t('Choose Icon'))
+      .setButtonText('Choose Icon')
       .onClick(() => {
         const command = {
           id: this.commandId,
@@ -348,18 +348,18 @@ addSpecialCharButtons(suffixSetting, suffixSetting.controlEl.querySelector('inpu
     // 添加保存和取消按钮
     new Setting(contentEl)
       .addButton(button => button
-        .setButtonText(t('Save'))
+        .setButtonText('Save')
         .setCta()
         .onClick(() => {
           // 验证必填字段
           if (!this.commandId || !this.commandName) {
-            new Notice(t('Command ID and command name cannot be empty'));
+            new Notice( 'Command ID and command name cannot be empty'));
             return;
           }
 
           // 验证ID格式
           if (this.commandId.includes(' ')) {
-            new Notice(t('Command ID cannot contain spaces'));
+            new Notice( 'Command ID cannot contain spaces'));
             return;
           }
           const commandId = this.commandIndex === null ? `custom-${this.commandId}` : this.commandId;
@@ -370,7 +370,7 @@ addSpecialCharButtons(suffixSetting, suffixSetting.controlEl.querySelector('inpu
               cmd => cmd.id === commandId
             );
             if (existingIndex >= 0) {
-              new Notice(t("The command") + this.commandId + t("already exists"), 8000);
+              new Notice("The command" + this.commandId + "already exists", 8000);
               return;
             }
           }
@@ -429,7 +429,7 @@ addSpecialCharButtons(suffixSetting, suffixSetting.controlEl.querySelector('inpu
         })
       )
       .addButton(button => button
-        .setButtonText(t('Cancel'))
+        .setButtonText('Cancel')
         .onClick(() => this.close())
       );
 
@@ -505,3 +505,4 @@ addSpecialCharButtons(suffixSetting, suffixSetting.controlEl.querySelector('inpu
   }
 
 } 
+
