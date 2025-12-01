@@ -260,7 +260,7 @@ export default class editingToolbarPlugin extends Plugin {
       activeDocument,
       'contextmenu',
       e => {
-        if (this.settings.isLoadOnMobile && Platform.isMobile && this.positionStyle == "following") {
+        if (this.settings.isLoadOnMobile && Platform.isMobile && this.isFollowingToolbarActive()) {
           const { target } = e;
           if (target instanceof HTMLElement) {
             const iseditor = target.closest('.cm-editor') !== null;
@@ -463,12 +463,11 @@ processAdmonitionTypes(pluginInstance: any) {
         // 如果是源码模式
         if (ViewUtils.isSourceMode(view)) {
           // 对于following样式，保持隐藏状态（等待用户选择文本时显示）
-          if (this.positionStyle === "following") {
+          if (this.isFollowingToolbarActive()) {
             if (toolbar) {
               toolbar.style.visibility = "hidden";
             }
           } else {
-            // 非following样式下，在源码模式中保持工具栏可见
             if (toolbar) {
               toolbar.style.visibility = "visible";
             }
@@ -517,13 +516,11 @@ processAdmonitionTypes(pluginInstance: any) {
     if (isMarkdownView) {
       // 如果是源码模式
       if (ViewUtils.isSourceMode(view)) {
-        // 对于following样式，保持当前逻辑（隐藏工具栏，等待选择文本时显示）
-        if (this.positionStyle === "following") {
+        if (this.isFollowingToolbarActive()) {
           if (editingToolbarModalBar) {
             editingToolbarModalBar.style.visibility = "hidden";
           }
         } else {
-          // 非following样式下，在源码模式中保持工具栏可见
           if (editingToolbarModalBar) {
             editingToolbarModalBar.style.visibility = "visible";
           }
@@ -1189,10 +1186,29 @@ updateCurrentCommands(commands: any[], style?: string): void {
     this.EN_Text_Format_Brush = false;
     this.formatBrushActive = false;
   }
+  private isFollowingToolbarActive(): boolean {
+    // New multi-toolbar setting: explicitly enable the following toolbar
+    if (this.settings.enableFollowingToolbar) {
+      return true;
+    }
+
+    // Backwards compatibility:
+    // if neither top nor fixed have been explicitly enabled, and the
+    // global positionStyle is "following", behave as the old single-mode
+    if (
+      !this.settings.enableTopToolbar &&
+      !this.settings.enableFixedToolbar &&
+      this.positionStyle === "following"
+    ) {
+      return true;
+    }
+
+    return false;
+  }
 
   private handleMiddleClickToolbar(e: MouseEvent) {
     const cmEditor = this.commandsManager.getActiveEditor();
-    if (this.positionStyle === "following" && cmEditor?.hasFocus()) {
+    if (this.isFollowingToolbarActive() && cmEditor?.hasFocus()) {
       this.showFollowingToolbar(cmEditor);
     }
   }
@@ -1240,14 +1256,14 @@ updateCurrentCommands(commands: any[], style?: string): void {
 
     if (selectionKeys.includes(e.code) || e.shiftKey) {
       this.handleTextSelection();
-    } else if (!e.shiftKey && this.positionStyle === "following") {
+    } else if (!e.shiftKey && this.isFollowingToolbarActive()) {
       this.hideToolbarIfNotSelected();
     }
   }
 
   private registerScrollAndBlurEvents(container: Document) {
     const hideToolbar = this.throttle(() => {
-      if (this.positionStyle !== "following") return;
+      if (!this.isFollowingToolbarActive()) return;
       this.hideToolbarIfNotSelected();
     }, 200);
 
@@ -1259,7 +1275,7 @@ updateCurrentCommands(commands: any[], style?: string): void {
 
   private hideToolbarIfNotSelected() {
     const editingToolbarModalBar = isExistoolbar(this.app, this);
-    if (editingToolbarModalBar && this.positionStyle == "following") {
+    if (editingToolbarModalBar && this.isFollowingToolbarActive()) {
       editingToolbarModalBar.style.visibility = "hidden";
     }
   }
@@ -1291,7 +1307,7 @@ updateCurrentCommands(commands: any[], style?: string): void {
     } else if (this.formatBrushActive && this.lastExecutedCommand) {
       this.applyFormatBrush(cmEditor);
     }
-    else if (this.positionStyle === "following") {
+    else if (this.isFollowingToolbarActive()) {
       this.showFollowingToolbar(cmEditor);
     }
   }
@@ -1310,20 +1326,18 @@ updateCurrentCommands(commands: any[], style?: string): void {
 
   // 抽取显示工具栏的逻辑
   private showFollowingToolbar(editor: Editor) {
-    // Only act if the following toolbar is actually considered active
     if (!this.isFollowingToolbarActive()) return;
 
-    const editingToolbarModalBar = isExistoolbar(this.app, this, "following");
+    const editingToolbarModalBar = isExistoolbar(this.app, this);
 
     if (editingToolbarModalBar) {
       editingToolbarModalBar.style.visibility = "visible";
       editingToolbarModalBar.classList.add("editingToolbarFlex");
       editingToolbarModalBar.classList.remove("editingToolbarGrid");
 
-      // 直接使用 createFollowingbar 的定位逻辑
+      // 直接使用createFollowingbar的定位逻辑
       createFollowingbar(this.app, this.toolbarIconSize, this, editor, true);
     } else {
-      // 如果还没有 following 工具栏实例，则创建一个
       createFollowingbar(this.app, this.toolbarIconSize, this, editor, true);
     }
   }
