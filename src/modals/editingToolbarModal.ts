@@ -279,7 +279,7 @@ export function createMoremenu(app: App, plugin: editingToolbarPlugin, selector:
   let morebutton = new ButtonComponent(cMoreMenu);
   morebutton
     .setClass("editingToolbarCommandItem")
-    .setTooltip(t("More"))
+    .setTooltip("More")
     .onClick(() => {
       if (Morecontainer.style.visibility == "hidden") {
         Morecontainer.style.visibility = "visible";
@@ -772,7 +772,7 @@ export function editingToolbarPopover(
             let button2 = new ButtonComponent(editingToolbar);
             button2
               .setClass("editingToolbarCommandsubItem-font-color")
-              .setTooltip(t("Font Colors"))
+              .setTooltip("Font Colours")
               .onClick(() => {
 
                 app.commands.executeCommandById(item.id);
@@ -816,13 +816,13 @@ export function editingToolbarPopover(
               let button3 = new ButtonComponent(el);
               button3
                 .setIcon("paintbrush")
-                .setTooltip(t("Format Brush"))
+                .setTooltip("Format Brush")
                 .onClick(() => {
                   quiteFormatbrushes(plugin);
                   plugin.setEN_FontColor_Format_Brush(true);
                   //  globalThis.EN_FontColor_Format_Brush = true;
                   plugin.Temp_Notice = new Notice(
-                    t("Font-Color formatting brush ON!"),
+                    "Font-Color formatting brush ON!",
                     0
                   );
 
@@ -830,7 +830,7 @@ export function editingToolbarPopover(
               let button4 = new ButtonComponent(el);
               button4
                 .setIcon("palette")
-                .setTooltip(t("Custom Font Color"))
+                .setTooltip("Custom Font Color")
                 .onClick(() => {
                   app.setting.open();
                   app.setting.openTabById("editing-toolbar");
@@ -856,7 +856,7 @@ export function editingToolbarPopover(
             let button2 = new ButtonComponent(editingToolbar);
             button2
               .setClass("editingToolbarCommandsubItem-font-color")
-              .setTooltip(t("Background color"))
+              .setTooltip("Background color")
               .onClick(() => {
 
                 app.commands.executeCommandById(item.id);
@@ -899,13 +899,13 @@ export function editingToolbarPopover(
               let button3 = new ButtonComponent(el);
               button3
                 .setIcon("paintbrush")
-                .setTooltip(t("Format Brush"))
+                .setTooltip("Format Brush")
                 .onClick(() => {
                   quiteFormatbrushes(plugin);
                   plugin.setEN_BG_Format_Brush(true);
                   //  globalplugin.EN_BG_Format_Brush = true;
                   plugin.Temp_Notice = new Notice(
-                    t("Font-Color formatting brush ON!"),
+                    "Font-Color formatting brush ON!",
                     0
                   );
 
@@ -913,7 +913,7 @@ export function editingToolbarPopover(
               let button4 = new ButtonComponent(el);
               button4
                 .setIcon("palette")
-                .setTooltip(t("Custom Backgroud Color"))
+                .setTooltip("Custom Backgroud Color")
                 .onClick(() => {
                   app.setting.open();
                   app.setting.openTabById("editing-toolbar");
