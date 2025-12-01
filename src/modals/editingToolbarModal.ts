@@ -2,7 +2,7 @@ import type editingToolbarPlugin from "src/plugin/main";
 import { App, Notice, requireApiVersion, ItemView, MarkdownView, ButtonComponent, WorkspaceParent, WorkspaceWindow, WorkspaceParentExt } from "obsidian";
 import { backcolorpicker, colorpicker } from "src/util/util";
 import { t } from "src/translations/helper";
-import { editingToolbarSettings } from "src/settings/settingsData";
+import { editingToolbarSettings, ToolbarStyleKey } from "src/settings/settingsData";
 import { ViewUtils } from 'src/util/viewUtils';
 import { setBottomValue, setHorizontalValue } from "src/util/statusBarConstants";
 import { Editor } from "obsidian";
@@ -530,19 +530,30 @@ function calculateTopPosition(editor: Editor, coords: { top: number; left: numbe
 }
 
 
-
-
-
-
-export function editingToolbarPopover(app: App, plugin: editingToolbarPlugin): void {
-  let settings = plugin.settings;
+export function editingToolbarPopover(
+  app: App,
+  plugin: editingToolbarPlugin,
+  style?: ToolbarStyleKey
+): void {
+  const settings = plugin.settings;
   requireApiVersion("0.15.0") ? activeDocument = activeWindow.document : activeDocument = window.document;
+
+  // Decide which toolbar style this render is for.
+  // For now, if no style is passed in, we fall back to the "old" behaviour:
+  // use plugin.positionStyle / settings.positionStyle.
+  const effectiveStyle: ToolbarStyleKey =
+    (style ||
+      (plugin.positionStyle as ToolbarStyleKey) ||
+      (plugin.settings.positionStyle as ToolbarStyleKey) ||
+      "top") as ToolbarStyleKey;
+
   const aestheticStyleMap: { [key: string]: string } = {
     default: "editingToolbarDefaultAesthetic",
     tiny: "editingToolbarTinyAesthetic",
     glass: "editingToolbarGlassAesthetic",
     custom: "editingToolbarCustomAesthetic",
   };
+
   function createMenu() {
     function applyAestheticStyle(element: HTMLElement, style: string) {
       // 移除所有美观风格类
@@ -565,7 +576,7 @@ export function editingToolbarPopover(app: App, plugin: editingToolbarPlugin): v
 
       let editingToolbar = createEl("div");
       if (editingToolbar) {
-        if (plugin.positionStyle == "top") {
+        if (effectiveStyle === "top") {
           editingToolbar.className += " top";
           if (settings.autohide) {
             editingToolbar.className += " autohide";
@@ -573,12 +584,13 @@ export function editingToolbarPopover(app: App, plugin: editingToolbarPlugin): v
           if (settings.Iscentered) {
             editingToolbar.className += " centered";
           }
-        } else if (plugin.positionStyle == "following") {
-          editingToolbar.style.visibility = "hidden"
-        } else if (plugin.positionStyle == "fixed") {
-
-          let Rowsize = settings.toolbarIconSize || 18;
-          editingToolbar.setAttribute("style",
+        } else if (effectiveStyle === "following") {
+          // For the following toolbar, start hidden; it will be positioned and shown when text is selected.
+          editingToolbar.style.visibility = "hidden";
+        } else if (effectiveStyle === "fixed") {
+          const Rowsize = settings.toolbarIconSize || 18;
+          editingToolbar.setAttribute(
+            "style",
             `left: calc(50% - calc(${settings.cMenuNumRows * (Rowsize + 10)}px / 2));
        bottom: 4.25em; 
        grid-template-columns: repeat(${settings.cMenuNumRows}, ${Rowsize + 10}px);
@@ -716,17 +728,18 @@ export function editingToolbarPopover(app: App, plugin: editingToolbarPlugin): v
                     // 检查命令执行后是否仍有文本选中
                     const editor = plugin.commandsManager.getActiveEditor();
                     const hasSelection = editor && editor.somethingSelected();
-
+      
                     if (settings.cMenuVisibility == false) {
                       editingToolbar.style.visibility = "hidden";
-                    } else if (plugin.positionStyle == "following") {
-                      // 只有在没有选中内容时才隐藏工具栏
+                    } else if (effectiveStyle === "following") {
+                      // For the following toolbar, only show when there is a selection.
                       if (!hasSelection) {
                         editingToolbar.style.visibility = "hidden";
                       }
                     } else {
                       editingToolbar.style.visibility = "visible";
                     }
+
                   });
                 if (index < settings.cMenuNumRows) {
                   if (plugin.positionStyle != "top")
@@ -755,17 +768,18 @@ export function editingToolbarPopover(app: App, plugin: editingToolbarPlugin): v
                 // 检查命令执行后是否仍有文本选中
                 const editor = plugin.commandsManager.getActiveEditor();
                 const hasSelection = editor && editor.somethingSelected();
-
+  
                 if (settings.cMenuVisibility == false) {
                   editingToolbar.style.visibility = "hidden";
-                } else if (plugin.positionStyle == "following") {
-                  // 只有在没有选中内容时才隐藏工具栏
+                } else if (effectiveStyle === "following") {
+                  // For the following toolbar, only show when there is a selection.
                   if (!hasSelection) {
                     editingToolbar.style.visibility = "hidden";
                   }
                 } else {
                   editingToolbar.style.visibility = "visible";
                 }
+
               });
             checkHtml(item.icon)
               ? (button2.buttonEl.innerHTML = item.icon)
@@ -838,17 +852,18 @@ export function editingToolbarPopover(app: App, plugin: editingToolbarPlugin): v
                 // 检查命令执行后是否仍有文本选中
                 const editor = plugin.commandsManager.getActiveEditor();
                 const hasSelection = editor && editor.somethingSelected();
-
+  
                 if (settings.cMenuVisibility == false) {
                   editingToolbar.style.visibility = "hidden";
-                } else if (plugin.positionStyle == "following") {
-                  // 只有在没有选中内容时才隐藏工具栏
+                } else if (effectiveStyle === "following") {
+                  // For the following toolbar, only show when there is a selection.
                   if (!hasSelection) {
                     editingToolbar.style.visibility = "hidden";
                   }
                 } else {
                   editingToolbar.style.visibility = "visible";
                 }
+
               });
             checkHtml(item.icon)
               ? (button2.buttonEl.innerHTML = item.icon)
@@ -928,14 +943,15 @@ export function editingToolbarPopover(app: App, plugin: editingToolbarPlugin): v
 
               if (settings.cMenuVisibility == false) {
                 editingToolbar.style.visibility = "hidden";
-              } else if (plugin.positionStyle == "following") {
-                // 只有在没有选中内容时才隐藏工具栏
+              } else if (effectiveStyle === "following") {
+                // For the following toolbar, only show when there is a selection.
                 if (!hasSelection) {
                   editingToolbar.style.visibility = "hidden";
                 }
               } else {
                 editingToolbar.style.visibility = "visible";
               }
+
             });
 
             button.setClass("editingToolbarCommandItem");
@@ -943,11 +959,13 @@ export function editingToolbarPopover(app: App, plugin: editingToolbarPlugin): v
 
               button.setClass("editingToolbarSecond");
             } else {
-              if (plugin.positionStyle != "top")
-                button.buttonEl.setAttribute('aria-label-position', 'top')
+              if (effectiveStyle !== "top") {
+                button.buttonEl.setAttribute("aria-label-position", "top");
+              }
             }
             if (item.id == "editingToolbar-Divider-Line")
               button.setClass("editingToolbar-Divider-Line");
+
             checkHtml(item.icon)
               ? (button.buttonEl.innerHTML = item.icon)
               : button.setIcon(item.icon);
