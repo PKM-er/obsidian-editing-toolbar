@@ -1,6 +1,5 @@
 import { App, Modal, Setting, Notice, setIcon, ToggleComponent } from "obsidian";
 import editingToolbarPlugin from "src/plugin/main";
-import { t } from 'src/translations/helper';
 
 interface DeployOption {
   id: string;
@@ -140,4 +139,5 @@ export class DeployCommandModal extends Modal {
       });
     }
 }
+
   
