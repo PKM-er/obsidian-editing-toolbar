@@ -7,6 +7,7 @@ import { selfDestruct, editingToolbarPopover, checkHtml } from "src/modals/editi
 import Sortable from "sortablejs";
 import { debounce } from "obsidian";
 import { GenNonDuplicateID } from "src/util/util";
+import { t } from 'src/translations/helper';
 import { ToolbarCommand } from './ToolbarSettings';
 import { UpdateNoticeModal } from "src/modals/updateModal";
 import Pickr from "@simonwep/pickr";
@@ -270,12 +271,9 @@ export class editingToolbarSettingTab extends PluginSettingTab {
           .onChange(async (value) => {
             const s = this.plugin.settings;
             const prevStyle = this.plugin.positionStyle;
-
             // Update only the Top toolbar flag
             s.enableTopToolbar = value;
-
             let nextStyle: string | null = null;
-
             if (value) {
               // Turning Top ON: make it the primary style for configuration/appearance.
               nextStyle = 'top';
@@ -285,12 +283,12 @@ export class editingToolbarSettingTab extends PluginSettingTab {
               else if (s.enableFixedToolbar) nextStyle = 'fixed';
               else nextStyle = null; // no other toolbar is enabled
             }
-
             if (nextStyle && nextStyle !== prevStyle) {
               this.plugin.onPositionStyleChange(nextStyle);
             }
-
             await this.plugin.saveSettings();
+            // Immediately refresh toolbars to reflect this toggle
+            this.plugin.handleeditingToolbar();
             this.display();
           });
       });
@@ -306,12 +304,9 @@ export class editingToolbarSettingTab extends PluginSettingTab {
           .onChange(async (value) => {
             const s = this.plugin.settings;
             const prevStyle = this.plugin.positionStyle;
-
             // Update only the Following toolbar flag
             s.enableFollowingToolbar = value;
-
             let nextStyle: string | null = null;
-
             if (value) {
               // Turning Following ON: make it the primary style for configuration/appearance.
               nextStyle = 'following';
@@ -321,12 +316,11 @@ export class editingToolbarSettingTab extends PluginSettingTab {
               else if (s.enableFixedToolbar) nextStyle = 'fixed';
               else nextStyle = null;
             }
-
             if (nextStyle && nextStyle !== prevStyle) {
               this.plugin.onPositionStyleChange(nextStyle);
             }
-
             await this.plugin.saveSettings();
+            this.plugin.handleeditingToolbar();
             this.display();
           });
       });
@@ -357,12 +351,11 @@ export class editingToolbarSettingTab extends PluginSettingTab {
               else if (s.enableFollowingToolbar) nextStyle = 'following';
               else nextStyle = null;
             }
-
             if (nextStyle && nextStyle !== prevStyle) {
               this.plugin.onPositionStyleChange(nextStyle);
             }
-
             await this.plugin.saveSettings();
+            this.plugin.handleeditingToolbar();
             this.display();
           });
       });
