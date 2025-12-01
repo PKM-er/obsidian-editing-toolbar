@@ -1,6 +1,5 @@
 import { App, Modal,Editor,EditorPosition, Setting, TextComponent, ToggleComponent, Platform, setIcon, Notice, requestUrl, MarkdownView } from "obsidian";
 import editingToolbarPlugin from "src/plugin/main";
-import { t } from "src/translations/helper";
 
 interface ClipboardItems {
     [key: string]: string;
@@ -1108,4 +1107,5 @@ private async fetchRemoteTitle(url: string): Promise<string> {
         this.updateHeader();
     }
 }
+
 
