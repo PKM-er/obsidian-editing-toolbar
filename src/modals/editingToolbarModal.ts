@@ -2,7 +2,12 @@ import type editingToolbarPlugin from "src/plugin/main";
 import { App, Notice, requireApiVersion, ItemView, MarkdownView, ButtonComponent, WorkspaceParent, WorkspaceWindow, WorkspaceParentExt } from "obsidian";
 import { backcolorpicker, colorpicker } from "src/util/util";
 import { t } from "src/translations/helper";
-import { editingToolbarSettings, ToolbarStyleKey } from "src/settings/settingsData";
+import {
+  editingToolbarSettings,
+  ToolbarStyleKey,
+  StyleAppearanceSettings,
+  AppearanceByStyle,
+} from "src/settings/settingsData";
 import { ViewUtils } from 'src/util/viewUtils';
 import { setBottomValue, setHorizontalValue } from "src/util/statusBarConstants";
 import { Editor } from "obsidian";
@@ -598,6 +603,24 @@ export function editingToolbarPopover(
   // From here on, we are rendering a single toolbar instance for a specific style
   const effectiveStyle: ToolbarStyleKey = style as ToolbarStyleKey;
 
+  // Per-style appearance for this toolbar instance
+  const appearanceStore = (settings.appearanceByStyle || {}) as AppearanceByStyle;
+  const appearanceForStyle =
+    (appearanceStore[effectiveStyle] || {}) as StyleAppearanceSettings;
+
+  const resolvedIconSize =
+    appearanceForStyle.toolbarIconSize ?? plugin.toolbarIconSize ?? 18;
+
+  const resolvedAestheticStyle: string =
+    (appearanceForStyle.aestheticStyle as string) ??
+    settings.aestheticStyle ??
+    "default";
+
+  const resolvedBgColor =
+    appearanceForStyle.toolbarBackgroundColor ?? settings.toolbarBackgroundColor;
+  const resolvedIconColor =
+    appearanceForStyle.toolbarIconColor ?? settings.toolbarIconColor;
+
   const aestheticStyleMap: { [key: string]: string } = {
     default: "editingToolbarDefaultAesthetic",
     tiny: "editingToolbarTinyAesthetic",
@@ -620,10 +643,7 @@ export function editingToolbarPopover(
     const generateMenu = () => {
       let btnwidth = 0;
       let leafwidth = 0;
-      let buttonWidth = 26;
-      if (plugin.toolbarIconSize) {
-        buttonWidth = plugin.toolbarIconSize + 8;
-      }
+      let buttonWidth = resolvedIconSize + 8;
     
       // 主工具栏容器
       let editingToolbar = createEl("div");
@@ -643,8 +663,8 @@ export function editingToolbarPopover(
         } else if (effectiveStyle === "following") {
           // following 工具栏初始隐藏，待选中文本后定位并显示
           editingToolbar.style.visibility = "hidden";
-        } else if (effectiveStyle === "fixed") {
-          const Rowsize = settings.toolbarIconSize || 18;
+                } else if (effectiveStyle === "fixed") {
+          const Rowsize = resolvedIconSize || 18;
           editingToolbar.setAttribute(
             "style",
             `left: calc(50% - calc(${settings.cMenuNumRows * (Rowsize + 10)}px / 2));
@@ -672,10 +692,41 @@ export function editingToolbarPopover(
       PopoverMenu.style.visibility = "hidden";
       PopoverMenu.style.height = "0";
     
-      // 在生成工具栏时应用样式
-      applyAestheticStyle(editingToolbar, settings.aestheticStyle);
-      // 在生成 Popover 时应用样式
-      applyAestheticStyle(PopoverMenu, settings.aestheticStyle);
+      // Apply per-style aesthetic
+      applyAestheticStyle(editingToolbar, resolvedAestheticStyle);
+      applyAestheticStyle(PopoverMenu, resolvedAestheticStyle);
+
+      // Apply per-style colors and icon size via CSS variables on each toolbar
+      if (resolvedBgColor) {
+        editingToolbar.style.setProperty(
+          "--editing-toolbar-background-color",
+          resolvedBgColor
+        );
+        PopoverMenu.style.setProperty(
+          "--editing-toolbar-background-color",
+          resolvedBgColor
+        );
+      }
+      if (resolvedIconColor) {
+        editingToolbar.style.setProperty(
+          "--editing-toolbar-icon-color",
+          resolvedIconColor
+        );
+        PopoverMenu.style.setProperty(
+          "--editing-toolbar-icon-color",
+          resolvedIconColor
+        );
+      }
+      if (resolvedIconSize) {
+        editingToolbar.style.setProperty(
+          "--toolbar-icon-size",
+          `${resolvedIconSize}px`
+        );
+        PopoverMenu.style.setProperty(
+          "--toolbar-icon-size",
+          `${resolvedIconSize}px`
+        );
+      }
 
       if (effectiveStyle === "top") {
         let currentleaf = app.workspace.activeLeaf.view.containerEl;
