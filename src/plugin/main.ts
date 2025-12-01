@@ -438,112 +438,110 @@ processAdmonitionTypes(pluginInstance: any) {
   }
 
   handleeditingToolbar = () => {
-
+    // Keep format-brush cursor state in sync with the toolbar state
     if (!this.formatBrushActive) {
-      activeDocument.body.classList.remove('format-brush-cursor');
+      activeDocument.body.classList.remove("format-brush-cursor");
     }
-    if (this.settings.cMenuVisibility == true) {
-      const view = this.app.workspace.getActiveViewOfType(ItemView);
-      let toolbar = isExistoolbar(this.app, this);
 
-      // 如果视图类型不在允许列表中，隐藏工具栏后返回
-      if (!ViewUtils.isAllowedViewType(view)) {
-        if (toolbar) {
-          toolbar.style.visibility = "hidden";
-          return;
-        }
+    // If the toolbar is globally disabled in settings, just hide any existing toolbars and return.
+    if (!this.settings.cMenuVisibility) {
+      (["top", "following", "fixed"] as const).forEach((style) => {
+        const el = isExistoolbar(this.app, this, style);
+        if (el) el.style.visibility = "hidden";
+      });
+      return;
+    }
+
+    const view = this.app.workspace.getActiveViewOfType(ItemView);
+
+    // If the view type is not allowed at all, hide everything and stop.
+    if (!ViewUtils.isAllowedViewType(view)) {
+      (["top", "following", "fixed"] as const).forEach((style) => {
+        const el = isExistoolbar(this.app, this, style);
+        if (el) el.style.visibility = "hidden";
+      });
+      return;
+    }
+
+    const viewType = view?.getViewType();
+    const isMarkdownView = viewType === "markdown";
+    const inSourceMode = isMarkdownView && ViewUtils.isSourceMode(view);
+
+    // For non-markdown views or reading mode, hide all toolbars.
+    if (!inSourceMode) {
+      (["top", "following", "fixed"] as const).forEach((style) => {
+        const el = isExistoolbar(this.app, this, style);
+        if (el) el.style.visibility = "hidden";
+      });
+      return;
+    }
+
+    // ---- Determine which styles SHOULD be active ----
+
+    // If you already added `isTopToolbarActive` earlier, this will call it.
+    // If not, it falls back to a legacy-compatible check.
+    const topEnabled =
+      typeof (this as any).isTopToolbarActive === "function"
+        ? (this as any).isTopToolbarActive()
+        : this.settings.enableTopToolbar ||
+          (!this.settings.enableFollowingToolbar &&
+            !this.settings.enableFixedToolbar &&
+            this.positionStyle === "top");
+
+    const followingEnabled =
+      typeof (this as any).isFollowingToolbarActive === "function"
+        ? this.isFollowingToolbarActive()
+        : this.settings.enableFollowingToolbar ||
+          (!this.settings.enableTopToolbar &&
+            !this.settings.enableFixedToolbar &&
+            this.positionStyle === "following");
+
+    const fixedEnabled =
+      this.settings.enableFixedToolbar ||
+      (!this.settings.enableTopToolbar &&
+        !this.settings.enableFollowingToolbar &&
+        this.positionStyle === "fixed");
+
+    const styles: { key: "top" | "following" | "fixed"; enabled: boolean }[] = [
+      { key: "top",       enabled: topEnabled },
+      { key: "following", enabled: followingEnabled },
+      { key: "fixed",     enabled: fixedEnabled },
+    ];
+
+    // ---- Per-style handling: create / show / hide independently ----
+    for (const { key, enabled } of styles) {
+      const existing = isExistoolbar(this.app, this, key);
+
+      if (!enabled) {
+        // Style disabled in settings → hide any existing toolbar of that style.
+        if (existing) existing.style.visibility = "hidden";
+        continue;
       }
 
-      // 获取视图类型
-      const viewType = view?.getViewType();
-      const isMarkdownView = viewType === 'markdown';
+      // Style is enabled:
+      // If we don't have this toolbar yet, create it for this style.
+      if (!existing) {
+        editingToolbarPopover(this.app, this, key);
+      }
 
-      // 如果是Markdown视图
-      if (isMarkdownView) {
-        // 如果是源码模式
-        if (ViewUtils.isSourceMode(view)) {
-          // 对于following样式，保持隐藏状态（等待用户选择文本时显示）
-          if (this.isFollowingToolbarActive()) {
-            if (toolbar) {
-              toolbar.style.visibility = "hidden";
-            }
-          } else {
-            if (toolbar) {
-              toolbar.style.visibility = "visible";
-            }
-          }
-        } else {
-          // 在Markdown阅读模式下，隐藏工具栏
-          if (toolbar) {
-            toolbar.style.visibility = "hidden";
-          }
-        }
+      const toolbar = isExistoolbar(this.app, this, key);
+      if (!toolbar) continue;
+
+      if (key === "following") {
+        // Following toolbar stays hidden until text is selected.
+        // Your `showFollowingToolbar` / selection handlers will reveal it.
+        toolbar.style.visibility = "hidden";
       } else {
-        // 对于其他允许的视图类型（canvas等），保持工具栏可见
-        if (toolbar) {
-          toolbar.style.visibility = "visible";
-        }
-      }
-
-      // 如果没有找到工具栏，创建一个
-      if (!toolbar) {
-        setTimeout(() => {
-          editingToolbarPopover(this.app, this);
-        }, 100);
+        // Top / Fixed: visible in markdown source mode.
+        toolbar.style.visibility = "visible";
       }
     }
   };
 
   handleeditingToolbar_layout = () => {
-    if (!this.settings.cMenuVisibility) return false;
-
-    const view = this.app.workspace.getActiveViewOfType(ItemView);
-    let editingToolbarModalBar = isExistoolbar(this.app, this);
-
-    // 如果视图类型不在允许列表中，隐藏工具栏后返回
-    if (!ViewUtils.isAllowedViewType(view)) {
-      if (editingToolbarModalBar) {
-        editingToolbarModalBar.style.visibility = "hidden";
-      }
-      return;
-    }
-
-    // 获取视图类型
-    const viewType = view?.getViewType();
-    const isMarkdownView = viewType === 'markdown';
-
-    // 如果是Markdown视图
-    if (isMarkdownView) {
-      // 如果是源码模式
-      if (ViewUtils.isSourceMode(view)) {
-        if (this.isFollowingToolbarActive()) {
-          if (editingToolbarModalBar) {
-            editingToolbarModalBar.style.visibility = "hidden";
-          }
-        } else {
-          if (editingToolbarModalBar) {
-            editingToolbarModalBar.style.visibility = "visible";
-          }
-        }
-      } else {
-        // 在Markdown阅读模式下，隐藏工具栏
-        if (editingToolbarModalBar) {
-          editingToolbarModalBar.style.visibility = "hidden";
-        }
-      }
-    } else {
-      // 对于其他允许的视图类型（canvas等），保持工具栏可见
-      if (editingToolbarModalBar) {
-        editingToolbarModalBar.style.visibility = "visible";
-      }
-    }
-
-    // 如果没有找到工具栏，创建一个
-    if (!editingToolbarModalBar) {
-      setTimeout(() => {
-        editingToolbarPopover(this.app, this);
-      }, 100);
-    }
+    // When the workspace layout changes (splits, panes, etc.),
+    // just recompute toolbar creation/visibility using the main handler.
+    this.handleeditingToolbar();
   };
   
   handleeditingToolbar_resize = () => {
