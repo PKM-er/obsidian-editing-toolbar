@@ -573,9 +573,13 @@ export function editingToolbarPopover(
       if (plugin.toolbarIconSize) {
         buttonWidth = plugin.toolbarIconSize + 8;
       }
-
+    
       let editingToolbar = createEl("div");
       if (editingToolbar) {
+        // NEW: give every toolbar a shared class and a style marker
+        editingToolbar.addClass("editingToolbarModalBar");
+        editingToolbar.setAttribute("data-toolbar-style", effectiveStyle);
+    
         if (effectiveStyle === "top") {
           editingToolbar.className += " top";
           if (settings.autohide) {
@@ -598,16 +602,25 @@ export function editingToolbarPopover(
           );
         }
       }
+    
+      // Keep the old id so existing CSS keeps working
       editingToolbar.setAttribute("id", "editingToolbarModalBar");
-      //二级弹出菜单
-
+    
+      // 二级弹出菜单
       let PopoverMenu = createEl("div");
       PopoverMenu.addClass("editingToolbarpopover");
       PopoverMenu.addClass("editingToolbarTinyAesthetic");
+    
+      // NEW: shared class + style marker for popover as well
+      PopoverMenu.addClass("editingToolbarPopoverBar");
+      PopoverMenu.setAttribute("data-toolbar-style", effectiveStyle);
+    
+      // Keep the old id so existing CSS keeps working
       PopoverMenu.setAttribute("id", "editingToolbarPopoverBar");
+    
       PopoverMenu.style.visibility = "hidden";
       PopoverMenu.style.height = "0";
-      // 应用样式到编辑工具栏
+
 
       // 在生成工具栏时应用样式
       applyAestheticStyle(editingToolbar, settings.aestheticStyle);
