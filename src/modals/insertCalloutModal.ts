@@ -1,5 +1,6 @@
 import { App, Modal, Setting, setIcon, DropdownComponent, Platform } from "obsidian";
 import editingToolbarPlugin, { AdmonitionDefinition } from "src/plugin/main";
+import { t } from "src/translations/helper";
 interface BuiltInCalloutType {
     type: string;
     aliases: string[];
@@ -45,7 +46,6 @@ export class InsertCalloutModal extends Modal {
         { type: "bug", aliases: [], icon: "lucide-bug", label: "Bug", color: "var(--callout-bug)" },
         { type: "example", aliases: [], icon: "lucide-list", label: "Example", color: "var(--callout-example)" },
         { type: "quote", aliases: ["cite"], icon: "lucide-quote", label: "Quote", color: "var(--callout-quote)" }
-        // { type: "glossary", aliases: [], icon: "lucide-book-a", label: "Glossary - ", color: "233, 151, 63" }
     ];
     constructor(private plugin: editingToolbarPlugin) {
         super(plugin.app);
@@ -129,7 +129,7 @@ export class InsertCalloutModal extends Modal {
         // Ensure iconContainerEl is created fresh each time display is called
         this.iconContainerEl = typeContainer.createDiv("callout-icon-container");
         new Setting(typeContainer)
-            .setName("Callout Type")
+            .setName(t("Callout Type"))
             .addDropdown((dropdown: DropdownComponent) => {
                 // Populate built-in types first
                 const builtIns = this.allCalloutOptions.filter(opt => !opt.isAdmonition);
@@ -171,10 +171,10 @@ export class InsertCalloutModal extends Modal {
 
         // 标题输入
         const titleSetting = new Setting(contentEl)
-            .setName("Title")
-            .setDesc("Optional, leave blank for default title")
+            .setName(t("Title"))
+            .setDesc(t("Optional, leave blank for default title"))
             .addText((text) => {
-                text.setPlaceholder("Input title")
+                text.setPlaceholder(t("Input title"))
                     .setValue(this.title)
                     .onChange((value) => {
                         this.title = value;
@@ -183,12 +183,12 @@ export class InsertCalloutModal extends Modal {
 
         // 折叠选项
         new Setting(contentEl)
-            .setName("Collapse State")
+            .setName(t("Collapse State"))
             .addDropdown((dropdown) => {
                 dropdown
-                    .addOption("none", "Default")
-                    .addOption("open", "Open")
-                    .addOption("closed", "Closed")
+                    .addOption("none", t("Default"))
+                    .addOption("open", t("Open"))
+                    .addOption("closed", t("Closed"))
                     .setValue(this.collapse)
                     .onChange((value: "none" | "open" | "closed") => {
                         this.collapse = value;
@@ -197,9 +197,9 @@ export class InsertCalloutModal extends Modal {
 
         // 内容输入
         const contentSetting = new Setting(contentEl)
-            .setName("Content")
+            .setName(t("Content"))
             .addTextArea((text) => {
-                text.setPlaceholder("Input content")
+                text.setPlaceholder(t("Input content"))
                     .setValue(this.content)
                     .onChange((value) => {
                         this.content = value;
@@ -211,7 +211,7 @@ export class InsertCalloutModal extends Modal {
 
         // 添加快捷键提示
         const shortcutHint = contentEl.createDiv("shortcut-hint");
-        shortcutHint.setText(`${Platform.isMacOS ? "⌘" : "Ctrl"} + Enter ${"to insert"}`);
+        shortcutHint.setText(`${Platform.isMacOS ? "⌘" : "Ctrl"} + Enter ${t("to insert")}`);
         shortcutHint.style.textAlign = "right";
         shortcutHint.style.fontSize = "0.8em";
         shortcutHint.style.opacity = "0.7";
@@ -221,7 +221,7 @@ export class InsertCalloutModal extends Modal {
         new Setting(contentEl)
             .addButton((btn) => {
                 btn
-                    .setButtonText("Insert")
+                    .setButtonText(t("Insert"))
                     .setCta()
                     .onClick(() => {
                         this.insertCallout();
@@ -231,8 +231,8 @@ export class InsertCalloutModal extends Modal {
                 return btn;
             })
             .addButton((btn) => {
-                btn.setButtonText("Cancel")
-                    .setTooltip("Cancel")
+                btn.setButtonText(t("Cancel"))
+                    .setTooltip(t("Cancel"))
                     .onClick(() => this.close());
                 return btn;
             });
@@ -367,8 +367,4 @@ export class InsertCalloutModal extends Modal {
             editor.focus();
         }, 0);
     }
-
 }
-
-
-

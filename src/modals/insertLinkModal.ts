@@ -1,5 +1,6 @@
 import { App, Modal,Editor,EditorPosition, Setting, TextComponent, ToggleComponent, Platform, setIcon, Notice, requestUrl, MarkdownView } from "obsidian";
 import editingToolbarPlugin from "src/plugin/main";
+import { t } from "src/translations/helper";
 
 interface ClipboardItems {
     [key: string]: string;
@@ -700,7 +701,7 @@ private matchLinkInLine(line: string, startPos: number, endPos: number, lineNumb
 
         .addButton((btn) => {
             btn.setIcon("lucide-globe")
-                .setTooltip("Fetch Remote Title")
+                .setTooltip(t("Fetch Remote Title"))
                 .onClick(async () => {
                     if (this.linkUrl) {
                         btn.setDisabled(true); // 禁用按钮，避免重复点击
@@ -712,14 +713,14 @@ private matchLinkInLine(line: string, startPos: number, endPos: number, lineNumb
                         this.linkTextInput.setValue(title);
                         this.updateHeader();
                     } else {
-                        new Notice("Please enter a URL first");
+                        new Notice(t("Please enter a URL first"));
                     }
                 });
         });
-        linkTextSetting.setName("Link Text")
+        linkTextSetting.setName(t("Link Text"))
             .addText((text) => {
                 this.linkTextInput = text;
-                text.setPlaceholder("Link Text")
+                text.setPlaceholder(t("Link Text"))
                     .setValue(this.linkText)
                     .onChange((value) => {
                         this.linkText = value;
@@ -730,10 +731,10 @@ private matchLinkInLine(line: string, startPos: number, endPos: number, lineNumb
     
         // 链接别名输入（非图片模式时显示）
         const aliasSetting = new Setting(contentEl)
-            .setName("Title")
+            .setName(t("Title"))
             .addText((text) => {
                 this.linkAliasInput = text;
-                text.setPlaceholder("Link Title (optional)")
+                text.setPlaceholder(t("Link Title (optional)"))
                     .setValue(this.linkAlias)
                     .onChange((value) => {
                         this.linkAlias = value;
@@ -743,11 +744,11 @@ private matchLinkInLine(line: string, startPos: number, endPos: number, lineNumb
     
         // 链接地址输入
         const urlSetting = new Setting(contentEl)
-            .setName("Link URL")
+            .setName(t("Link URL"))
             .setClass("link-url-setting")
             .addText((text) => {
                 this.linkUrlInput = text;
-                text.setPlaceholder("Link URL")
+                text.setPlaceholder(t("Link URL"))
                     .setValue(this.linkUrl)
                     .onChange((value) => {
                         this.linkUrl = value.trim();
@@ -758,7 +759,7 @@ private matchLinkInLine(line: string, startPos: number, endPos: number, lineNumb
             .addButton((btn) => {
                 btn
                     .setIcon("lucide-clipboard")
-                    .setTooltip("Paste and Parse")
+                    .setTooltip(t("Paste and Parse"))
                     .onClick(async () => {
                         await this.parseClipboard();
                         this.updateHeader();
@@ -772,8 +773,8 @@ private matchLinkInLine(line: string, startPos: number, endPos: number, lineNumb
     
         // 嵌入选项
         const embedSetting = new Setting(contentEl)
-            .setName("Embed Content")
-            .setDesc("If it is an image, turn on");
+            .setName(t("Embed Content"))
+            .setDesc(t("If it is an image, turn on"));
     
         this.embedToggle = new ToggleComponent(embedSetting.controlEl);
         this.embedToggle
@@ -793,7 +794,7 @@ private matchLinkInLine(line: string, startPos: number, endPos: number, lineNumb
         const imageSizeSetting = new Setting(contentEl)
         .addButton((btn) => {
             btn.setIcon("lucide-maximize")
-                .setTooltip("Fit Editor Width")
+                .setTooltip(t("Fit Editor Width"))
                 .onClick(() => {
                     const dimensions = this.getImageDimensions();
                     if (dimensions) {
@@ -808,10 +809,10 @@ private matchLinkInLine(line: string, startPos: number, endPos: number, lineNumb
                 });
         });
         imageSizeSetting.setClass('image-size-setting')
-            .setName("Image Size")
+            .setName(t("Image Size"))
             .addText((text) => {
                 text.inputEl.addClass('image-width-input');
-                text.setPlaceholder("Image Width")
+                text.setPlaceholder(t("Image Width"))
                     .setValue(this.imageWidth)
                     .onChange((value) => {
                         this.imageWidth = value.replace(/[^\d]/g, '');
@@ -826,7 +827,7 @@ private matchLinkInLine(line: string, startPos: number, endPos: number, lineNumb
     
         imageSizeSetting.addText((text) => {
             text.inputEl.addClass('image-height-input');
-            text.setPlaceholder("Image Height")
+            text.setPlaceholder(t("Image Height"))
                 .setValue(this.imageHeight)
                 .onChange((value) => {
                     this.imageHeight = value.replace(/[^\d]/g, '');
@@ -840,8 +841,8 @@ private matchLinkInLine(line: string, startPos: number, endPos: number, lineNumb
     
         // 新行插入选项
         new Setting(contentEl)
-            .setName("Insert New Line")
-            .setDesc("Insert a link on the next line")
+            .setName(t("Insert New Line"))
+            .setDesc(t("Insert a link on the next line"))
             .addToggle((toggle) => {
                 toggle.setValue(this.insertNewLine)
                     .onChange((value) => {
@@ -860,7 +861,7 @@ private matchLinkInLine(line: string, startPos: number, endPos: number, lineNumb
             });
     
         const shortcutHint = contentEl.createDiv("shortcut-hint");
-        shortcutHint.setText(`${Platform.isMacOS ? "⌘" : "Ctrl"} + Enter ${"to insert"}`);
+        shortcutHint.setText(`${Platform.isMacOS ? "⌘" : "Ctrl"} + Enter ${t("to insert")}`);
         shortcutHint.style.textAlign = "right";
         shortcutHint.style.fontSize = "0.8em";
         shortcutHint.style.opacity = "0.7";
@@ -870,7 +871,7 @@ private matchLinkInLine(line: string, startPos: number, endPos: number, lineNumb
         const buttonSetting = new Setting(contentEl)
             .addButton((btn) => {
                 btn
-                    .setButtonText("Insert")
+                    .setButtonText(t("Insert"))
                     .setCta()
                     .onClick(() => {
                         this.insertLink();
@@ -880,7 +881,7 @@ private matchLinkInLine(line: string, startPos: number, endPos: number, lineNumb
             })
             .addButton((btn) =>
                 btn
-                    .setButtonText("Cancel")
+                    .setButtonText(t("Cancel"))
                     .onClick(() => {
                         this.close();
                     })
@@ -971,7 +972,7 @@ private async fetchRemoteTitle(url: string): Promise<string> {
         }
 
         if (!this.isValidUrl(url)) {
-            this.urlErrorMsg.textContent = "URL Format Error";
+            this.urlErrorMsg.textContent = t("URL Format Error");
             this.urlErrorMsg.style.display = "block";
             return false;
         }
@@ -1107,6 +1108,4 @@ private async fetchRemoteTitle(url: string): Promise<string> {
         this.updateHeader();
     }
 }
-
-
 

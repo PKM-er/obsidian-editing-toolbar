@@ -1,6 +1,7 @@
 import { App, Modal, Setting, Notice, setIcon, TextComponent, ToggleComponent } from "obsidian";
 import editingToolbarPlugin from "src/plugin/main";
 import { ChooseFromIconList } from "src/modals/suggesterModals";
+import { t } from 'src/translations/helper';
 import { CustomCommand } from "src/settings/settingsData";
 
 export class RegexCommandModal extends Modal {
@@ -76,14 +77,14 @@ export class RegexCommandModal extends Modal {
     const { contentEl } = this;
     this.modalEl.addClass('custom-commands-modal');
     contentEl.empty();
-    contentEl.createEl('h2', { text: this.commandIndex !== null ? 'Edit regular expression command' : 'Add regular expression command' });
+    contentEl.createEl('h2', { text: this.commandIndex !== null ? t('Edit regular expression command') : t('Add regular expression command') });
 
     // 基本设置部分
     const basicSettingsContainer = contentEl.createDiv('basic-settings-container');
 
     const commandIdSetting = new Setting(basicSettingsContainer)
-      .setName('Command ID')
-      .setDesc('Unique identifier, no spaces, e.g.: "my-custom-format"')
+      .setName(t('Command ID'))
+      .setDesc(t('Unique identifier, no spaces, e.g.: "my-custom-format"'))
       .addText(text => {
         text.setValue(this.commandId);
         // 如果是编辑模式，设置为只读
@@ -105,8 +106,8 @@ export class RegexCommandModal extends Modal {
       });
 
     const commandNameSetting = new Setting(basicSettingsContainer)
-      .setName('Command Name')
-      .setDesc('Displayed name in toolbar and menu')
+      .setName(t('Command Name'))
+      .setDesc(t('Displayed name in toolbar and menu'))
       .addText(text => text
         .setValue(this.commandName)
         .onChange(value => this.commandName = value)
@@ -125,7 +126,7 @@ export class RegexCommandModal extends Modal {
     aiHelpContainer.style.borderRadius = '5px';
     aiHelpContainer.style.overflow = 'hidden';
 
-    const aiHelpSummary = aiHelpContainer.createEl('summary', { text: 'How to use AI to get regular expressions?' });
+    const aiHelpSummary = aiHelpContainer.createEl('summary', { text: t('How to use AI to get regular expressions?') });
     aiHelpSummary.style.padding = '8px 12px';
     aiHelpSummary.style.backgroundColor = 'var(--background-secondary)';
     aiHelpSummary.style.cursor = 'pointer';
@@ -145,17 +146,17 @@ export class RegexCommandModal extends Modal {
     aiHelpContent.style.userSelect = 'text';
 
     aiHelpContent.innerHTML = `
-      <p><strong>${'AI question template:'}</strong><br>
-    ${'[Description]'}:
-      ${'I need to convert the url to a markdown format link'}
+      <p><strong>${t('AI question template:')}</strong><br>
+    ${t('[Description]')}:
+      ${t('I need to convert the url to a markdown format link')}
     <br>
-    ${'[Example]'}: 
-      ${'For example, convert https://example.com to [https://example.com](https://example.com)'}
+    ${t('[Example]')}: 
+      ${t('For example, convert https://example.com to [https://example.com](https://example.com)')}
     <br>
-    ${'[Requirements]'}:  
-      ${'Use js regular expression to implement, and output the parameters in the following format (the result does not need to be escaped with json)'}
+    ${t('[Requirements]')}:  
+      ${t('Use js regular expression to implement, and output the parameters in the following format (the result does not need to be escaped with json)')}
     <br>
-    ${'[Output]'}:
+    ${t('[Output]')}:
     <br>
       "name": "[Descriptive Name]", <br>
       "pattern": "[Regex Pattern]", <br>
@@ -166,8 +167,8 @@ export class RegexCommandModal extends Modal {
 
     // 添加正则表达式模式设置
     new Setting(regexContainer)
-      .setName('Matching pattern')
-      .setDesc('Regex pattern to match')
+      .setName(t('Matching pattern'))
+      .setDesc(t('Regex pattern to match'))
       .addText(text =>
         this.regexPatternInput = text
           .setValue(this.regexPattern)
@@ -179,8 +180,8 @@ export class RegexCommandModal extends Modal {
 
     // 添加替换模式设置
     new Setting(regexContainer)
-      .setName('Replacement pattern')
-      .setDesc('Replacement pattern (use $1, $2, etc. to reference capture groups)'+'Use \\n to represent line breaks')
+      .setName(t('Replacement pattern'))
+      .setDesc(t('Replacement pattern (use $1, $2, etc. to reference capture groups)')+t('Use \\n to represent line breaks'))
       .addText(text =>
         this.regexReplacementInput = text
 // 显示时，把真实换行符变成 \n
@@ -198,8 +199,8 @@ export class RegexCommandModal extends Modal {
     regexOptionsContainer.style.gap = '8px';
 
     new Setting(regexOptionsContainer)
-      .setName('Ignore case')
-      .setDesc('Match case-insensitive')
+      .setName(t('Ignore case'))
+      .setDesc(t('Match case-insensitive'))
       .addToggle(toggle => toggle
         .setValue(this.regexCaseInsensitive)
         .onChange(value => {
@@ -209,8 +210,8 @@ export class RegexCommandModal extends Modal {
       );
 
     new Setting(regexOptionsContainer)
-      .setName('Global replace')
-      .setDesc('Replace all matches')
+      .setName(t('Global replace'))
+      .setDesc(t('Replace all matches'))
       .addToggle(toggle => toggle
         .setValue(this.regexGlobal)
         .onChange(value => {
@@ -220,8 +221,8 @@ export class RegexCommandModal extends Modal {
       );
 
     new Setting(regexOptionsContainer)
-      .setName('Multiline mode')
-      .setDesc('^ and $ match the start and end of each line')
+      .setName(t('Multiline mode'))
+      .setDesc(t('^ and $ match the start and end of each line'))
       .addToggle(toggle =>
         this.regexMultilineToggle = toggle
           .setValue(this.regexMultiline)
@@ -236,8 +237,8 @@ export class RegexCommandModal extends Modal {
     const conditionContainer = regexContainer.createDiv('condition-container');
 
     new Setting(conditionContainer)
-      .setName('Use condition')
-      .setDesc('Only apply custom command when text matches the condition')
+      .setName(t('Use condition'))
+      .setDesc(t('Only apply custom command when text matches the condition'))
       .addToggle(toggle =>
         this.useConditionToggle = toggle
           .setValue(this.useCondition)
@@ -255,8 +256,8 @@ export class RegexCommandModal extends Modal {
     conditionSettingsContainer.style.marginBottom = '15px';
 
     new Setting(conditionSettingsContainer)
-      .setName('Condition pattern')
-      .setDesc('Must exist regular expression or text')
+      .setName(t('Condition pattern'))
+      .setDesc(t('Must exist regular expression or text'))
       .addText(text =>
         this.conditionPatternInput = text
           .setValue(this.conditionPattern)
@@ -267,8 +268,8 @@ export class RegexCommandModal extends Modal {
 
     // 图标设置
     const iconSetting = new Setting(regexContainer)
-      .setName('Icon')
-      .setDesc('Command icon (click to select)');
+      .setName(t('Icon'))
+      .setDesc(t('Command icon (click to select)'));
 
     // 添加图标预览
     this.iconDisplay = iconSetting.controlEl.createDiv('editingToolbarSettingsIcon');
@@ -282,7 +283,7 @@ export class RegexCommandModal extends Modal {
 
     // 添加选择图标按钮
     iconSetting.addButton(button => button
-      .setButtonText('Choose icon')
+      .setButtonText(t('Choose icon'))
       .onClick(() => {
         const command = {
           id: this.commandId,
@@ -322,7 +323,7 @@ export class RegexCommandModal extends Modal {
     regexExamplesContainer.style.borderRadius = '5px';
     regexExamplesContainer.style.overflow = 'hidden';
 
-    const examplesSummary = regexExamplesContainer.createEl('summary', { text: 'Regular expression examples' });
+    const examplesSummary = regexExamplesContainer.createEl('summary', { text: t('Regular expression examples') });
     examplesSummary.style.padding = '8px 12px';
     examplesSummary.style.backgroundColor = 'var(--background-secondary)';
     examplesSummary.style.cursor = 'pointer';
@@ -343,61 +344,61 @@ export class RegexCommandModal extends Modal {
 
     const examples = [
       {
-        name: 'URL to Markdown link',
+        name: t('URL to Markdown link'),
         pattern: '(https?://\\S+)',
         replacement: '[$1]($1)'
       },
       {
-        name: 'Convert MM/DD/YYYY to YYYY-MM-DD',
+        name: t('Convert MM/DD/YYYY to YYYY-MM-DD'),
         pattern: '(\\d{1,2})/(\\d{1,2})/(\\d{4})',
         replacement: '$3-$1-$2'
       },
       {
-        name: 'Add bold to keywords',
+        name: t('Add bold to keywords'),
         pattern: '\\b(important|critical|urgent)\\b',
         replacement: '**$1**'
       },
       {
-        name: 'Format phone number',
+        name: t('Format phone number'),
         pattern: '(\\d{3})(\\d{3})(\\d{4})',
         replacement: '($1) $2-$3'
       },
       {
-        name: 'Remove extra spaces',
+        name: t('Remove extra spaces'),
         pattern: '\\s{2,}',
         replacement: ' '
       },
       {
-        name: 'Convert HTML bold tags to Markdown format',
+        name: t('Convert HTML bold tags to Markdown format'),
         pattern: '<strong>(.*?)</strong>',
         replacement: '**$1**'
       },
   
       {
-        name: 'Convert quoted text to quote block',
+        name: t('Convert quoted text to quote block'),
         pattern: '"([^"]+)"',
         replacement: '> $1'
       },
       {
-        name: 'Add uniform alias to Markdown links',
+        name: t('Add uniform alias to Markdown links'),
         pattern: '\\[([^\\]]+)\\]\\(([^\\)]+)\\)',
         replacement: '[$1|alias]($2)'
       },
       {
-        name: 'Delete empty lines (multiline mode)',
+        name: t('Delete empty lines (multiline mode)'),
         pattern: '^\\s*$\\n',
         replacement: '',
         toggleMultiline: true
       },
       {
-        name: 'Add list symbol to each line (multiline mode)',
+        name: t('Add list symbol to each line (multiline mode)'),
         pattern: '^(.+)$',
         replacement: '- $1',
         toggleMultiline: true
       },
       // 添加使用条件格式的示例
       {
-        name: 'If the text contains important, set the text highlight (conditional format)',
+        name: t('If the text contains important, set the text highlight (conditional format)'),
         pattern: '(.+)',
         replacement: '==$1==',
         useCondition: true,
@@ -466,19 +467,19 @@ export class RegexCommandModal extends Modal {
     previewContainer.style.padding = '10px';
     previewContainer.style.borderRadius = '5px';
 
-    const previewLabel = previewContainer.createEl('label', { text: 'Preview' });
+    const previewLabel = previewContainer.createEl('label', { text: t('Preview') });
 
 
     const previewInputContainer = previewContainer.createDiv('preview-input-container');
     previewInputContainer.style.marginBottom = '10px';
 
-    const previewInputLabel = previewInputContainer.createEl('label', { text: 'Example text: ' });
+    const previewInputLabel = previewInputContainer.createEl('label', { text: t('Example text:') });
     previewInputLabel.style.display = 'block';
     previewInputLabel.style.marginBottom = '5px';
 
     this.previewInput = previewInputContainer.createEl('textarea', {
       attr: {
-        placeholder: 'Input example text to view the formatting effect of the command...'
+        placeholder: t('Input example text to view the formatting effect of the command...')
       }
     });
     this.previewInput.style.height = 'auto';
@@ -494,7 +495,7 @@ export class RegexCommandModal extends Modal {
 
     const previewOutputContainer = previewContainer.createDiv('preview-output-container');
 
-    const previewOutputLabel = previewOutputContainer.createEl('label', { text: 'Result:' });
+    const previewOutputLabel = previewOutputContainer.createEl('label', { text: t('Result:') });
     previewOutputLabel.style.display = 'block';
     previewOutputLabel.style.marginBottom = '5px';
 
@@ -511,24 +512,24 @@ export class RegexCommandModal extends Modal {
     // 添加保存和取消按钮
     new Setting(contentEl)
       .addButton(button => button
-        .setButtonText('Save')
+        .setButtonText('保存')
         .setCta()
         .onClick(() => {
           // 验证必填字段
           if (!this.commandId || !this.commandName) {
-            new Notice('Command ID and command name cannot be empty');
+            new Notice(t('Command ID and command name cannot be empty'));
             return;
           }
 
           // 验证ID格式
           if (this.commandId.includes(' ')) {
-            new Notice('Command ID cannot contain spaces');
+            new Notice(t('Command ID cannot contain spaces'));
             return;
           }
 
           // 验证正则表达式
           if (!this.regexPattern) {
-            new Notice('Regex pattern cannot be empty');
+            new Notice(t('Regex pattern cannot be empty'));
             return;
           }
           const commandId = this.commandIndex === null ? `custom-${this.commandId}` : this.commandId;
@@ -538,7 +539,7 @@ export class RegexCommandModal extends Modal {
               cmd => cmd.id === commandId
             );
             if (existingIndex >= 0) {
-              new Notice('Command'+' ' + this.commandId +' '+ 'already exists', 8000);
+              new Notice(t('Command')+' ' + this.commandId +' '+ t('already exists'), 8000);
               return;
             }
           }
@@ -588,7 +589,7 @@ export class RegexCommandModal extends Modal {
         })
       )
       .addButton(button => button
-        .setButtonText('Cancel')
+        .setButtonText(t('Cancel'))
         .onClick(() => this.close())
       );
   }
@@ -629,7 +630,7 @@ export class RegexCommandModal extends Modal {
       });
       this.previewOutput.style.color = 'var(--text-normal)';
     } catch (error) {
-      this.previewOutput.setText('Error: ' + error.message);
+      this.previewOutput.setText(t('Error: ') + error.message);
       this.previewOutput.style.color = 'var(--text-error)';
 
       // 错误时清除正则代码显示
@@ -653,12 +654,12 @@ export class RegexCommandModal extends Modal {
       (codeContainer as HTMLDivElement).style.borderTop = '1px solid var(--background-modifier-border)';
       (codeContainer as HTMLDivElement).style.paddingTop = '10px';
 
-      const codeTitle = codeContainer.createEl('div', { text: 'Complete regular expression code (copy to AI for explanation)' });
+      const codeTitle = codeContainer.createEl('div', { text: t('Complete regular expression code (copy to AI for explanation)') });
       codeTitle.style.marginBottom = '5px';
       codeTitle.style.fontWeight = 'bold';
     } else {
       codeContainer.empty();
-      const codeTitle = codeContainer.createEl('div', { text: 'Complete regular expression code (copy to AI for explanation)' });
+      const codeTitle = codeContainer.createEl('div', { text: t('Complete regular expression code (copy to AI for explanation)') });
       codeTitle.style.marginBottom = '5px';
       codeTitle.style.fontWeight = 'bold';
     }
@@ -673,15 +674,15 @@ export class RegexCommandModal extends Modal {
     codeBlock.style.fontSize = 'var(--font-smaller)';
 
     // 构建完整的正则表达式代码
-    let codeText = `//${'Explain the syntax of JavaScript regular expressions'}\n`;
+    let codeText = `//${t('Explain the syntax of JavaScript regular expressions')}\n`;
     codeText += `const regex = /${this.escapeRegexForDisplay(this.regexPattern)}/${flags};\n`;
     codeText += `const result = text.replace(regex, "${this.escapeStringForDisplay(this.regexReplacement)}");\n`;
 
     if (this.useCondition && this.conditionPattern) {
-      codeText += `\n//${'Conditional matching'}\n`;
+      codeText += `\n//${t('Conditional matching')}\n`;
       codeText += `const condition = /${this.escapeRegexForDisplay(this.conditionPattern)}/;\n`;
       codeText += `if (condition.test(text)) {\n`;
-      codeText += `  //${'Apply regular expression replacement'}\n`;
+      codeText += `  //${t('Apply regular expression replacement')}\n`;
       codeText += `  const result = text.replace(regex, "${this.escapeStringForDisplay(this.regexReplacement)}");\n`;
       codeText += `}`;
     }
@@ -689,7 +690,7 @@ export class RegexCommandModal extends Modal {
     codeBlock.textContent = codeText;
 
     // 添加复制按钮
-    const copyButton = codeContainer.createEl('button', { text: 'Copy code' });
+    const copyButton = codeContainer.createEl('button', { text: t('Copy code') });
     copyButton.style.marginTop = '5px';
     copyButton.style.padding = '4px 8px';
     copyButton.style.borderRadius = '4px';
@@ -697,9 +698,9 @@ export class RegexCommandModal extends Modal {
 
     copyButton.addEventListener('click', () => {
       navigator.clipboard.writeText(codeText).then(() => {
-        copyButton.textContent = 'Copied!';
+        copyButton.textContent = t('Copied!');
         setTimeout(() => {
-          copyButton.textContent = 'Copy code';
+          copyButton.textContent = t('Copy code');
         }, 2000);
       });
     });
@@ -714,6 +715,4 @@ export class RegexCommandModal extends Modal {
   private escapeStringForDisplay(str: string): string {
     return str.replace(/"/g, '\\"');
   }
-
 } 
-

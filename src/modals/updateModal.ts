@@ -10,6 +10,7 @@ import {
 } from "obsidian";
 import type editingToolbarPlugin from "src/plugin/main";
 import { DEFAULT_SETTINGS } from "src/settings/settingsData";
+import { t } from "src/translations/helper";
 import { ConfirmModal } from "src/modals/ConfirmModal";
 
 interface Command {
@@ -216,16 +217,16 @@ export class UpdateNoticeModal extends Modal {
 
             if (hasChanges) {
                 await this.plugin.saveSettings();
-                new Notice("Command IDs have been successfully repaired!");
+                new Notice(t("Command IDs have been successfully repaired!"));
                 // 重新加载插件
                 dispatchEvent(new Event("editingToolbar-NewCommand"));
             } else {
-                new Notice("No command IDs need to be repaired");
+                new Notice(t("No command IDs need to be repaired"));
             }
         } catch (error) {
             console.error("修复命令ID时出错:", error);
             new Notice(
-                "Error repairing command IDs, please check the console for details"
+                t("Error repairing command IDs, please check the console for details")
             );
         }
     }
@@ -258,7 +259,7 @@ export class UpdateNoticeModal extends Modal {
             await this.plugin.saveSettings();
 
             new Notice(
-                "Successfully restored default settings! (Custom commands preserved)"
+                t("Successfully restored default settings! (Custom commands preserved)")
             );
 
             // 重新加载插件
@@ -267,7 +268,7 @@ export class UpdateNoticeModal extends Modal {
         } catch (error) {
             console.error("恢复默认设置时出错:", error);
             new Notice(
-                "Error restoring default settings, please check the console for details"
+                t("Error restoring default settings, please check the console for details")
             );
         }
     }
@@ -281,31 +282,31 @@ export class UpdateNoticeModal extends Modal {
 
         // 版本更新说明
         contentEl.createEl("p", {
-            text: "Notice:",
+            text: t("Notice:"),
         });
 
         const ul = contentEl.createEl("ul");
 
         ul.createEl("li", {
-            text: 
+            text: t(
                 "⚠️This update is not compatible with 2.x version command ids, please click [Repair command] to be compatible"
-            ,
+            ),
         });
         ul.createEl("li", {
-            text: 
+            text: t(
                 "⚠️If you want to restore the default settings, please click [Restore default settings]"
-            ,
+            ),
         });
 
         // 创建更新日志容器，但先不加载内容
         this.changelogContainer = contentEl.createDiv({ cls: "changelog-container" });
-        this.changelogContainer.createEl("h3", { text: "Latest Changes" });
+        this.changelogContainer.createEl("h3", { text: t("Latest Changes") });
 
         this.changelogContentEl = this.changelogContainer.createDiv({
             cls: "changelog-content",
         });
         // 显示加载中提示
-        this.changelogContentEl.setText("Loading changelog...");
+        this.changelogContentEl.setText(t("Loading changelog..."));
 
         // 异步加载更新日志，不阻塞界面显示
         setTimeout(() => {
@@ -314,33 +315,33 @@ export class UpdateNoticeModal extends Modal {
 
         // 数据修复按钮
         new Setting(contentEl)
-            .setName("🔧Data repair")
+            .setName(t("🔧Data repair"))
             .setDesc(
-                
+                t(
                     "This update changed the ID of some commands, please click this button to repair the commands to ensure the toolbar works properly"
-                
+                )
             )
             .addButton((button) =>
-                button.setButtonText("Repair command ID").onClick(async () => {
+                button.setButtonText(t("Repair command ID")).onClick(async () => {
                     await this.fixCommandIds();
                 })
             );
 
         // 恢复默认设置按钮
         new Setting(contentEl)
-            .setName("🔄Restore default settings")
+            .setName(t("🔄Restore default settings"))
             .setDesc(
-                
+                t(
                     "This will reset all your custom configurations, but custom commands will be preserved"
-                
+                )
             )
             .addButton((button) =>
-                button.setButtonText("Restore default").onClick(async () => {
+                button.setButtonText(t("Restore default")).onClick(async () => {
                     // 添加确认对话框
                     ConfirmModal.show(this.app, {
-                        message: 
+                        message: t(
                             "Are you sure you want to restore all settings to default? But custom commands will be preserved."
-                        ,
+                        ),
                         onConfirm: async () => {
                             await this.restoreDefaultSettings();
                         }
@@ -350,10 +351,10 @@ export class UpdateNoticeModal extends Modal {
 
         // 查看完整更新日志按钮
         new Setting(contentEl)
-            .setName("📋View full changelog")
-            .setDesc("Open the complete changelog in your browser")
+            .setName(t("📋View full changelog"))
+            .setDesc(t("Open the complete changelog in your browser"))
             .addButton((button) =>
-                button.setButtonText("Open changelog").onClick(() => {
+                button.setButtonText(t("Open changelog")).onClick(() => {
                     window.open(
                         "https://github.com/PKM-er/obsidian-editing-toolbar/blob/master/CHANGELOG.md",
                         "_blank"
@@ -363,7 +364,7 @@ export class UpdateNoticeModal extends Modal {
 
         // 关闭按钮
         new Setting(contentEl).addButton((button) =>
-            button.setButtonText("Close").onClick(() => {
+            button.setButtonText(t("Close")).onClick(() => {
                 this.close();
             })
         );
@@ -395,5 +396,3 @@ export class UpdateNoticeModal extends Modal {
         contentEl.empty();
     }
 }
-
-
