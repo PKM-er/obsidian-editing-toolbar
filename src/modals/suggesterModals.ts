@@ -3,7 +3,6 @@ import { appIcons } from "src/icons/appIcons";
 import { Notice, Command, setIcon, FuzzyMatch, FuzzySuggestModal, Modal, SliderComponent, TextAreaComponent, TextComponent, debounce, App } from "obsidian";
 import { findmenuID } from "src/util/util";
 import { setBottomValue, setHorizontalValue } from "src/util/statusBarConstants";
-import { t } from "src/translations/helper";
 
 // 通用的图标选择回调类型
 export type IconSelectCallback = (iconId: string) => void;
