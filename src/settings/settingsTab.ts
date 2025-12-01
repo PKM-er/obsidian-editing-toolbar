@@ -261,7 +261,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
         })
       );
 
-    // Top toolbar toggle
+// Top toolbar toggle
     new Setting(generalSettingContainer)
       .setName('Top Toolbar')
       .setDesc('Enable the toolbar positioned at the top.')
@@ -272,28 +272,19 @@ export class editingToolbarSettingTab extends PluginSettingTab {
             const s = this.plugin.settings;
             const prevStyle = this.plugin.positionStyle;
 
+            // Update only the Top toolbar flag
             s.enableTopToolbar = value;
 
             let nextStyle: string | null = null;
 
             if (value) {
-              // Turning Top ON → it becomes the only active style
-              s.enableFollowingToolbar = false;
-              s.enableFixedToolbar = false;
+              // Turning Top ON: make it the primary style for configuration/appearance.
               nextStyle = 'top';
-            } else {
-              // Turning Top OFF
-              const anyOtherEnabled = s.enableFollowingToolbar || s.enableFixedToolbar;
-
-              if (!anyOtherEnabled) {
-                // Do not allow all three to be OFF; keep Top enabled
-                s.enableTopToolbar = true;
-                nextStyle = 'top';
-              } else if (prevStyle === 'top') {
-                // Top was the active style → move to another enabled style
-                if (s.enableFollowingToolbar) nextStyle = 'following';
-                else if (s.enableFixedToolbar) nextStyle = 'fixed';
-              }
+            } else if (prevStyle === 'top') {
+              // Turning Top OFF and it was the primary style → choose another enabled style as primary.
+              if (s.enableFollowingToolbar) nextStyle = 'following';
+              else if (s.enableFixedToolbar) nextStyle = 'fixed';
+              else nextStyle = null; // no other toolbar is enabled
             }
 
             if (nextStyle && nextStyle !== prevStyle) {
@@ -305,7 +296,8 @@ export class editingToolbarSettingTab extends PluginSettingTab {
           });
       });
 
-    // Following toolbar toggle
+
+// Following toolbar toggle
     new Setting(generalSettingContainer)
       .setName('Following Toolbar')
       .setDesc('Enable the toolbar that appears upon text selection.')
@@ -316,25 +308,19 @@ export class editingToolbarSettingTab extends PluginSettingTab {
             const s = this.plugin.settings;
             const prevStyle = this.plugin.positionStyle;
 
+            // Update only the Following toolbar flag
             s.enableFollowingToolbar = value;
 
             let nextStyle: string | null = null;
 
             if (value) {
-              // Turning Following ON → it becomes the only active style
-              s.enableTopToolbar = false;
-              s.enableFixedToolbar = false;
+              // Turning Following ON: make it the primary style for configuration/appearance.
               nextStyle = 'following';
-            } else {
-              const anyOtherEnabled = s.enableTopToolbar || s.enableFixedToolbar;
-
-              if (!anyOtherEnabled) {
-                s.enableFollowingToolbar = true;
-                nextStyle = 'following';
-              } else if (prevStyle === 'following') {
-                if (s.enableTopToolbar) nextStyle = 'top';
-                else if (s.enableFixedToolbar) nextStyle = 'fixed';
-              }
+            } else if (prevStyle === 'following') {
+              // Turning Following OFF and it was the primary style → choose another enabled style as primary.
+              if (s.enableTopToolbar) nextStyle = 'top';
+              else if (s.enableFixedToolbar) nextStyle = 'fixed';
+              else nextStyle = null;
             }
 
             if (nextStyle && nextStyle !== prevStyle) {
@@ -346,10 +332,11 @@ export class editingToolbarSettingTab extends PluginSettingTab {
           });
       });
 
-    // Fixed toolbar toggle
+
+// Fixed toolbar toggle
     new Setting(generalSettingContainer)
       .setName('Fixed Toolbar')
-      .setDesc('Enable the toolbar whoose position may be fixed where you please.')
+      .setDesc('Enable the toolbar whose position may be fixed where you please.')
       .addToggle(toggle => {
         toggle
           .setValue(this.plugin.settings.enableFixedToolbar || false)
@@ -357,25 +344,19 @@ export class editingToolbarSettingTab extends PluginSettingTab {
             const s = this.plugin.settings;
             const prevStyle = this.plugin.positionStyle;
 
+            // Update only the Fixed toolbar flag
             s.enableFixedToolbar = value;
 
             let nextStyle: string | null = null;
 
             if (value) {
-              // Turning Fixed ON → it becomes the only active style
-              s.enableTopToolbar = false;
-              s.enableFollowingToolbar = false;
+              // Turning Fixed ON: make it the primary style for configuration/appearance.
               nextStyle = 'fixed';
-            } else {
-              const anyOtherEnabled = s.enableTopToolbar || s.enableFollowingToolbar;
-
-              if (!anyOtherEnabled) {
-                s.enableFixedToolbar = true;
-                nextStyle = 'fixed';
-              } else if (prevStyle === 'fixed') {
-                if (s.enableTopToolbar) nextStyle = 'top';
-                else if (s.enableFollowingToolbar) nextStyle = 'following';
-              }
+            } else if (prevStyle === 'fixed') {
+              // Turning Fixed OFF and it was the primary style → choose another enabled style as primary.
+              if (s.enableTopToolbar) nextStyle = 'top';
+              else if (s.enableFollowingToolbar) nextStyle = 'following';
+              else nextStyle = null;
             }
 
             if (nextStyle && nextStyle !== prevStyle) {
@@ -386,6 +367,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
             this.display();
           });
       });
+
 
     // Mobile setting
     new Setting(generalSettingContainer)
