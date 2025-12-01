@@ -1254,9 +1254,9 @@ updateCurrentCommands(commands: any[], style?: string): void {
   }
 
   private hideToolbarIfNotSelected() {
-    const editingToolbarModalBar = isExistoolbar(this.app, this);
-    if (editingToolbarModalBar && this.isFollowingToolbarActive()) {
-      editingToolbarModalBar.style.visibility = "hidden";
+    const followingToolbar = isExistoolbar(this.app, this, "following");
+    if (followingToolbar && this.isFollowingToolbarActive()) {
+      followingToolbar.style.visibility = "hidden";
     }
   }
 
@@ -1304,20 +1304,21 @@ updateCurrentCommands(commands: any[], style?: string): void {
     };
   }
 
-  // 抽取显示工具栏的逻辑
+  // 抽取显示“following”工具栏的逻辑
   private showFollowingToolbar(editor: Editor) {
     if (!this.isFollowingToolbarActive()) return;
 
-    const editingToolbarModalBar = isExistoolbar(this.app, this);
+    const followingToolbar = isExistoolbar(this.app, this, "following");
 
-    if (editingToolbarModalBar) {
-      editingToolbarModalBar.style.visibility = "visible";
-      editingToolbarModalBar.classList.add("editingToolbarFlex");
-      editingToolbarModalBar.classList.remove("editingToolbarGrid");
+    if (followingToolbar) {
+      followingToolbar.style.visibility = "visible";
+      followingToolbar.classList.add("editingToolbarFlex");
+      followingToolbar.classList.remove("editingToolbarGrid");
 
-      // 直接使用createFollowingbar的定位逻辑
+      // 使用 createFollowingbar 的定位逻辑（会根据选择重新定位）
       createFollowingbar(this.app, this.toolbarIconSize, this, editor, true);
     } else {
+      // 如果还没有构建 following 工具栏，则创建并定位
       createFollowingbar(this.app, this.toolbarIconSize, this, editor, true);
     }
   }
