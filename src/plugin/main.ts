@@ -545,35 +545,40 @@ processAdmonitionTypes(pluginInstance: any) {
       }, 100);
     }
   };
-
+  
   handleeditingToolbar_resize = () => {
-    // const type= this.app.workspace.activeLeaf.getViewState().type
-    // console.log(type,"handleeditingToolbar_layout" )
-    //requireApiVersion("0.15.0") ? activeDocument = activeWindow.document : activeDocument = window.document;
-    if (this.settings.cMenuVisibility == true && this.positionStyle == "top") {
-      const view = app.workspace.getActiveViewOfType(ItemView);
-      if (ViewUtils.isSourceMode(view)) {
-        let leafwidth = this.app.workspace.activeLeaf.view.leaf.width ?? 0
-        //let leafwidth = view.containerEl?.querySelector<HTMLElement>(".markdown-source-view").offsetWidth ?? 0
-        if (this.Leaf_Width == leafwidth) return false;
-        if (leafwidth > 0) {
-          this.Leaf_Width = leafwidth
-          if (this.settings.cMenuWidth && leafwidth) {
-            if ((leafwidth - this.settings.cMenuWidth) < 78 && (leafwidth > this.settings.cMenuWidth))
-              return;
-            else {
-              setTimeout(() => {
-                resetToolbar(), editingToolbarPopover(app, this);
-              }, 200)
-            }
-          }
-        }
-
-      }
-    } else {
+    // Only care about resizing when the toolbar is visible and top-style is active
+    if (!this.settings.cMenuVisibility || !this.isTopToolbarActive()) {
       return false;
     }
-  }
+  
+    const view = app.workspace.getActiveViewOfType(ItemView);
+    if (!ViewUtils.isSourceMode(view)) {
+      return false;
+    }
+  
+    const leafwidth = this.app.workspace.activeLeaf.view.leaf.width ?? 0;
+    // No width, or nothing changed → nothing to do
+    if (leafwidth <= 0 || this.Leaf_Width === leafwidth) {
+      return false;
+    }
+  
+    this.Leaf_Width = leafwidth;
+  
+    if (this.settings.cMenuWidth && leafwidth) {
+      const diff = leafwidth - this.settings.cMenuWidth;
+  
+      // Same guard as before: don't rebuild if the configured width still fits
+      if (diff < 78 && leafwidth > this.settings.cMenuWidth) {
+        return;
+      }
+  
+      setTimeout(() => {
+        resetToolbar();
+        editingToolbarPopover(app, this);
+      }, 200);
+    }
+  };
 
   setIS_MORE_Button(status: boolean): void {
     this.IS_MORE_Button = status
@@ -1186,6 +1191,29 @@ updateCurrentCommands(commands: any[], style?: string): void {
     this.EN_Text_Format_Brush = false;
     this.formatBrushActive = false;
   }
+
+  // Top toolbar is considered active if:
+  // - explicit multi-toolbar toggle is on, or
+  // - no explicit toggles are used and positionStyle is "top" (legacy behaviour)
+  private isTopToolbarActive(): boolean {
+    if (this.settings.enableTopToolbar) {
+      return true;
+    }
+  
+    // Backwards compatibility fallback:
+    // if neither following nor fixed have been explicitly enabled,
+    // and the old global positionStyle is "top", behave like old single-mode.
+    if (
+      !this.settings.enableFollowingToolbar &&
+      !this.settings.enableFixedToolbar &&
+      this.positionStyle === "top"
+    ) {
+      return true;
+    }
+  
+    return false;
+  }
+
   private isFollowingToolbarActive(): boolean {
     // New multi-toolbar setting: explicitly enable the following toolbar
     if (this.settings.enableFollowingToolbar) {
