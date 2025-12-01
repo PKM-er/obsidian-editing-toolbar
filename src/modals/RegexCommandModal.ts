@@ -1,7 +1,6 @@
 import { App, Modal, Setting, Notice, setIcon, TextComponent, ToggleComponent } from "obsidian";
 import editingToolbarPlugin from "src/plugin/main";
 import { ChooseFromIconList } from "src/modals/suggesterModals";
-import { t } from 'src/translations/helper';
 import { CustomCommand } from "src/settings/settingsData";
 
 export class RegexCommandModal extends Modal {
@@ -715,4 +714,5 @@ export class RegexCommandModal extends Modal {
   private escapeStringForDisplay(str: string): string {
     return str.replace(/"/g, '\\"');
   }
+
 } 
