@@ -14,9 +14,9 @@ export class ConfirmModal extends Modal {
     constructor(app: App, options: ConfirmModalOptions) {
         super(app);
         this.options = {
-            title: t('Confirm'),
-            confirmText: t('Confirm'),
-            cancelText: t('Cancel'),
+            title: 'Confirm',
+            confirmText: 'Confirm',
+            cancelText: 'Cancel',
             ...options
         };
     }
@@ -63,3 +63,4 @@ export class ConfirmModal extends Modal {
     }
 
 }
+
