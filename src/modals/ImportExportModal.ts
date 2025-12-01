@@ -1,7 +1,6 @@
 import { settings } from "cluster";
 import { App, Modal, Setting, Notice, TextAreaComponent, ButtonComponent } from "obsidian";
 import type editingToolbarPlugin from "src/plugin/main";
-import { t } from 'src/translations/helper';
 import { ConfirmModal } from "src/modals/ConfirmModal";
 export class ImportExportModal extends Modal {
   plugin: editingToolbarPlugin;
@@ -640,4 +639,5 @@ export class ImportExportModal extends Modal {
         return style;
     }
   }
+
 } 
