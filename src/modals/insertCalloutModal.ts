@@ -46,7 +46,7 @@ export class InsertCalloutModal extends Modal {
         { type: "bug", aliases: [], icon: "lucide-bug", label: "Bug", color: "var(--callout-bug)" },
         { type: "example", aliases: [], icon: "lucide-list", label: "Example", color: "var(--callout-example)" },
         { type: "quote", aliases: ["cite"], icon: "lucide-quote", label: "Quote", color: "var(--callout-quote)" }
-        { type: "glossary", aliases: [], icon: "lucide-book-a", label: "Glossary - ", color: "233, 151, 63" }
+        // { type: "glossary", aliases: [], icon: "lucide-book-a", label: "Glossary - ", color: "233, 151, 63" }
     ];
     constructor(private plugin: editingToolbarPlugin) {
         super(plugin.app);
@@ -370,3 +370,4 @@ export class InsertCalloutModal extends Modal {
     }
 
 }
+
