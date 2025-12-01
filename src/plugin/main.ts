@@ -29,7 +29,6 @@ import { ViewUtils } from 'src/util/viewUtils';
 import { UpdateNoticeModal } from "src/modals/updateModal";
 import { StatusBar } from "src/components/StatusBar";
 import { CommandsManager } from "src/commands/commands";
-import { t } from 'src/translations/helper';
 import { InsertLinkModal } from "src/modals/insertLinkModal";
 import { InsertCalloutModal } from "src/modals/insertCalloutModal";
 
