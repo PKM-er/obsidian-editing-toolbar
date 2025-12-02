@@ -379,13 +379,15 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     appearanceSettingContainer.style.borderRadius = '8px';
     appearanceSettingContainer.style.backgroundColor = 'var(--background-secondary)';
     appearanceSettingContainer.style.marginBottom = '20px';
-  
-    // Ensure the plugin knows which style we're editing
+
+    // Which toolbar style are we editing in this tab?
     const editingStyle =
-      (this.plugin.settings.positionStyle as ToolbarStyleKey) || "top";
+      (this.plugin.appearanceEditStyle as ToolbarStyleKey) ||
+      (this.plugin.settings.positionStyle as ToolbarStyleKey) ||
+      "top";
     this.plugin.appearanceEditStyle = editingStyle;
-    
-    // Toolbar Settings – choose which style's settings to edit
+
+    // Dropdown: choose which style's appearance to edit
     new Setting(appearanceSettingContainer)
       .setName("Toolbar Settings")
       .setDesc("Choose which toolbar style’s appearance you want to edit.")
@@ -394,23 +396,22 @@ export class editingToolbarSettingTab extends PluginSettingTab {
         POSITION_STYLES.forEach((style) => {
           positions[style] = style[0].toUpperCase() + style.slice(1);
         });
-    
+
         dropdown
           .addOptions(positions)
-          .setValue(this.plugin.settings.positionStyle)
+          .setValue(editingStyle)
           .onChange(async (value) => {
-            this.plugin.settings.positionStyle = value;
-            this.plugin.appearanceEditStyle = value as ToolbarStyleKey;
+            const style = value as ToolbarStyleKey;
+            // Only change which style we are editing + persist it
+            this.plugin.appearanceEditStyle = style;
+            this.plugin.settings.positionStyle = style;
             await this.plugin.saveSettings();
             this.display();
           });
       });
-    
-    // Use the style we're *editing* to decide which controls to show
-    const settingsStyle = editingStyle;
 
-  
-    if (settingsStyle === "top") {
+    // Extra options that only apply to specific styles
+    if (editingStyle === "top") {
       new Setting(appearanceSettingContainer)
         .setName('Editing Toolbar Auto-hide')
         .setDesc('The toolbar is displayed when the mouse moves over it, otherwise it is automatically hidden.')
@@ -421,7 +422,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
             this.plugin.saveSettings();
             this.triggerRefresh();
           }));
-  
+
       new Setting(appearanceSettingContainer)
         .setName('Editing Toolbar Centred Display')
         .setDesc('Whether the toolbar is centred or full-width, the default is full-width.')
@@ -433,8 +434,8 @@ export class editingToolbarSettingTab extends PluginSettingTab {
             this.triggerRefresh();
           }));
     }
-  
-    if (settingsStyle === "fixed") {
+
+    if (editingStyle === "fixed") {
       new Setting(appearanceSettingContainer)
         .setName('Editing Toolbar Columns')
         .setDesc('Choose the number of columns per row to display on Editing Toolbar.')
@@ -455,7 +456,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
             )
             .setDynamicTooltip();
         });
-  
+
       new Setting(appearanceSettingContainer)
         .setName('Fixed Position Offset')
         .setDesc('Choose the offset of the Editing Toolbar in the fixed position.')
@@ -466,7 +467,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
           }));
     }
 
-    // Color / paintbrush settings remain as you have them
+    // Colour / paintbrush settings + preview
     this.createColorSettings(containerEl);
   }
 
@@ -1190,11 +1191,9 @@ export class editingToolbarSettingTab extends PluginSettingTab {
                 `${value}px`
               );
             }
-    
             await this.plugin.saveSettings();
           });
       });
-
     // 添加工具栏预览区域
     const previewContainer = toolbarContainer.createDiv('toolbar-preview-container');
     previewContainer.addClass('toolbar-preview-section');
@@ -1208,28 +1207,28 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     // 创建预览工具栏 - 使用类似 generateMenu 的方式
     const wrapper = previewContainer.createDiv();
     wrapper.classList.add("preview-toolbar-wrapper");
-    wrapper.classList.add(`preview-${this.plugin.positionStyle}`);
+    wrapper.classList.add(`preview-${editingStyle}`);
 
-    
     const editingToolbar = wrapper.createDiv();
     editingToolbar.classList.add("editing-toolbar-preview");
-    editingToolbar.classList.add(`preview-${this.plugin.positionStyle}`);
+    editingToolbar.classList.add(`preview-${editingStyle}`);
 
-    
     editingToolbar.setAttribute("id", "editingToolbarModalBar");
-    this.applyAestheticStyle(editingToolbar, this.plugin.settings.aestheticStyle, this.plugin.positionStyle);
+    this.applyAestheticStyle(
+      editingToolbar,
+      this.plugin.settings.aestheticStyle,
+      editingStyle
+    );
     // 根据当前美观风格设置类
-
-    if (this.plugin.positionStyle === "fixed") {
+    if (editingStyle === "fixed") {
       const icon = this.plugin.settings.toolbarIconSize || 18;
       const cols = this.plugin.settings.cMenuNumRows || 6;
-    
+
       editingToolbar.style.display = "grid";
       editingToolbar.style.gridTemplateColumns = `repeat(${cols}, ${icon + 10}px)`;
       editingToolbar.style.gap = `${Math.max((icon - 18) / 4, 2)}px`;
       editingToolbar.style.margin = "0 auto";  // centers the grid like top/following
     }
-
 
     // 定义预览工具栏的命令
     const previewCommands = [
