@@ -796,7 +796,9 @@ export function editingToolbarPopover(
         if ("SubmenuCommands" in item) {
           let _btn: any;
         
-          if (btnwidth >= leafwidth - buttonWidth * 4 && leafwidth > 100) {
+            const reserveWidth = buttonWidth * 2; // space for More + safety
+            if (leafwidth > 100 && (leafwidth - btnwidth) <= reserveWidth) {
+
             //说明已经溢出
             plugin.setIS_MORE_Button(true);
             // globalThis.IS_MORE_Button = true; //需要添加更多按钮
@@ -1037,7 +1039,8 @@ export function editingToolbarPopover(
             }
           } else {
             let button;
-            if (btnwidth >= leafwidth - buttonWidth * 4 && leafwidth > 100) {
+              const reserveWidth = buttonWidth * 2; // space for More + safety
+              if (leafwidth > 100 && (leafwidth - btnwidth) <= reserveWidth) {
               //说明已经溢出
               plugin.setIS_MORE_Button(true);
               //globalpluginIS_MORE_Button = true; //需要添加更多按钮
@@ -1088,7 +1091,8 @@ export function editingToolbarPopover(
       });
 
       createMoremenu(app, plugin, editingToolbar);
-      if (Math.abs(plugin.settings.cMenuWidth - Number(btnwidth)) > (btnwidth + 4)) {
+      // Always keep an up-to-date estimate of the toolbar width.
+      if (!plugin.settings.cMenuWidth || Math.abs(plugin.settings.cMenuWidth - btnwidth) > 4) {
         plugin.settings.cMenuWidth = Number(btnwidth);
         setTimeout(() => {
           plugin.saveSettings();
