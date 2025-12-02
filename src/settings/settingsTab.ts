@@ -1209,9 +1209,16 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     editingToolbar.classList.add(`preview-${editingStyle}`);
 
     editingToolbar.setAttribute("id", "editingToolbarModalBar");
+
+    // Use the per-style aesthetic if set; fall back to the global one
+    const previewAestheticStyle =
+      (appearanceBucket.aestheticStyle as string) ??
+      this.plugin.settings.aestheticStyle ??
+      "default";
+
     this.applyAestheticStyle(
       editingToolbar,
-      this.plugin.settings.aestheticStyle,
+      previewAestheticStyle,
       editingStyle
     );
     // 根据当前美观风格设置类
@@ -1226,28 +1233,6 @@ export class editingToolbarSettingTab extends PluginSettingTab {
       editingToolbar.style.gap = `${Math.max((icon - 18) / 4, 2)}px`;
       editingToolbar.style.margin = "0 auto";  // centers the grid like top/following
     }
-
-    // Apply the current style's colours and icon size directly to the preview
-    const bg =
-      appearanceBucket.toolbarBackgroundColor ??
-      this.plugin.settings.toolbarBackgroundColor;
-    const iconColor =
-      appearanceBucket.toolbarIconColor ??
-      this.plugin.settings.toolbarIconColor;
-    const size = appearanceBucket.toolbarIconSize ?? 18;
-
-    if (bg) {
-      editingToolbar.style.backgroundColor = bg;
-    }
-
-    const iconSvgs = editingToolbar.querySelectorAll<SVGElement>("svg");
-    iconSvgs.forEach((svg) => {
-      if (iconColor) {
-        svg.style.color = iconColor;
-      }
-      svg.style.width = `${size}px`;
-      svg.style.height = `${size}px`;
-    });
 
     // 定义预览工具栏的命令
     const previewCommands = [
@@ -1314,9 +1299,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
         name: "Insert Table",
         icon: "lucide-table",
       },
-
     ];
-
     // 为每个命令创建按钮
     previewCommands.forEach(item => {
       const button = new ButtonComponent(editingToolbar);
@@ -1327,14 +1310,32 @@ export class editingToolbarSettingTab extends PluginSettingTab {
       // 设置图标
       if (item.icon) {
         setIcon(button.buttonEl, item.icon);
-
-
-
       }
-
     });
+    // Apply the current style's colours and icon size directly to the preview
+    const bg =
+      appearanceBucket.toolbarBackgroundColor ??
+      this.plugin.settings.toolbarBackgroundColor;
+    const iconColor =
+      appearanceBucket.toolbarIconColor ??
+      this.plugin.settings.toolbarIconColor;
+    const size =
+      appearanceBucket.toolbarIconSize ??
+      this.plugin.settings.toolbarIconSize ??
+      18;
 
+    if (bg) {
+      editingToolbar.style.backgroundColor = bg;
+    }
 
+    const iconSvgs = editingToolbar.querySelectorAll<SVGElement>("svg");
+    iconSvgs.forEach((svg) => {
+      if (iconColor) {
+        svg.style.color = iconColor;
+      }
+      svg.style.width = `${size}px`;
+      svg.style.height = `${size}px`;
+    });
   }
 
 
