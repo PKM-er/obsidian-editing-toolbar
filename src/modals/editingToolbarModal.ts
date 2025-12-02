@@ -616,10 +616,17 @@ export function editingToolbarPopover(
     settings.aestheticStyle ??
     "default";
 
+  // Only use explicit colours when the style is "custom".
+  // For "default", "tiny" and "glass", let the CSS classes define colours.
   const resolvedBgColor =
-    appearanceForStyle.toolbarBackgroundColor ?? settings.toolbarBackgroundColor;
+    resolvedAestheticStyle === "custom"
+      ? appearanceForStyle.toolbarBackgroundColor ?? settings.toolbarBackgroundColor
+      : undefined;
+
   const resolvedIconColor =
-    appearanceForStyle.toolbarIconColor ?? settings.toolbarIconColor;
+    resolvedAestheticStyle === "custom"
+      ? appearanceForStyle.toolbarIconColor ?? settings.toolbarIconColor
+      : undefined;
 
   const aestheticStyleMap: { [key: string]: string } = {
     default: "editingToolbarDefaultAesthetic",
