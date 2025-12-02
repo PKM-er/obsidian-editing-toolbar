@@ -795,14 +795,14 @@ export function editingToolbarPopover(
         let tip;
         if ("SubmenuCommands" in item) {
           let _btn: any;
-
+        
           if (btnwidth >= leafwidth - buttonWidth * 4 && leafwidth > 100) {
             //说明已经溢出
             plugin.setIS_MORE_Button(true);
             // globalThis.IS_MORE_Button = true; //需要添加更多按钮
             _btn = new ButtonComponent(editingToolbarPopoverBar);
           } else _btn = new ButtonComponent(editingToolbar);
-
+        
           _btn.setClass("editingToolbarCommandsubItem" + index);
           if (index >= settings.cMenuNumRows) {
             _btn.setClass("editingToolbarSecond");
@@ -811,18 +811,15 @@ export function editingToolbarPopover(
             if (effectiveStyle !== "top")
               _btn.buttonEl.setAttribute('aria-label-position', 'top')
           }
-
+        
           checkHtml(item.icon)
             ? (_btn.buttonEl.innerHTML = item.icon)
             : _btn.setIcon(item.icon);
-
-          // let __btnwidth;
-          // if (_btn.buttonEl.offsetWidth > 100) __btnwidth = 26;
-          // else {
-          //   if (_btn.buttonEl.offsetWidth < 26) __btnwidth = 26;
-          //   else __btnwidth = _btn.buttonEl.offsetWidth;
-          // }
-          btnwidth += buttonWidth + 2;
+        
+          // use the actual rendered width of this submenu button
+          const submenuWidth = _btn.buttonEl.offsetWidth || buttonWidth;
+          btnwidth += submenuWidth;
+        
           let submenu = createDiv("subitem");
           if (submenu) {
             item.SubmenuCommands.forEach(
@@ -873,7 +870,6 @@ export function editingToolbarPopover(
               .setClass("editingToolbarCommandsubItem-font-color")
               .setTooltip(t("Font Colors"))
               .onClick(() => {
-
                 app.commands.executeCommandById(item.id);
 
                 // 检查命令执行后是否仍有文本选中
@@ -895,12 +891,15 @@ export function editingToolbarPopover(
             checkHtml(item.icon)
               ? (button2.buttonEl.innerHTML = item.icon)
               : button2.setIcon(item.icon);
-
-            btnwidth += buttonWidth;
+        
+            // use the actual rendered width of the font-color button
+            const fontColorWidth = button2.buttonEl.offsetWidth || buttonWidth;
+            btnwidth += fontColorWidth;
+        
             //  let Selection = createDiv("triangle-icon");
             let submenu2 = createEl("div");
             submenu2.addClass("subitem");
-
+        
             if (submenu2) {
               submenu2.innerHTML = colorpicker(plugin);
 
@@ -957,7 +956,6 @@ export function editingToolbarPopover(
               .setClass("editingToolbarCommandsubItem-font-color")
               .setTooltip(t("Background color"))
               .onClick(() => {
-
                 app.commands.executeCommandById(item.id);
 
                 // 检查命令执行后是否仍有文本选中
@@ -974,13 +972,15 @@ export function editingToolbarPopover(
                 } else {
                   editingToolbar.style.visibility = "visible";
                 }
-
               });
             checkHtml(item.icon)
               ? (button2.buttonEl.innerHTML = item.icon)
               : button2.setIcon(item.icon);
-
-            btnwidth += buttonWidth;
+          
+            // use the actual rendered width of the background-color button
+            const bgColorWidth = button2.buttonEl.offsetWidth || buttonWidth;
+            btnwidth += bgColorWidth;
+          
             //  let Selection = createDiv("triangle-icon");
             let submenu2 = createEl("div");
             submenu2.addClass("subitem");
@@ -1062,12 +1062,11 @@ export function editingToolbarPopover(
               } else {
                 editingToolbar.style.visibility = "visible";
               }
-
             });
-
+          
             button.setClass("editingToolbarCommandItem");
             if (index >= settings.cMenuNumRows) {
-
+          
               button.setClass("editingToolbarSecond");
             } else {
               if (effectiveStyle !== "top") {
@@ -1076,18 +1075,14 @@ export function editingToolbarPopover(
             }
             if (item.id == "editingToolbar-Divider-Line")
               button.setClass("editingToolbar-Divider-Line");
-
+          
             checkHtml(item.icon)
               ? (button.buttonEl.innerHTML = item.icon)
               : button.setIcon(item.icon);
-            //let __btnwidth2;
-            // if (button.buttonEl.offsetWidth > 100) __btnwidth2 = 26;
-            // else {
-            //   if (button.buttonEl.offsetWidth < 26) __btnwidth2 = 26;
-            //   else __btnwidth2 = button.buttonEl.offsetWidth;
-            // }
-
-            btnwidth += buttonWidth;
+          
+            // use the actual rendered width of this button
+            const buttonWidthActual = button.buttonEl.offsetWidth || buttonWidth;
+            btnwidth += buttonWidthActual;
           }
         }
       });
