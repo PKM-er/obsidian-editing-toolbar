@@ -290,46 +290,25 @@ export const setcolorHex = function (color: string) {
   }
 };
 
-export function createMoremenu(
-  app: App,
-  plugin: editingToolbarPlugin,
-  selector: HTMLDivElement
-) {
+export function createMoremenu(app: App, plugin: editingToolbarPlugin, selector: HTMLDivElement) {
   const view = app.workspace.getActiveViewOfType(ItemView);
   if (!ViewUtils.isAllowedViewType(view)) return;
 
-  const moreContainer = view.containerEl.querySelector(
-    "#editingToolbarPopoverBar"
-  ) as HTMLElement | null;
-  if (!moreContainer) return;
-
-  // If there are no commands in the popover bar, no reason to show "More"
-  const hasCommands = moreContainer.querySelector(
-    ".editingToolbarCommandItem, button[class^='editingToolbarCommandsubItem']"
-  );
-  if (!hasCommands) return;
-
-  // Don't create a second More button if one already exists
-  if (selector.querySelector(".more-menu")) return;
-
-  const cMoreMenu = selector.createEl("span");
+  let Morecontainer = view.containerEl.querySelector("#editingToolbarPopoverBar") as HTMLElement
+  if (!plugin.IS_MORE_Button) return;
+  let cMoreMenu = selector.createEl("span");
   cMoreMenu.addClass("more-menu");
-
-  const morebutton = new ButtonComponent(cMoreMenu);
+  let morebutton = new ButtonComponent(cMoreMenu);
   morebutton
     .setClass("editingToolbarCommandItem")
     .setTooltip(t("More"))
     .onClick(() => {
-      const isHidden =
-        moreContainer.style.visibility === "hidden" ||
-        !moreContainer.style.visibility;
-
-      if (isHidden) {
-        moreContainer.style.visibility = "visible";
-        moreContainer.style.height = "32px";
+      if (Morecontainer.style.visibility == "hidden") {
+        Morecontainer.style.visibility = "visible";
+        Morecontainer.style.height = "32px";
       } else {
-        moreContainer.style.visibility = "hidden";
-        moreContainer.style.height = "0";
+        Morecontainer.style.visibility = "hidden";
+        Morecontainer.style.height = "0";
       }
     });
   morebutton.buttonEl.innerHTML = `<svg  width="14" height="14"  version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" enable-background="new 0 0 1024 1024" xml:space="preserve"><path fill="#666" d="M510.29 14.13 q17.09 -15.07 40.2 -14.07 q23.12 1 39.2 18.08 l334.66 385.92 q25.12 30.15 34.16 66.83 q9.04 36.68 0.5 73.87 q-8.54 37.19 -32.66 67.34 l-335.67 390.94 q-15.07 18.09 -38.69 20.1 q-23.62 2.01 -41.71 -13.07 q-18.08 -15.08 -20.09 -38.19 q-2.01 -23.12 13.06 -41.21 l334.66 -390.94 q11.06 -13.06 11.56 -29.65 q0.5 -16.58 -10.55 -29.64 l-334.67 -386.92 q-15.07 -17.09 -13.56 -40.7 q1.51 -23.62 19.59 -38.7 ZM81.17 14.13 q17.08 -15.07 40.19 -14.07 q23.11 1 39.2 18.08 l334.66 385.92 q25.12 30.15 34.16 66.83 q9.04 36.68 0.5 73.87 q-8.54 37.19 -32.66 67.34 l-335.67 390.94 q-15.07 18.09 -38.69 20.6 q-23.61 2.51 -41.7 -12.57 q-18.09 -15.08 -20.1 -38.69 q-2.01 -23.62 13.06 -41.71 l334.66 -390.94 q11.06 -13.06 11.56 -29.65 q0.5 -16.58 -10.55 -29.64 l-334.66 -386.92 q-15.08 -17.09 -13.57 -40.7 q1.51 -23.62 19.6 -38.7 Z"/></svg>`;
@@ -815,42 +794,48 @@ export function editingToolbarPopover(
       currentCommands.forEach((item, index) => {
         let tip;
         if ("SubmenuCommands" in item) {
-          // Always build submenu buttons in the main toolbar first.
-          // We’ll decide what to move into the popover after we know the total width.
-          const _btn = new ButtonComponent(editingToolbar);
-      
+          let _btn: any;
+
+          if (btnwidth >= leafwidth - buttonWidth * 4 && leafwidth > 100) {
+            //说明已经溢出
+            plugin.setIS_MORE_Button(true);
+            // globalThis.IS_MORE_Button = true; //需要添加更多按钮
+            _btn = new ButtonComponent(editingToolbarPopoverBar);
+          } else _btn = new ButtonComponent(editingToolbar);
+
           _btn.setClass("editingToolbarCommandsubItem" + index);
           if (index >= settings.cMenuNumRows) {
             _btn.setClass("editingToolbarSecond");
-          } else {
-            if (effectiveStyle !== "top") {
-              _btn.buttonEl.setAttribute("aria-label-position", "top");
-            }
           }
-      
+          else {
+            if (effectiveStyle !== "top")
+              _btn.buttonEl.setAttribute('aria-label-position', 'top')
+          }
+
           checkHtml(item.icon)
             ? (_btn.buttonEl.innerHTML = item.icon)
             : _btn.setIcon(item.icon);
-      
-          // measure actual width for cMenuWidth bookkeeping
-          const submenuWidth = _btn.buttonEl.offsetWidth || buttonWidth;
-          btnwidth += submenuWidth;
-      
+
+          // let __btnwidth;
+          // if (_btn.buttonEl.offsetWidth > 100) __btnwidth = 26;
+          // else {
+          //   if (_btn.buttonEl.offsetWidth < 26) __btnwidth = 26;
+          //   else __btnwidth = _btn.buttonEl.offsetWidth;
+          // }
+          btnwidth += buttonWidth + 2;
           let submenu = createDiv("subitem");
           if (submenu) {
             item.SubmenuCommands.forEach(
               (subitem: { name: string; id: any; icon: string }) => {
                 let hotkey = getHotkey(app, subitem.id);
-                hotkey == "–"
-                  ? (tip = subitem.name)
-                  : (tip = subitem.name + "(" + hotkey + ")");
-      
+                hotkey == "–" ? tip = subitem.name : tip = subitem.name + "(" + hotkey + ")";
                 let sub_btn = new ButtonComponent(submenu)
                   .setTooltip(tip)
                   .setClass("menu-item")
                   .onClick(() => {
+
                     app.commands.executeCommandById(subitem.id);
-      
+
                     // 检查命令执行后是否仍有文本选中
                     const editor = plugin.commandsManager.getActiveEditor();
                     const hasSelection = editor && editor.somethingSelected();
@@ -865,15 +850,21 @@ export function editingToolbarPopover(
                     } else {
                       editingToolbar.style.visibility = "visible";
                     }
+
                   });
-      
+                if (index < settings.cMenuNumRows) {
+                  if (effectiveStyle !== "top")
+                    sub_btn.buttonEl.setAttribute('aria-label-position', 'top')
+                }
+                if (subitem.id == "editingToolbar-Divider-Line")
+                  sub_btn.setClass("editingToolbar-Divider-Line");
                 checkHtml(subitem.icon)
                   ? (sub_btn.buttonEl.innerHTML = subitem.icon)
                   : sub_btn.setIcon(subitem.icon);
+
+                _btn.buttonEl.insertAdjacentElement("afterbegin", submenu);
               }
             );
-      
-            _btn.buttonEl.appendChild(submenu);
           }
         } else {
           if (item.id == "editing-toolbar:change-font-color") {
@@ -882,6 +873,7 @@ export function editingToolbarPopover(
               .setClass("editingToolbarCommandsubItem-font-color")
               .setTooltip(t("Font Colors"))
               .onClick(() => {
+
                 app.commands.executeCommandById(item.id);
 
                 // 检查命令执行后是否仍有文本选中
@@ -903,15 +895,12 @@ export function editingToolbarPopover(
             checkHtml(item.icon)
               ? (button2.buttonEl.innerHTML = item.icon)
               : button2.setIcon(item.icon);
-        
-            // use the actual rendered width of the font-color button
-            const fontColorWidth = button2.buttonEl.offsetWidth || buttonWidth;
-            btnwidth += fontColorWidth;
-        
+
+            btnwidth += buttonWidth;
             //  let Selection = createDiv("triangle-icon");
             let submenu2 = createEl("div");
             submenu2.addClass("subitem");
-        
+
             if (submenu2) {
               submenu2.innerHTML = colorpicker(plugin);
 
@@ -968,6 +957,7 @@ export function editingToolbarPopover(
               .setClass("editingToolbarCommandsubItem-font-color")
               .setTooltip(t("Background color"))
               .onClick(() => {
+
                 app.commands.executeCommandById(item.id);
 
                 // 检查命令执行后是否仍有文本选中
@@ -984,15 +974,13 @@ export function editingToolbarPopover(
                 } else {
                   editingToolbar.style.visibility = "visible";
                 }
+
               });
             checkHtml(item.icon)
               ? (button2.buttonEl.innerHTML = item.icon)
               : button2.setIcon(item.icon);
-          
-            // use the actual rendered width of the background-color button
-            const bgColorWidth = button2.buttonEl.offsetWidth || buttonWidth;
-            btnwidth += bgColorWidth;
-          
+
+            btnwidth += buttonWidth;
             //  let Selection = createDiv("triangle-icon");
             let submenu2 = createEl("div");
             submenu2.addClass("subitem");
@@ -1048,19 +1036,22 @@ export function editingToolbarPopover(
 
             }
           } else {
-            // Normal commands: build in the main toolbar first.
-            const button = new ButtonComponent(editingToolbar);
-        
+            let button;
+            if (btnwidth >= leafwidth - buttonWidth * 4 && leafwidth > 100) {
+              //说明已经溢出
+              plugin.setIS_MORE_Button(true);
+              //globalpluginIS_MORE_Button = true; //需要添加更多按钮
+              button = new ButtonComponent(editingToolbarPopoverBar);
+            } else button = new ButtonComponent(editingToolbar);
             let hotkey = getHotkey(app, item.id);
-            hotkey == "–" ? (tip = item.name) : (tip = item.name + "(" + hotkey + ")");
-        
+            hotkey == "–" ? tip = item.name : tip = item.name + "(" + hotkey + ")";
             button.setTooltip(tip).onClick(() => {
               app.commands.executeCommandById(item.id);
-        
+
               // 检查命令执行后是否仍有文本选中
               const editor = plugin.commandsManager.getActiveEditor();
               const hasSelection = editor && editor.somethingSelected();
-        
+
               if (settings.cMenuVisibility == false) {
                 editingToolbar.style.visibility = "hidden";
               } else if (effectiveStyle === "following") {
@@ -1071,86 +1062,44 @@ export function editingToolbarPopover(
               } else {
                 editingToolbar.style.visibility = "visible";
               }
+
             });
-        
+
             button.setClass("editingToolbarCommandItem");
             if (index >= settings.cMenuNumRows) {
+
               button.setClass("editingToolbarSecond");
             } else {
               if (effectiveStyle !== "top") {
                 button.buttonEl.setAttribute("aria-label-position", "top");
               }
             }
-        
-            if (item.id == "editingToolbar-Divider-Line") {
+            if (item.id == "editingToolbar-Divider-Line")
               button.setClass("editingToolbar-Divider-Line");
-            }
-        
+
             checkHtml(item.icon)
               ? (button.buttonEl.innerHTML = item.icon)
               : button.setIcon(item.icon);
-        
-            // measure actual width for cMenuWidth bookkeeping
-            const buttonWidthActual = button.buttonEl.offsetWidth || buttonWidth;
-            btnwidth += buttonWidthActual;
+            //let __btnwidth2;
+            // if (button.buttonEl.offsetWidth > 100) __btnwidth2 = 26;
+            // else {
+            //   if (button.buttonEl.offsetWidth < 26) __btnwidth2 = 26;
+            //   else __btnwidth2 = button.buttonEl.offsetWidth;
+            // }
+
+            btnwidth += buttonWidth;
           }
-        });
-      });
-    // --- Dynamic overflow: move buttons into the popover until the bar fits ---
-    if (
-      effectiveStyle === "top" &&
-      leafwidth &&
-      leafwidth > 0 &&
-      editingToolbarPopoverBar
-    ) {
-      const hostWidth = leafwidth;
-      // Rough space reservation for the More button itself.
-      const moreWidthGuess = buttonWidth * 1.5;
-
-      // All candidates in the main bar that we are allowed to move.
-      const candidates = Array.from(
-        editingToolbar.querySelectorAll<HTMLElement>(
-          ".editingToolbarCommandItem, button[class^='editingToolbarCommandsubItem']"
-        )
-      );
-
-      let moved = 0;
-
-      // While the toolbar content is too wide, move buttons from right to left
-      while (
-        candidates.length > 0 &&
-        editingToolbar.scrollWidth > hostWidth - moreWidthGuess
-      ) {
-        const btnEl = candidates.pop()!;
-
-        // If the last thing is just a divider, pull its neighbor with it
-        if (
-          btnEl.classList.contains("editingToolbar-Divider-Line") &&
-          candidates.length > 0
-        ) {
-          const prev = candidates.pop()!;
-          editingToolbarPopoverBar.appendChild(btnEl);
-          editingToolbarPopoverBar.appendChild(prev);
-          moved += 2;
-        } else {
-          editingToolbarPopoverBar.appendChild(btnEl);
-          moved++;
         }
-      }
+      });
 
-      if (moved > 0) {
-        plugin.setIS_MORE_Button(true);
+      createMoremenu(app, plugin, editingToolbar);
+      if (Math.abs(plugin.settings.cMenuWidth - Number(btnwidth)) > (btnwidth + 4)) {
+        plugin.settings.cMenuWidth = Number(btnwidth);
+        setTimeout(() => {
+          plugin.saveSettings();
+        }, 100);
       }
-    }
-
-    createMoremenu(app, plugin, editingToolbar);
-    // Always keep an up-to-date estimate of the toolbar width.
-    if (!plugin.settings.cMenuWidth || Math.abs(plugin.settings.cMenuWidth - btnwidth) > 4) {
-      plugin.settings.cMenuWidth = Number(btnwidth);
-      setTimeout(() => {
-        plugin.saveSettings();
-      }, 100);
-    }
+    };
     if (!plugin.isLoadMobile()) return;
     const view = app.workspace.getActiveViewOfType(ItemView);
     if (ViewUtils.isAllowedViewType(view)) {
