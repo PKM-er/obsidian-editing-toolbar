@@ -1187,6 +1187,11 @@ export class editingToolbarSettingTab extends PluginSettingTab {
               );
             }
             await this.plugin.saveSettings();
+
+            // Rebuild the settings UI and live toolbar so the preview
+            // and the real toolbar both pick up the new size.
+            this.display();
+            this.triggerRefresh();
           });
       });
     // 添加工具栏预览区域
@@ -1312,7 +1317,11 @@ export class editingToolbarSettingTab extends PluginSettingTab {
         setIcon(button.buttonEl, item.icon);
       }
     });
-    // Apply the current style's colours and icon size directly to the preview
+    // Apply the current style's colours and icon size directly to the preview.
+    // Only override colours when we're using a custom theme; for the built-in
+    // "default", "tiny" and "glass" styles we rely on the CSS classes instead.
+    const usesCustomColours = previewAestheticStyle === "custom";
+
     const bg =
       appearanceBucket.toolbarBackgroundColor ??
       this.plugin.settings.toolbarBackgroundColor;
@@ -1324,21 +1333,23 @@ export class editingToolbarSettingTab extends PluginSettingTab {
       this.plugin.settings.toolbarIconSize ??
       18;
 
-    if (bg) {
+    if (usesCustomColours && bg) {
       editingToolbar.style.backgroundColor = bg;
+    } else {
+      editingToolbar.style.removeProperty("background-color");
     }
 
     const iconSvgs = editingToolbar.querySelectorAll<SVGElement>("svg");
     iconSvgs.forEach((svg) => {
-      if (iconColor) {
+      if (usesCustomColours && iconColor) {
         svg.style.color = iconColor;
+      } else {
+        svg.style.removeProperty("color");
       }
       svg.style.width = `${size}px`;
       svg.style.height = `${size}px`;
     });
   }
-
-
 
   private createCommandList(containerEl: HTMLElement): void {
     // 根据编辑的配置获取对应的命令列表
@@ -1715,6 +1726,11 @@ export class editingToolbarSettingTab extends PluginSettingTab {
         if (bucket.aestheticStyle !== "custom") {
           bucket.aestheticStyle = "custom";
         }
+
+        // Immediately refresh the settings UI and live toolbar so the
+        // preview and real toolbar both match the new colour.
+        this.display();
+        this.triggerRefresh();
       } else {
         // All other keys (custom_bgX/custom_fcX) stay as global settings
         (this.plugin.settings as any)[settingKey] = hexColor;
