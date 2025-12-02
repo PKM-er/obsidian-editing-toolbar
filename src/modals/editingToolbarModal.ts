@@ -290,25 +290,46 @@ export const setcolorHex = function (color: string) {
   }
 };
 
-export function createMoremenu(app: App, plugin: editingToolbarPlugin, selector: HTMLDivElement) {
+export function createMoremenu(
+  app: App,
+  plugin: editingToolbarPlugin,
+  selector: HTMLDivElement
+) {
   const view = app.workspace.getActiveViewOfType(ItemView);
   if (!ViewUtils.isAllowedViewType(view)) return;
 
-  let Morecontainer = view.containerEl.querySelector("#editingToolbarPopoverBar") as HTMLElement
-  if (!plugin.IS_MORE_Button) return;
-  let cMoreMenu = selector.createEl("span");
+  const moreContainer = view.containerEl.querySelector(
+    "#editingToolbarPopoverBar"
+  ) as HTMLElement | null;
+  if (!moreContainer) return;
+
+  // If there are no commands in the popover bar, no reason to show "More"
+  const hasCommands = moreContainer.querySelector(
+    ".editingToolbarCommandItem, button[class^='editingToolbarCommandsubItem']"
+  );
+  if (!hasCommands) return;
+
+  // Don't create a second More button if one already exists
+  if (selector.querySelector(".more-menu")) return;
+
+  const cMoreMenu = selector.createEl("span");
   cMoreMenu.addClass("more-menu");
-  let morebutton = new ButtonComponent(cMoreMenu);
+
+  const morebutton = new ButtonComponent(cMoreMenu);
   morebutton
     .setClass("editingToolbarCommandItem")
     .setTooltip(t("More"))
     .onClick(() => {
-      if (Morecontainer.style.visibility == "hidden") {
-        Morecontainer.style.visibility = "visible";
-        Morecontainer.style.height = "32px";
+      const isHidden =
+        moreContainer.style.visibility === "hidden" ||
+        !moreContainer.style.visibility;
+
+      if (isHidden) {
+        moreContainer.style.visibility = "visible";
+        moreContainer.style.height = "32px";
       } else {
-        Morecontainer.style.visibility = "hidden";
-        Morecontainer.style.height = "0";
+        moreContainer.style.visibility = "hidden";
+        moreContainer.style.height = "0";
       }
     });
   morebutton.buttonEl.innerHTML = `<svg  width="14" height="14"  version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" enable-background="new 0 0 1024 1024" xml:space="preserve"><path fill="#666" d="M510.29 14.13 q17.09 -15.07 40.2 -14.07 q23.12 1 39.2 18.08 l334.66 385.92 q25.12 30.15 34.16 66.83 q9.04 36.68 0.5 73.87 q-8.54 37.19 -32.66 67.34 l-335.67 390.94 q-15.07 18.09 -38.69 20.1 q-23.62 2.01 -41.71 -13.07 q-18.08 -15.08 -20.09 -38.19 q-2.01 -23.12 13.06 -41.21 l334.66 -390.94 q11.06 -13.06 11.56 -29.65 q0.5 -16.58 -10.55 -29.64 l-334.67 -386.92 q-15.07 -17.09 -13.56 -40.7 q1.51 -23.62 19.59 -38.7 ZM81.17 14.13 q17.08 -15.07 40.19 -14.07 q23.11 1 39.2 18.08 l334.66 385.92 q25.12 30.15 34.16 66.83 q9.04 36.68 0.5 73.87 q-8.54 37.19 -32.66 67.34 l-335.67 390.94 q-15.07 18.09 -38.69 20.6 q-23.61 2.51 -41.7 -12.57 q-18.09 -15.08 -20.1 -38.69 q-2.01 -23.62 13.06 -41.71 l334.66 -390.94 q11.06 -13.06 11.56 -29.65 q0.5 -16.58 -10.55 -29.64 l-334.66 -386.92 q-15.08 -17.09 -13.57 -40.7 q1.51 -23.62 19.6 -38.7 Z"/></svg>`;
