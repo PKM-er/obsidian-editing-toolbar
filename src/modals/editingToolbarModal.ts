@@ -777,8 +777,9 @@ export function editingToolbarPopover(
         targetDom.insertAdjacentElement("afterbegin", editingToolbar);
        }
 
-        // 获取宽度
-        leafwidth = targetDom?.offsetWidth;
+        // Use the measured leaf width from the plugin if available,
+        // otherwise fall back to the DOM element’s width.
+        leafwidth = plugin.Leaf_Width || targetDom?.offsetWidth || 0;
 
       } else if (settings.appendMethod == "body") {
         activeDocument.body.appendChild(editingToolbar);
