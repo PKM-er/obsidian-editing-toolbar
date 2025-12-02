@@ -555,22 +555,22 @@ processAdmonitionTypes(pluginInstance: any) {
       return false;
     }
   
-    const leafwidth = this.app.workspace.activeLeaf.view.leaf.width ?? 0;
-    // No width, or nothing changed → nothing to do
-    if (leafwidth <= 0 || this.Leaf_Width === leafwidth) {
-      return false;
-    }
-  
     this.Leaf_Width = leafwidth;
-  
-    if (this.settings.cMenuWidth && leafwidth) {
-      const diff = leafwidth - this.settings.cMenuWidth;
-  
-      // Same guard as before: don't rebuild if the configured width still fits
-      if (diff < 78 && leafwidth > this.settings.cMenuWidth) {
+
+    const toolbarWidth = this.settings.cMenuWidth ?? 0;
+
+    if (toolbarWidth && leafwidth) {
+      const diff = Math.abs(leafwidth - toolbarWidth);
+
+      // Rebuild only when the workspace width has moved far enough
+      // relative to the needed toolbar width (about one icon).
+      const iconSize = this.toolbarIconSize ?? 18;
+      const threshold = iconSize + 16;
+
+      if (diff < threshold) {
         return;
       }
-  
+
       setTimeout(() => {
         resetToolbar();
         editingToolbarPopover(app, this);
