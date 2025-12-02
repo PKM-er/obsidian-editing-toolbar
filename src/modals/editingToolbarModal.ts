@@ -794,8 +794,7 @@ export function editingToolbarPopover(
       currentCommands.forEach((item, index) => {
         let tip;
         if ("SubmenuCommands" in item) {
-          let _btn: any;
-          _btn = new ButtonComponent(editingToolbar);
+          const _btn = new ButtonComponent(editingToolbar);
 
           _btn.setClass("editingToolbarCommandsubItem" + index);
           if (index >= settings.cMenuNumRows) {
@@ -884,7 +883,6 @@ export function editingToolbarPopover(
                 } else {
                   editingToolbar.style.visibility = "visible";
                 }
-
               });
             checkHtml(item.icon)
               ? (button2.buttonEl.innerHTML = item.icon)
@@ -918,7 +916,6 @@ export function editingToolbarPopover(
                     t("Font-Color formatting brush ON!"),
                     0
                   );
-
                 });
               let button4 = new ButtonComponent(el);
               button4
@@ -942,7 +939,6 @@ export function editingToolbarPopover(
                       }, 100);
                     }
                   }, 200);
-
                 });
             }
           } else if (item.id == "editing-toolbar:change-background-color") {
@@ -968,7 +964,6 @@ export function editingToolbarPopover(
                 } else {
                   editingToolbar.style.visibility = "visible";
                 }
-
               });
             checkHtml(item.icon)
               ? (button2.buttonEl.innerHTML = item.icon)
@@ -1001,7 +996,6 @@ export function editingToolbarPopover(
                     t("Font-Color formatting brush ON!"),
                     0
                   );
-
                 });
               let button4 = new ButtonComponent(el);
               button4
@@ -1025,13 +1019,11 @@ export function editingToolbarPopover(
                       }, 100);
                     }
                   }, 200);
-
                 });
-
             }
           } else {
-            let button;
-            let button = new ButtonComponent(editingToolbar);
+            const button = new ButtonComponent(editingToolbar);
+
             let hotkey = getHotkey(app, item.id);
             hotkey == "–" ? tip = item.name : tip = item.name + "(" + hotkey + ")";
             button.setTooltip(tip).onClick(() => {
@@ -1051,12 +1043,10 @@ export function editingToolbarPopover(
               } else {
                 editingToolbar.style.visibility = "visible";
               }
-
             });
 
             button.setClass("editingToolbarCommandItem");
             if (index >= settings.cMenuNumRows) {
-
               button.setClass("editingToolbarSecond");
             } else {
               if (effectiveStyle !== "top") {
@@ -1069,18 +1059,11 @@ export function editingToolbarPopover(
             checkHtml(item.icon)
               ? (button.buttonEl.innerHTML = item.icon)
               : button.setIcon(item.icon);
-            //let __btnwidth2;
-            // if (button.buttonEl.offsetWidth > 100) __btnwidth2 = 26;
-            // else {
-            //   if (button.buttonEl.offsetWidth < 26) __btnwidth2 = 26;
-            //   else __btnwidth2 = button.buttonEl.offsetWidth;
-            // }
 
             btnwidth += buttonWidth;
           }
         }
       });
-
       createMoremenu(app, plugin, editingToolbar);
       if (Math.abs(plugin.settings.cMenuWidth - Number(btnwidth)) > (btnwidth + 4)) {
         plugin.settings.cMenuWidth = Number(btnwidth);
@@ -1096,11 +1079,9 @@ export function editingToolbarPopover(
       if (isExistoolbar(app, plugin, effectiveStyle)) return;
 
       generateMenu();
-
       setHorizontalValue(plugin.settings);
       setBottomValue(plugin.settings);
       setsvgColor(settings.cMenuFontColor, settings.cMenuBackgroundColor);
-
     } else {
       //  selfDestruct();
       return;
