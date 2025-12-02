@@ -1025,15 +1025,13 @@ export class editingToolbarSettingTab extends PluginSettingTab {
           (appearanceBucket.aestheticStyle as string) ??
             this.plugin.settings.aestheticStyle
         );
-    
         dropdown.onChange(async (value) => {
-          const activeStyle = this.plugin.positionStyle;
           const style =
             (this.plugin.appearanceEditStyle as ToolbarStyleKey) ||
             (this.plugin.settings.positionStyle as ToolbarStyleKey) ||
             "top";
           const bucket = this.getAppearanceBucket(style);
-    
+
           if (value in aesthetics) {
             bucket.aestheticStyle = value;
             bucket.toolbarIconSize = 18;
@@ -1041,7 +1039,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
             // custom presets all map to "custom" aestheticStyle
             bucket.aestheticStyle = "custom";
           }
-    
+
           // Set colours/sizes in the per-style bucket
           switch (value) {
             case "light":
@@ -1070,36 +1068,34 @@ export class editingToolbarSettingTab extends PluginSettingTab {
               bucket.toolbarIconSize = 19;
               break;
           }
-    
-          // If we're editing the *active* style, push the change to the live toolbar
-          if (activeStyle === style) {
-            const bg =
-              bucket.toolbarBackgroundColor ??
-              this.plugin.settings.toolbarBackgroundColor;
-            const icon =
-              bucket.toolbarIconColor ??
-              this.plugin.settings.toolbarIconColor;
-            const size = bucket.toolbarIconSize ?? 18;
-    
-            document.documentElement.style.setProperty(
-              "--editing-toolbar-background-color",
-              bg
-            );
-            document.documentElement.style.setProperty(
-              "--editing-toolbar-icon-color",
-              icon
-            );
-            document.documentElement.style.setProperty(
-              "--toolbar-icon-size",
-              `${size}px`
-            );
-    
-            this.plugin.toolbarIconSize = size;
-          }
-    
+
+          // Push the current style's values into the global CSS vars
+          const bg =
+            bucket.toolbarBackgroundColor ??
+            this.plugin.settings.toolbarBackgroundColor;
+          const icon =
+            bucket.toolbarIconColor ??
+            this.plugin.settings.toolbarIconColor;
+          const size = bucket.toolbarIconSize ?? 18;
+
+          document.documentElement.style.setProperty(
+            "--editing-toolbar-background-color",
+            bg
+          );
+          document.documentElement.style.setProperty(
+            "--editing-toolbar-icon-color",
+            icon
+          );
+          document.documentElement.style.setProperty(
+            "--toolbar-icon-size",
+            `${size}px`
+          );
+
+          this.plugin.toolbarIconSize = size;
+
           this.destroyPickrs();
           this.display();
-    
+
           await this.plugin.saveSettings();
           this.triggerRefresh();
         });
@@ -1220,6 +1216,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
       editingStyle
     );
     // 根据当前美观风格设置类
+
     if (editingStyle === "fixed") {
       const icon = this.plugin.settings.toolbarIconSize || 18;
       const cols = this.plugin.settings.cMenuNumRows || 6;
@@ -1229,6 +1226,28 @@ export class editingToolbarSettingTab extends PluginSettingTab {
       editingToolbar.style.gap = `${Math.max((icon - 18) / 4, 2)}px`;
       editingToolbar.style.margin = "0 auto";  // centers the grid like top/following
     }
+
+    // Apply the current style's colours and icon size directly to the preview
+    const bg =
+      appearanceBucket.toolbarBackgroundColor ??
+      this.plugin.settings.toolbarBackgroundColor;
+    const iconColor =
+      appearanceBucket.toolbarIconColor ??
+      this.plugin.settings.toolbarIconColor;
+    const size = appearanceBucket.toolbarIconSize ?? 18;
+
+    if (bg) {
+      editingToolbar.style.backgroundColor = bg;
+    }
+
+    const iconSvgs = editingToolbar.querySelectorAll<SVGElement>("svg");
+    iconSvgs.forEach((svg) => {
+      if (iconColor) {
+        svg.style.color = iconColor;
+      }
+      svg.style.width = `${size}px`;
+      svg.style.height = `${size}px`;
+    });
 
     // 定义预览工具栏的命令
     const previewCommands = [
