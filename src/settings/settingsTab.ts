@@ -384,7 +384,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     const editingStyle =
       (this.plugin.settings.positionStyle as ToolbarStyleKey) || "top";
     this.plugin.appearanceEditStyle = editingStyle;
-    
+
     // Toolbar Settings – choose which style's settings to edit
     new Setting(appearanceSettingContainer)
       .setName("Toolbar Settings")
@@ -397,9 +397,10 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     
         dropdown
           .addOptions(positions)
-          .setValue(this.plugin.settings.positionStyle)
+          // use the style we're *editing*, not the live toolbar style
+          .setValue(this.plugin.appearanceEditStyle ?? this.plugin.settings.positionStyle)
           .onChange(async (value) => {
-            this.plugin.settings.positionStyle = value;
+            // ONLY change which style we are editing in the UI
             this.plugin.appearanceEditStyle = value as ToolbarStyleKey;
             await this.plugin.saveSettings();
             this.display();
@@ -1204,23 +1205,26 @@ export class editingToolbarSettingTab extends PluginSettingTab {
       text: 'Toolbar preview'
     });
     previewLabel.style.marginBottom = '10px';
-
-    // 创建预览工具栏 - 使用类似 generateMenu 的方式
+    
     const wrapper = previewContainer.createDiv();
     wrapper.classList.add("preview-toolbar-wrapper");
-    wrapper.classList.add(`preview-${this.plugin.positionStyle}`);
-
+    wrapper.classList.add(`preview-${settingsStyle}`);
     
     const editingToolbar = wrapper.createDiv();
     editingToolbar.classList.add("editing-toolbar-preview");
-    editingToolbar.classList.add(`preview-${this.plugin.positionStyle}`);
-
+    editingToolbar.classList.add(`preview-${settingsStyle}`);
     
     editingToolbar.setAttribute("id", "editingToolbarModalBar");
-    this.applyAestheticStyle(editingToolbar, this.plugin.settings.aestheticStyle, this.plugin.positionStyle);
-    // 根据当前美观风格设置类
-
-    if (this.plugin.positionStyle === "fixed") {
+    
+    // Apply the aesthetic style for the style we're editing, not the live toolbar
+    this.applyAestheticStyle(
+      editingToolbar,
+      this.plugin.settings.aestheticStyle,
+      settingsStyle
+    );
+    
+    // For FIXED style, show a grid in the preview
+    if (settingsStyle === "fixed") {
       const icon = this.plugin.settings.toolbarIconSize || 18;
       const cols = this.plugin.settings.cMenuNumRows || 6;
     
@@ -1229,7 +1233,6 @@ export class editingToolbarSettingTab extends PluginSettingTab {
       editingToolbar.style.gap = `${Math.max((icon - 18) / 4, 2)}px`;
       editingToolbar.style.margin = "0 auto";  // centers the grid like top/following
     }
-
 
     // 定义预览工具栏的命令
     const previewCommands = [
