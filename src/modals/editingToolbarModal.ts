@@ -643,7 +643,10 @@ export function editingToolbarPopover(
     const generateMenu = () => {
       let btnwidth = 0;
       let leafwidth = 0;
-      let buttonWidth = resolvedIconSize + 8;
+      let buttonWidth = 28;
+      if (plugin.toolbarIconSize) {
+        buttonWidth = plugin.toolbarIconSize + 8;
+      }
     
       // 主工具栏容器
       let editingToolbar = createEl("div");
