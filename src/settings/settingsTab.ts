@@ -372,51 +372,49 @@ export class editingToolbarSettingTab extends PluginSettingTab {
           this.triggerRefresh();
         }));
   }
-
   private displayAppearanceSettings(containerEl: HTMLElement): void {
+
     const appearanceSettingContainer = containerEl.createDiv('appearanceSetting-container');
     appearanceSettingContainer.style.padding = '16px';
     appearanceSettingContainer.style.borderRadius = '8px';
     appearanceSettingContainer.style.backgroundColor = 'var(--background-secondary)';
     appearanceSettingContainer.style.marginBottom = '20px';
+    // Aesthetic style setting
 
-    // Which toolbar style are we editing in this tab?
-    const editingStyle =
+    // Decide which style we are editing in this tab
+    const editingStyle: ToolbarStyleKey =
       (this.plugin.appearanceEditStyle as ToolbarStyleKey) ||
       (this.plugin.settings.positionStyle as ToolbarStyleKey) ||
       "top";
     this.plugin.appearanceEditStyle = editingStyle;
 
-    // Dropdown: choose which style's appearance to edit
+    // Style picker – only controls which style's settings you edit
     new Setting(appearanceSettingContainer)
-      .setName("Toolbar Settings")
-      .setDesc("Choose which toolbar style’s appearance you want to edit.")
+      .setName(t('Toolbar settings'))
+      .setDesc(t('Choose which toolbar style’s appearance you want to edit.'))
       .addDropdown((dropdown) => {
         const positions: Record<string, string> = {};
-        POSITION_STYLES.forEach((style) => {
-          positions[style] = style[0].toUpperCase() + style.slice(1);
-        });
-
+        POSITION_STYLES.map((position) => (positions[position] = position));
         dropdown
           .addOptions(positions)
           .setValue(editingStyle)
           .onChange(async (value) => {
             const style = value as ToolbarStyleKey;
-            // Only change which style we are editing + persist it
-            this.plugin.appearanceEditStyle = style;
-            this.plugin.settings.positionStyle = style;
+            this.plugin.appearanceEditStyle = style;     // which style we edit
+            this.plugin.settings.positionStyle = style;  // persist choice
             await this.plugin.saveSettings();
             this.display();
           });
       });
 
-    // Extra options that only apply to specific styles
     if (editingStyle === "top") {
+
       new Setting(appearanceSettingContainer)
-        .setName('Editing Toolbar Auto-hide')
-        .setDesc('The toolbar is displayed when the mouse moves over it, otherwise it is automatically hidden.')
-        .addToggle(toggle => toggle
-          .setValue(this.plugin.settings?.autohide)
+        .setName(t('Editing Toolbar Auto-hide'))
+        .setDesc(
+          t('The toolbar is displayed when the mouse moves over it, otherwise it is automatically hidden')
+        )
+        .addToggle(toggle => toggle.setValue(this.plugin.settings?.autohide)
           .onChange((value) => {
             this.plugin.settings.autohide = value;
             this.plugin.saveSettings();
@@ -424,10 +422,11 @@ export class editingToolbarSettingTab extends PluginSettingTab {
           }));
 
       new Setting(appearanceSettingContainer)
-        .setName('Editing Toolbar Centred Display')
-        .setDesc('Whether the toolbar is centred or full-width, the default is full-width.')
-        .addToggle(toggle => toggle
-          .setValue(this.plugin.settings?.Iscentered)
+        .setName(t('Editing Toolbar Centred Display'))
+        .setDesc(
+          t('Whether the toolbar is centred or full-width, the default is full-width.')
+        )
+        .addToggle(toggle => toggle.setValue(this.plugin.settings?.Iscentered)
           .onChange((value) => {
             this.plugin.settings.Iscentered = value;
             this.plugin.saveSettings();
@@ -437,8 +436,10 @@ export class editingToolbarSettingTab extends PluginSettingTab {
 
     if (editingStyle === "fixed") {
       new Setting(appearanceSettingContainer)
-        .setName('Editing Toolbar Columns')
-        .setDesc('Choose the number of columns per row to display on Editing Toolbar.')
+        .setName(t('Editing Toolbar columns'))
+        .setDesc(
+          t('Choose the number of columns per row to display on Editing Toolbar.')
+        )
         .addSlider((slider) => {
           slider
             .setLimits(1, 32, 1)
@@ -456,21 +457,19 @@ export class editingToolbarSettingTab extends PluginSettingTab {
             )
             .setDynamicTooltip();
         });
-
       new Setting(appearanceSettingContainer)
-        .setName('Fixed Position Offset')
-        .setDesc('Choose the offset of the Editing Toolbar in the fixed position.')
+        .setName(t('Fixed position offset'))
+        .setDesc(t('Choose the offset of the Editing Toolbar in the fixed position.'))
         .addButton(button => button
-          .setButtonText('Settings')
+          .setButtonText(t('Settings'))
           .onClick(() => {
             new openSlider(this.app, this.plugin).open();
           }));
     }
 
-    // Colour / paintbrush settings + preview
+    // Color settings
     this.createColorSettings(containerEl);
   }
-
 
   private displayCommandSettings(containerEl: HTMLElement): void {
     const commandSettingContainer = containerEl.createDiv('commandSetting-container');
@@ -922,7 +921,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
   }
 
   private createColorSettings(containerEl: HTMLElement): void {
-    const editingStyle =
+    const editingStyle: ToolbarStyleKey =
       (this.plugin.appearanceEditStyle as ToolbarStyleKey) ||
       (this.plugin.settings.positionStyle as ToolbarStyleKey) ||
       "top";
@@ -1218,6 +1217,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     // 根据当前美观风格设置类
 
     if (editingStyle === "fixed") {
+    
       const icon = this.plugin.settings.toolbarIconSize || 18;
       const cols = this.plugin.settings.cMenuNumRows || 6;
 
