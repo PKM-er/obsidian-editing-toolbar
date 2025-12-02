@@ -795,13 +795,7 @@ export function editingToolbarPopover(
         let tip;
         if ("SubmenuCommands" in item) {
           let _btn: any;
-
-          if (btnwidth >= leafwidth - buttonWidth * 4 && leafwidth > 100) {
-            //说明已经溢出
-            plugin.setIS_MORE_Button(true);
-            // globalThis.IS_MORE_Button = true; //需要添加更多按钮
-            _btn = new ButtonComponent(editingToolbarPopoverBar);
-          } else _btn = new ButtonComponent(editingToolbar);
+          _btn = new ButtonComponent(editingToolbar);
 
           _btn.setClass("editingToolbarCommandsubItem" + index);
           if (index >= settings.cMenuNumRows) {
@@ -1037,12 +1031,7 @@ export function editingToolbarPopover(
             }
           } else {
             let button;
-            if (btnwidth >= leafwidth - buttonWidth * 4 && leafwidth > 100) {
-              //说明已经溢出
-              plugin.setIS_MORE_Button(true);
-              //globalpluginIS_MORE_Button = true; //需要添加更多按钮
-              button = new ButtonComponent(editingToolbarPopoverBar);
-            } else button = new ButtonComponent(editingToolbar);
+            let button = new ButtonComponent(editingToolbar);
             let hotkey = getHotkey(app, item.id);
             hotkey == "–" ? tip = item.name : tip = item.name + "(" + hotkey + ")";
             button.setTooltip(tip).onClick(() => {
