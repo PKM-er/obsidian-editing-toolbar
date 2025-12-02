@@ -390,8 +390,8 @@ export class editingToolbarSettingTab extends PluginSettingTab {
 
     // Style picker – only controls which style's settings you edit
     new Setting(appearanceSettingContainer)
-      .setName(t('Toolbar settings'))
-      .setDesc(t('Choose which toolbar style’s appearance you want to edit.'))
+      .setName('Toolbar settings')
+      .setDesc('Choose which toolbar style’s appearance you want to edit.')
       .addDropdown((dropdown) => {
         const positions: Record<string, string> = {};
         POSITION_STYLES.map((position) => (positions[position] = position));
