@@ -545,48 +545,35 @@ processAdmonitionTypes(pluginInstance: any) {
   };
   
   handleeditingToolbar_resize = () => {
-    // Only care about resizing when the toolbar is visible and the top toolbar is active
+    // Only care about resizing when the toolbar is visible and top-style is active
     if (!this.settings.cMenuVisibility || !this.isTopToolbarActive()) {
-      return;
+      return false;
     }
-
-    const view = this.app.workspace.getActiveViewOfType(ItemView);
+  
+    const view = app.workspace.getActiveViewOfType(ItemView);
     if (!ViewUtils.isSourceMode(view)) {
-      return;
+      return false;
     }
-
-    const leaf = this.app.workspace.activeLeaf;
-    const leafWidth =
-      (leaf && typeof (leaf as any).width === "number" ? (leaf as any).width : 0) || 0;
-
-    if (leafWidth <= 0) {
-      return;
+  
+    const leafwidth = this.app.workspace.activeLeaf.view.leaf.width ?? 0;
+    // No width, or nothing changed → nothing to do
+    if (leafwidth <= 0 || this.Leaf_Width === leafwidth) {
+      return false;
     }
-
-    // Skip tiny changes to avoid thrashing
-    const previousWidth = this.Leaf_Width || 0;
-    const delta = Math.abs(leafWidth - previousWidth);
-    const iconSize =
-      this.toolbarIconSize || this.settings.toolbarIconSize || 18;
-    const minDelta = iconSize * 0.75;
-
-    if (delta < minDelta) {
-      return;
-    }
-
-    // Remember latest width so we can compare next time
-    this.Leaf_Width = leafWidth;
-
-    const toolbarWidth = this.settings.cMenuWidth || 0;
-
-    // If we don't have a recorded toolbar width yet, or the workspace width
-    // changed meaningfully relative to the toolbar width, rebuild the top toolbar
-    if (!toolbarWidth || Math.abs(leafWidth - toolbarWidth) >= iconSize) {
-      window.setTimeout(() => {
+  
+    this.Leaf_Width = leafwidth;
+  
+    if (this.settings.cMenuWidth && leafwidth) {
+      const diff = leafwidth - this.settings.cMenuWidth;
+  
+      // Same guard as before: don't rebuild if the configured width still fits
+      if (diff < 78 && leafwidth > this.settings.cMenuWidth) {
+        return;
+      }
+  
+      setTimeout(() => {
         resetToolbar();
-        // Rebuild only the TOP toolbar so the “More” menu can re-balance
-        // which commands live on the first row.
-        editingToolbarPopover(this.app, this, "top");
+        editingToolbarPopover(app, this);
       }, 200);
     }
   };
