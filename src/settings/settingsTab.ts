@@ -382,8 +382,12 @@ export class editingToolbarSettingTab extends PluginSettingTab {
   
     // Ensure the plugin knows which style we're editing
     const editingStyle =
-      (this.plugin.settings.positionStyle as ToolbarStyleKey) || "top";
+      (this.plugin.appearanceEditStyle as ToolbarStyleKey) ||
+      (this.plugin.settings.positionStyle as ToolbarStyleKey) ||
+      "top";
+    
     this.plugin.appearanceEditStyle = editingStyle;
+    const settingsStyle = editingStyle;
 
     // Toolbar Settings – choose which style's settings to edit
     new Setting(appearanceSettingContainer)
@@ -1206,6 +1210,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     });
     previewLabel.style.marginBottom = '10px';
     
+    // 创建预览工具栏 - 使用类似 generateMenu 的方式
     const wrapper = previewContainer.createDiv();
     wrapper.classList.add("preview-toolbar-wrapper");
     wrapper.classList.add(`preview-${settingsStyle}`);
@@ -1215,15 +1220,13 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     editingToolbar.classList.add(`preview-${settingsStyle}`);
     
     editingToolbar.setAttribute("id", "editingToolbarModalBar");
-    
-    // Apply the aesthetic style for the style we're editing, not the live toolbar
     this.applyAestheticStyle(
       editingToolbar,
       this.plugin.settings.aestheticStyle,
       settingsStyle
     );
+    // 根据当前美观风格设置类
     
-    // For FIXED style, show a grid in the preview
     if (settingsStyle === "fixed") {
       const icon = this.plugin.settings.toolbarIconSize || 18;
       const cols = this.plugin.settings.cMenuNumRows || 6;
