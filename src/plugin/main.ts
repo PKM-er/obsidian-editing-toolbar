@@ -144,11 +144,12 @@ export default class editingToolbarPlugin extends Plugin {
     
     const getCurrentStyle = (): ToolbarStyleKey => {
       const raw = (
-        this.positionStyle ||             // primary: the live toolbar style
-        settings.positionStyle ||         // fallback: whatever is stored in settings
+        this.appearanceEditStyle ||       // 1. style currently being edited in settings
+        this.positionStyle ||             // 2. live toolbar style
+        settings.positionStyle ||         // 3. stored fallback
         "top"
       ) as string;
-    
+
       return STYLE_KEYS.includes(raw as ToolbarStyleKey)
         ? (raw as ToolbarStyleKey)
         : "top";
