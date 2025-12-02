@@ -1094,21 +1094,11 @@ export function editingToolbarPopover(
           }
         }
       });
+
       createMoremenu(app, plugin, editingToolbar);
-
-      // Track how much horizontal space the toolbar actually needs.
-      // This is later compared against the workspace width to decide
-      // when the "More" layout needs to be rebuilt.
-      const totalButtonsWidth = Number(btnwidth) || 0;
-      const previousWidth = Number(plugin.settings.cMenuWidth) || 0;
-
-      // Minimum change that’s worth a rebuild: roughly one icon’s width.
-      const iconSize = resolvedIconSize ?? 18;
-      const minDelta = iconSize + 8;
-
-      if (!previousWidth || Math.abs(previousWidth - totalButtonsWidth) > minDelta) {
-        plugin.settings.cMenuWidth = totalButtonsWidth;
-        window.setTimeout(() => {
+      if (Math.abs(plugin.settings.cMenuWidth - Number(btnwidth)) > (btnwidth + 4)) {
+        plugin.settings.cMenuWidth = Number(btnwidth);
+        setTimeout(() => {
           plugin.saveSettings();
         }, 100);
       }
