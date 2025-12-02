@@ -796,7 +796,7 @@ export function editingToolbarPopover(
         if ("SubmenuCommands" in item) {
           let _btn: any;
 
-          if (btnwidth >= leafwidth - buttonWidth * 4 && leafwidth > 100) {
+          if (btnwidth >= leafwidth - buttonWidth * 7 && leafwidth > 100) {
             //说明已经溢出
             plugin.setIS_MORE_Button(true);
             // globalThis.IS_MORE_Button = true; //需要添加更多按钮
@@ -1037,7 +1037,7 @@ export function editingToolbarPopover(
             }
           } else {
             let button;
-            if (btnwidth >= leafwidth - buttonWidth * 4 && leafwidth > 100) {
+            if (btnwidth >= leafwidth - buttonWidth * 7 && leafwidth > 100) {
               //说明已经溢出
               plugin.setIS_MORE_Button(true);
               //globalpluginIS_MORE_Button = true; //需要添加更多按钮
