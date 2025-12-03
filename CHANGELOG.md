@@ -1,5 +1,58 @@
 # Changelog
 
+## 3.2.0 – Multi-toolbar and settings overhaul (2025-12-02)
+
+This release significantly improves how toolbars are enabled, configured, and previewed, and cleans up the settings UI text.
+
+### New
+
+- Multiple toolbars can be active at once
+	- Previously, only a single toolbar could be enabled at a time via a dropdown in the Appearance settings.
+	- You can now enable any combination of the three toolbars simultaneously.
+	- Activation is now controlled via three individual toggles in the **General** settings.
+	
+- Reworked configuration flow
+	- Toolbar activation was moved out of **Appearance** and into **General** for clearer separation between “what is active” and “how it looks”.
+	- Each toolbar now has clearly separated configuration for commands and appearance.
+	
+
+### Improvements
+
+- Fully separated toolbar commands
+	- Fixed the previous behavior where toolbars could mirror each other’s command sets in certain cases.
+	- Each toolbar now maintains its own independent set of commands.
+	
+- Fully separated appearance and modes
+	- Theme/appearance options for each toolbar and each mode are now properly isolated.
+	- Changing appearance for one toolbar or mode no longer affects others.
+	
+- Updated preview section
+	- The preview panel has been rewritten.
+	- It no longer attempts to show the currently configured commands.
+	- Instead, it focuses on reflecting the current appearance/layout settings as you configure them.
+	
+- Settings text and punctuation cleanup
+	- All labels and descriptions in `settingsTab.ts` have been edited for clearer wording and consistent punctuation in English.
+	
+
+### Localization / translations
+
+- Many settings labels no longer use the translation helper (`t`) because their keys changed during the copy/punctuation cleanup.
+- Existing translation files will not cover these updated strings yet; for those settings, English text will be shown.
+- The remaining settings still use the translation helper and will continue to work with existing translations.
+- Translation contributors will need to update the localization files in a separate pass to restore full multi-language coverage.
+
+### Fixes
+
+- Fixed issues where:
+	- Toolbars could unintentionally mirror each other’s commands.
+	- Appearance and theme settings could bleed across toolbar modes.
+	
+
+### Unchanged
+
+- Import/export behavior is unchanged in this release.
+
 ## 3.1.18 (2025-07-10)
 ### 国际化部分字段
 ### 修复自定义正则命令，换行符\n无效
