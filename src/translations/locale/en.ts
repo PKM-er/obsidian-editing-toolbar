@@ -275,7 +275,6 @@ export default {
 '^ and $ match the start and end of each line': '^ and $ match the start and end of each line',
 'Replace all matches': 'Replace all matches',
 'Command': 'Command',
-'Error: ': 'Error: ',
 'Input example text to view the formatting effect of the command...': 'Input example text to view the formatting effect of the command...',
 'Description': 'Description',
 '[Example]': '[Example]',
