@@ -1066,7 +1066,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
       });
     new Setting(toolbarContainer)
       .setName(t("Toolbar Icon Size"))
-      .setDesc(t("Set the size of the toolbar icon (px), default 18px."))
+      .setDesc(t("Set the size of the toolbar icon (px); default: 18px"))
       .addSlider((slider) => {
         const initialSize =
           appearanceBucket.toolbarIconSize ??
