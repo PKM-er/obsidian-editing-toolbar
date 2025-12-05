@@ -318,7 +318,7 @@ export class CommandsManager {
             editor.setSelection(newStart, newEnd);
         } catch (error) {
             console.error('正则表达式命令执行错误:', error);
-            new Notice(t('Regex command execution error:') + error.message);
+            new Notice(t('Regex command execution error: ') + error.message);
         }
     }
 
@@ -818,4 +818,5 @@ type CommandPlot = {
     prefix: string;
     suffix: string;
     islinehead: boolean;
+
 }; 
