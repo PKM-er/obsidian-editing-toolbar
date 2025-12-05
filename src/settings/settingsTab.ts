@@ -926,7 +926,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     // 添加主题选择下拉框
     new Setting(toolbarContainer)
       .setName(t("Toolbar Theme"))
-      .setDesc(t("Select a preset toolbar theme; it updates background, icon colour, and size for the selected style."))
+      .setDesc(t("Select a preset toolbar theme, automatically setting the background color, icon color, and size for the selected style."))
       .addDropdown((dropdown) => {
         const aesthetics: Record<string, string> = {};
         AESTHETIC_STYLES.forEach((aesthetic) => {
