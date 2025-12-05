@@ -373,7 +373,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     // Style picker – only controls which style's settings you edit
     new Setting(appearanceSettingContainer)
       .setName(t('Toolbar Settings'))
-      .setDesc(t('Choose which toolbar style’s appearance you want to edit.'))
+      .setDesc(t("Choose which toolbar style's appearance you want to edit."))
       .addDropdown((dropdown) => {
         const positions: Record<string, string> = {};
         POSITION_STYLES.map((position) => (positions[position] = position));
@@ -861,7 +861,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     paintbrushContainer.style.marginBottom = '20px';
     new Setting(paintbrushContainer)
       .setName(t('🎨 Set Custom Background'))
-      .setDesc(t('Click on the picker to adjust the colour'))
+      .setDesc(t('Click on the picker to adjust the color'))
       .setClass('custom_bg')
       .then((setting) => {
         const pickerContainer = setting.controlEl.createDiv({ cls: "pickr-container" });
@@ -890,8 +890,8 @@ export class editingToolbarSettingTab extends PluginSettingTab {
         }
       });
     new Setting(paintbrushContainer)
-      .setName(t('🖌️ Set Custom Font Colour'))
-      .setDesc(t('Click on the picker to adjust the colour'))
+      .setName(t('🖌️ Set Custom Font Color'))
+      .setDesc(t('Click on the picker to adjust the color'))
       .setClass('custom_font')
       .then((setting) => {
         const pickerContainer = setting.controlEl.createDiv({ cls: "pickr-container" });
