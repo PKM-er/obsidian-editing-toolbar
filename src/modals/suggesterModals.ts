@@ -284,7 +284,7 @@ export class ChangeCmdname extends Modal {
   }
   onOpen() {
     const { contentEl } = this;
-    contentEl.createEl("b", { text: t("Please enter a new name：") });
+    contentEl.createEl("b", { text: t("Please enter a new name: ") });
 
     const textComponent = new TextComponent(contentEl);
     textComponent.inputEl.classList.add('InputPromptInputEl');
@@ -355,7 +355,7 @@ export class openSlider extends Modal {
     horizontalContainer.createEl("p", { text: t("Horizontal Position") });
       // 添加列数控制区域
       const columnsContainer = containerEl.createDiv({ cls: "columns-slider-container" });
-      columnsContainer.createEl("p", { text: t("Editing Toolbar columns") });
+      columnsContainer.createEl("p", { text: t("Editing Toolbar Columns") });
     // 获取body容器的高度和宽度
     const bodyHeight = document.body.clientHeight;
     const bodyWidth = document.body.clientWidth;
