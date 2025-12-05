@@ -399,4 +399,15 @@ export default {
 'Please execute a format command or select format text first, then enable the format brush': 'Please execute a format command or select format text first, then enable the format brush',
 'Use \\n to represent line breaks': 'Use \\n to represent line breaks',
 'Use ↵ to represent line breaks': 'Use ↵ to represent line breaks',
+
+// New terms
+'Top Toolbar': ,
+'Enable the toolbar positioned at the top.': ,
+'Following Toolbar': ,
+'Enable the toolbar that appears upon text selection.': ,
+'Fixed Toolbar': ,
+'Enable the toolbar whose position may be fixed where you please.': ,
+'Toolbar Settings': ,
+'Choose which toolbar style’s appearance you want to edit.': ,
+"Vertical Split": ,
 }
