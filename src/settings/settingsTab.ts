@@ -372,7 +372,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
 
     // Style picker – only controls which style's settings you edit
     new Setting(appearanceSettingContainer)
-      .setName(t('Toolbar settings'))
+      .setName(t('Toolbar Settings'))
       .setDesc(t('Choose which toolbar style’s appearance you want to edit.'))
       .addDropdown((dropdown) => {
         const positions: Record<string, string> = {};
@@ -1674,7 +1674,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     }).style.marginTop = '0';
 
     const shareLink = communityDiv.createEl('p');
-    shareLink.innerHTML = t('Share your toolbar settings and styles in our.') + ' <a href="https://github.com/PKM-er/obsidian-editing-toolbar/discussions/categories/show-and-tell" target="_blank" rel="noopener noreferrer">Show and Tell</a> ';
+    shareLink.innerHTML = t('Share your toolbar settings and styles in our') + ' <a href="https://github.com/PKM-er/obsidian-editing-toolbar/discussions/categories/show-and-tell" target="_blank" rel="noopener noreferrer">Show and Tell</a> ';
     const shareNote = communityDiv.createEl('p', {
       text: t('Get inspired by what others have created or showcase your own customizations.')
     });
