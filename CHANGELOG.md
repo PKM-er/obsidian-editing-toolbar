@@ -1,57 +1,60 @@
 # Changelog
 
-## 3.2.0 – Multi-toolbar and settings overhaul (2025-12-02)
+## 3.2.0 – Multi-toolbar and settings overhaul (2025-12-05)
 
-This release significantly improves how toolbars are enabled, configured, and previewed, and cleans up the settings UI text.
+This release overhauls how toolbars are enabled, configured, and previewed, and cleans up the settings UI text and translations.
 
 ### New
 
-- Multiple toolbars can be active at once
-	- Previously, only a single toolbar could be enabled at a time via a dropdown in the Appearance settings.
-	- You can now enable any combination of the three toolbars simultaneously.
-	- Activation is now controlled via three individual toggles in the **General** settings.
-	
-- Reworked configuration flow
-	- Toolbar activation was moved out of **Appearance** and into **General** for clearer separation between “what is active” and “how it looks”.
-	- Each toolbar now has clearly separated configuration for commands and appearance.
-	
+- Multiple toolbar types at the same time
+  - Top, Following, and Fixed toolbars can now be toggled individually in **Settings → General**.
+  - You can run a single toolbar, any two of them, or all three together.
+
+- Clear separation of activation vs appearance
+  - Which toolbars are active is controlled only by the toggles in **Settings → General**.
+  - The old “Editing toolbar position” control has been reworked into a **Toolbar Settings** section that only controls how the selected toolbar looks and behaves (position, layout, etc.), not which toolbar is represented.
+
+- Per-toolbar command sets
+  - The **Commands** tab is now aware of the three toolbar types.
+  - Each toolbar has its own command configuration, so Top, Following, and Fixed can all have different button sets without overwriting one another.
+
+- Updated preview panel
+  - The preview focuses on showing the selected toolbar’s appearance (position, orientation, layout) as you adjust settings.
+  - It still does not mirror the command set.
+  - "Fixed toolbar" preview has been normalised.
 
 ### Improvements
 
-- Fully separated toolbar commands
-	- Fixed the previous behavior where toolbars could mirror each other’s command sets in certain cases.
-	- Each toolbar now maintains its own independent set of commands.
-	
-- Fully separated appearance and modes
-	- Theme/appearance options for each toolbar and each mode are now properly isolated.
-	- Changing appearance for one toolbar or mode no longer affects others.
-	
-- Updated preview section
-	- The preview panel has been rewritten.
-	- It no longer attempts to show the currently configured commands.
-	- Instead, it focuses on reflecting the current appearance/layout settings as you configure them.
-	
-- Settings text and punctuation cleanup
-	- All labels and descriptions in `settingsTab.ts` have been edited for clearer wording and consistent punctuation in English.
-	
+- Settings layout and wording
+  - Reorganised settings into clearer **General** vs **Appearance** groups.
+  - Normalised naming for the three toolbar types across the UI.
+  - Cleaned up labels and descriptions for clearer wording and more consistent punctuation in English.
+
+- Visual polish
+  - CSS clean-up across all toolbar variants for more consistent spacing, alignment, and hover states.
+  - Small adjustments to keep toolbars readable and tidy at different widths and zoom levels.
+  - Updated the "glass" theme for better readability.
 
 ### Localization / translations
 
-- Many settings labels no longer use the translation helper (`t`) because their keys changed during the copy/punctuation cleanup.
-- Existing translation files will not cover these updated strings yet; for those settings, English text will be shown.
-- The remaining settings still use the translation helper and will continue to work with existing translations.
-- Translation contributors will need to update the localization files in a separate pass to restore full multi-language coverage.
+- Updated built-in locales for all new and renamed settings strings:
+  - `en` (default English),
+  - `en-gb` (new British English variant),
+  - `zh-cn` (Simplified Chinese).
+- The new `en-gb` locale mirrors the default English text but uses British spelling and punctuation.
+- For these locales, all current settings text should now be fully translated and consistent with the new configuration flow.
 
 ### Fixes
 
 - Fixed issues where:
-	- Toolbars could unintentionally mirror each other’s commands.
-	- Appearance and theme settings could bleed across toolbar modes.
-	
+  - Toolbars could unintentionally mirror or copy each other’s command configuration.
+  - Appearance and theme settings could bleed across toolbar modes instead of staying scoped to the selected toolbar.
+- Fixed a few minor layout glitches introduced by earlier toolbar changes.
 
 ### Unchanged
 
-- Import/export behavior is unchanged in this release.
+- Import/export behaviour is unchanged in this release; existing configuration files remain compatible.
+
 
 ## 3.1.18 (2025-07-10)
 ### 国际化部分字段
