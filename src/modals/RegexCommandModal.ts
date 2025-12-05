@@ -495,7 +495,7 @@ export class RegexCommandModal extends Modal {
 
     const previewOutputContainer = previewContainer.createDiv('preview-output-container');
 
-    const previewOutputLabel = previewOutputContainer.createEl('label', { text: t('Result:') });
+    const previewOutputLabel = previewOutputContainer.createEl('label', { text: t('Result: ') });
     previewOutputLabel.style.display = 'block';
     previewOutputLabel.style.marginBottom = '5px';
 
@@ -715,4 +715,5 @@ export class RegexCommandModal extends Modal {
   private escapeStringForDisplay(str: string): string {
     return str.replace(/"/g, '\\"');
   }
+
 } 
