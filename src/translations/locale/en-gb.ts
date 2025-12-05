@@ -40,7 +40,7 @@ export default {
 'Custom Font Color':'Custom Font Colour',
 '🎨 Set Custom Background':'🎨 Set Custom Background',
 '🖌️ Set Custom Font Color':'🖌️ Set Custom Font Colour',
-'Click on the picker to adjust the colour':'Click on the picker to adjust the colour',
+'Click on the picker to adjust the color':'Click on the picker to adjust the colour',
 'Mobile Enabled or Not':'Mobile Enabled or Not',
 'Whether to enable the plugin for the mobile client, the default is enabled.':'Whether to enable the plugin for the mobile client, the default is enabled.',
 'Whether to enable on mobile devices with device width less than 768px.': 'Whether to enable on mobile devices with device width less than 768px, the default is disable.',
