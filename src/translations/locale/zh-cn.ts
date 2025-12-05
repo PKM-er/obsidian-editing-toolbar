@@ -274,7 +274,6 @@ export default {
   '^ and $ match the start and end of each line': '^ 和 $ 匹配每行的开始和结束',
   'Replace all matches': '替换所有匹配',
   'Command': '命令',
-  'Error: ': '错误：',
   'Input example text to view the formatting effect of the command...': '输入示例文本以查看命令的格式化效果...',
   'Description': '描述',
   '[Example]': '[示例]',
