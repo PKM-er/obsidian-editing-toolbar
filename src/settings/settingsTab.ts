@@ -271,6 +271,16 @@ export class editingToolbarSettingTab extends PluginSettingTab {
           this.plugin.saveSettings();
           this.triggerRefresh();
         }));
+
+    // Regex command behavior setting
+    new Setting(generalSettingContainer)
+      .setName(t('Use current line for regex commands'))
+      .setDesc(t('When no text is selected, regex commands will use the current line instead of clipboard content'))
+      .addToggle(toggle => toggle.setValue(this.plugin.settings?.useCurrentLineForRegex ?? false)
+        .onChange(async (value) => {
+          this.plugin.settings.useCurrentLineForRegex = value;
+          await this.plugin.saveSettings();
+        }));
   }
 
   private displayAppearanceSettings(containerEl: HTMLElement): void {

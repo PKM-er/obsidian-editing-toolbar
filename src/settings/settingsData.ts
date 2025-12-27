@@ -72,6 +72,7 @@ export interface editingToolbarSettings {
   toolbarBackgroundColor: string;
   toolbarIconColor: string;
   toolbarIconSize: number;
+  useCurrentLineForRegex: boolean;
   
 }
 
@@ -401,5 +402,6 @@ export const DEFAULT_SETTINGS: editingToolbarSettings = {
     "viewTypeSettings": {},
     "toolbarBackgroundColor": "rgba(var(--background-secondary-rgb), 0.7)",
     "toolbarIconColor": "var(--text-normal)",
-    "toolbarIconSize": 18
+    "toolbarIconSize": 18,
+    "useCurrentLineForRegex": false
   }

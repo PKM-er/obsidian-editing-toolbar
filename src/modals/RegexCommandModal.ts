@@ -702,6 +702,8 @@ export class RegexCommandModal extends Modal {
         setTimeout(() => {
           copyButton.textContent = t('Copy code');
         }, 2000);
+      }).catch(err => {
+        console.error('Failed to copy code: ', err);
       });
     });
   }
