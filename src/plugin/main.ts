@@ -131,6 +131,12 @@ export default class editingToolbarPlugin extends Plugin {
   // 添加设置标签页引用
   settingTab: editingToolbarSettingTab;
 
+  // 性能优化：工具栏 DOM 缓存
+  private toolbarCache: Map<ToolbarStyleKey, HTMLElement> = new Map();
+  private popoverCache: Map<ToolbarStyleKey, HTMLElement> = new Map();
+
+
+
     // Initialise per-style appearance (patch v3 logic, but limited to this plugin)
   private initPerStyleAppearance(): void {
     const settings = this.settings;
@@ -440,7 +446,7 @@ this.app.workspace.onLayoutReady(async () => {
     this.quiteAllFormatBrushes();
 
     // 销毁工具栏
-    selfDestruct();
+    selfDestruct(this);
 
     console.log("editingToolbar unloaded");
   }
@@ -480,8 +486,9 @@ this.app.workspace.onLayoutReady(async () => {
     const isMarkdownView = viewType === "markdown";
     const inSourceMode = isMarkdownView && ViewUtils.isSourceMode(view);
 
-    // For non-markdown views or reading mode, hide all toolbars.
-    if (!inSourceMode) {
+    // For markdown views in reading mode, hide all toolbars.
+    // For non-markdown views (like Canvas), we'll handle them below.
+    if (isMarkdownView && !inSourceMode) {
       (["top", "following", "fixed"] as const).forEach((style) => {
         const el = isExistoolbar(this.app, this, style);
         if (el) el.style.visibility = "hidden";
@@ -541,11 +548,17 @@ this.app.workspace.onLayoutReady(async () => {
       if (!toolbar) continue;
 
       if (key === "following") {
-        // Following toolbar stays hidden until text is selected.
-        // Your `showFollowingToolbar` / selection handlers will reveal it.
-        toolbar.style.visibility = "hidden";
+        // Following toolbar only works in markdown source mode
+        // For other views (Canvas, etc.), hide it
+        if (!inSourceMode) {
+          toolbar.style.visibility = "hidden";
+        } else {
+          // In markdown source mode, stays hidden until text is selected.
+          // Your `showFollowingToolbar` / selection handlers will reveal it.
+          toolbar.style.visibility = "hidden";
+        }
       } else {
-        // Top / Fixed: visible in markdown source mode.
+        // Top / Fixed: visible in markdown source mode and other allowed views
         toolbar.style.visibility = "visible";
       }
     }
@@ -585,7 +598,7 @@ this.app.workspace.onLayoutReady(async () => {
       }
   
       setTimeout(() => {
-        resetToolbar();
+        resetToolbar(this);
         editingToolbarPopover(app, this);
       }, 200);
     }
@@ -610,8 +623,33 @@ this.app.workspace.onLayoutReady(async () => {
   async loadSettings() {
     this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
 
-    // 初始化多配置
-    // 如果是新安装或升级，初始化各个位置样式的命令配置
+    // 配置迁移逻辑：将旧的 positionStyle 配置迁移到新的 enable 开关
+    // 判断条件：所有新开关都是 false（说明用户还没有配置过新版）
+    const isLegacyConfig =
+      !this.settings.enableTopToolbar &&
+      !this.settings.enableFollowingToolbar &&
+      !this.settings.enableFixedToolbar;
+
+    if (isLegacyConfig && this.settings.positionStyle) {
+      // 根据旧的 positionStyle 值，自动设置对应的新开关
+      // 这样可以确保：
+      // 1. 新用户：默认 positionStyle 是 "top"，会自动启用 top 工具栏
+      // 2. 旧用户升级：根据之前的 positionStyle 设置，自动启用对应的工具栏
+      switch (this.settings.positionStyle) {
+        case "top":
+          this.settings.enableTopToolbar = true;
+          break;
+        case "following":
+          this.settings.enableFollowingToolbar = true;
+          break;
+        case "fixed":
+          this.settings.enableFixedToolbar = true;
+          break;
+      }
+
+      // 保存迁移后的配置
+      await this.saveSettings();
+    }
   }
 
   // 获取当前位置样式对应的命令配置
@@ -1247,6 +1285,55 @@ updateCurrentCommands(commands: any[], style?: string): void {
     this.formatBrushActive = false;
   }
 
+  // 性能优化：缓存工具栏 DOM 引用
+  public getCachedToolbar(style: ToolbarStyleKey): HTMLElement | null {
+    const cached = this.toolbarCache.get(style);
+    // 验证缓存的元素是否仍在 DOM 中
+    if (cached && cached.isConnected) {
+    
+      return cached;
+    }
+    // 缓存失效，清除
+    if (cached) {
+      this.toolbarCache.delete(style);
+    }
+
+    return null;
+  }
+
+  public setCachedToolbar(style: ToolbarStyleKey, element: HTMLElement): void {
+    this.toolbarCache.set(style, element);
+  }
+
+  public getCachedPopover(style: ToolbarStyleKey): HTMLElement | null {
+    const cached = this.popoverCache.get(style);
+    if (cached && cached.isConnected) {
+      return cached;
+    }
+    if (cached) {
+      this.popoverCache.delete(style);
+    }
+    return null;
+  }
+
+  public setCachedPopover(style: ToolbarStyleKey, element: HTMLElement): void {
+    this.popoverCache.set(style, element);
+  }
+
+  public clearToolbarCache(style?: ToolbarStyleKey): void {
+    if (style) {
+      this.toolbarCache.delete(style);
+      this.popoverCache.delete(style);
+    } else {
+      this.toolbarCache.clear();
+      this.popoverCache.clear();
+    }
+  }
+
+
+
+
+
   // Top toolbar is considered active if:
   // - explicit multi-toolbar toggle is on, or
   // - no explicit toggles are used and positionStyle is "top" (legacy behaviour)
@@ -1411,7 +1498,7 @@ updateCurrentCommands(commands: any[], style?: string): void {
     };
   }
 
-  // 抽取显示“following”工具栏的逻辑
+  // 抽取显示"following"工具栏的逻辑
   private showFollowingToolbar(editor: Editor) {
     if (!this.isFollowingToolbarActive()) return;
 

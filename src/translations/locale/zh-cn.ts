@@ -183,7 +183,7 @@ export default {
   'No configuration selected for deployment': '没有选中的配置',
   'Command already exists in selected configurations': '命令已存在于选中的配置',
   'Command deployed to: ': '命令已部署到：',
-  'Command deleted': '命令已删除',
+  'Command Deleted': '命令已删除',
   'Confirm Delete?': '确认删除？',
   'Are you sure you want to restore all settings to default? But custom commands will be preserved.': '您确定要将所有设置恢复为默认值吗？但自定义命令将被保留。',
   'Successfully restored default settings! (Custom commands preserved)': '成功恢复默认设置！（自定义命令已保留）',

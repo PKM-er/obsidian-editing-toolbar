@@ -377,12 +377,14 @@ export class CommandsManager {
 
     public registerCommands() {
 
+
+
         this.plugin.addCommand({
             id: 'renumber-ordered-list',
             name: 'Renumber Ordered List',
             editorCallback: (editor: Editor) => {
                 editor && this.executeCommandWithoutBlur(editor, () => renumberSelection(editor));
-            },    
+            },
           });
         // 隐藏/显示菜单命令
         this.plugin.addCommand({
@@ -398,7 +400,7 @@ export class CommandsManager {
                 } else {
                     setMenuVisibility(this.plugin.settings.cMenuVisibility);
                 }
-                selfDestruct();
+                selfDestruct(this.plugin);
                 await this.plugin.saveSettings();
             },
         });

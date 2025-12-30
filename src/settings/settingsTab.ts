@@ -117,7 +117,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     this.currentEditingConfig = this.plugin.settings.positionStyle;
 
     addEventListener("editingToolbar-NewCommand", () => {
-      selfDestruct();
+      selfDestruct(this.plugin);
       editingToolbarPopover(app, this.plugin);
       this.display();
     });
@@ -786,7 +786,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
           await this.plugin.saveSettings();
           this.plugin.reloadCustomCommands();
           this.display();
-          new Notice(t('Command deleted.'));
+          new Notice(t('Command Deleted'));
         }))
       // 如果有图标，显示图标
       if (command.icon) {
@@ -1106,7 +1106,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     previewContainer.addClass('toolbar-preview-section');
     previewContainer.style.marginTop = '20px';
     const previewLabel = previewContainer.createEl('h3', {
-      text: 'Toolbar Preview (With a hypothetical command configuration.)'
+    text: t(`Toolbar Preview (With a hypothetical command configuration.)`)
     });
     previewLabel.style.marginBottom = '10px';
     // 创建预览工具栏 - 使用类似 generateMenu 的方式

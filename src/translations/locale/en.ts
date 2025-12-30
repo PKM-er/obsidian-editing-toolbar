@@ -183,7 +183,7 @@ export default {
 'No configuration selected for deployment': 'No configuration selected for deployment',
 'Command already exists in selected configurations': 'Command already exists in selected configurations',
 'Command deployed to: ': 'Command deployed to: ',
-'Command deleted': 'Command deleted',
+'Command Deleted': 'Command Deleted',
 'Confirm Delete?': 'Confirm Delete?',
 'Confirm': 'Confirm',
 'Are you sure you want to restore all settings to default? But custom commands will be preserved.': 'Are you sure you want to restore all settings to default? But custom commands will be preserved.',

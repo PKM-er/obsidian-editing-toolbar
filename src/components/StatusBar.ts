@@ -71,7 +71,7 @@ export class StatusBar {
             dispatchEvent(new Event("editingToolbar-NewCommand"));
           }, 100)
           : setMenuVisibility(this.plugin.settings.cMenuVisibility);
-        selfDestruct();
+        selfDestruct(this.plugin);
         await this.plugin.saveSettings();
       };
 
@@ -142,9 +142,9 @@ export class StatusBar {
           
           // 保存设置
           await this.plugin.saveSettings();
-          
+
           // 刷新工具栏
-          selfDestruct();
+          selfDestruct(this.plugin);
           setTimeout(() => {
             dispatchEvent(new Event("editingToolbar-NewCommand"));
           }, 100);
@@ -189,10 +189,10 @@ export class StatusBar {
               
               // 切换状态
               this.plugin.settings.viewTypeSettings[vType] = !isViewAllowed;
-              
+
               // 如果当前视图就是这个类型，则刷新工具栏
               if (viewType === vType) {
-                selfDestruct();
+                selfDestruct(this.plugin);
                 setTimeout(() => {
                   dispatchEvent(new Event("editingToolbar-NewCommand"));
                 }, 100);
@@ -273,7 +273,7 @@ export class StatusBar {
           subItem.onClick(async () => {
             this.plugin.settings.aestheticStyle = style;
             await this.plugin.saveSettings();
-            selfDestruct();
+            selfDestruct(this.plugin);
             setTimeout(() => {
               dispatchEvent(new Event("editingToolbar-NewCommand"));
             }, 100);

@@ -45,7 +45,7 @@ export function getRootSplits(): WorkspaceParentExt[] {
   return rootSplits;
 }
 
-export function resetToolbar() {
+export function resetToolbar(plugin?: editingToolbarPlugin) {
   requireApiVersion("0.15.0")
     ? (activeDocument = activeWindow.document)
     : (activeDocument = window.document);
@@ -68,9 +68,14 @@ export function resetToolbar() {
     }
     element.remove();
   });
+
+  // 性能优化：清理缓存
+  if (plugin) {
+    plugin.clearToolbarCache();
+  }
 }
 
-export function selfDestruct() {
+export function selfDestruct(plugin?: editingToolbarPlugin) {
   requireApiVersion("0.15.0")
     ? (activeDocument = activeWindow.document)
     : (activeDocument = window.document);
@@ -107,6 +112,11 @@ export function selfDestruct() {
       }
     });
   }
+
+  // 性能优化：清理缓存
+  if (plugin) {
+    plugin.clearToolbarCache();
+  }
 }
 
 export function isExistoolbar(
@@ -125,6 +135,16 @@ export function isExistoolbar(
       (plugin.settings.positionStyle as ToolbarStyleKey) ||
       "top") as ToolbarStyleKey;
 
+  // 性能优化：先检查缓存
+  // 注意：Top 工具栏不使用缓存，因为每个 leaf 都有独立的工具栏
+  if (targetStyle !== "top") {
+    const cached = plugin.getCachedToolbar(targetStyle);
+    if (cached) {
+      return cached;
+    }
+  }
+
+  // 缓存未命中，执行 DOM 查询
   const selector = `.editingToolbarModalBar[data-toolbar-style="${targetStyle}"]`;
 
   let container: HTMLElement | null = null;
@@ -138,6 +158,11 @@ export function isExistoolbar(
   } else {
     // 其它样式的工具栏在整个文档范围查找
     container = activeDocument.querySelector(selector) as HTMLElement;
+  }
+
+  // 如果找到，缓存起来（但 top 工具栏不缓存）
+  if (container && targetStyle !== "top") {
+    plugin.setCachedToolbar(targetStyle, container);
   }
 
   return container ? (container as HTMLElement) : null;
@@ -535,13 +560,17 @@ function positionToolbar(toolbar: HTMLElement, editor: Editor) {
 }
 
 // 单独提取垂直位置计算逻辑
-function calculateTopPosition(editor: Editor, coords: { top: number; left: number; bottom: number; }, editorRect: { top: number; left: number; bottom: number; }, toolbarHeight: number) {
-
-
+function calculateTopPosition(
+  editor: Editor,
+  coords: { top: number; left: number; bottom: number; },
+  editorRect: { top: number; left: number; bottom: number; },
+  toolbarHeight: number
+) {
   const from = editor.getCursor("from");
   const to = editor.getCursor("to");
   //@ts-ignore
   const coordsTO = editor.coordsAtPos(to); //选择结束位置
+
   const isSingleLineSelection = from.line === to.line;
   let topPosition = coords.top - toolbarHeight - 10;
   if (isSingleLineSelection) {
@@ -1110,10 +1139,54 @@ export function editingToolbarPopover(
     if (!plugin.isLoadMobile()) return;
     const view = app.workspace.getActiveViewOfType(ItemView);
     if (ViewUtils.isAllowedViewType(view)) {
-      // Guard per-style: if this style already has a toolbar, don’t recreate it
-      if (isExistoolbar(app, plugin, effectiveStyle)) return;
+      // 性能优化：检查是否已存在工具栏，如果存在则复用
+      // 注意：Top 工具栏每个 leaf 都有独立的，不能复用
+      const existingToolbar = isExistoolbar(app, plugin, effectiveStyle);
+      if (existingToolbar && effectiveStyle !== "top") {
+        // 工具栏已存在，只需要更新可见性和样式
+        if (effectiveStyle === "following") {
+          existingToolbar.style.visibility = "hidden";
+        } else {
+          existingToolbar.style.visibility = "visible";
+        }
 
+        // 更新 CSS 变量（可能用户更改了设置）
+        if (resolvedBgColor) {
+          existingToolbar.style.setProperty(
+            "--editing-toolbar-background-color",
+            resolvedBgColor
+          );
+        }
+        if (resolvedIconColor) {
+          existingToolbar.style.setProperty(
+            "--editing-toolbar-icon-color",
+            resolvedIconColor
+          );
+        }
+        if (resolvedIconSize) {
+          existingToolbar.style.setProperty(
+            "--toolbar-icon-size",
+            `${resolvedIconSize}px`
+          );
+        }
+
+        return; // 复用现有工具栏，不重新创建
+      }
+
+      // 工具栏不存在，创建新的
+  
       generateMenu();
+     
+
+  
+
+      // 缓存新创建的工具栏（但 top 工具栏不缓存，因为每个 leaf 都有独立的工具栏）
+      if (effectiveStyle !== "top") {
+        const newToolbar = isExistoolbar(app, plugin, effectiveStyle);
+        if (newToolbar) {
+          plugin.setCachedToolbar(effectiveStyle, newToolbar);
+        }
+      }
 
       setHorizontalValue(plugin.settings);
       setBottomValue(plugin.settings);
@@ -1129,20 +1202,21 @@ export function editingToolbarPopover(
 
 function setsvgColor(fontcolor: string, bgcolor: string) {
   requireApiVersion("0.15.0") ? activeDocument = activeWindow.document : activeDocument = window.document;
-  let font_colour_dom = activeDocument.querySelectorAll("#change-font-color-icon")
-  if (font_colour_dom) {
-    font_colour_dom.forEach(element => {
-      let ele = element as HTMLElement
-      ele.style.fill = fontcolor;
+
+  // 性能优化：缓存选择器，减少重复查询
+  const fontColorIcons = activeDocument.querySelectorAll("#change-font-color-icon");
+  const bgColorIcons = activeDocument.querySelectorAll("#change-background-color-icon");
+
+  // 批量更新样式
+  if (fontColorIcons.length > 0) {
+    fontColorIcons.forEach(element => {
+      (element as HTMLElement).style.fill = fontcolor;
     });
   }
 
-  let background_colour_dom = activeDocument.querySelectorAll("#change-background-color-icon")
-  if (background_colour_dom) {
-    background_colour_dom.forEach(element => {
-      let ele = element as HTMLElement
-      ele.style.fill = bgcolor;
+  if (bgColorIcons.length > 0) {
+    bgColorIcons.forEach(element => {
+      (element as HTMLElement).style.fill = bgcolor;
     });
   }
-
 }
