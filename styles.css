@@ -373,7 +373,7 @@ button[class^=editingToolbarCommandsubItem]::after {
   box-shadow: none;
   border: 1px solid var(--background-modifier-border-hover);
   background-color: var(--background-secondary);
-
+  z-index:1;
   visibility: hidden;
   transition: all 0.15s linear;
   -webkit-transition: all 0.15s linear;
@@ -491,6 +491,7 @@ button[class^=editingToolbarCommandsubItem]::after {
   visibility: visible;
   transition: all 0.3s linear;
   -webkit-transition: all 0.3s linear;
+  z-index:1;
 }
 
 .editingToolbarCommandsubItem-font-color button {
@@ -917,7 +918,6 @@ button[class^=editingToolbarCommandsubItem]::after {
   margin: 0;
   padding: 0;
   height: auto;
-
 }
 
 .theme-dark :is(#editingToolbarModalBar, #editingToolbarPopoverBar) button.editingToolbar-Divider-Line {
