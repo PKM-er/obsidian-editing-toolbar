@@ -103,42 +103,42 @@ export class CommandsManager {
     private modCommands: Command[] = [
         {
             id: "editor:insert-embed",
-            name: "Add embed",
+            name: "Insert Embed",
             icon: "note-glyph",
         },
         {
             id: "editor:insert-link",
-            name: "Insert markdown link",
+            name: "Insert Link",
             icon: "link-glyph",
         },
         {
             id: "editor:insert-tag",
-            name: "Add tag",
+            name: "Insert Tag",
             icon: "price-tag-glyph",
         },
         {
             id: "editor:insert-wikilink",
-            name: "Add internal link",
+            name: "Insert Internal link",
             icon: "bracket-glyph",
         },
         {
             id: "editor:toggle-code",
-            name: "Code",
+            name: "Insert Code",
             icon: "code-glyph",
         },
         {
             id: "editor:toggle-blockquote",
-            name: "Blockquote",
+            name: "Insert Blockquote",
             icon: "lucide-text-quote",
         },
         {
             id: "editor:toggle-checklist-status",
-            name: "Checklist status",
+            name: "Cycle List and Checklist",
             icon: "checkbox-glyph",
         },
         {
             id: "editor:toggle-comments",
-            name: "Comment",
+            name: "Insert Comment",
             icon: "percent-sign-glyph",
         },
 
@@ -149,7 +149,7 @@ export class CommandsManager {
         },
         {
             id: "editor:insert-mathblock",
-            name: "MathBlock",
+            name: "Insert MathBlock",
             icon: "lucide-sigma-square",
         },
         {
@@ -159,22 +159,22 @@ export class CommandsManager {
         },
         {
             id: "editor:swap-line-up",
-            name: "Swap line up",
+            name: "Swap Line Up",
             icon: "lucide-corner-right-up",
         },
         {
             id: "editor:swap-line-down",
-            name: "Swap line down",
+            name: "Swap Line Down",
             icon: "lucide-corner-right-down",
         },
         {
             id: "editor:attach-file",
-            name: "Attach file",
+            name: "Attach File",
             icon: "lucide-paperclip",
         },
         {
             id: "editor:clear-formatting",
-            name: "Clear formatting",
+            name: "Clear Formatting",
             icon: "lucide-eraser",
         }
 
@@ -379,7 +379,7 @@ export class CommandsManager {
 
         this.plugin.addCommand({
             id: 'renumber-ordered-list',
-            name: 'Renumber ordered list',
+            name: 'Renumber Ordered List',
             editorCallback: (editor: Editor) => {
                 editor && this.executeCommandWithoutBlur(editor, () => renumberSelection(editor));
             },    
@@ -387,7 +387,7 @@ export class CommandsManager {
         // 隐藏/显示菜单命令
         this.plugin.addCommand({
             id: "hide-show-menu",
-            name: "Hide/show ",
+            name: "Hide/Show ",
             icon: "editingToolbar",
             callback: async () => {
                 this.plugin.settings.cMenuVisibility = !this.plugin.settings.cMenuVisibility;
@@ -418,7 +418,7 @@ export class CommandsManager {
         // 添加字体颜色相关命令
         this.plugin.addCommand({
             id: 'change-font-color',
-            name: 'Change font color[html]',
+            name: 'Change Font Color',
             callback: () => {
                 const editor = this.getActiveEditor();
                 editor && this.executeCommandWithoutBlur(editor, () => setFontcolor(this.plugin.settings.cMenuFontColor ?? "#2DC26B", editor));
@@ -428,7 +428,7 @@ export class CommandsManager {
 
         this.plugin.addCommand({
             id: 'change-background-color',
-            name: 'Change Backgroundcolor[html]',
+            name: 'Change Background Color',
             callback: () => {
                 const editor = this.getActiveEditor();
                 editor && this.executeCommandWithoutBlur(editor, () => setBackgroundcolor(this.plugin.settings.cMenuBackgroundColor ?? "#FA541C", editor));
@@ -438,7 +438,7 @@ export class CommandsManager {
         });
         this.plugin.addCommand({
             id: 'indent-list',
-            name: 'Indent list',
+            name: 'Indent List',
             callback: () => {
                 const editor = this.getActiveEditor();
                 editor && this.executeCommandWithoutBlur(editor, () => editor?.indentList());
@@ -448,7 +448,7 @@ export class CommandsManager {
         });
         this.plugin.addCommand({
             id: 'undent-list',
-            name: 'Unindent list',
+            name: 'Unindent List',
             callback: () => {
                 const editor = this.getActiveEditor();
                 editor && this.executeCommandWithoutBlur(editor, () => editor?.unindentList());
@@ -458,7 +458,7 @@ export class CommandsManager {
         });
         this.plugin.addCommand({
             id: 'toggle-numbered-list',
-            name: 'Numbered list',
+            name: 'Numbered List',
             callback: () => {
                 const editor = this.getActiveEditor();
                 editor && this.executeCommandWithoutBlur(editor, () => editor?.toggleNumberList());
@@ -468,7 +468,7 @@ export class CommandsManager {
         });
         this.plugin.addCommand({
             id: 'toggle-bullet-list',
-            name: 'bullet list',
+            name: 'Unordered List',
             callback: () => {
                 const editor = this.getActiveEditor();
                 editor && this.executeCommandWithoutBlur(editor, () => editor?.toggleBulletList());
@@ -478,7 +478,7 @@ export class CommandsManager {
         });
         this.plugin.addCommand({
             id: 'toggle-highlight',
-            name: 'highlight',
+            name: 'Highlight',
             callback: () => {
                 const editor = this.getActiveEditor();
                 editor && this.executeCommandWithoutBlur(editor, () => editor?.toggleMarkdownFormatting("highlight"));
@@ -488,7 +488,7 @@ export class CommandsManager {
         });
         this.plugin.addCommand({
             id: 'toggle-bold',
-            name: 'Bold',
+            name: 'Toggle Bold',
             callback: () => {
                 const editor = this.getActiveEditor();
                 if (editor) {
@@ -502,7 +502,7 @@ export class CommandsManager {
         });
         this.plugin.addCommand({
             id: 'toggle-italics',
-            name: 'Italics',
+            name: 'Toggle Italics',
             callback: () => {
                 const editor = this.getActiveEditor();
                 editor && this.executeCommandWithoutBlur(editor, () => editor?.toggleMarkdownFormatting("italic"));
@@ -512,7 +512,7 @@ export class CommandsManager {
         });
         this.plugin.addCommand({
             id: 'toggle-strikethrough',
-            name: 'Strikethrough',
+            name: 'Toggle Strikethrough',
             callback: () => {
                 const editor = this.getActiveEditor();
                 editor && this.executeCommandWithoutBlur(editor, () => editor?.toggleMarkdownFormatting("strikethrough"));
@@ -522,7 +522,7 @@ export class CommandsManager {
         });
         this.plugin.addCommand({
             id: 'toggle-inline-math',
-            name: 'Inline math',
+            name: 'Toggle Inline Math',
             callback: () => {
                 const editor = this.getActiveEditor();
                 editor && this.executeCommandWithoutBlur(editor, () => editor?.toggleMarkdownFormatting("math"));
@@ -532,7 +532,7 @@ export class CommandsManager {
         });
         this.plugin.addCommand({
             id: "editor:cycle-list-checklist",
-            name: "Cycle list checklist",
+            name: "Cycle List and Checklist",
             icon: "lucide-check-square",
             callback: () => {
                 const editor = this.getActiveEditor();
@@ -541,7 +541,7 @@ export class CommandsManager {
         });
         this.plugin.addCommand({
             id: 'editor-undo',
-            name: 'Undo editor',
+            name: 'Undo Edit',
             callback: () => {
                 const editor = this.getActiveEditor();
                 editor && this.executeCommandWithoutBlur(editor, () => editor?.undo());
@@ -551,7 +551,7 @@ export class CommandsManager {
         });
         this.plugin.addCommand({
             id: 'editor-redo',
-            name: 'Redo editor',
+            name: 'Redo Edit',
             callback: () => {
                 const editor = this.getActiveEditor();
                 editor && this.executeCommandWithoutBlur(editor, () => editor?.redo());
@@ -561,7 +561,7 @@ export class CommandsManager {
         });
         this.plugin.addCommand({
             id: 'editor-copy',
-            name: 'Copy editor',
+            name: 'Copy',
             callback: () => {
                 const editor = this.getActiveEditor();
                 editor && this.executeCommandWithoutBlur(editor, async () => {
@@ -578,7 +578,7 @@ export class CommandsManager {
         });
         this.plugin.addCommand({
             id: 'editor-paste',
-            name: 'Paste editor',
+            name: 'Paste',
             callback: () => {
                 const editor = this.getActiveEditor();
                 editor && this.executeCommandWithoutBlur(editor, async () => {
@@ -596,7 +596,7 @@ export class CommandsManager {
         });
         this.plugin.addCommand({
             id: 'editor-cut',
-            name: 'Cut editor',
+            name: 'Cut',
             callback: () => {
                 const editor = this.getActiveEditor();
                 editor && this.executeCommandWithoutBlur(editor, async () => {
@@ -633,7 +633,7 @@ export class CommandsManager {
         })
         this.plugin.addCommand({
             id: "fullscreen-focus",
-            name: "Fullscreen focus mode",
+            name: "Toggle Fullscreen Focus Mode",
             hotkeys: [{ modifiers: ["Mod", "Shift"], key: "F11" }],
             callback: () => {
                 return fullscreenMode(app)
@@ -642,7 +642,7 @@ export class CommandsManager {
         });
         this.plugin.addCommand({
             id: "workplace-fullscreen-focus",
-            name: "Workplace Fullscreen Focus",
+            name: "Toggle Workplace Fullscreen Focus",
             callback: () => {
                 return workplacefullscreenMode(app)
             },
