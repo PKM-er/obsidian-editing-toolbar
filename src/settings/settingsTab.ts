@@ -354,15 +354,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
           this.triggerRefresh();
         }));
 
-    // Regex command behavior setting
-    new Setting(generalSettingContainer)
-      .setName(t('Use current line for regex commands'))
-      .setDesc(t('When no text is selected, regex commands will use the current line instead of clipboard content'))
-      .addToggle(toggle => toggle.setValue(this.plugin.settings?.useCurrentLineForRegex ?? false)
-        .onChange(async (value) => {
-          this.plugin.settings.useCurrentLineForRegex = value;
-          await this.plugin.saveSettings();
-        }));
+  
   }
   private displayAppearanceSettings(containerEl: HTMLElement): void {
 
@@ -674,6 +666,15 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     const descriptionEl = customCommandsContainer.createEl('p', {
       text: t('Add, edit or delete custom format commands.')
     });
+      // Regex command behavior setting
+    new Setting(customCommandsContainer)
+      .setName(t('Use current line for regex commands'))
+      .setDesc(t('When no text is selected, regex commands will use the current line instead of clipboard content'))
+      .addToggle(toggle => toggle.setValue(this.plugin.settings?.useCurrentLineForRegex ?? false)
+        .onChange(async (value) => {
+          this.plugin.settings.useCurrentLineForRegex = value;
+          await this.plugin.saveSettings();
+        }));
     // 添加命令列表
     const commandListContainer = customCommandsContainer.createDiv('command-list-container');
     commandListContainer.style.padding = '16px';
