@@ -2,7 +2,12 @@ import type editingToolbarPlugin from "src/plugin/main";
 import { App, Notice, requireApiVersion, ItemView, MarkdownView, ButtonComponent, WorkspaceParent, WorkspaceWindow, WorkspaceParentExt } from "obsidian";
 import { backcolorpicker, colorpicker } from "src/util/util";
 import { t } from "src/translations/helper";
-import { editingToolbarSettings } from "src/settings/settingsData";
+import {
+  editingToolbarSettings,
+  ToolbarStyleKey,
+  StyleAppearanceSettings,
+  AppearanceByStyle,
+} from "src/settings/settingsData";
 import { ViewUtils } from 'src/util/viewUtils';
 import { setBottomValue, setHorizontalValue } from "src/util/statusBarConstants";
 import { Editor } from "obsidian";
@@ -41,86 +46,102 @@ export function getRootSplits(): WorkspaceParentExt[] {
 }
 
 export function resetToolbar() {
-  requireApiVersion("0.15.0") ? activeDocument = activeWindow.document : activeDocument = window.document;
-  let currentleaf = activeDocument;
-  let editingToolbarModalBar = currentleaf.querySelectorAll(
-    "#editingToolbarModalBar"
-  );
-  let editingToolbarPopoverBar = currentleaf.querySelectorAll(
-    "#editingToolbarPopoverBar"
-  );
-  editingToolbarModalBar.forEach(element => {
-    if (element) {
-      if (element.firstChild) {
-        element.removeChild(element.firstChild);
-      }
-      element.remove();
-    }
+  requireApiVersion("0.15.0")
+    ? (activeDocument = activeWindow.document)
+    : (activeDocument = window.document);
 
-  });
-  editingToolbarPopoverBar.forEach(element => {
-    if (element) {
-      if (element.firstChild) {
-        element.removeChild(element.firstChild);
-      }
-      element.remove();
-    }
+  const currentDoc = activeDocument;
 
+  const toolbars = currentDoc.querySelectorAll(".editingToolbarModalBar");
+  const popovers = currentDoc.querySelectorAll(".editingToolbarPopoverBar");
+
+  toolbars.forEach((element) => {
+    if (element.firstChild) {
+      element.removeChild(element.firstChild);
+    }
+    element.remove();
   });
 
+  popovers.forEach((element) => {
+    if (element.firstChild) {
+      element.removeChild(element.firstChild);
+    }
+    element.remove();
+  });
 }
 
 export function selfDestruct() {
-  requireApiVersion("0.15.0") ? activeDocument = activeWindow.document : activeDocument = window.document;
-  const toolBarElement = activeDocument.getElementById("editingToolbarModalBar");
-  if (toolBarElement) toolBarElement.remove();
+  requireApiVersion("0.15.0")
+    ? (activeDocument = activeWindow.document)
+    : (activeDocument = window.document);
+
   const rootSplits = getRootSplits();
-  const clearToolbar = (leaf: HTMLElement) => {
 
-    let editingToolbarModalBar = leaf.querySelectorAll(
-      "#editingToolbarModalBar"
-    );
-    let editingToolbarPopoverBar = leaf.querySelectorAll(
-      "#editingToolbarPopoverBar"
-    );
+  const clearToolbar = (root: ParentNode) => {
+    const toolbars = root.querySelectorAll(".editingToolbarModalBar");
+    const popovers = root.querySelectorAll(".editingToolbarPopoverBar");
 
-    editingToolbarModalBar.forEach(element => {
-      if (element) {
-        if (element.firstChild) {
-          element.removeChild(element.firstChild);
-        }
-        element.remove();
+    toolbars.forEach((element) => {
+      if (element.firstChild) {
+        element.removeChild(element.firstChild);
       }
-
-    });
-    editingToolbarPopoverBar.forEach(element => {
-      if (element) {
-        if (element.firstChild) {
-          element.removeChild(element.firstChild);
-        }
-        element.remove();
-      }
-
+      element.remove();
     });
 
+    popovers.forEach((element) => {
+      if (element.firstChild) {
+        element.removeChild(element.firstChild);
+      }
+      element.remove();
+    });
+  };
 
-  }
-  if (rootSplits)
+  // 清理主文档中的工具栏
+  clearToolbar(activeDocument);
+
+  // 清理各个 root split 容器中的工具栏
+  if (rootSplits) {
     rootSplits.forEach((rootSplit: WorkspaceParentExt) => {
-      if (rootSplit?.containerEl)
-        clearToolbar(rootSplit?.containerEl)
+      if (rootSplit?.containerEl) {
+        clearToolbar(rootSplit.containerEl);
+      }
     });
-
+  }
 }
 
-export function isExistoolbar(app: App, plugin: editingToolbarPlugin): HTMLElement {
-  requireApiVersion("0.15.0") ? activeDocument = activeWindow.document : activeDocument = window.document;
-  let container = plugin.positionStyle == "top" ? app.workspace.activeLeaf?.view.containerEl?.querySelector("#editingToolbarModalBar")
-    : activeDocument.getElementById("editingToolbarModalBar");
-  return (container) ? container as HTMLElement : null;
+export function isExistoolbar(
+  app: App,
+  plugin: editingToolbarPlugin,
+  style?: ToolbarStyleKey
+): HTMLElement {
+  requireApiVersion("0.15.0")
+    ? (activeDocument = activeWindow.document)
+    : (activeDocument = window.document);
+
+  // 决定要查找的样式；未显式传入时，保持原有行为
+  const targetStyle: ToolbarStyleKey =
+    (style ||
+      (plugin.positionStyle as ToolbarStyleKey) ||
+      (plugin.settings.positionStyle as ToolbarStyleKey) ||
+      "top") as ToolbarStyleKey;
+
+  const selector = `.editingToolbarModalBar[data-toolbar-style="${targetStyle}"]`;
+
+  let container: HTMLElement | null = null;
+
+  if (targetStyle === "top") {
+    // top 样式的工具栏挂在当前活动 leaf 容器下
+    container =
+      (app.workspace.activeLeaf?.view.containerEl?.querySelector(
+        selector
+      ) as HTMLElement) || null;
+  } else {
+    // 其它样式的工具栏在整个文档范围查找
+    container = activeDocument.querySelector(selector) as HTMLElement;
+  }
+
+  return container ? (container as HTMLElement) : null;
 }
-
-
 
 const getNestedObject = (nestedObj: any, pathArr: any[]) => {
   return pathArr.reduce((obj, key) =>
@@ -388,13 +409,17 @@ export function setFormateraser(plugin: editingToolbarPlugin, editor: Editor) {
 
 
   //app.commands.executeCommandById("editor:clear-formatting");
-
-
 }
 
-export function createFollowingbar(app: App, iconSize: number, plugin: editingToolbarPlugin, editor: Editor, forceShow: boolean = false) {
-  // 获取或创建工具栏
-  let editingToolbarModalBar = isExistoolbar(app, plugin);
+export function createFollowingbar(
+  app: App,
+  iconSize: number,
+  plugin: editingToolbarPlugin,
+  editor: Editor,
+  forceShow: boolean = false
+) {
+  // 获取或创建“following”样式的工具栏
+  let editingToolbarModalBar = isExistoolbar(app, plugin, "following");
 
   // 检查视图类型
   const view = app.workspace.getActiveViewOfType(ItemView);
@@ -405,16 +430,26 @@ export function createFollowingbar(app: App, iconSize: number, plugin: editingTo
     return;
   }
 
-  // 仅处理 following 样式
-  if (plugin.positionStyle !== "following") return;
+  // 仅处理 following 样式（支持新开关 & 向后兼容）
+  const followingEnabled =
+    // New multi-toolbar toggle
+    plugin.settings.enableFollowingToolbar ||
+    // Legacy single-style behaviour: no other style is explicitly enabled
+    (!plugin.settings.enableTopToolbar &&
+      !plugin.settings.enableFixedToolbar &&
+      plugin.positionStyle === "following");
+
+  if (!followingEnabled) return;
 
   const viewType = view?.getViewType();
-  const isMarkdownView = viewType === 'markdown';
+  const isMarkdownView = viewType === "markdown";
 
   let height = 30;
   if (plugin.settings.aestheticStyle === "tiny") {
     height = 30;
-  } else height = iconSize + 14;
+  } else {
+    height = iconSize + 14;
+  }
 
   if (isMarkdownView) {
     // 处理 Markdown 视图
@@ -530,19 +565,76 @@ function calculateTopPosition(editor: Editor, coords: { top: number; left: numbe
 }
 
 
+export function editingToolbarPopover(
+  app: App,
+  plugin: editingToolbarPlugin,
+  style?: ToolbarStyleKey
+): void {
+  const settings = plugin.settings;
+  requireApiVersion("0.15.0")
+    ? (activeDocument = activeWindow.document)
+    : (activeDocument = window.document);
 
+  // NEW: if no explicit style is provided, render toolbars for all enabled styles.
+  if (!style) {
+    const stylesToRender: ToolbarStyleKey[] = [];
 
+    if (settings.enableTopToolbar) stylesToRender.push("top");
+    if (settings.enableFollowingToolbar) stylesToRender.push("following");
+    if (settings.enableFixedToolbar) stylesToRender.push("fixed");
 
+    // Fallback to legacy single-style behaviour if nothing is explicitly enabled
+    if (stylesToRender.length === 0) {
+      const legacyStyle =
+        (plugin.positionStyle as ToolbarStyleKey) ||
+        (plugin.settings.positionStyle as ToolbarStyleKey) ||
+        "top";
+      stylesToRender.push(legacyStyle);
+    }
 
-export function editingToolbarPopover(app: App, plugin: editingToolbarPlugin): void {
-  let settings = plugin.settings;
-  requireApiVersion("0.15.0") ? activeDocument = activeWindow.document : activeDocument = window.document;
+    stylesToRender.forEach((styleKey) => {
+      // Each call below runs the rest of this function with an explicit style.
+      editingToolbarPopover(app, plugin, styleKey);
+    });
+
+    return;
+  }
+
+  // From here on, we are rendering a single toolbar instance for a specific style
+  const effectiveStyle: ToolbarStyleKey = style as ToolbarStyleKey;
+
+  // Per-style appearance for this toolbar instance
+  const appearanceStore = (settings.appearanceByStyle || {}) as AppearanceByStyle;
+  const appearanceForStyle =
+    (appearanceStore[effectiveStyle] || {}) as StyleAppearanceSettings;
+
+  const resolvedIconSize =
+    appearanceForStyle.toolbarIconSize ?? plugin.toolbarIconSize ?? 18;
+
+  const resolvedAestheticStyle: string =
+    (appearanceForStyle.aestheticStyle as string) ??
+    settings.aestheticStyle ??
+    "default";
+
+  // Only use explicit colours when the style is "custom".
+  // For "default", "tiny" and "glass", let the CSS classes define colours.
+  const resolvedBgColor =
+    resolvedAestheticStyle === "custom"
+      ? appearanceForStyle.toolbarBackgroundColor ?? settings.toolbarBackgroundColor
+      : undefined;
+
+  const resolvedIconColor =
+    resolvedAestheticStyle === "custom"
+      ? appearanceForStyle.toolbarIconColor ?? settings.toolbarIconColor
+      : undefined;
+
   const aestheticStyleMap: { [key: string]: string } = {
     default: "editingToolbarDefaultAesthetic",
     tiny: "editingToolbarTinyAesthetic",
     glass: "editingToolbarGlassAesthetic",
     custom: "editingToolbarCustomAesthetic",
   };
+
   function createMenu() {
     function applyAestheticStyle(element: HTMLElement, style: string) {
       // 移除所有美观风格类
@@ -558,14 +650,16 @@ export function editingToolbarPopover(app: App, plugin: editingToolbarPlugin): v
     const generateMenu = () => {
       let btnwidth = 0;
       let leafwidth = 0;
-      let buttonWidth = 26;
-      if (plugin.toolbarIconSize) {
-        buttonWidth = plugin.toolbarIconSize + 8;
-      }
-
+      let buttonWidth = resolvedIconSize + 8;
+    
+      // 主工具栏容器
       let editingToolbar = createEl("div");
       if (editingToolbar) {
-        if (plugin.positionStyle == "top") {
+        // 标记为编辑工具栏，并带上样式信息
+        editingToolbar.addClass("editingToolbarModalBar");
+        editingToolbar.setAttribute("data-toolbar-style", effectiveStyle);
+    
+        if (effectiveStyle === "top") {
           editingToolbar.className += " top";
           if (settings.autohide) {
             editingToolbar.className += " autohide";
@@ -573,39 +667,75 @@ export function editingToolbarPopover(app: App, plugin: editingToolbarPlugin): v
           if (settings.Iscentered) {
             editingToolbar.className += " centered";
           }
-        } else if (plugin.positionStyle == "following") {
-          editingToolbar.style.visibility = "hidden"
-        } else if (plugin.positionStyle == "fixed") {
-
-          let Rowsize = settings.toolbarIconSize || 18;
-          editingToolbar.setAttribute("style",
+        } else if (effectiveStyle === "following") {
+          // following 工具栏初始隐藏，待选中文本后定位并显示
+          editingToolbar.style.visibility = "hidden";
+                } else if (effectiveStyle === "fixed") {
+          const Rowsize = resolvedIconSize || 18;
+          editingToolbar.setAttribute(
+            "style",
             `left: calc(50% - calc(${settings.cMenuNumRows * (Rowsize + 10)}px / 2));
-       bottom: 4.25em; 
-       grid-template-columns: repeat(${settings.cMenuNumRows}, ${Rowsize + 10}px);
-       gap: ${(Rowsize - 18) / 4}px`
+           bottom: 4.25em; 
+           grid-template-columns: repeat(${settings.cMenuNumRows}, ${Rowsize + 10}px);
+           gap: ${(Rowsize - 18) / 4}px`
           );
         }
       }
+      // 继续保留旧的 id，以兼容当前 CSS
       editingToolbar.setAttribute("id", "editingToolbarModalBar");
-      //二级弹出菜单
-
+    
+      // 二级弹出菜单
       let PopoverMenu = createEl("div");
       PopoverMenu.addClass("editingToolbarpopover");
       PopoverMenu.addClass("editingToolbarTinyAesthetic");
+    
+      // 标记为 Popover 工具栏，并带上样式信息
+      PopoverMenu.addClass("editingToolbarPopoverBar");
+      PopoverMenu.setAttribute("data-toolbar-style", effectiveStyle);
+    
+      // 继续保留旧的 id，以兼容当前 CSS
       PopoverMenu.setAttribute("id", "editingToolbarPopoverBar");
+    
       PopoverMenu.style.visibility = "hidden";
       PopoverMenu.style.height = "0";
-      // 应用样式到编辑工具栏
+    
+      // Apply per-style aesthetic
+      applyAestheticStyle(editingToolbar, resolvedAestheticStyle);
+      applyAestheticStyle(PopoverMenu, resolvedAestheticStyle);
 
-      // 在生成工具栏时应用样式
-      applyAestheticStyle(editingToolbar, settings.aestheticStyle);
-      // 在生成工具栏时应用样式
-      applyAestheticStyle(PopoverMenu, settings.aestheticStyle);
-      //  if (settings.positionStyle == "following") {
-      //    editingToolbar.style.visibility = "hidden";
-      // }
+      // Apply per-style colors and icon size via CSS variables on each toolbar
+      if (resolvedBgColor) {
+        editingToolbar.style.setProperty(
+          "--editing-toolbar-background-color",
+          resolvedBgColor
+        );
+        PopoverMenu.style.setProperty(
+          "--editing-toolbar-background-color",
+          resolvedBgColor
+        );
+      }
+      if (resolvedIconColor) {
+        editingToolbar.style.setProperty(
+          "--editing-toolbar-icon-color",
+          resolvedIconColor
+        );
+        PopoverMenu.style.setProperty(
+          "--editing-toolbar-icon-color",
+          resolvedIconColor
+        );
+      }
+      if (resolvedIconSize) {
+        editingToolbar.style.setProperty(
+          "--toolbar-icon-size",
+          `${resolvedIconSize}px`
+        );
+        PopoverMenu.style.setProperty(
+          "--toolbar-icon-size",
+          `${resolvedIconSize}px`
+        );
+      }
 
-      if (plugin.positionStyle == "top") {
+      if (effectiveStyle === "top") {
         let currentleaf = app.workspace.activeLeaf.view.containerEl;
 
         // 确定要插入工具栏的目标元素
@@ -665,15 +795,15 @@ export function editingToolbarPopover(app: App, plugin: editingToolbarPlugin): v
       let editingToolbarPopoverBar = app.workspace.activeLeaf.view.containerEl
         ?.querySelector("#editingToolbarPopoverBar") as HTMLElement;
 
-      // 使用plugin.getCurrentCommands()获取当前位置样式对应的命令配置
-      const currentCommands = plugin.getCurrentCommands();
+      // Use per-style commands based on the toolbar we are rendering
+      const currentCommands = plugin.getCurrentCommands(effectiveStyle);
 
       currentCommands.forEach((item, index) => {
         let tip;
         if ("SubmenuCommands" in item) {
           let _btn: any;
 
-          if (btnwidth >= leafwidth - buttonWidth * 4 && leafwidth > 100) {
+          if (btnwidth >= leafwidth - buttonWidth * 7 && leafwidth > 100) {
             //说明已经溢出
             plugin.setIS_MORE_Button(true);
             // globalThis.IS_MORE_Button = true; //需要添加更多按钮
@@ -685,7 +815,7 @@ export function editingToolbarPopover(app: App, plugin: editingToolbarPlugin): v
             _btn.setClass("editingToolbarSecond");
           }
           else {
-            if (plugin.positionStyle != "top")
+            if (effectiveStyle !== "top")
               _btn.buttonEl.setAttribute('aria-label-position', 'top')
           }
 
@@ -716,20 +846,21 @@ export function editingToolbarPopover(app: App, plugin: editingToolbarPlugin): v
                     // 检查命令执行后是否仍有文本选中
                     const editor = plugin.commandsManager.getActiveEditor();
                     const hasSelection = editor && editor.somethingSelected();
-
+      
                     if (settings.cMenuVisibility == false) {
                       editingToolbar.style.visibility = "hidden";
-                    } else if (plugin.positionStyle == "following") {
-                      // 只有在没有选中内容时才隐藏工具栏
+                    } else if (effectiveStyle === "following") {
+                      // For the following toolbar, only show when there is a selection.
                       if (!hasSelection) {
                         editingToolbar.style.visibility = "hidden";
                       }
                     } else {
                       editingToolbar.style.visibility = "visible";
                     }
+
                   });
                 if (index < settings.cMenuNumRows) {
-                  if (plugin.positionStyle != "top")
+                  if (effectiveStyle !== "top")
                     sub_btn.buttonEl.setAttribute('aria-label-position', 'top')
                 }
                 if (subitem.id == "editingToolbar-Divider-Line")
@@ -755,17 +886,18 @@ export function editingToolbarPopover(app: App, plugin: editingToolbarPlugin): v
                 // 检查命令执行后是否仍有文本选中
                 const editor = plugin.commandsManager.getActiveEditor();
                 const hasSelection = editor && editor.somethingSelected();
-
+  
                 if (settings.cMenuVisibility == false) {
                   editingToolbar.style.visibility = "hidden";
-                } else if (plugin.positionStyle == "following") {
-                  // 只有在没有选中内容时才隐藏工具栏
+                } else if (effectiveStyle === "following") {
+                  // For the following toolbar, only show when there is a selection.
                   if (!hasSelection) {
                     editingToolbar.style.visibility = "hidden";
                   }
                 } else {
                   editingToolbar.style.visibility = "visible";
                 }
+
               });
             checkHtml(item.icon)
               ? (button2.buttonEl.innerHTML = item.icon)
@@ -838,17 +970,18 @@ export function editingToolbarPopover(app: App, plugin: editingToolbarPlugin): v
                 // 检查命令执行后是否仍有文本选中
                 const editor = plugin.commandsManager.getActiveEditor();
                 const hasSelection = editor && editor.somethingSelected();
-
+  
                 if (settings.cMenuVisibility == false) {
                   editingToolbar.style.visibility = "hidden";
-                } else if (plugin.positionStyle == "following") {
-                  // 只有在没有选中内容时才隐藏工具栏
+                } else if (effectiveStyle === "following") {
+                  // For the following toolbar, only show when there is a selection.
                   if (!hasSelection) {
                     editingToolbar.style.visibility = "hidden";
                   }
                 } else {
                   editingToolbar.style.visibility = "visible";
                 }
+
               });
             checkHtml(item.icon)
               ? (button2.buttonEl.innerHTML = item.icon)
@@ -911,7 +1044,7 @@ export function editingToolbarPopover(app: App, plugin: editingToolbarPlugin): v
             }
           } else {
             let button;
-            if (btnwidth >= leafwidth - buttonWidth * 4 && leafwidth > 100) {
+            if (btnwidth >= leafwidth - buttonWidth * 7 && leafwidth > 100) {
               //说明已经溢出
               plugin.setIS_MORE_Button(true);
               //globalpluginIS_MORE_Button = true; //需要添加更多按钮
@@ -928,14 +1061,15 @@ export function editingToolbarPopover(app: App, plugin: editingToolbarPlugin): v
 
               if (settings.cMenuVisibility == false) {
                 editingToolbar.style.visibility = "hidden";
-              } else if (plugin.positionStyle == "following") {
-                // 只有在没有选中内容时才隐藏工具栏
+              } else if (effectiveStyle === "following") {
+                // For the following toolbar, only show when there is a selection.
                 if (!hasSelection) {
                   editingToolbar.style.visibility = "hidden";
                 }
               } else {
                 editingToolbar.style.visibility = "visible";
               }
+
             });
 
             button.setClass("editingToolbarCommandItem");
@@ -943,11 +1077,13 @@ export function editingToolbarPopover(app: App, plugin: editingToolbarPlugin): v
 
               button.setClass("editingToolbarSecond");
             } else {
-              if (plugin.positionStyle != "top")
-                button.buttonEl.setAttribute('aria-label-position', 'top')
+              if (effectiveStyle !== "top") {
+                button.buttonEl.setAttribute("aria-label-position", "top");
+              }
             }
             if (item.id == "editingToolbar-Divider-Line")
               button.setClass("editingToolbar-Divider-Line");
+
             checkHtml(item.icon)
               ? (button.buttonEl.innerHTML = item.icon)
               : button.setIcon(item.icon);
@@ -974,23 +1110,20 @@ export function editingToolbarPopover(app: App, plugin: editingToolbarPlugin): v
     if (!plugin.isLoadMobile()) return;
     const view = app.workspace.getActiveViewOfType(ItemView);
     if (ViewUtils.isAllowedViewType(view)) {
-      //  let Markdown = app.workspace.getActiveViewOfType(MarkdownView);
-      // if (Markdown) {
-      if (isExistoolbar(app, plugin)) return;
+      // Guard per-style: if this style already has a toolbar, don’t recreate it
+      if (isExistoolbar(app, plugin, effectiveStyle)) return;
 
       generateMenu();
 
       setHorizontalValue(plugin.settings);
       setBottomValue(plugin.settings);
-      setsvgColor(settings.cMenuFontColor, settings.cMenuBackgroundColor)
+      setsvgColor(settings.cMenuFontColor, settings.cMenuBackgroundColor);
 
     } else {
       //  selfDestruct();
       return;
     }
-
   }
-
   createMenu();
 }
 

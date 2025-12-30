@@ -1,5 +1,61 @@
 # Changelog
 
+## 3.2.0 – Multi-toolbar and settings overhaul (2025-12-05)
+
+This release overhauls how toolbars are enabled, configured, and previewed, and cleans up the settings UI text and translations.
+
+### New
+
+- Multiple toolbar types at the same time
+  - Top, Following, and Fixed toolbars can now be toggled individually in **Settings → General**.
+  - You can run a single toolbar, any two of them, or all three together.
+
+- Clear separation of activation vs appearance
+  - Which toolbars are active is controlled only by the toggles in **Settings → General**.
+  - The old “Editing toolbar position” control has been reworked into a **Toolbar Settings** section that only controls how the selected toolbar looks and behaves (position, layout, etc.), not which toolbar is represented.
+
+- Per-toolbar command sets
+  - The **Commands** tab is now aware of the three toolbar types.
+  - Each toolbar has its own command configuration, so Top, Following, and Fixed can all have different button sets without overwriting one another.
+
+- Updated preview panel
+  - The preview focuses on showing the selected toolbar’s appearance (position, orientation, layout) as you adjust settings.
+  - It still does not mirror the command set.
+  - "Fixed toolbar" preview has been normalised.
+
+### Improvements
+
+- Settings layout and wording
+  - Reorganised settings into clearer **General** vs **Appearance** groups.
+  - Normalised naming for the three toolbar types across the UI.
+  - Cleaned up labels and descriptions for clearer wording and more consistent punctuation in English.
+
+- Visual polish
+  - CSS clean-up across all toolbar variants for more consistent spacing, alignment, and hover states.
+  - Small adjustments to keep toolbars readable and tidy at different widths and zoom levels.
+  - Updated the "glass" theme for better readability.
+
+### Localization / translations
+
+- Updated built-in locales for all new and renamed settings strings:
+  - `en` (default English),
+  - `en-gb` (new British English variant),
+  - `zh-cn` (Simplified Chinese).
+- The new `en-gb` locale mirrors the default English text but uses British spelling and punctuation.
+- For these locales, all current settings text should now be fully translated and consistent with the new configuration flow.
+
+### Fixes
+
+- Fixed issues where:
+  - Toolbars could unintentionally mirror or copy each other’s command configuration.
+  - Appearance and theme settings could bleed across toolbar modes instead of staying scoped to the selected toolbar.
+- Fixed a few minor layout glitches introduced by earlier toolbar changes.
+
+### Unchanged
+
+- Import/export behaviour is unchanged in this release; existing configuration files remain compatible.
+
+
 ## 3.1.18 (2025-07-10)
 ### 国际化部分字段
 ### 修复自定义正则命令，换行符\n无效

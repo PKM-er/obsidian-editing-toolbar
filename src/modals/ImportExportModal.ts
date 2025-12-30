@@ -454,8 +454,8 @@ export class ImportExportModal extends Modal {
       });
 
     } catch (error) {
-      console.error('Import error:', error);
-      new Notice(t('Error:') + ' ' + error.message);
+      console.error('Import error: ', error);
+      new Notice(t('Error: ') + ' ' + error.message);
     }
 
 
@@ -640,4 +640,5 @@ export class ImportExportModal extends Modal {
         return style;
     }
   }
+
 } 

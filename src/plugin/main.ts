@@ -14,43 +14,71 @@ import {
   debounce,
   View,
 } from "obsidian";
-
-import { editingToolbarSettingTab } from "../settings/settingsTab";
-import {
-  selfDestruct,
-  editingToolbarPopover,
-  quiteFormatbrushes,
-  createFollowingbar,
-  setFormateraser,
-  isExistoolbar,
-  resetToolbar,
-} from "src/modals/editingToolbarModal";
-import {
-  editingToolbarSettings,
-  DEFAULT_SETTINGS,
-} from "src/settings/settingsData";
-import addIcons from // addFeatherIcons,
-// addRemixIcons
-// addBoxIcons
-"src/icons/customIcons";
-
-import {
-  setFontcolor,
-  setBackgroundcolor,
-  renumberSelection,
-} from "src/util/util";
-
-import { ViewUtils } from "src/util/viewUtils";
+import { editingToolbarSettingTab } from '../settings/settingsTab';
+import { selfDestruct, editingToolbarPopover, quiteFormatbrushes, createFollowingbar, setFormateraser, isExistoolbar, resetToolbar } from "src/modals/editingToolbarModal";
+import { editingToolbarSettings, DEFAULT_SETTINGS } from "src/settings/settingsData";
+import { t } from 'src/translations/helper';
+import addIcons, {
+  // addFeatherIcons,
+  // addRemixIcons
+  // addBoxIcons
+} from "src/icons/customIcons";
+import { setFontcolor, setBackgroundcolor, renumberSelection } from "src/util/util";
+import { ViewUtils } from 'src/util/viewUtils';
 import { UpdateNoticeModal } from "src/modals/updateModal";
 import { StatusBar } from "src/components/StatusBar";
 import { CommandsManager } from "src/commands/commands";
-import { t } from "src/translations/helper";
 import { InsertLinkModal } from "src/modals/insertLinkModal";
 import { InsertCalloutModal } from "src/modals/insertCalloutModal";
 
 let activeDocument: Document;
 
-export interface AdmonitionDefinition {
+// ---- Per-style appearance support (patch v3, integrated) ----
+import type { AppearanceByStyle, ToolbarStyleKey, StyleAppearanceSettings} from "src/settings/settingsData";
+
+const STYLE_KEYS: ToolbarStyleKey[] = ["top", "following", "fixed", "mobile"];
+
+const APPEARANCE_KEYS: Array<keyof StyleAppearanceSettings> = [
+  "toolbarBackgroundColor",
+  "toolbarIconColor",
+  "toolbarIconSize",
+  "aestheticStyle",
+];
+
+function ensureAppearanceStore(
+  settings: editingToolbarSettings,
+  migratingFromGlobal: boolean
+): void {
+  if (!settings.appearanceByStyle || typeof settings.appearanceByStyle !== "object") {
+    settings.appearanceByStyle = {};
+  }
+
+  const store = settings.appearanceByStyle as AppearanceByStyle;
+
+  // Ensure bucket objects exist for each style
+  STYLE_KEYS.forEach((style) => {
+    if (!store[style] || typeof store[style] !== "object") {
+      store[style] = {};
+    }
+  });
+
+  // On first migration: seed all style buckets from the legacy/global fields
+  if (migratingFromGlobal) {
+    APPEARANCE_KEYS.forEach((key) => {
+      const legacyValue = (settings as any)[key];
+      if (legacyValue === undefined) return;
+
+      STYLE_KEYS.forEach((style) => {
+        const bucket = store[style]!;
+        if (!(key in bucket)) {
+          (bucket as any)[key] = legacyValue;
+        }
+      });
+    });
+  }
+}
+// ---- end per-style appearance helpers ----
+export interface AdmonitionDefinition  {
   type: string;
   title?: string;
   icon: string;
@@ -75,6 +103,10 @@ export default class editingToolbarPlugin extends Plugin {
   statusBar: StatusBar;
   public toolbarIconSize: number; // 新增全局变量
   public positionStyle: string;
+  
+  // NEW: which style's appearance is being edited in the settings UI
+  public appearanceEditStyle: ToolbarStyleKey | null = null;
+  
   // 修改为公共属性
   commandsManager: CommandsManager;
   public admonitionDefinitions: Record<string, AdmonitionDefinition> | null =
@@ -99,14 +131,68 @@ export default class editingToolbarPlugin extends Plugin {
   // 添加设置标签页引用
   settingTab: editingToolbarSettingTab;
 
+    // Initialise per-style appearance (patch v3 logic, but limited to this plugin)
+  private initPerStyleAppearance(): void {
+    const settings = this.settings;
+    if (!settings) return;
+
+    const migratingFromGlobal = !settings.appearanceByStyle;
+    ensureAppearanceStore(settings, migratingFromGlobal);
+
+    const store = settings.appearanceByStyle as AppearanceByStyle;
+    
+    const getCurrentStyle = (): ToolbarStyleKey => {
+      const raw = (
+        this.appearanceEditStyle ||       // 1. style we are editing in settings
+        this.positionStyle ||             // 2. live toolbar style
+        settings.positionStyle ||         // 3. stored fallback
+        "top"
+      ) as string;
+
+      return STYLE_KEYS.includes(raw as ToolbarStyleKey)
+        ? (raw as ToolbarStyleKey)
+        : "top";
+    };
+
+    APPEARANCE_KEYS.forEach((key) => {
+      // Only patch properties that actually exist on settings
+      if (!(key in settings)) return;
+
+      const initialGlobal = (settings as any)[key];
+
+      Object.defineProperty(settings, key, {
+        configurable: true,
+        enumerable: true,
+        get() {
+          const style = getCurrentStyle();
+          const bucket = store[style];
+          if (bucket && Object.prototype.hasOwnProperty.call(bucket, key)) {
+            return (bucket as any)[key];
+          }
+          // Fallback to the original global value
+          return initialGlobal;
+        },
+        set(value: any) {
+          const style = getCurrentStyle();
+          ensureAppearanceStore(settings, false);
+          const bucket = (settings.appearanceByStyle as AppearanceByStyle)[style]!;
+          (bucket as any)[key] = value;
+        },
+      });
+    });
+  }
+
   async onload(): Promise<void> {
     const currentVersion = this.manifest.version; // 设置当前版本号
     console.log("editingToolbar v" + currentVersion + " loaded");
-
-    requireApiVersion("0.15.0")
-      ? (activeDocument = activeWindow.document)
-      : (activeDocument = window.document);
+  
+    requireApiVersion("0.15.0") ? activeDocument = activeWindow.document : activeDocument = window.document;
+  
     await this.loadSettings();
+  
+    // IMPORTANT: wire up per-style getters/setters before we start using appearance fields
+    this.initPerStyleAppearance();
+  
     this.settingTab = new editingToolbarSettingTab(this.app, this);
     this.addSettingTab(this.settingTab);
 
@@ -176,34 +262,31 @@ export default class editingToolbarPlugin extends Plugin {
         dispatchEvent(new Event("editingToolbar-NewCommand"));
       }, 100);
     }
-    this.registerDomEvent(activeDocument, "contextmenu", (e) => {
-      if (
-        this.settings.isLoadOnMobile &&
-        Platform.isMobile &&
-        this.positionStyle == "following"
-      ) {
-        const { target } = e;
-        if (target instanceof HTMLElement) {
-          const iseditor = target.closest(".cm-editor") !== null;
-          if (iseditor) {
-            e.preventDefault();
+    this.registerDomEvent(
+      activeDocument,
+      'contextmenu',
+      e => {
+        if (this.settings.isLoadOnMobile && Platform.isMobile && this.isFollowingToolbarActive()) {
+          const { target } = e;
+          if (target instanceof HTMLElement) {
+            const iseditor = target.closest('.cm-editor') !== null;
+            if (iseditor) {
+              e.preventDefault();
+            }
           }
         }
-      }
-    });
+      },
+    );
 
-    // 最好等待工作区布局准备好，确保所有插件都已加载
-    this.app.workspace.onLayoutReady(async () => {
-      await this.tryGetAdmonitionTypes();
-    });
-
-    //////
+// 最好等待工作区布局准备好，确保所有插件都已加载
+this.app.workspace.onLayoutReady(async () => {
+  await this.tryGetAdmonitionTypes();
+});
 
     // // 注册右键菜单
     // this.registerEvent(
     //   this.app.workspace.on('editor-menu', (menu: Menu, editor: Editor, view: MarkdownView) => {
     //     const selection = editor.getSelection();
-
     //     if (selection) {
     //       // 检查是否为链接或图片（包括带大小参数的图片）
     //       if (/(!)?\[.*(?:\|(?:\d+x\d+|\d+))?\]\([a-zA-Z]+:\/\/[^\s)]+(?:\s+["'][^"']*["'])?\)/.test(selection.trim())) {
@@ -216,20 +299,16 @@ export default class editingToolbarPlugin extends Plugin {
     //       }
     //       return; // 有选中文本时，不继续检查光标周围
     //     }
-
     //     // 如果没有选中文本，检查光标周围是否为链接或图片
     //     const cursor = editor.getCursor();
     //     const lineText = editor.getLine(cursor.line);
     //     const cursorPos = cursor.ch;
-
     //     // 使用合并的正则表达式，同时匹配链接和图片
     //     const combinedRegex = /(!)?\[([^\]]+)(?:\|(\d+x\d+|\d+))?\]\(([a-zA-Z]+:\/\/[^\s)]+)(?:\s+["'][^"']*["'])?\)/g;
     //     let match;
-
     //     while ((match = combinedRegex.exec(lineText)) !== null) {
     //       const linkStart = match.index;
     //       const linkEnd = match.index + match[0].length;
-
     //       // 检查光标是否在链接或图片范围内（包括边缘）
     //       if (cursorPos >= linkStart && cursorPos <= linkEnd) {
     //         menu.addItem((item) =>
@@ -241,7 +320,6 @@ export default class editingToolbarPlugin extends Plugin {
     //         break; // 找到匹配后退出
     //       }
     //     }
-
     //   })
     // );
     // 注册右键菜单
@@ -266,20 +344,19 @@ export default class editingToolbarPlugin extends Plugin {
     );
     this.registerEvent(
       // @ts-ignore
-      this.app.workspace.on( "url-menu",
-        (menu: Menu, url: string, view: MarkdownView) => {
-          // 添加自定义菜单项
-          menu.addItem((item) =>
-            item
-              .setTitle("Edit Link(Modal)")
-              .setSection("info")
-              .setIcon("link")
-              .onClick(() => {
-                new InsertLinkModal(this).open();
-              })
-          );
-        }
-      )
+      this.app.workspace.on('url-menu', (menu: Menu, url: string, view: MarkdownView) => {
+        // 添加自定义菜单项
+        menu.addItem((item) =>
+          item
+            .setTitle('Edit Link(Modal)')
+            .setSection("info")
+            .setIcon('link')
+            .onClick(() => {
+
+              new InsertLinkModal(this).open()
+            })
+        );
+      })
     );
     // 初始化图标
     addIcons();
@@ -304,9 +381,10 @@ export default class editingToolbarPlugin extends Plugin {
     // @ts-ignore
     const admonitionPluginInstance = this.app.plugins?.getPlugin(ADMONITION_PLUGIN_ID);
     if (admonitionPluginInstance) {
-      this.processAdmonitionTypes(admonitionPluginInstance);
+       
+        this.processAdmonitionTypes(admonitionPluginInstance);
+      }  
     }
-  }
 
   processAdmonitionTypes(pluginInstance: any) {
     const admonitionPlugin = pluginInstance as {
@@ -324,11 +402,12 @@ export default class editingToolbarPlugin extends Plugin {
     ) {
       registeredTypes = Object.keys(admonitionPlugin.admonitions);
       this.admonitionDefinitions = admonitionPlugin.admonitions;
-    } else {
-      console.warn("未能从 admonitionPlugin.admonitions (作为对象) 获取类型。");
-      this.admonitionDefinitions = null;
-    }
+   
+  }  else {
+    console.warn('未能从 admonitionPlugin.admonitions (作为对象) 获取类型。');
+    this.admonitionDefinitions = null; 
   }
+}
 
   isLoadMobile() {
     let screenWidth = window.innerWidth > 0 ? window.innerWidth : screen.width;
@@ -372,144 +451,143 @@ export default class editingToolbarPlugin extends Plugin {
   }
 
   handleeditingToolbar = () => {
+    // Keep format-brush cursor state in sync with the toolbar state
     if (!this.formatBrushActive) {
       activeDocument.body.classList.remove("format-brush-cursor");
     }
-    if (this.settings.cMenuVisibility == true) {
-      const view = this.app.workspace.getActiveViewOfType(ItemView);
-      let toolbar = isExistoolbar(this.app, this);
 
-      // 如果视图类型不在允许列表中，隐藏工具栏后返回
-      if (!ViewUtils.isAllowedViewType(view)) {
-        if (toolbar) {
-          toolbar.style.visibility = "hidden";
-          return;
-        }
+    // If the toolbar is globally disabled in settings, just hide any existing toolbars and return.
+    if (!this.settings.cMenuVisibility) {
+      (["top", "following", "fixed"] as const).forEach((style) => {
+        const el = isExistoolbar(this.app, this, style);
+        if (el) el.style.visibility = "hidden";
+      });
+      return;
+    }
+
+    const view = this.app.workspace.getActiveViewOfType(ItemView);
+
+    // If the view type is not allowed at all, hide everything and stop.
+    if (!ViewUtils.isAllowedViewType(view)) {
+      (["top", "following", "fixed"] as const).forEach((style) => {
+        const el = isExistoolbar(this.app, this, style);
+        if (el) el.style.visibility = "hidden";
+      });
+      return;
+    }
+
+    const viewType = view?.getViewType();
+    const isMarkdownView = viewType === "markdown";
+    const inSourceMode = isMarkdownView && ViewUtils.isSourceMode(view);
+
+    // For non-markdown views or reading mode, hide all toolbars.
+    if (!inSourceMode) {
+      (["top", "following", "fixed"] as const).forEach((style) => {
+        const el = isExistoolbar(this.app, this, style);
+        if (el) el.style.visibility = "hidden";
+      });
+      return;
+    }
+
+    // ---- Determine which styles SHOULD be active ----
+
+    // If you already added `isTopToolbarActive` earlier, this will call it.
+    // If not, it falls back to a legacy-compatible check.
+    const topEnabled =
+      typeof (this as any).isTopToolbarActive === "function"
+        ? (this as any).isTopToolbarActive()
+        : this.settings.enableTopToolbar ||
+          (!this.settings.enableFollowingToolbar &&
+            !this.settings.enableFixedToolbar &&
+            this.positionStyle === "top");
+
+    const followingEnabled =
+      typeof (this as any).isFollowingToolbarActive === "function"
+        ? this.isFollowingToolbarActive()
+        : this.settings.enableFollowingToolbar ||
+          (!this.settings.enableTopToolbar &&
+            !this.settings.enableFixedToolbar &&
+            this.positionStyle === "following");
+
+    const fixedEnabled =
+      this.settings.enableFixedToolbar ||
+      (!this.settings.enableTopToolbar &&
+        !this.settings.enableFollowingToolbar &&
+        this.positionStyle === "fixed");
+
+    const styles: { key: "top" | "following" | "fixed"; enabled: boolean }[] = [
+      { key: "top",       enabled: topEnabled },
+      { key: "following", enabled: followingEnabled },
+      { key: "fixed",     enabled: fixedEnabled },
+    ];
+
+    // ---- Per-style handling: create / show / hide independently ----
+    for (const { key, enabled } of styles) {
+      const existing = isExistoolbar(this.app, this, key);
+
+      if (!enabled) {
+        // Style disabled in settings → hide any existing toolbar of that style.
+        if (existing) existing.style.visibility = "hidden";
+        continue;
       }
 
-      // 获取视图类型
-      const viewType = view?.getViewType();
-      const isMarkdownView = viewType === "markdown";
+      // Style is enabled:
+      // If we don't have this toolbar yet, create it for this style.
+      if (!existing) {
+        editingToolbarPopover(this.app, this, key);
+      }
 
-      // 如果是Markdown视图
-      if (isMarkdownView) {
-        // 如果是源码模式
-        if (ViewUtils.isSourceMode(view)) {
-          // 对于following样式，保持隐藏状态（等待用户选择文本时显示）
-          if (this.positionStyle === "following") {
-            if (toolbar) {
-              toolbar.style.visibility = "hidden";
-            }
-          } else {
-            // 非following样式下，在源码模式中保持工具栏可见
-            if (toolbar) {
-              toolbar.style.visibility = "visible";
-            }
-          }
-        } else {
-          // 在Markdown阅读模式下，隐藏工具栏
-          if (toolbar) {
-            toolbar.style.visibility = "hidden";
-          }
-        }
+      const toolbar = isExistoolbar(this.app, this, key);
+      if (!toolbar) continue;
+
+      if (key === "following") {
+        // Following toolbar stays hidden until text is selected.
+        // Your `showFollowingToolbar` / selection handlers will reveal it.
+        toolbar.style.visibility = "hidden";
       } else {
-        // 对于其他允许的视图类型（canvas等），保持工具栏可见
-        if (toolbar) {
-          toolbar.style.visibility = "visible";
-        }
-      }
-
-      // 如果没有找到工具栏，创建一个
-      if (!toolbar) {
-        setTimeout(() => {
-          editingToolbarPopover(this.app, this);
-        }, 100);
+        // Top / Fixed: visible in markdown source mode.
+        toolbar.style.visibility = "visible";
       }
     }
   };
 
   handleeditingToolbar_layout = () => {
-    if (!this.settings.cMenuVisibility) return false;
-
-    const view = this.app.workspace.getActiveViewOfType(ItemView);
-    let editingToolbarModalBar = isExistoolbar(this.app, this);
-
-    // 如果视图类型不在允许列表中，隐藏工具栏后返回
-    if (!ViewUtils.isAllowedViewType(view)) {
-      if (editingToolbarModalBar) {
-        editingToolbarModalBar.style.visibility = "hidden";
-      }
-      return;
-    }
-
-    // 获取视图类型
-    const viewType = view?.getViewType();
-    const isMarkdownView = viewType === "markdown";
-
-    // 如果是Markdown视图
-    if (isMarkdownView) {
-      // 如果是源码模式
-      if (ViewUtils.isSourceMode(view)) {
-        // 对于following样式，保持当前逻辑（隐藏工具栏，等待选择文本时显示）
-        if (this.positionStyle === "following") {
-          if (editingToolbarModalBar) {
-            editingToolbarModalBar.style.visibility = "hidden";
-          }
-        } else {
-          // 非following样式下，在源码模式中保持工具栏可见
-          if (editingToolbarModalBar) {
-            editingToolbarModalBar.style.visibility = "visible";
-          }
-        }
-      } else {
-        // 在Markdown阅读模式下，隐藏工具栏
-        if (editingToolbarModalBar) {
-          editingToolbarModalBar.style.visibility = "hidden";
-        }
-      }
-    } else {
-      // 对于其他允许的视图类型（canvas等），保持工具栏可见
-      if (editingToolbarModalBar) {
-        editingToolbarModalBar.style.visibility = "visible";
-      }
-    }
-
-    // 如果没有找到工具栏，创建一个
-    if (!editingToolbarModalBar) {
-      setTimeout(() => {
-        editingToolbarPopover(this.app, this);
-      }, 100);
-    }
+    // When the workspace layout changes (splits, panes, etc.),
+    // just recompute toolbar creation/visibility using the main handler.
+    this.handleeditingToolbar();
   };
-
+  
   handleeditingToolbar_resize = () => {
-    // const type= this.app.workspace.activeLeaf.getViewState().type
-    // console.log(type,"handleeditingToolbar_layout" )
-    //requireApiVersion("0.15.0") ? activeDocument = activeWindow.document : activeDocument = window.document;
-    if (this.settings.cMenuVisibility == true && this.positionStyle == "top") {
-      const view = app.workspace.getActiveViewOfType(ItemView);
-      if (ViewUtils.isSourceMode(view)) {
-        let leafwidth = this.app.workspace.activeLeaf.view.leaf.width ?? 0;
-        //let leafwidth = view.containerEl?.querySelector<HTMLElement>(".markdown-source-view").offsetWidth ?? 0
-        if (this.Leaf_Width == leafwidth) return false;
-        if (leafwidth > 0) {
-          this.Leaf_Width = leafwidth;
-          if (this.settings.cMenuWidth && leafwidth) {
-            if (
-              leafwidth - this.settings.cMenuWidth < 78 &&
-              leafwidth > this.settings.cMenuWidth
-            )
-              return;
-            else {
-              setTimeout(() => {
-                resetToolbar(), editingToolbarPopover(app, this);
-              }, 200);
-            }
-          }
-        }
-      }
-    } else {
+    // Only care about resizing when the toolbar is visible and top-style is active
+    if (!this.settings.cMenuVisibility || !this.isTopToolbarActive()) {
       return false;
+    }
+  
+    const view = app.workspace.getActiveViewOfType(ItemView);
+    if (!ViewUtils.isSourceMode(view)) {
+      return false;
+    }
+  
+    const leafwidth = this.app.workspace.activeLeaf.view.leaf.width ?? 0;
+    // No width, or nothing changed → nothing to do
+    if (leafwidth <= 0 || this.Leaf_Width === leafwidth) {
+      return false;
+    }
+  
+    this.Leaf_Width = leafwidth;
+  
+    if (this.settings.cMenuWidth && leafwidth) {
+      const diff = leafwidth - this.settings.cMenuWidth;
+  
+      // Same guard as before: don't rebuild if the configured width still fits
+      if (diff < 78 && leafwidth > this.settings.cMenuWidth) {
+        return;
+      }
+  
+      setTimeout(() => {
+        resetToolbar();
+        editingToolbarPopover(app, this);
+      }, 200);
     }
   };
 
@@ -559,33 +637,42 @@ export default class editingToolbarPlugin extends Plugin {
     }
   }
 
-  // 更新当前位置样式对应的命令配置
-  updateCurrentCommands(commands: any[]): void {
-    if (!this.settings.enableMultipleConfig) {
-      this.settings.menuCommands = commands;
-      return;
-    }
+  // 更新指定样式对应的命令配置（设置页可以显式指定样式）
+updateCurrentCommands(commands: any[], style?: string): void {
+  // 单一配置模式：一直使用 menuCommands
+  if (!this.settings.enableMultipleConfig) {
+    this.settings.menuCommands = commands;
+    return;
+  }
 
-    // 如果移动端模式开启且在移动设备上
+  // 如果没有显式传入 style，则保持旧逻辑：根据当前环境决定目标样式
+  let targetStyle = style;
+
+  if (!targetStyle) {
     if (this.settings.isLoadOnMobile && Platform.isMobileApp) {
-      this.settings.mobileCommands = commands;
-      return;
-    }
-
-    switch (this.positionStyle) {
-      case "following":
-        this.settings.followingCommands = commands;
-        break;
-      case "top":
-        this.settings.topCommands = commands;
-        break;
-      case "fixed":
-        this.settings.fixedCommands = commands;
-        break;
-      default:
-        this.settings.menuCommands = commands;
+      targetStyle = 'mobile';
+    } else {
+      targetStyle = this.positionStyle;
     }
   }
+
+  switch (targetStyle) {
+    case 'following':
+      this.settings.followingCommands = commands;
+      break;
+    case 'top':
+      this.settings.topCommands = commands;
+      break;
+    case 'fixed':
+      this.settings.fixedCommands = commands;
+      break;
+    case 'mobile':
+      this.settings.mobileCommands = commands;
+      break;
+    default:
+      this.settings.menuCommands = commands;
+  }
+}
 
   async saveSettings() {
     await this.saveData(this.settings);
@@ -871,7 +958,6 @@ export default class editingToolbarPlugin extends Plugin {
         }
 
         // 检测删除线
-
         const strikeRegex = /~~([^~]+)~~/g;
         while ((match = strikeRegex.exec(lineText)) !== null) {
           const formatStart = match.index;
@@ -889,7 +975,6 @@ export default class editingToolbarPlugin extends Plugin {
         }
 
         // 检测高亮
-
         const highlightRegex = /==([^=]+)==/g;
         while ((match = highlightRegex.exec(lineText)) !== null) {
           const formatStart = match.index;
@@ -907,7 +992,6 @@ export default class editingToolbarPlugin extends Plugin {
         }
 
         // 检测代码
-
         const codeRegex = /`([^`]+)`/g;
         while ((match = codeRegex.exec(lineText)) !== null) {
           const formatStart = match.index;
@@ -925,7 +1009,6 @@ export default class editingToolbarPlugin extends Plugin {
         }
 
         // 检测字体颜色
-
         const fontColorRegex = /<font color="([^"]+)">([^<]+)<\/font>/g;
         while ((match = fontColorRegex.exec(lineText)) !== null) {
           const formatStart = match.index;
@@ -943,8 +1026,7 @@ export default class editingToolbarPlugin extends Plugin {
         }
 
         // 检测背景颜色
-
-        const bgColorRegex = /<mark style="background:([^"]+)">([^<]+)<\/mark>/g;
+        const bgColorRegex = /<span style="background:([^"]+)">([^<]+)<\/span>/g;
         while ((match = bgColorRegex.exec(lineText)) !== null) {
           const formatStart = match.index;
           const formatEnd = match.index + match[0].length;
@@ -1023,7 +1105,8 @@ export default class editingToolbarPlugin extends Plugin {
     this.formatBrushActive = !this.formatBrushActive;
 
     if (this.formatBrushActive) {
-      activeDocument.body.classList.add("format-brush-cursor");
+
+      activeDocument.body.classList.add('format-brush-cursor');
       // 关闭其他格式刷
       this.EN_FontColor_Format_Brush = false;
       this.EN_BG_Format_Brush = false;
@@ -1164,9 +1247,51 @@ export default class editingToolbarPlugin extends Plugin {
     this.formatBrushActive = false;
   }
 
+  // Top toolbar is considered active if:
+  // - explicit multi-toolbar toggle is on, or
+  // - no explicit toggles are used and positionStyle is "top" (legacy behaviour)
+  private isTopToolbarActive(): boolean {
+    if (this.settings.enableTopToolbar) {
+      return true;
+    }
+  
+    // Backwards compatibility fallback:
+    // if neither following nor fixed have been explicitly enabled,
+    // and the old global positionStyle is "top", behave like old single-mode.
+    if (
+      !this.settings.enableFollowingToolbar &&
+      !this.settings.enableFixedToolbar &&
+      this.positionStyle === "top"
+    ) {
+      return true;
+    }
+  
+    return false;
+  }
+
+  private isFollowingToolbarActive(): boolean {
+    // New multi-toolbar setting: explicitly enable the following toolbar
+    if (this.settings.enableFollowingToolbar) {
+      return true;
+    }
+
+    // Backwards compatibility:
+    // if neither top nor fixed have been explicitly enabled, and the
+    // global positionStyle is "following", behave as the old single-mode
+    if (
+      !this.settings.enableTopToolbar &&
+      !this.settings.enableFixedToolbar &&
+      this.positionStyle === "following"
+    ) {
+      return true;
+    }
+
+    return false;
+  }
+
   private handleMiddleClickToolbar(e: MouseEvent) {
     const cmEditor = this.commandsManager.getActiveEditor();
-    if (this.positionStyle === "following" && cmEditor?.hasFocus()) {
+    if (this.isFollowingToolbarActive() && cmEditor?.hasFocus()) {
       this.showFollowingToolbar(cmEditor);
     }
   }
@@ -1216,14 +1341,14 @@ export default class editingToolbarPlugin extends Plugin {
 
     if (selectionKeys.includes(e.code) || e.shiftKey) {
       this.handleTextSelection();
-    } else if (!e.shiftKey && this.positionStyle === "following") {
+    } else if (!e.shiftKey && this.isFollowingToolbarActive()) {
       this.hideToolbarIfNotSelected();
     }
   };
 
   private registerScrollAndBlurEvents(container: Document) {
     const hideToolbar = this.throttle(() => {
-      if (this.positionStyle !== "following") return;
+      if (!this.isFollowingToolbarActive()) return;
       this.hideToolbarIfNotSelected();
     }, 200);
 
@@ -1234,9 +1359,9 @@ export default class editingToolbarPlugin extends Plugin {
   }
 
   private hideToolbarIfNotSelected() {
-    const editingToolbarModalBar = isExistoolbar(this.app, this);
-    if (editingToolbarModalBar && this.positionStyle == "following") {
-      editingToolbarModalBar.style.visibility = "hidden";
+    const followingToolbar = isExistoolbar(this.app, this, "following");
+    if (followingToolbar && this.isFollowingToolbarActive()) {
+      followingToolbar.style.visibility = "hidden";
     }
   }
 
@@ -1268,7 +1393,8 @@ export default class editingToolbarPlugin extends Plugin {
       );
     } else if (this.formatBrushActive && this.lastExecutedCommand) {
       this.applyFormatBrush(cmEditor);
-    } else if (this.positionStyle === "following") {
+    }
+    else if (this.isFollowingToolbarActive()) {
       this.showFollowingToolbar(cmEditor);
     }
   }
@@ -1285,62 +1411,60 @@ export default class editingToolbarPlugin extends Plugin {
     };
   }
 
-  // 抽取显示工具栏的逻辑
+  // 抽取显示“following”工具栏的逻辑
   private showFollowingToolbar(editor: Editor) {
-    const editingToolbarModalBar = isExistoolbar(this.app, this);
+    if (!this.isFollowingToolbarActive()) return;
 
-    if (editingToolbarModalBar) {
-      editingToolbarModalBar.style.visibility = "visible";
-      editingToolbarModalBar.classList.add("editingToolbarFlex");
-      editingToolbarModalBar.classList.remove("editingToolbarGrid");
+    const followingToolbar = isExistoolbar(this.app, this, "following");
 
-      // 直接使用createFollowingbar的定位逻辑
+    if (followingToolbar) {
+      followingToolbar.style.visibility = "visible";
+      followingToolbar.classList.add("editingToolbarFlex");
+      followingToolbar.classList.remove("editingToolbarGrid");
+
+      // 使用 createFollowingbar 的定位逻辑（会根据选择重新定位）
       createFollowingbar(this.app, this.toolbarIconSize, this, editor, true);
     } else {
+      // 如果还没有构建 following 工具栏，则创建并定位
       createFollowingbar(this.app, this.toolbarIconSize, this, editor, true);
     }
   }
 
-  public onPositionStyleChange(newStyle: string): void {
+  onPositionStyleChange(newStyle: string): void {
+    // Temporarily ignore any "editing style" override while we update the live toolbar
+    const previousEditStyle = this.appearanceEditStyle;
+    this.appearanceEditStyle = null;
+  
+    // Track the new style both in-memory and in settings
     this.positionStyle = newStyle;
-    // 如果启用了多配置模式，检查对应样式的配置是否存在
+    this.settings.positionStyle = newStyle;
+  
+    // If multi-config is enabled, ensure the command arrays for this style exist
     if (this.settings.enableMultipleConfig) {
       switch (newStyle) {
         case "following":
-          if (
-            !this.settings.followingCommands ||
-            this.settings.followingCommands.length === 0
-          ) {
+          if (!this.settings.followingCommands || this.settings.followingCommands.length === 0) {
             this.settings.followingCommands = [...this.settings.menuCommands];
             this.saveSettings();
             new Notice(t("Following style commands successfully initialized"));
           }
           break;
         case "top":
-          if (
-            !this.settings.topCommands ||
-            this.settings.topCommands.length === 0
-          ) {
+          if (!this.settings.topCommands || this.settings.topCommands.length === 0) {
             this.settings.topCommands = [...this.settings.menuCommands];
             this.saveSettings();
             new Notice(t("Top style commands successfully initialized"));
           }
           break;
         case "fixed":
-          if (
-            !this.settings.fixedCommands ||
-            this.settings.fixedCommands.length === 0
-          ) {
+          if (!this.settings.fixedCommands || this.settings.fixedCommands.length === 0) {
             this.settings.fixedCommands = [...this.settings.menuCommands];
             this.saveSettings();
             new Notice(t("Fixed style commands successfully initialized"));
           }
           break;
         case "mobile":
-          if (
-            !this.settings.mobileCommands ||
-            this.settings.mobileCommands.length === 0
-          ) {
+          if (!this.settings.mobileCommands || this.settings.mobileCommands.length === 0) {
             this.settings.mobileCommands = [...this.settings.menuCommands];
             this.saveSettings();
             new Notice(t("Mobile style commands successfully initialized"));
@@ -1348,8 +1472,30 @@ export default class editingToolbarPlugin extends Plugin {
           break;
       }
     }
-
-    // 重新加载工具栏
+  
+    // Keep the in-memory size in sync with the active style
+    this.toolbarIconSize = this.settings.toolbarIconSize;
+  
+    // Refresh the global CSS variables from the *active* style's appearance
+    const doc = activeDocument ?? document;
+    if (doc && doc.documentElement) {
+      doc.documentElement.style.setProperty(
+        "--editing-toolbar-background-color",
+        this.settings.toolbarBackgroundColor
+      );
+      doc.documentElement.style.setProperty(
+        "--editing-toolbar-icon-color",
+        this.settings.toolbarIconColor
+      );
+      doc.documentElement.style.setProperty(
+        "--toolbar-icon-size",
+        `${this.settings.toolbarIconSize}px`
+      );
+    }
+  
     dispatchEvent(new Event("editingToolbar-NewCommand"));
+  
+    // Restore whatever the settings UI was editing
+    this.appearanceEditStyle = previousEditStyle;
   }
 }

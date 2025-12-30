@@ -2,7 +2,18 @@ import type { Command } from "obsidian";
 export const APPEND_METHODS = ["body", "workspace"];
 export const AESTHETIC_STYLES = ["default", "tiny", "glass", "custom"];
 export const POSITION_STYLES = ["following", "top", "fixed"];
+export type ToolbarStyleKey = "top" | "following" | "fixed" | "mobile";
 
+export interface StyleAppearanceSettings {
+  toolbarBackgroundColor?: string;
+  toolbarIconColor?: string;
+  toolbarIconSize?: number;
+  aestheticStyle?: string;
+}
+
+export interface AppearanceByStyle {
+  [style: string]: StyleAppearanceSettings;
+}
 
 
 declare module 'obsidian' {
@@ -42,6 +53,9 @@ export interface editingToolbarSettings {
   fixedCommands: Command[];
   mobileCommands: Command[];
   enableMultipleConfig: boolean;
+  enableTopToolbar: boolean;
+  enableFollowingToolbar: boolean;
+  enableFixedToolbar: boolean;
   appendMethod: string;
   shouldShowMenuOnSelect: boolean;
   cMenuVisibility: boolean;
@@ -69,6 +83,11 @@ export interface editingToolbarSettings {
   viewTypeSettings?: {
     [viewType: string]: boolean;
   };
+
+  // Per-style appearance buckets (top/following/fixed/mobile)
+  appearanceByStyle?: AppearanceByStyle;
+
+  // Legacy/global appearance fields, used as defaults and for migration
   toolbarBackgroundColor: string;
   toolbarIconColor: string;
   toolbarIconSize: number;
@@ -373,6 +392,9 @@ export const DEFAULT_SETTINGS: editingToolbarSettings = {
     "fixedCommands": [],
     "mobileCommands": [],
     "enableMultipleConfig": false,
+    "enableTopToolbar": false,
+    "enableFollowingToolbar": false,
+    "enableFixedToolbar": false,
     "appendMethod": "workspace",
     "shouldShowMenuOnSelect": false,
     "cMenuVisibility": true,
@@ -399,6 +421,36 @@ export const DEFAULT_SETTINGS: editingToolbarSettings = {
     "formatBrushes": {},
     "customCommands": [],
     "viewTypeSettings": {},
+
+    // New: per-style appearance buckets, initially cloned from the legacy globals
+    "appearanceByStyle": {
+      "top": {
+        "toolbarBackgroundColor": "rgba(var(--background-secondary-rgb), 0.7)",
+        "toolbarIconColor": "var(--text-normal)",
+        "toolbarIconSize": 18,
+        "aestheticStyle": "default"
+      },
+      "following": {
+        "toolbarBackgroundColor": "rgba(var(--background-secondary-rgb), 0.7)",
+        "toolbarIconColor": "var(--text-normal)",
+        "toolbarIconSize": 18,
+        "aestheticStyle": "default"
+      },
+      "fixed": {
+        "toolbarBackgroundColor": "rgba(var(--background-secondary-rgb), 0.7)",
+        "toolbarIconColor": "var(--text-normal)",
+        "toolbarIconSize": 18,
+        "aestheticStyle": "default"
+      },
+      "mobile": {
+        "toolbarBackgroundColor": "rgba(var(--background-secondary-rgb), 0.7)",
+        "toolbarIconColor": "var(--text-normal)",
+        "toolbarIconSize": 18,
+        "aestheticStyle": "default"
+      }
+    },
+
+    // Legacy/global appearance fields kept for migration + backwards compatibility
     "toolbarBackgroundColor": "rgba(var(--background-secondary-rgb), 0.7)",
     "toolbarIconColor": "var(--text-normal)",
     "toolbarIconSize": 18

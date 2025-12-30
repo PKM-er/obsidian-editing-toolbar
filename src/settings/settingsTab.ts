@@ -1,8 +1,8 @@
 import type editingToolbarPlugin from "src/plugin/main";
 import { CommandPicker, ChooseFromIconList, openSlider, ChangeCmdname } from "src/modals/suggesterModals";
-
 import { App, Setting, PluginSettingTab, Command, Notice, setIcon } from "obsidian";
 import { APPEND_METHODS, AESTHETIC_STYLES, POSITION_STYLES } from "src/settings/settingsData";
+import type { ToolbarStyleKey, StyleAppearanceSettings, AppearanceByStyle } from "src/settings/settingsData";
 import { selfDestruct, editingToolbarPopover, checkHtml } from "src/modals/editingToolbarModal";
 import Sortable from "sortablejs";
 import { debounce } from "obsidian";
@@ -94,9 +94,6 @@ export function getPickrSettings(opts: {
     },
   };
 }
-
-
-
 export function getComandindex(item: any, arr: any[]): number {
   let idx;
   arr.forEach((el, index) => {
@@ -106,7 +103,6 @@ export function getComandindex(item: any, arr: any[]): number {
   });
   return idx;
 }
-
 export class editingToolbarSettingTab extends PluginSettingTab {
   plugin: editingToolbarPlugin;
   appendMethod: string;
@@ -126,7 +122,6 @@ export class editingToolbarSettingTab extends PluginSettingTab {
       this.display();
     });
   }
-
   display(): void {
     this.destroyPickrs();
     const { containerEl } = this;
@@ -144,7 +139,6 @@ export class editingToolbarSettingTab extends PluginSettingTab {
       const tabButton = tabContainer.createEl('div', {
         cls: `editing-toolbar-tab ${this.activeTab === tab.id ? 'active' : ''}`
       });
-
       setIcon(tabButton, tab.icon);
       tabButton.createEl('span', { text: tab.name });
 
@@ -153,12 +147,10 @@ export class editingToolbarSettingTab extends PluginSettingTab {
         this.display();
       });
     });
-
     // 创建设置内容容器
     const contentContainer = containerEl.createEl('div', {
       cls: 'editing-toolbar-content'
     });
-
     // 根据当前激活的标签页显示对应设置
     switch (this.activeTab) {
       case 'general':
@@ -178,7 +170,6 @@ export class editingToolbarSettingTab extends PluginSettingTab {
         break;
     }
   }
-
   // 创建删除按钮
   private createDeleteButton(
     button: any,
@@ -222,7 +213,6 @@ export class editingToolbarSettingTab extends PluginSettingTab {
         }
       });
   }
-
   // 拆分设置项到不同方法
   private displayGeneralSettings(containerEl: HTMLElement): void {
     const generalSettingContainer = containerEl.createDiv('generalSetting-container');
@@ -231,7 +221,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     generalSettingContainer.style.backgroundColor = 'var(--background-secondary)';
     generalSettingContainer.style.marginBottom = '20px';
     new Setting(generalSettingContainer)
-      .setName(t('Editing Toolbar append method'))
+      .setName(t('Editing Toolbar Append Method'))
       .setDesc(t('Choose where Editing Toolbar will append upon regeneration.'))
       .addDropdown((dropdown) => {
         let methods: Record<string, string> = {};
@@ -244,11 +234,10 @@ export class editingToolbarSettingTab extends PluginSettingTab {
             this.plugin.saveSettings();
           });
       });
-
     // 添加多配置切换选项
     new Setting(generalSettingContainer)
-      .setName(t('Enable multiple configurations'))
-      .setDesc(t('Enable different command configurations for each position style (following, top, fixed)'))
+      .setName(t('Enable Multiple Configurations'))
+      .setDesc(t('Enable different command configurations for each position style (following, top, fixed).'))
       .addToggle(toggle => toggle
         .setValue(this.plugin.settings.enableMultipleConfig || false)
         .onChange(async (value) => {
@@ -260,11 +249,104 @@ export class editingToolbarSettingTab extends PluginSettingTab {
           this.display();
         })
       );
+// Top toolbar toggle
+    new Setting(generalSettingContainer)
+      .setName(t('Top Toolbar'))
+      .setDesc(t('Enable the toolbar positioned at the top.'))
+      .addToggle(toggle => {
+        toggle
+          .setValue(this.plugin.settings.enableTopToolbar || false)
+          .onChange(async (value) => {
+            const s = this.plugin.settings;
+            const prevStyle = this.plugin.positionStyle;
+            // Update only the Top toolbar flag
+            s.enableTopToolbar = value;
+            let nextStyle: string | null = null;
+            if (value) {
+              // Turning Top ON: make it the primary style for configuration/appearance.
+              nextStyle = 'top';
+            } else if (prevStyle === 'top') {
+              // Turning Top OFF and it was the primary style → choose another enabled style as primary.
+              if (s.enableFollowingToolbar) nextStyle = 'following';
+              else if (s.enableFixedToolbar) nextStyle = 'fixed';
+              else nextStyle = null; // no other toolbar is enabled
+            }
+            if (nextStyle && nextStyle !== prevStyle) {
+              this.plugin.onPositionStyleChange(nextStyle);
+            }
+            await this.plugin.saveSettings();
+            // Immediately refresh toolbars to reflect this toggle
+            this.plugin.handleeditingToolbar();
+            this.display();
+          });
+      });
+// Following toolbar toggle
+    new Setting(generalSettingContainer)
+      .setName(t('Following Toolbar'))
+      .setDesc(t('Enable the toolbar that appears upon text selection.'))
+      .addToggle(toggle => {
+        toggle
+          .setValue(this.plugin.settings.enableFollowingToolbar || false)
+          .onChange(async (value) => {
+            const s = this.plugin.settings;
+            const prevStyle = this.plugin.positionStyle;
+            // Update only the Following toolbar flag
+            s.enableFollowingToolbar = value;
+            let nextStyle: string | null = null;
+            if (value) {
+              // Turning Following ON: make it the primary style for configuration/appearance.
+              nextStyle = 'following';
+            } else if (prevStyle === 'following') {
+              // Turning Following OFF and it was the primary style → choose another enabled style as primary.
+              if (s.enableTopToolbar) nextStyle = 'top';
+              else if (s.enableFixedToolbar) nextStyle = 'fixed';
+              else nextStyle = null;
+            }
+            if (nextStyle && nextStyle !== prevStyle) {
+              this.plugin.onPositionStyleChange(nextStyle);
+            }
+            await this.plugin.saveSettings();
+            this.plugin.handleeditingToolbar();
+            this.display();
+          });
+      });
+// Fixed toolbar toggle
+    new Setting(generalSettingContainer)
+      .setName(t('Fixed Toolbar'))
+      .setDesc(t('Enable the toolbar whose position may be fixed where you please.'))
+      .addToggle(toggle => {
+        toggle
+          .setValue(this.plugin.settings.enableFixedToolbar || false)
+          .onChange(async (value) => {
+            const s = this.plugin.settings;
+            const prevStyle = this.plugin.positionStyle;
 
+            // Update only the Fixed toolbar flag
+            s.enableFixedToolbar = value;
+
+            let nextStyle: string | null = null;
+
+            if (value) {
+              // Turning Fixed ON: make it the primary style for configuration/appearance.
+              nextStyle = 'fixed';
+            } else if (prevStyle === 'fixed') {
+              // Turning Fixed OFF and it was the primary style → choose another enabled style as primary.
+              if (s.enableTopToolbar) nextStyle = 'top';
+              else if (s.enableFollowingToolbar) nextStyle = 'following';
+              else nextStyle = null;
+            }
+            if (nextStyle && nextStyle !== prevStyle) {
+              this.plugin.onPositionStyleChange(nextStyle);
+            }
+            await this.plugin.saveSettings();
+            this.plugin.handleeditingToolbar();
+            this.display();
+          });
+      });
     // Mobile setting
     new Setting(generalSettingContainer)
-      .setName(t('Mobile enabled or not'))
-      .setDesc(t("Whether to enable on mobile devices with device width less than 768px"))
+      .setName(t('Mobile Enabled or Not'))
+      .setDesc(t("Whether to enable on mobile devices with device width less than 768px."))
       .addToggle(toggle => toggle.setValue(this.plugin.settings?.isLoadOnMobile ?? false)
         .onChange((value) => {
           this.plugin.settings.isLoadOnMobile = value;
@@ -272,7 +354,6 @@ export class editingToolbarSettingTab extends PluginSettingTab {
           this.triggerRefresh();
         }));
   }
-
   private displayAppearanceSettings(containerEl: HTMLElement): void {
 
     const appearanceSettingContainer = containerEl.createDiv('appearanceSetting-container');
@@ -282,30 +363,36 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     appearanceSettingContainer.style.marginBottom = '20px';
     // Aesthetic style setting
 
+    // Decide which style we are editing in this tab
+    const editingStyle: ToolbarStyleKey =
+      (this.plugin.appearanceEditStyle as ToolbarStyleKey) ||
+      (this.plugin.settings.positionStyle as ToolbarStyleKey) ||
+      "top";
+    this.plugin.appearanceEditStyle = editingStyle;
 
-    // Position style setting
+    // Style picker – only controls which style's settings you edit
     new Setting(appearanceSettingContainer)
-      .setName(t('Editing Toolbar position'))
-      .setDesc(t('Choose between fixed position or cursor following mode'))
+      .setName(t('Toolbar Settings'))
+      .setDesc(t("Choose which toolbar style's appearance you want to edit."))
       .addDropdown((dropdown) => {
-        let positions: Record<string, string> = {};
+        const positions: Record<string, string> = {};
         POSITION_STYLES.map((position) => (positions[position] = position));
         dropdown
           .addOptions(positions)
-          .setValue(this.plugin.settings.positionStyle)
+          .setValue(editingStyle)
           .onChange(async (value) => {
-            this.plugin.settings.positionStyle = value;
+            const style = value as ToolbarStyleKey;
+            this.plugin.appearanceEditStyle = style;     // which style we edit
+            this.plugin.settings.positionStyle = style;  // persist choice
             await this.plugin.saveSettings();
-            // 调用插件的公共方法
-            this.plugin.onPositionStyleChange(value);
             this.display();
           });
       });
-    if (this.plugin.positionStyle == "top") {
+
+    if (editingStyle === "top") {
 
       new Setting(appearanceSettingContainer)
-        .setName(t('Editing Toolbar Auto-hide')
-        )
+        .setName(t('Editing Toolbar Auto-hide'))
         .setDesc(
           t('The toolbar is displayed when the mouse moves over it, otherwise it is automatically hidden')
         )
@@ -315,23 +402,22 @@ export class editingToolbarSettingTab extends PluginSettingTab {
             this.plugin.saveSettings();
             this.triggerRefresh();
           }));
-          new Setting(appearanceSettingContainer)
-          .setName(t('Editing Toolbar Centred Display')
-          )
-          .setDesc(
-            t('Whether the toolbar is centred or full-width, the default is full-width.')
-          )
-          .addToggle(toggle => toggle.setValue(this.plugin.settings?.Iscentered)
-            .onChange((value) => {
-              this.plugin.settings.Iscentered = value;
-              this.plugin.saveSettings();
-              this.triggerRefresh();
-            }));
-    }
-    if (this.plugin.positionStyle == "fixed") {
+
       new Setting(appearanceSettingContainer)
-        .setName(t('Editing Toolbar columns')
+        .setName(t('Editing Toolbar Centred Display'))
+        .setDesc(
+          t('Whether the toolbar is centred or full-width, the default is full-width.')
         )
+        .addToggle(toggle => toggle.setValue(this.plugin.settings?.Iscentered)
+          .onChange((value) => {
+            this.plugin.settings.Iscentered = value;
+            this.plugin.saveSettings();
+            this.triggerRefresh();
+          }));
+    }
+    if (editingStyle === "fixed") {
+      new Setting(appearanceSettingContainer)
+        .setName(t('Editing Toolbar Columns'))
         .setDesc(
           t('Choose the number of columns per row to display on Editing Toolbar.')
         )
@@ -353,7 +439,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
             .setDynamicTooltip();
         });
       new Setting(appearanceSettingContainer)
-        .setName(t('Fixed position offset'))
+        .setName(t('Fixed Position Offset'))
         .setDesc(t('Choose the offset of the Editing Toolbar in the fixed position.'))
         .addButton(button => button
           .setButtonText(t('Settings'))
@@ -364,7 +450,6 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     // Color settings
     this.createColorSettings(containerEl);
   }
-
   private displayCommandSettings(containerEl: HTMLElement): void {
     const commandSettingContainer = containerEl.createDiv('commandSetting-container');
     commandSettingContainer.style.padding = '16px';
@@ -374,7 +459,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     if (this.plugin.settings.enableMultipleConfig) {
       const configSwitcher = new Setting(commandSettingContainer)
         .setName(t('Current Configuration'))
-        .setDesc(t('Switch between different command configurations'))
+        .setDesc(t('Switch between different command configurations.'))
         .addDropdown(dropdown => {
           // 添加基本配置选项
           dropdown.addOption('top', t('Top Style'));
@@ -401,10 +486,8 @@ export class editingToolbarSettingTab extends PluginSettingTab {
       // 获取当前编辑的配置类型
       const currentConfigType = this.currentEditingConfig;
 
-
       const commandsArray = this.getCommandsArrayByType(currentConfigType);
       const buttonContainer = containerEl.createDiv('command-buttons-container');
-
 
       buttonContainer.style.display = 'flex';
       buttonContainer.style.flexDirection = 'column';
@@ -414,11 +497,10 @@ export class editingToolbarSettingTab extends PluginSettingTab {
       buttonContainer.style.borderRadius = '8px';
       buttonContainer.style.backgroundColor = 'var(--background-secondary)';
 
-
       // 添加命令导入设置
       const importSetting = new Setting(buttonContainer)
         .setName(t('Import From'))
-        .setDesc(t('Copy commands from another style configuration'));
+        .setDesc(t('Copy commands from another style configuration.'));
 
       // 添加源样式选择下拉菜单
       let selectedSourceStyle = 'Main menu'; // 默认从主菜单导入
@@ -455,13 +537,13 @@ export class editingToolbarSettingTab extends PluginSettingTab {
       // 添加导入按钮
       configSwitcher.addButton(button => button
         .setButtonText(this.currentEditingConfig + ' ' + t('Import'))
-        .setTooltip('Copy commands from selected style')
+        .setTooltip('Copy commands from selected style.')
         .onClick(async () => {
           // 获取源样式的命令数组
           const sourceCommands = this.getCommandsArrayByType(selectedSourceStyle);
 
           if (!sourceCommands || sourceCommands.length === 0) {
-            new Notice('The selected style has no commands to import');
+            new Notice('The selected style has no commands to import.');
             return;
           }
 
@@ -490,21 +572,17 @@ export class editingToolbarSettingTab extends PluginSettingTab {
                 this.plugin.settings.mobileCommands = [...sourceCommands];
                 break;
             }
-
             await this.plugin.saveSettings();
             new Notice('Commands imported successfully from' + ' ' + `"${selectedSourceStyle}"` + ' to ' + `"${this.currentEditingConfig}" ` + t(`configuration`));
             this.display();
           }
-
-        
       }) 
         })
       );
-
       // 添加清除按钮（如果当前配置有命令）
       importSetting.addButton(button => button
         .setButtonText(t('Clear') + ' ' + `${this.currentEditingConfig}`)
-        .setTooltip(t('Remove all commands from this configuration'))
+        .setTooltip(t('Remove all commands from this configuration.'))
         .setWarning()
         .onClick(async () => {
           // 添加确认对话框
@@ -527,31 +605,26 @@ export class editingToolbarSettingTab extends PluginSettingTab {
                 break;
             }
             await this.plugin.saveSettings();
-            new Notice('All commands have been removed');
+            new Notice('All commands have been removed.');
             this.display();
           }
           })
-
         })
       );
-
-
-
     } else {
       const buttonContainer = commandSettingContainer.createDiv('command-buttons-container');
 
       const clearButton = buttonContainer.createEl('button', {
-        text: t('One-click clear'),
+        text: t('One-click Clear'),
         cls: 'mod-warning' // Obsidian 的警告样式类
       });
-
       clearButton.addEventListener('click', async () => {
         ConfirmModal.show(this.app, {
           message: t('Are you sure you want to clear all commands under the current style?'),
           onConfirm: async () => {
             this.plugin.settings.menuCommands = [];
             await this.plugin.saveSettings();
-            new Notice(t('All commands have been removed'));
+            new Notice(t('All commands have been removed.'));
             this.display();
           }
         })
@@ -568,9 +641,8 @@ export class editingToolbarSettingTab extends PluginSettingTab {
         text: t(`Currently editing commands for`) + ` "${this.currentEditingConfig} Style" ` + t(`configuration`)
       });
     }
-
     new Setting(commandListContainer)
-      .setName(t('Editing Toolbar commands'))
+      .setName(t('Editing Toolbar Commands'))
       .setDesc(t("Add a command onto Editing Toolbar from Obsidian's commands library. To reorder the commands, drag and drop the command items. To delete them, use the delete buttom to the right of the command item. Editing Toolbar will not automaticaly refresh after reordering commands. Use the refresh button above."))
       .addButton((addButton) => {
         addButton
@@ -581,24 +653,17 @@ export class editingToolbarSettingTab extends PluginSettingTab {
             this.triggerRefresh();
           });
       });
-
     // 现有的命令列表代码
-
-
-
     this.createCommandList(commandListContainer);
   }
-
   private displayCustomCommandSettings(containerEl: HTMLElement): void {
     containerEl.empty();
 
     const customCommandsContainer = containerEl.createDiv('custom-commands-container');
-
     // 添加说明
     const descriptionEl = customCommandsContainer.createEl('p', {
-      text: t('Add, edit or delete custom format commands')
+      text: t('Add, edit or delete custom format commands.')
     });
-
     // 添加命令列表
     const commandListContainer = customCommandsContainer.createDiv('command-list-container');
     commandListContainer.style.padding = '16px';
@@ -606,7 +671,6 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     commandListContainer.style.backgroundColor = 'var(--background-secondary)';
     commandListContainer.style.marginBottom = '20px';
     commandListContainer.style.marginTop = '20px';
-
     // 添加新命令按钮容器
     const addButtonContainer = customCommandsContainer.createDiv('add-command-button-container');
     addButtonContainer.style.padding = '16px';
@@ -616,7 +680,6 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     addButtonContainer.style.marginTop = '20px';
     addButtonContainer.style.display = 'flex';
     addButtonContainer.style.gap = '10px';
-
     // 添加普通格式命令按钮
     const addFormatButton = addButtonContainer.createEl('button', {
       text: t('Add Format Command')
@@ -626,7 +689,6 @@ export class editingToolbarSettingTab extends PluginSettingTab {
       // 打开新命令模态框
       new CustomCommandModal(this.app, this.plugin, null).open();
     });
-
     // 添加正则表达式命令按钮
     const addRegexButton = addButtonContainer.createEl('button', {
       text: t('Add Regex Command')
@@ -634,30 +696,23 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     addRegexButton.addClass('mod-cta');
     addRegexButton.addEventListener('click', () => {
       // 打开正则表达式命令模态框
-
       new RegexCommandModal(this.app, this.plugin, null).open();
     });
-
     // 显示现有命令
     this.plugin.settings.customCommands.forEach((command, index) => {
       const commandSetting = new Setting(commandListContainer)
         .setName(command.name);
-
       // 创建描述元素
       const descEl = createFragment();
-
       // 基本描述
       let desc = `${t('ID')}: ${command.id}`;
-
       // 根据命令类型添加不同的描述
       if (command.useRegex) {
         desc += `, ${t('Pattern')}: ${command.regexPattern}`;
       } else {
         desc += `, ${t('Prefix')}: ${command.prefix}, ${t('Suffix')}: ${command.suffix}`;
       }
-
       descEl.createSpan({ text: desc });
-
       // 添加命令类型标签
       const typeBadge = descEl.createSpan({ cls: 'command-type-badge' });
       if (command.useRegex) {
@@ -666,13 +721,12 @@ export class editingToolbarSettingTab extends PluginSettingTab {
       } else {
         typeBadge.setText(t('Prefix/Suffix'));
       }
-
       commandSetting.descEl.appendChild(descEl);
       commandSetting.addButton(button => button
         .setButtonText(t('Add to Toolbar'))
-        .setTooltip(t('Add this command to the toolbar'))
+        .setTooltip(t('Add this command to the toolbar.'))
         .setButtonText(t('Add to Toolbar'))
-        .setTooltip(t('Add this command to the toolbar'))
+        .setTooltip(t('Add this command to the toolbar.'))
         .onClick(() => {
           if (this.plugin.settings.enableMultipleConfig) {
             // 如果启用了多配置，打开部署模态框
@@ -682,18 +736,15 @@ export class editingToolbarSettingTab extends PluginSettingTab {
             const isInToolbar = this.plugin.settings.menuCommands.some(
               cmd => cmd.id === `editing-toolbar:${command.id}`
             );
-
             if (isInToolbar) {
-              new Notice(t('This command is already in the toolbar'));
+              new Notice(t('This command is already in the toolbar.'));
               return;
             }
-
             const toolbarCommand = {
               id: `editing-toolbar:${command.id}`,
               name: command.name,
               icon: command.icon || 'obsidian-new'
             };
-
             this.plugin.settings.menuCommands.push(toolbarCommand);
             this.plugin.saveSettings().then(() => {
               new Notice(t('Command added to toolbar'));
@@ -719,7 +770,6 @@ export class editingToolbarSettingTab extends PluginSettingTab {
         })
         .addButton(button => this.createDeleteButton(button, async () => {
           const customCommandId = `editing-toolbar:${this.plugin.settings.customCommands[index].id}`;
-
           // 从所有配置中删除该命令
           this.removeCommandFromConfig(this.plugin.settings.menuCommands, customCommandId);
 
@@ -736,12 +786,8 @@ export class editingToolbarSettingTab extends PluginSettingTab {
           await this.plugin.saveSettings();
           this.plugin.reloadCustomCommands();
           this.display();
-          new Notice(t('Command deleted'));
+          new Notice(t('Command deleted.'));
         }))
-
-
-
-
       // 如果有图标，显示图标
       if (command.icon) {
         try {
@@ -755,8 +801,6 @@ export class editingToolbarSettingTab extends PluginSettingTab {
         }
       }
     });
-
-
   }
   // 工具方法
   private triggerRefresh(): void {
@@ -764,36 +808,22 @@ export class editingToolbarSettingTab extends PluginSettingTab {
       dispatchEvent(new Event("editingToolbar-NewCommand"));
     }, 100);
   }
-
   private createHeader(containerEl: HTMLElement): void {
     const headerContainer = containerEl.createEl("div", {
       cls: "editing-toolbar-header"
     });
-
     // 创建左侧标题容器
     const titleContainer = headerContainer.createEl("div", {
       cls: "editing-toolbar-title-container"
     });
-
     titleContainer.createEl("h1", {
-      text: "Obsidian Editing Toolbar:" + this.plugin.manifest.version,
+      text: "Obsidian Editing Toolbar: " + this.plugin.manifest.version,
       cls: "editing-toolbar-title"
     });
-
     // 创建右侧信息容器
     const infoContainer = headerContainer.createEl("div", {
       cls: "editing-toolbar-info"
     });
-
-    infoContainer.createEl("span", { text: "作者：" }).createEl("a", {
-      text: "Cuman ✨",
-      href: "https://github.com/cumany",
-    });
-    infoContainer.createEl("span", { text: "  教程：" }).createEl("a", {
-      text: "pkmer.cn",
-      href: "https://pkmer.cn/show/20230329145815",
-    });
-
     // 添加修复按钮
     new Setting(infoContainer)
       .setClass("editing-toolbar-fix-button")
@@ -806,16 +836,32 @@ export class editingToolbarSettingTab extends PluginSettingTab {
           });
       });
   }
-
+  private getAppearanceBucket(style: ToolbarStyleKey): StyleAppearanceSettings {
+    const settings = this.plugin.settings;
+  
+    if (!settings.appearanceByStyle || typeof settings.appearanceByStyle !== "object") {
+      settings.appearanceByStyle = {} as AppearanceByStyle;
+    }
+    const store = settings.appearanceByStyle as AppearanceByStyle;
+    if (!store[style] || typeof store[style] !== "object") {
+      store[style] = {};
+    }
+    return store[style]!;
+  }
   private createColorSettings(containerEl: HTMLElement): void {
+    const editingStyle: ToolbarStyleKey =
+      (this.plugin.appearanceEditStyle as ToolbarStyleKey) ||
+      (this.plugin.settings.positionStyle as ToolbarStyleKey) ||
+      "top";
+    const appearanceBucket = this.getAppearanceBucket(editingStyle);
     const paintbrushContainer = containerEl.createDiv('custom-paintbrush-container');
     paintbrushContainer.style.padding = '16px';
     paintbrushContainer.style.borderRadius = '8px';
     paintbrushContainer.style.backgroundColor = 'var(--background-secondary)';
     paintbrushContainer.style.marginBottom = '20px';
     new Setting(paintbrushContainer)
-      .setName(t('🎨 Set custom background'))
-      .setDesc(t('Click on the picker to adjust the colour'))
+      .setName(t('🎨 Set Custom Background'))
+      .setDesc(t('Click on the picker to adjust the color'))
       .setClass('custom_bg')
       .then((setting) => {
         const pickerContainer = setting.controlEl.createDiv({ cls: "pickr-container" });
@@ -839,17 +885,13 @@ export class editingToolbarSettingTab extends PluginSettingTab {
               defaultColor: (this.plugin.settings as any)[`custom_bg${i + 1}`] || '#000000'
             })
           );
-
           this.setupPickrEvents(pickr, `custom_bg${i + 1}`, 'background-color');
           this.pickrs.push(pickr);
         }
       });
-
-
-
     new Setting(paintbrushContainer)
-      .setName(t('🖌️ Set custom font color'))
-      .setDesc(t('Click on the picker to adjust the colour'))
+      .setName(t('🖌️ Set Custom Font Color'))
+      .setDesc(t('Click on the picker to adjust the color'))
       .setClass('custom_font')
       .then((setting) => {
         const pickerContainer = setting.controlEl.createDiv({ cls: "pickr-container" });
@@ -873,7 +915,6 @@ export class editingToolbarSettingTab extends PluginSettingTab {
               defaultColor: (this.plugin.settings as any)[`custom_fc${i + 1}`] || '#000000'
             })
           );
-
           this.setupPickrEvents(pickr, `custom_fc${i + 1}`, 'color');
           this.pickrs.push(pickr);
         }
@@ -884,80 +925,104 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     toolbarContainer.style.backgroundColor = 'var(--background-secondary)';
     // 添加主题选择下拉框
     new Setting(toolbarContainer)
-      .setName(t("Toolbar theme"))
-      .setDesc(t("Select a preset toolbar theme, automatically setting the background color, icon color, and size"))
-      .addDropdown(dropdown => {
-        let aesthetics: Record<string, string> = {};
-        AESTHETIC_STYLES.map((aesthetic) => (aesthetic == 'custom' ? aesthetics[aesthetic] = t('Custom theme') : aesthetics[aesthetic] = aesthetic));
+      .setName(t("Toolbar Theme"))
+      .setDesc(t("Select a preset toolbar theme, automatically setting the background color, icon color, and size for the selected style."))
+      .addDropdown((dropdown) => {
+        const aesthetics: Record<string, string> = {};
+        AESTHETIC_STYLES.forEach((aesthetic) => {
+          aesthetics[aesthetic] =
+            aesthetic === "custom" ? t("Custom Theme") : aesthetic;
+        });
         dropdown.addOptions(aesthetics);
-        dropdown.selectEl.options[3].disabled = true; // 禁用第一个选项
-        dropdown.addOption('light', '┌ Light');
-        dropdown.addOption('dark', '├ Dark');
-        dropdown.addOption('vibrant', '├ Vibrant');
-        dropdown.addOption('minimal', '├ Minimal');
-        dropdown.addOption('elegant', '└ Elegant');
-
-        dropdown.setValue(this.plugin.settings.aestheticStyle)
+        dropdown.selectEl.options[3].disabled = true; // disable the raw "custom" option
+        dropdown.addOption("light", "┌ Light");
+        dropdown.addOption("dark", "├ Dark");
+        dropdown.addOption("vibrant", "├ Vibrant");
+        dropdown.addOption("minimal", "├ Minimal");
+        dropdown.addOption("elegant", "└ Elegant");
+        // Use the bucket for the currently edited style
+        dropdown.setValue(
+          (appearanceBucket.aestheticStyle as string) ??
+            this.plugin.settings.aestheticStyle
+        );
         dropdown.onChange(async (value) => {
+          const style =
+            (this.plugin.appearanceEditStyle as ToolbarStyleKey) ||
+            (this.plugin.settings.positionStyle as ToolbarStyleKey) ||
+            "top";
+          const bucket = this.getAppearanceBucket(style);
+
           if (value in aesthetics) {
-            this.plugin.settings.aestheticStyle = value;
-            this.plugin.settings.toolbarIconSize = 18;
+            bucket.aestheticStyle = value;
+            bucket.toolbarIconSize = 18;
           } else {
-            this.plugin.settings.aestheticStyle = 'custom';
+            // custom presets all map to "custom" aestheticStyle
+            bucket.aestheticStyle = "custom";
           }
-
-          // 根据选择的主题设置颜色和大小
+          // Set colours/sizes in the per-style bucket
           switch (value) {
-
-            case 'light':
-              this.plugin.settings.toolbarBackgroundColor = '#F5F8FA';
-              this.plugin.settings.toolbarIconColor = '#4A5568';
-              this.plugin.settings.toolbarIconSize = 18;
+            case "light":
+              bucket.toolbarBackgroundColor = "#F5F8FA";
+              bucket.toolbarIconColor = "#4A5568";
+              bucket.toolbarIconSize = 18;
               break;
-            case 'dark':
-              this.plugin.settings.toolbarBackgroundColor = '#2D3033';
-              this.plugin.settings.toolbarIconColor = '#E2E8F0';
-              this.plugin.settings.toolbarIconSize = 18;
+            case "dark":
+              bucket.toolbarBackgroundColor = "#2D3033";
+              bucket.toolbarIconColor = "#E2E8F0";
+              bucket.toolbarIconSize = 18;
               break;
-            case 'vibrant':
-              this.plugin.settings.toolbarBackgroundColor = '#7E57C2';
-              this.plugin.settings.toolbarIconColor = '#FFFFFF';
-              this.plugin.settings.toolbarIconSize = 20;
+            case "vibrant":
+              bucket.toolbarBackgroundColor = "#7E57C2";
+              bucket.toolbarIconColor = "#FFFFFF";
+              bucket.toolbarIconSize = 20;
               break;
-            case 'minimal':
-              this.plugin.settings.toolbarBackgroundColor = '#F8F9FA';
-              this.plugin.settings.toolbarIconColor = '#6B7280';
-              this.plugin.settings.toolbarIconSize = 16;
+            case "minimal":
+              bucket.toolbarBackgroundColor = "#F8F9FA";
+              bucket.toolbarIconColor = "#6B7280";
+              bucket.toolbarIconSize = 16;
               break;
-            case 'elegant':
-              this.plugin.settings.toolbarBackgroundColor = '#1A2F28';
-              this.plugin.settings.toolbarIconColor = '#D4AF37';
-              this.plugin.settings.toolbarIconSize = 19;
+            case "elegant":
+              bucket.toolbarBackgroundColor = "#1A2F28";
+              bucket.toolbarIconColor = "#D4AF37";
+              bucket.toolbarIconSize = 19;
               break;
           }
+          // Push the current style's values into the global CSS vars
+          const bg =
+            bucket.toolbarBackgroundColor ??
+            this.plugin.settings.toolbarBackgroundColor;
+          const icon =
+            bucket.toolbarIconColor ??
+            this.plugin.settings.toolbarIconColor;
+          const size = bucket.toolbarIconSize ?? 18;
 
-          // 更新CSS变量
-          this.plugin.toolbarIconSize = this.plugin.settings.toolbarIconSize;
-          document.documentElement.style.setProperty('--editing-toolbar-background-color', this.plugin.settings.toolbarBackgroundColor);
-          document.documentElement.style.setProperty('--editing-toolbar-icon-color', this.plugin.settings.toolbarIconColor);
-          document.documentElement.style.setProperty('--toolbar-icon-size', `${this.plugin.settings.toolbarIconSize}px`);
+          document.documentElement.style.setProperty(
+            "--editing-toolbar-background-color",
+            bg
+          );
+          document.documentElement.style.setProperty(
+            "--editing-toolbar-icon-color",
+            icon
+          );
+          document.documentElement.style.setProperty(
+            "--toolbar-icon-size",
+            `${size}px`
+          );
 
-          // 更新颜色选择器显示
+          this.plugin.toolbarIconSize = size;
           this.destroyPickrs();
           this.display();
-
           await this.plugin.saveSettings();
           this.triggerRefresh();
         });
       });
     new Setting(toolbarContainer)
-      .setName(t("Toolbar background color"))
-      .setDesc(t("Set the background color of the toolbar"))
+      .setName(t("Toolbar Background Color"))
+      .setDesc(t("Set the background color of the toolbar."))
       .setClass('toolbar_background')
       .then((setting) => {
         const pickerContainer = setting.controlEl.createDiv({ cls: "pickr-container" });
         const pickerEl = pickerContainer.createDiv({ cls: "picker" });
-
         const pickr = Pickr.create(
           getPickrSettings({
             isView: false,
@@ -965,39 +1030,21 @@ export class editingToolbarSettingTab extends PluginSettingTab {
             containerEl: pickerContainer,
             swatches: ['#F5F8FA', '#F4F1E8', '#2D3033', '#1A2F28', '#2A1D3B'],
             opacity: true,
-            defaultColor: this.plugin.settings.toolbarBackgroundColor
+            defaultColor:
+              appearanceBucket.toolbarBackgroundColor ??
+              this.plugin.settings.toolbarBackgroundColor,
           })
         );
-
         this.setupPickrEvents(pickr, 'toolbarBackgroundColor', 'background-color');
         this.pickrs.push(pickr);
       });
-
-    // new Setting(toolbarContainer)
-    // .setName(t('Editing Toolbar aesthetic'))
-    // .setDesc(t('Choose between a glass morphism, tiny and default style'))
-    // .addDropdown((dropdown) => {
-    //   let aesthetics: Record<string, string> = {};
-    //   AESTHETIC_STYLES.map((aesthetic) => (aesthetics[aesthetic] = aesthetic));
-    //   dropdown
-    //     .addOptions(aesthetics)
-    //     .setValue(this.plugin.settings.aestheticStyle)
-    //     .onChange((value) => {
-    //       this.plugin.settings.aestheticStyle = value;
-    //       this.plugin.saveSettings();
-    //       this.triggerRefresh();
-    //     });
-    // });
-
-
     new Setting(toolbarContainer)
-      .setName(t("Toolbar icon color"))
-      .setDesc(t("Set the color of the toolbar icon"))
+      .setName(t("Toolbar Icon Color"))
+      .setDesc(t("Set the color of the toolbar icon."))
       .setClass('toolbar_icon')
       .then((setting) => {
         const pickerContainer = setting.controlEl.createDiv({ cls: "pickr-container" });
         const pickerEl = pickerContainer.createDiv({ cls: "picker" });
-
         const pickr = Pickr.create(
           getPickrSettings({
             isView: false,
@@ -1014,60 +1061,81 @@ export class editingToolbarSettingTab extends PluginSettingTab {
             defaultColor: this.plugin.settings.toolbarIconColor
           })
         );
-
         this.pickrs.push(pickr);
         this.setupPickrEvents(pickr, 'toolbarIconColor', 'icon-color');
       });
-
     new Setting(toolbarContainer)
-      .setName(t("Toolbar icon size"))
-      .setDesc(t("Set the size of the toolbar icon (px) default 18px"))
+      .setName(t("Toolbar Icon Size"))
+      .setDesc(t("Set the size of the toolbar icon (px); default: 18px"))
       .addSlider((slider) => {
+        const initialSize =
+          appearanceBucket.toolbarIconSize ??
+          this.plugin.settings.toolbarIconSize;
+    
         slider
-          .setValue(this.plugin.settings.toolbarIconSize)
+          .setValue(initialSize)
           .setLimits(12, 32, 1)
           .setDynamicTooltip()
           .onChange(async (value) => {
-            this.plugin.settings.toolbarIconSize = value;
-            this.plugin.toolbarIconSize = value;
-            document.documentElement.style.setProperty('--toolbar-icon-size', `${value}px`);
-            // 更新预览区域   
-            this.plugin.settings.aestheticStyle = 'custom';
-
+            const activeStyle = this.plugin.positionStyle;
+            const style =
+              (this.plugin.appearanceEditStyle as ToolbarStyleKey) ||
+              (this.plugin.settings.positionStyle as ToolbarStyleKey) ||
+              "top";
+            const bucket = this.getAppearanceBucket(style);
+            // Per-style value
+            bucket.toolbarIconSize = value;
+            bucket.aestheticStyle = "custom";
+            // Only touch the live toolbar when editing the active style
+            if (activeStyle === style) {
+              this.plugin.toolbarIconSize = value;
+              document.documentElement.style.setProperty(
+                "--toolbar-icon-size",
+                `${value}px`
+              );
+            }
             await this.plugin.saveSettings();
-
+            // Rebuild the settings UI and live toolbar so the preview
+            // and the real toolbar both pick up the new size.
+            this.display();
+            this.triggerRefresh();
           });
       });
-
     // 添加工具栏预览区域
     const previewContainer = toolbarContainer.createDiv('toolbar-preview-container');
     previewContainer.addClass('toolbar-preview-section');
     previewContainer.style.marginTop = '20px';
-
     const previewLabel = previewContainer.createEl('h3', {
-      text: t('Toolbar preview')
+      text: 'Toolbar Preview (With a hypothetical command configuration.)'
     });
     previewLabel.style.marginBottom = '10px';
-
     // 创建预览工具栏 - 使用类似 generateMenu 的方式
-    const editingToolbar = previewContainer.createDiv();
+    const wrapper = previewContainer.createDiv();
+    wrapper.classList.add("preview-toolbar-wrapper");
+    wrapper.classList.add(`preview-${editingStyle}`);
+    const editingToolbar = wrapper.createDiv();
+    editingToolbar.classList.add("editing-toolbar-preview");
+    editingToolbar.classList.add(`preview-${editingStyle}`);
     editingToolbar.setAttribute("id", "editingToolbarModalBar");
-    this.applyAestheticStyle(editingToolbar, this.plugin.settings.aestheticStyle, this.plugin.positionStyle);
+    // Use the per-style aesthetic if set; fall back to the global one
+    const previewAestheticStyle =
+      (appearanceBucket.aestheticStyle as string) ??
+      this.plugin.settings.aestheticStyle ??
+      "default";
+    this.applyAestheticStyle(
+      editingToolbar,
+      previewAestheticStyle,
+      editingStyle
+    );
     // 根据当前美观风格设置类
-
-    if (this.plugin.positionStyle == "fixed") {
-
-      let Rowsize = this.plugin.settings.toolbarIconSize || 18;
-      editingToolbar.setAttribute("style",
-        `left: calc(50% - calc(${this.plugin.settings.cMenuNumRows * (Rowsize + 10)}px / 2));
-   bottom: 4.25em; 
-   grid-template-columns: repeat(${this.plugin.settings.cMenuNumRows}, ${Rowsize + 10}px);
-   gap: ${(Rowsize - 18) / 4}px;
-   position:absolute;`
-      );
+    if (editingStyle === "fixed") {
+      const icon = this.plugin.settings.toolbarIconSize || 18;
+      const cols = this.plugin.settings.cMenuNumRows || 6;
+      editingToolbar.style.display = "grid";
+      editingToolbar.style.gridTemplateColumns = `repeat(${cols}, ${icon + 10}px)`;
+      editingToolbar.style.gap = `${Math.max((icon - 18) / 4, 2)}px`;
+      editingToolbar.style.margin = "0 auto";  // centers the grid like top/following
     }
-
-
     // 定义预览工具栏的命令
     const previewCommands = [
       { id: "bold", name: "Bold", icon: "bold" },
@@ -1133,30 +1201,49 @@ export class editingToolbarSettingTab extends PluginSettingTab {
         name: "Insert Table",
         icon: "lucide-table",
       },
-
     ];
-
     // 为每个命令创建按钮
     previewCommands.forEach(item => {
       const button = new ButtonComponent(editingToolbar);
       button.setClass("editingToolbarCommandItem");
+      button.buttonEl.classList.add("preview-button");
       button.setTooltip(item.name);
 
       // 设置图标
       if (item.icon) {
         setIcon(button.buttonEl, item.icon);
-
-
-
       }
-
     });
-
-
+    // Apply the current style's colours and icon size directly to the preview.
+    // Only override colours when we're using a custom theme; for the built-in
+    // "default", "tiny" and "glass" styles we rely on the CSS classes instead.
+    const usesCustomColours = previewAestheticStyle === "custom";
+    const bg =
+      appearanceBucket.toolbarBackgroundColor ??
+      this.plugin.settings.toolbarBackgroundColor;
+    const iconColor =
+      appearanceBucket.toolbarIconColor ??
+      this.plugin.settings.toolbarIconColor;
+    const size =
+      appearanceBucket.toolbarIconSize ??
+      this.plugin.settings.toolbarIconSize ??
+      18;
+    if (usesCustomColours && bg) {
+      editingToolbar.style.backgroundColor = bg;
+    } else {
+      editingToolbar.style.removeProperty("background-color");
+    }
+    const iconSvgs = editingToolbar.querySelectorAll<SVGElement>("svg");
+    iconSvgs.forEach((svg) => {
+      if (usesCustomColours && iconColor) {
+        svg.style.color = iconColor;
+      } else {
+        svg.style.removeProperty("color");
+      }
+      svg.style.width = `${size}px`;
+      svg.style.height = `${size}px`;
+    });
   }
-
-
-
   private createCommandList(containerEl: HTMLElement): void {
     // 根据编辑的配置获取对应的命令列表
     let commandsToEdit: Command[] = [];
@@ -1180,7 +1267,6 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     } else {
       commandsToEdit = this.plugin.settings.menuCommands;
     }
-
     const editingToolbarCommandsContainer = containerEl.createEl("div", {
       cls: "editingToolbarSettingsTabsContainer",
     });
@@ -1215,7 +1301,6 @@ export class editingToolbarSettingTab extends PluginSettingTab {
           const arrayResult = commandsToEdit;
           const [removed] = arrayResult.splice(command.oldIndex, 1)
           arrayResult.splice(command.newIndex, 0, removed);
-
           // 根据当前编辑的配置更新对应的命令列表
           if (this.plugin.settings.enableMultipleConfig) {
             switch (this.currentEditingConfig) {
@@ -1243,14 +1328,11 @@ export class editingToolbarSettingTab extends PluginSettingTab {
         dragele = evt.item.className;
       },
     });
-
     // 使用getCurrentCommands获取当前命令配置
     const currentCommands = commandsToEdit;
     currentCommands.forEach((newCommand: Command, index: number) => {
       const setting = new Setting(editingToolbarCommandsContainer)
-
       if ("SubmenuCommands" in newCommand) {
-
         setting.settingEl.setAttribute("data-id", newCommand.id)
         setting
           .setClass("editingToolbarCommandItem")
@@ -1266,14 +1348,12 @@ export class editingToolbarSettingTab extends PluginSettingTab {
           })
           .addButton((deleteButton) => this.createDeleteButton(deleteButton, async () => {
             currentCommands.remove(newCommand);
-            this.plugin.updateCurrentCommands(currentCommands);
+            this.plugin.updateCurrentCommands(currentCommands, this.currentEditingConfig);
             await this.plugin.saveSettings();
             this.display();
             this.triggerRefresh();
             console.log(`%cCommand '${newCommand.name}' was removed from editingToolbar`, "color: #989cab");
           }))
-
-
 
         if (newCommand.id == "editingToolbar-plugin:change-font-color") return;  //修改字体颜色指令单独处理
         if (newCommand.id == "editingToolbar-plugin:change-background-color") return;  //修改字体颜色指令单独处理
@@ -1290,7 +1370,6 @@ export class editingToolbarSettingTab extends PluginSettingTab {
                 return false;
               else return true;
             }
-
           },
           draggable: ".setting-item",
           animation: 150,
@@ -1309,38 +1388,31 @@ export class editingToolbarSettingTab extends PluginSettingTab {
           onStart: function () { },
           onSort: (command) => {
 
-
             if (command.from.className === command.to.className) {
               // 使用getCurrentCommands获取当前命令配置
               const arrayResult = commandsToEdit;
               const subresult = arrayResult[index]?.SubmenuCommands;
 
-
               if (subresult) {
-
                 const [removed] = subresult.splice(command.oldIndex, 1);
                 subresult.splice(command.newIndex, 0, removed);
                 // 使用updateCurrentCommands更新当前命令配置
-                this.plugin.updateCurrentCommands(arrayResult);
+                this.plugin.updateCurrentCommands(arrayResult, this.currentEditingConfig);
                 this.plugin.saveSettings();
               }
             } else if (command.to.className === "editingToolbarSettingsTabsContainer") {
               // 从子菜单拖动到父菜单的逻辑
               // 使用getCurrentCommands获取当前命令配置
               const arrayResult = commandsToEdit;
-
               let cmdindex = getComandindex(command.target.parentElement.dataset["id"], arrayResult);
-
               const subresult = arrayResult[cmdindex]?.SubmenuCommands;
 
               if (subresult) {
-
                 const [removed] = subresult.splice(command.oldIndex, 1);
                 arrayResult.splice(command.newIndex, 0, removed);
                 // 使用updateCurrentCommands更新当前命令配置
-                this.plugin.updateCurrentCommands(arrayResult);
+                this.plugin.updateCurrentCommands(arrayResult, this.currentEditingConfig);
                 this.plugin.saveSettings();
-
               } else {
                 console.error('Subresult is undefined.');
               }
@@ -1349,39 +1421,24 @@ export class editingToolbarSettingTab extends PluginSettingTab {
               // 使用getCurrentCommands获取当前命令配置
               const arrayResult = commandsToEdit;
               const fromDatasetId = command.target.parentElement.dataset["id"];
-
-
-
               const cmdindex = getComandindex(fromDatasetId, arrayResult);
-
-
-
-
               const subresult = arrayResult[cmdindex]?.SubmenuCommands;
 
-
               if (subresult) {
-
                 const [removed] = arrayResult.splice(command.oldIndex, 1);
                 subresult.splice(command.newIndex, 0, removed);
                 // 使用updateCurrentCommands更新当前命令配置
-                this.plugin.updateCurrentCommands(arrayResult);
+                this.plugin.updateCurrentCommands(arrayResult, this.currentEditingConfig);
                 this.plugin.saveSettings();
-
               } else {
                 console.error('Subresult is undefined.');
               }
             }
             this.triggerRefresh();
           },
-
         });
-
-
-
         newCommand.SubmenuCommands.forEach((subCommand: Command) => {
           const subsetting = new Setting(editingToolbarCommandsContainer_sub)
-
           subsetting
             .setClass("editingToolbarCommandItem")
             .addButton((addicon) => {
@@ -1390,7 +1447,6 @@ export class editingToolbarSettingTab extends PluginSettingTab {
                 .onClick(async () => {
                   new ChooseFromIconList(this.plugin, subCommand, true, null, this.currentEditingConfig).open();
                 });
-
               checkHtml(subCommand?.icon) ? addicon.buttonEl.innerHTML = subCommand.icon : addicon.setIcon(subCommand.icon)
             })
             .setName(subCommand.name)
@@ -1411,7 +1467,6 @@ export class editingToolbarSettingTab extends PluginSettingTab {
               console.log(`%cCommand '${newCommand.name}' was removed from editingToolbar`, "color: #989cab");
             }))
           subsetting.nameEl;
-
         });
       } else {
         setting
@@ -1424,7 +1479,6 @@ export class editingToolbarSettingTab extends PluginSettingTab {
               });
             checkHtml(newCommand.icon) ? addicon.buttonEl.innerHTML = newCommand.icon : addicon.setIcon(newCommand.icon)
           })
-
         if (newCommand.id == "editingToolbar-Divider-Line") setting.setClass("editingToolbar-Divider-Line")
         setting
           .setClass("editingToolbarCommandItem")
@@ -1441,7 +1495,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
           .addButton((addsubButton) => {
             addsubButton
               .setIcon("editingToolbarSub")
-              .setTooltip(t("Add submenu"))
+              .setTooltip(t("Add Submenu"))
               .setClass("editingToolbarSettingsButton")
               .setClass("editingToolbarSettingsButtonaddsub")
               .onClick(async () => {
@@ -1455,7 +1509,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
                 const currentCommands = commandsToEdit;
                 currentCommands.splice(index + 1, 0, submenuCommand);
                 // 使用updateCurrentCommands更新当前命令配置
-                this.plugin.updateCurrentCommands(currentCommands);
+                this.plugin.updateCurrentCommands(currentCommands, this.currentEditingConfig);
                 await this.plugin.saveSettings();
                 this.display();
                 this.triggerRefresh();
@@ -1465,56 +1519,76 @@ export class editingToolbarSettingTab extends PluginSettingTab {
           .addButton((addsubButton) => {
             addsubButton
               .setIcon("vertical-split")
-              .setTooltip(t("add hr"))
+              .setTooltip(t("Add Separator"))
               .setClass("editingToolbarSettingsButton")
               .setClass("editingToolbarSettingsButtonaddsub")
               .onClick(async () => {
                 const dividermenu =
-                  { id: "editingToolbar-Divider-Line", name: "HR", icon: "vertical-split" };
+                  { id: "editingToolbar-Divider-Line", name: t("Vertical Split"), icon: "vertical-split" };
                 // 使用getCurrentCommands获取当前命令配置
                 const currentCommands = commandsToEdit;
                 currentCommands.splice(index + 1, 0, dividermenu);
                 // 使用updateCurrentCommands更新当前命令配置
-                this.plugin.updateCurrentCommands(currentCommands);
+                this.plugin.updateCurrentCommands(currentCommands, this.currentEditingConfig);
                 await this.plugin.saveSettings();
                 this.display();
                 this.triggerRefresh();
-
               });
           })
           .addButton((deleteButton) => this.createDeleteButton(deleteButton, async () => {
             currentCommands.remove(newCommand);
-            this.plugin.updateCurrentCommands(currentCommands);
+            this.plugin.updateCurrentCommands(currentCommands, this.currentEditingConfig);
             await this.plugin.saveSettings();
             this.display();
             this.triggerRefresh();
             console.log(`%cCommand '${newCommand.name}' was removed from editingToolbar`, "color: #989cab");
           }))
-
-
       }
-      //    setting.nameEl;
     });
   }
-
-  private setupPickrEvents(pickr: any, settingKey: string, cssProperty: string) {
-    pickr.on('save', (color: any) => {
+  private setupPickrEvents(
+    pickr: any,
+    settingKey: string,
+    cssProperty: string
+  ) {
+    pickr.on("save", (color: any) => {
       const hexColor = color.toHEXA().toString();
-      (this.plugin.settings as any)[settingKey] = hexColor;
-      document.documentElement.style.setProperty(`--editing-toolbar-${cssProperty}`, hexColor);
-      this.plugin.saveSettings();
-
-
-      // 当修改颜色时，切换到 custom 样式
-      if (this.plugin.settings.aestheticStyle !== 'custom') {
-        this.plugin.settings.aestheticStyle = 'custom';
-        this.plugin.saveSettings();
-        // 更新预览工具栏的样式
-
+  
+      const activeStyle = this.plugin.positionStyle;
+      const editingStyle =
+        (this.plugin.appearanceEditStyle as ToolbarStyleKey) ||
+        (this.plugin.settings.positionStyle as ToolbarStyleKey) ||
+        activeStyle ||
+        "top";
+      // For the main toolbar colour fields, use the per-style bucket.
+      if (
+        settingKey === "toolbarBackgroundColor" ||
+        settingKey === "toolbarIconColor"
+      ) {
+        const bucket = this.getAppearanceBucket(editingStyle as ToolbarStyleKey);
+        (bucket as any)[settingKey] = hexColor;
+        // Only push CSS variables if we're editing the active style
+        if (activeStyle === editingStyle) {
+          document.documentElement.style.setProperty(
+            `--editing-toolbar-${cssProperty}`,
+            hexColor
+          );
+        }
+        // Changing a colour implies a custom aesthetic for this style
+        if (bucket.aestheticStyle !== "custom") {
+          bucket.aestheticStyle = "custom";
+        }
+        // Immediately refresh the settings UI and live toolbar so the
+        // preview and real toolbar both match the new colour.
+        this.display();
+        this.triggerRefresh();
+      } else {
+        // All other keys (custom_bgX/custom_fcX) stay as global settings
+        (this.plugin.settings as any)[settingKey] = hexColor;
       }
+      this.plugin.saveSettings();
     });
   }
-
   private destroyPickrs() {
     this.pickrs.forEach(pickr => {
       if (pickr) {
@@ -1523,35 +1597,25 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     });
     this.pickrs = [];
   }
-
   hide(): void {
     this.destroyPickrs();
     this.triggerRefresh();
   }
-
   // 添加一个辅助方法用于从配置中删除命令
   private removeCommandFromConfig(commands: any[], commandId: string) {
     if (!commands) return;
-
     // 删除主菜单中的命令
     for (let i = commands.length - 1; i >= 0; i--) {
       if (commands[i].id === commandId) {
         commands.splice(i, 1);
         continue;
       }
-
       // 检查并删除子菜单中的命令
       if (commands[i].SubmenuCommands) {
         this.removeCommandFromConfig(commands[i].SubmenuCommands, commandId);
-
-        // 如果子菜单为空，可以选择是否删除子菜单本身
-        // if (commands[i].SubmenuCommands.length === 0) {
-        //   commands.splice(i, 1);
-        // }
       }
     }
   }
-
   // 添加导入导出设置显示方法
   private displayImportExportSettings(containerEl: HTMLElement): void {
     // 添加样式
@@ -1560,11 +1624,10 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     importExportContainer.style.borderRadius = '8px';
     importExportContainer.style.backgroundColor = 'var(--background-secondary)';
     importExportContainer.style.marginBottom = '20px';
-
     // 导出设置
     new Setting(importExportContainer)
       .setName(t('Export Configuration'))
-      .setDesc(t('Export your toolbar configuration to share with others'))
+      .setDesc(t('Export your toolbar configuration to share with others.'))
       .addButton(button => button
         .setButtonText(t('Export'))
         .setCta()
@@ -1572,11 +1635,10 @@ export class editingToolbarSettingTab extends PluginSettingTab {
           new ImportExportModal(this.app, this.plugin, 'export').open();
         })
       );
-
     // 导入设置
     new Setting(importExportContainer)
       .setName(t('Import Configuration'))
-      .setDesc(t('Import toolbar configuration from JSON'))
+      .setDesc(t('Import toolbar configuration from JSON.'))
       .addButton(button => button
         .setButtonText(t('Import'))
         .setCta()
@@ -1584,14 +1646,12 @@ export class editingToolbarSettingTab extends PluginSettingTab {
           new ImportExportModal(this.app, this.plugin, 'import').open();
         })
       );
-
     // 添加说明
     const infoDiv = containerEl.createDiv('import-export-info');
     infoDiv.style.marginTop = '20px';
     infoDiv.style.padding = '16px';
     infoDiv.style.borderRadius = '8px';
     infoDiv.style.backgroundColor = 'var(--background-secondary)';
-
     infoDiv.createEl('h3', {
       text: t('Usage Instructions'),
       cls: 'import-export-heading'
@@ -1599,9 +1659,8 @@ export class editingToolbarSettingTab extends PluginSettingTab {
 
     const ul = infoDiv.createEl('ul');
     ul.style.paddingLeft = '20px';
-
-    ul.createEl('li', { text: t('Export: Generate a JSON configuration that you can save or share') });
-    ul.createEl('li', { text: t('Import: Paste a previously exported JSON configuration') });
+    ul.createEl('li', { text: t('Export: Generate a JSON configuration that you can save or share.')});
+    ul.createEl('li', { text: t('Import: Paste a previously exported JSON configuration.')});
     // 添加社区分享链接
     const communityDiv = containerEl.createDiv('community-share-container');
     communityDiv.style.marginTop = '20px';
@@ -1616,7 +1675,6 @@ export class editingToolbarSettingTab extends PluginSettingTab {
 
     const shareLink = communityDiv.createEl('p');
     shareLink.innerHTML = t('Share your toolbar settings and styles in our') + ' <a href="https://github.com/PKM-er/obsidian-editing-toolbar/discussions/categories/show-and-tell" target="_blank" rel="noopener noreferrer">Show and Tell</a> ';
-
     const shareNote = communityDiv.createEl('p', {
       text: t('Get inspired by what others have created or showcase your own customizations.')
     });
@@ -1627,13 +1685,11 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     warningDiv.style.borderRadius = '8px';
     warningDiv.style.backgroundColor = 'rgba(var(--color-red-rgb), 0.1)';
     warningDiv.style.border = '1px solid rgba(var(--color-red-rgb), 0.3)';
-
     warningDiv.createEl('p', {
       text: t('Warning: Importing configuration will overwrite your current settings. Consider exporting your current configuration first as a backup.'),
       cls: 'warning-text'
     }).style.margin = '0';
   }
-
   private aestheticStyleMap: { [key: string]: string } = {
     default: "editingToolbarDefaultAesthetic",
     tiny: "editingToolbarTinyAesthetic",
@@ -1648,16 +1704,13 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     Object.values(this.aestheticStyleMap).forEach(className => {
       element.removeClass(className);
     });
-
     // 添加当前选择的美观风格类
     const selectedAestheticClass = this.aestheticStyleMap[aestheticStyle] || this.aestheticStyleMap.default;
     element.addClass(selectedAestheticClass);
-
     // 添加位置样式类
     const positionClass = this.aestheticStyleMap[positionStyle] || this.aestheticStyleMap.top; // 默认使用 top 样式
     element.addClass(positionClass);
   }
-
   // 辅助函数：根据类型获取命令数组
   private getCommandsArrayByType(type: string) {
     switch (type) {
@@ -1674,6 +1727,3 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     }
   }
 }
-
-
-
