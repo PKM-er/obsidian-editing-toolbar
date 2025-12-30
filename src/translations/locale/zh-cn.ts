@@ -127,7 +127,7 @@ export default {
   '⚠️If you want to restore the default settings, please click [Restore default settings]': '⚠️如果想恢复默认设置，请点击【恢复默认设置】',
   'Please execute a editingToolbar format command first, then enable the format brush': '请先执行一个格式命令，然后再启用格式刷',
   'Format brush ON! Select text to apply【': '格式刷已开启\n选中文本应用【',
-  '】format': '】格式\n点击鼠标中键或者右键关闭格式刷',
+  '】format': '】格式\n点击鼠标右键关闭格式刷',
   'Add to Toolbar': '添加到工具栏',
   'This command is already in the toolbar': '该命令已存在于工具栏中',
   'Command added to toolbar': '命令已添加到工具栏',

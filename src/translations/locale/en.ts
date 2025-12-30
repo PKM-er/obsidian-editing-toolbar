@@ -127,7 +127,7 @@ export default {
 '⚠️If you want to restore the default settings, please click [Restore default settings]':'⚠️If you want to restore the default settings, please click [Restore default settings]',
 'Please execute a editingToolbar format command first, then enable the format brush':'Please execute a editingToolbar format command first, then enable the format brush',
 'Format brush ON! Select text to apply【':'Format brush ON! Select text to apply【',
-'】format':'】format\nClick the mouse middle or right key to close the formatting-brush',
+'】format':'】format\nClick the mouse right key to close the formatting-brush',
 'Add to Toolbar':'Add to Toolbar',
 'This command is already in the toolbar':'This command is already in the toolbar',
 'Command added to toolbar':'Command added to toolbar',

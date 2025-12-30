@@ -12,51 +12,61 @@ import {
   requireApiVersion,
   App,
   debounce,
-  View
+  View,
 } from "obsidian";
 
-import { editingToolbarSettingTab } from '../settings/settingsTab';
-import { selfDestruct, editingToolbarPopover, quiteFormatbrushes, createFollowingbar, setFormateraser, isExistoolbar, resetToolbar } from "src/modals/editingToolbarModal";
-import { editingToolbarSettings, DEFAULT_SETTINGS } from "src/settings/settingsData";
-import addIcons, {
-  // addFeatherIcons,
-  // addRemixIcons
-  // addBoxIcons
-} from "src/icons/customIcons";
+import { editingToolbarSettingTab } from "../settings/settingsTab";
+import {
+  selfDestruct,
+  editingToolbarPopover,
+  quiteFormatbrushes,
+  createFollowingbar,
+  setFormateraser,
+  isExistoolbar,
+  resetToolbar,
+} from "src/modals/editingToolbarModal";
+import {
+  editingToolbarSettings,
+  DEFAULT_SETTINGS,
+} from "src/settings/settingsData";
+import addIcons from // addFeatherIcons,
+// addRemixIcons
+// addBoxIcons
+"src/icons/customIcons";
 
+import {
+  setFontcolor,
+  setBackgroundcolor,
+  renumberSelection,
+} from "src/util/util";
 
-import { setFontcolor, setBackgroundcolor, renumberSelection } from "src/util/util";
-
-
-import { ViewUtils } from 'src/util/viewUtils';
+import { ViewUtils } from "src/util/viewUtils";
 import { UpdateNoticeModal } from "src/modals/updateModal";
 import { StatusBar } from "src/components/StatusBar";
 import { CommandsManager } from "src/commands/commands";
-import { t } from 'src/translations/helper';
+import { t } from "src/translations/helper";
 import { InsertLinkModal } from "src/modals/insertLinkModal";
 import { InsertCalloutModal } from "src/modals/insertCalloutModal";
 
-
 let activeDocument: Document;
 
-export interface AdmonitionDefinition  {
+export interface AdmonitionDefinition {
   type: string;
-    title?: string;
-    icon: string;
-    color: string;
-    command: boolean;
-    injectColor?: boolean;
-    noTitle: boolean;
-    copy?: boolean;
+  title?: string;
+  icon: string;
+  color: string;
+  command: boolean;
+  injectColor?: boolean;
+  noTitle: boolean;
+  copy?: boolean;
 }
 
 interface AdmonitionPluginPublic {
-  admonitions: Map<string, AdmonitionDefinition >;
+  admonitions: Map<string, AdmonitionDefinition>;
   postprocessors: Map<string, any>;
-
 }
 // ... 常量定义 ...
-const ADMONITION_PLUGIN_ID = 'obsidian-admonition';
+const ADMONITION_PLUGIN_ID = "obsidian-admonition";
 
 export default class editingToolbarPlugin extends Plugin {
   app: App;
@@ -67,7 +77,8 @@ export default class editingToolbarPlugin extends Plugin {
   public positionStyle: string;
   // 修改为公共属性
   commandsManager: CommandsManager;
-  public admonitionDefinitions: Record<string, AdmonitionDefinition> | null = null;
+  public admonitionDefinitions: Record<string, AdmonitionDefinition> | null =
+    null;
 
   // 添加缺失的属性定义
   IS_MORE_Button: boolean;
@@ -92,8 +103,9 @@ export default class editingToolbarPlugin extends Plugin {
     const currentVersion = this.manifest.version; // 设置当前版本号
     console.log("editingToolbar v" + currentVersion + " loaded");
 
-
-    requireApiVersion("0.15.0") ? activeDocument = activeWindow.document : activeDocument = window.document;
+    requireApiVersion("0.15.0")
+      ? (activeDocument = activeWindow.document)
+      : (activeDocument = window.document);
     await this.loadSettings();
     this.settingTab = new editingToolbarSettingTab(this.app, this);
     this.addSettingTab(this.settingTab);
@@ -109,31 +121,30 @@ export default class editingToolbarPlugin extends Plugin {
     });
     this.init_evt(activeDocument, editor);
     if (requireApiVersion("0.15.0")) {
-      this.app.workspace.on('window-open', (leaf) => {
+      this.app.workspace.on("window-open", (leaf) => {
         this.init_evt(leaf.doc, editor);
       });
     }
-    const lastVersion = this.settings?.lastVersion || '0.0.0';
+    const lastVersion = this.settings?.lastVersion || "0.0.0";
 
     const parseVersion = (version: string) => {
-      const parts = version.split('.').map(p => parseInt(p));
+      const parts = version.split(".").map((p) => parseInt(p));
       return {
         major: parts[0] || 0,
         minor: parts[1] || 0,
-        patch: parts[2] || 0
+        patch: parts[2] || 0,
       };
     };
     const lastVer = parseVersion(lastVersion);
     const currentVer = parseVersion(currentVersion);
     const updateModal = new UpdateNoticeModal(this.app, this);
-    const isNewInstall = lastVersion === '0.0.0';
+    const isNewInstall = lastVersion === "0.0.0";
     if (isNewInstall) {
       updateModal.fixCommandIds();
     }
     const needUpdateNotice =
       !isNewInstall &&
-      (lastVer.major < 3 ||
-        (lastVer.major === 3 && lastVer.minor < 1));
+      (lastVer.major < 3 || (lastVer.major === 3 && lastVer.minor < 1));
     if (needUpdateNotice) {
       setTimeout(() => {
         updateModal.open();
@@ -145,44 +156,48 @@ export default class editingToolbarPlugin extends Plugin {
     const isThinoEnabled = app.plugins.enabledPlugins.has("obsidian-memos");
     if (isThinoEnabled) {
       // @ts-ignore - 自定义事件
-      this.registerEvent(this.app.workspace.on("thino-editor-created", this.handleeditingToolbar));
+      this.registerEvent( this.app.workspace.on("thino-editor-created", this.handleeditingToolbar)
+      );
     }
-    this.registerEvent(this.app.workspace.on("active-leaf-change", this.handleeditingToolbar));
-    this.registerEvent(this.app.workspace.on("layout-change", this.handleeditingToolbar_layout));
-    this.registerEvent(this.app.workspace.on("resize", this.handleeditingToolbar_resize));
+    this.registerEvent(
+      this.app.workspace.on("active-leaf-change", this.handleeditingToolbar)
+    );
+    this.registerEvent(
+      this.app.workspace.on("layout-change", this.handleeditingToolbar_layout)
+    );
+    this.registerEvent(
+      this.app.workspace.on("resize", this.handleeditingToolbar_resize)
+    );
     //  this.registerEvent(this.app.workspace.on("editor-change", this.handleeditingToolbar));
 
     // this.app.workspace.onLayoutReady(this.handleeditingToolbar_editor.bind(this));
     if (this.settings.cMenuVisibility == true) {
       setTimeout(() => {
         dispatchEvent(new Event("editingToolbar-NewCommand"));
-      }, 100)
+      }, 100);
     }
-    this.registerDomEvent(
-      activeDocument,
-      'contextmenu',
-      e => {
-        if (this.settings.isLoadOnMobile && Platform.isMobile && this.positionStyle == "following") {
-          const { target } = e;
-          if (target instanceof HTMLElement) {
-            const iseditor = target.closest('.cm-editor') !== null;
-            if (iseditor) {
-              e.preventDefault();
-            }
+    this.registerDomEvent(activeDocument, "contextmenu", (e) => {
+      if (
+        this.settings.isLoadOnMobile &&
+        Platform.isMobile &&
+        this.positionStyle == "following"
+      ) {
+        const { target } = e;
+        if (target instanceof HTMLElement) {
+          const iseditor = target.closest(".cm-editor") !== null;
+          if (iseditor) {
+            e.preventDefault();
           }
         }
+      }
+    });
 
-      },
-    );
-
-// 最好等待工作区布局准备好，确保所有插件都已加载
-this.app.workspace.onLayoutReady(async () => {
-  await this.tryGetAdmonitionTypes();
-});
-
+    // 最好等待工作区布局准备好，确保所有插件都已加载
+    this.app.workspace.onLayoutReady(async () => {
+      await this.tryGetAdmonitionTypes();
+    });
 
     //////
-
 
     // // 注册右键菜单
     // this.registerEvent(
@@ -227,43 +242,44 @@ this.app.workspace.onLayoutReady(async () => {
     //       }
     //     }
 
-
     //   })
     // );
     // 注册右键菜单
     this.registerEvent(
-      this.app.workspace.on('editor-menu', (menu: Menu, editor: Editor, view: MarkdownView) => {
-        const cursor = editor.getCursor();
-        const lineText = editor.getLine(cursor.line);
-        // 判断光标是否在有序列表行（简单匹配数字开头）
-        if (/^\d+\.\s/.test(lineText)) {
-          menu.addItem((item) =>
-            item
-              .setSection("info")
-              .setTitle(t('Renumber List'))
-              .setIcon('list-restart')
-              .onClick(() => renumberSelection(editor))
-          );
+      this.app.workspace.on(
+        "editor-menu",
+        (menu: Menu, editor: Editor, view: MarkdownView) => {
+          const cursor = editor.getCursor();
+          const lineText = editor.getLine(cursor.line);
+          // 判断光标是否在有序列表行（简单匹配数字开头）
+          if (/^\d+\.\s/.test(lineText)) {
+            menu.addItem((item) =>
+              item
+                .setSection("info")
+                .setTitle(t("Renumber List"))
+                .setIcon("list-restart")
+                .onClick(() => renumberSelection(editor))
+            );
+          }
         }
-      })
+      )
     );
     this.registerEvent(
       // @ts-ignore
-      this.app.workspace.on('url-menu', (menu: Menu, url: string, view: MarkdownView) => {
-        // 添加自定义菜单项
-        menu.addItem((item) =>
-          item
-            .setTitle('Edit Link(Modal)')
-            .setSection("info")
-            .setIcon('link')
-            .onClick(() => {
-
-              new InsertLinkModal(this).open()
-            })
-        );
-      })
-
-
+      this.app.workspace.on( "url-menu",
+        (menu: Menu, url: string, view: MarkdownView) => {
+          // 添加自定义菜单项
+          menu.addItem((item) =>
+            item
+              .setTitle("Edit Link(Modal)")
+              .setSection("info")
+              .setIcon("link")
+              .onClick(() => {
+                new InsertLinkModal(this).open();
+              })
+          );
+        }
+      )
     );
     // 初始化图标
     addIcons();
@@ -271,56 +287,54 @@ this.app.workspace.onLayoutReady(async () => {
     this.positionStyle = this.settings.positionStyle;
     // 初始化 CSS 变量
     activeDocument.documentElement.style.setProperty(
-      '--editing-toolbar-background-color',
+      "--editing-toolbar-background-color",
       this.settings.toolbarBackgroundColor
     );
     activeDocument.documentElement.style.setProperty(
-      '--editing-toolbar-icon-color',
+      "--editing-toolbar-icon-color",
       this.settings.toolbarIconColor
     );
     activeDocument.documentElement.style.setProperty(
-      '--toolbar-icon-size',
+      "--toolbar-icon-size",
       `${this.settings.toolbarIconSize}px`
     );
   }
-
 
   async tryGetAdmonitionTypes(retries = 0): Promise<void> {
     // @ts-ignore
     const admonitionPluginInstance = this.app.plugins?.getPlugin(ADMONITION_PLUGIN_ID);
     if (admonitionPluginInstance) {
-
-        this.processAdmonitionTypes(admonitionPluginInstance);
+      this.processAdmonitionTypes(admonitionPluginInstance);
     }
-    }
+  }
 
-processAdmonitionTypes(pluginInstance: any) {
+  processAdmonitionTypes(pluginInstance: any) {
+    const admonitionPlugin = pluginInstance as {
+      admonitions?: Record<string, AdmonitionDefinition>;
+    };
 
-  const admonitionPlugin = pluginInstance as { admonitions?: Record<string, AdmonitionDefinition> };
+    let registeredTypes: string[] | null = null;
+    let typesSource: string | null = null;
 
-  let registeredTypes: string[] | null = null;
-  let typesSource: string | null = null;
-
-  if (admonitionPlugin.admonitions &&
-      typeof admonitionPlugin.admonitions === 'object' &&
+    if (
+      admonitionPlugin.admonitions &&
+      typeof admonitionPlugin.admonitions === "object" &&
       !Array.isArray(admonitionPlugin.admonitions) && // 确保不是数组
-      Object.keys(admonitionPlugin.admonitions).length > 0) {
-
+      Object.keys(admonitionPlugin.admonitions).length > 0
+    ) {
       registeredTypes = Object.keys(admonitionPlugin.admonitions);
       this.admonitionDefinitions = admonitionPlugin.admonitions;
-
-  }  else {
-    console.warn('未能从 admonitionPlugin.admonitions (作为对象) 获取类型。');
-    this.admonitionDefinitions = null;
-}
-
-}
-
-
+    } else {
+      console.warn("未能从 admonitionPlugin.admonitions (作为对象) 获取类型。");
+      this.admonitionDefinitions = null;
+    }
+  }
 
   isLoadMobile() {
     let screenWidth = window.innerWidth > 0 ? window.innerWidth : screen.width;
-    let isLoadOnMobile = this.settings?.isLoadOnMobile ? this.settings.isLoadOnMobile : false;
+    let isLoadOnMobile = this.settings?.isLoadOnMobile
+      ? this.settings.isLoadOnMobile
+      : false;
     if (Platform.isMobileApp && !isLoadOnMobile) {
       if (screenWidth <= 768) {
         // 移动设备且屏幕宽度小于等于 768px，默认不开启toolbar
@@ -358,9 +372,8 @@ processAdmonitionTypes(pluginInstance: any) {
   }
 
   handleeditingToolbar = () => {
-
     if (!this.formatBrushActive) {
-      activeDocument.body.classList.remove('format-brush-cursor');
+      activeDocument.body.classList.remove("format-brush-cursor");
     }
     if (this.settings.cMenuVisibility == true) {
       const view = this.app.workspace.getActiveViewOfType(ItemView);
@@ -376,7 +389,7 @@ processAdmonitionTypes(pluginInstance: any) {
 
       // 获取视图类型
       const viewType = view?.getViewType();
-      const isMarkdownView = viewType === 'markdown';
+      const isMarkdownView = viewType === "markdown";
 
       // 如果是Markdown视图
       if (isMarkdownView) {
@@ -431,7 +444,7 @@ processAdmonitionTypes(pluginInstance: any) {
 
     // 获取视图类型
     const viewType = view?.getViewType();
-    const isMarkdownView = viewType === 'markdown';
+    const isMarkdownView = viewType === "markdown";
 
     // 如果是Markdown视图
     if (isMarkdownView) {
@@ -476,36 +489,38 @@ processAdmonitionTypes(pluginInstance: any) {
     if (this.settings.cMenuVisibility == true && this.positionStyle == "top") {
       const view = app.workspace.getActiveViewOfType(ItemView);
       if (ViewUtils.isSourceMode(view)) {
-        let leafwidth = this.app.workspace.activeLeaf.view.leaf.width ?? 0
+        let leafwidth = this.app.workspace.activeLeaf.view.leaf.width ?? 0;
         //let leafwidth = view.containerEl?.querySelector<HTMLElement>(".markdown-source-view").offsetWidth ?? 0
         if (this.Leaf_Width == leafwidth) return false;
         if (leafwidth > 0) {
-          this.Leaf_Width = leafwidth
+          this.Leaf_Width = leafwidth;
           if (this.settings.cMenuWidth && leafwidth) {
-            if ((leafwidth - this.settings.cMenuWidth) < 78 && (leafwidth > this.settings.cMenuWidth))
+            if (
+              leafwidth - this.settings.cMenuWidth < 78 &&
+              leafwidth > this.settings.cMenuWidth
+            )
               return;
             else {
               setTimeout(() => {
                 resetToolbar(), editingToolbarPopover(app, this);
-              }, 200)
+              }, 200);
             }
           }
         }
-
       }
     } else {
       return false;
     }
-  }
+  };
 
   setIS_MORE_Button(status: boolean): void {
-    this.IS_MORE_Button = status
+    this.IS_MORE_Button = status;
   }
   setEN_BG_Format_Brush(status: boolean): void {
-    this.EN_BG_Format_Brush = status
+    this.EN_BG_Format_Brush = status;
   }
   setEN_FontColor_Format_Brush(status: boolean): void {
-    this.EN_FontColor_Format_Brush = status
+    this.EN_FontColor_Format_Brush = status;
   }
   setEN_Text_Format_Brush(status: boolean): void {
     this.EN_Text_Format_Brush = status;
@@ -519,12 +534,10 @@ processAdmonitionTypes(pluginInstance: any) {
 
     // 初始化多配置
     // 如果是新安装或升级，初始化各个位置样式的命令配置
-
   }
 
   // 获取当前位置样式对应的命令配置
   getCurrentCommands(style?: string): any[] {
-
     if (!this.settings.enableMultipleConfig) {
       return this.settings.menuCommands;
     }
@@ -535,11 +548,11 @@ processAdmonitionTypes(pluginInstance: any) {
     }
 
     switch (currentstyle) {
-      case 'following':
+      case "following":
         return this.settings.followingCommands;
-      case 'top':
+      case "top":
         return this.settings.topCommands;
-      case 'fixed':
+      case "fixed":
         return this.settings.fixedCommands;
       default:
         return this.settings.menuCommands;
@@ -560,13 +573,13 @@ processAdmonitionTypes(pluginInstance: any) {
     }
 
     switch (this.positionStyle) {
-      case 'following':
+      case "following":
         this.settings.followingCommands = commands;
         break;
-      case 'top':
+      case "top":
         this.settings.topCommands = commands;
         break;
-      case 'fixed':
+      case "fixed":
         this.settings.fixedCommands = commands;
         break;
       default:
@@ -588,8 +601,8 @@ processAdmonitionTypes(pluginInstance: any) {
       this.lastExecutedCommandName = command.name;
     } else {
       // 如果找不到命令名称，使用命令ID的最后部分
-      const parts = commandId.split(':');
-      this.lastExecutedCommandName = parts[parts.length - 1].replace(/-/g, ' ');
+      const parts = commandId.split(":");
+      this.lastExecutedCommandName = parts[parts.length - 1].replace(/-/g, " ");
     }
   }
 
@@ -608,7 +621,10 @@ processAdmonitionTypes(pluginInstance: any) {
           this.lastExecutedCommand = "editor:toggle-bold";
           this.lastExecutedCommandName = "Bold";
           detectedFormat = true;
-        } else if (/^\*.*\*$/.test(selectedText) || /^_.*_$/.test(selectedText)) {
+        } else if (
+          /^\*.*\*$/.test(selectedText) ||
+          /^_.*_$/.test(selectedText)
+        ) {
           // 斜体
           this.lastExecutedCommand = "editor:toggle-italics";
           this.lastExecutedCommandName = "Italic";
@@ -633,51 +649,49 @@ processAdmonitionTypes(pluginInstance: any) {
           this.lastExecutedCommand = "editing-toolbar:change-font-color";
           this.lastExecutedCommandName = "Font Color";
           detectedFormat = true;
-        } else if (/^<span style="background:.*">.*<\/span>$/.test(selectedText)) {
+        } else if (
+          /^<span style="background:.*">.*<\/span>$/.test(selectedText)
+        ) {
           // 背景颜色
           this.lastExecutedCommand = "editing-toolbar:change-background-color";
           this.lastExecutedCommandName = "Background Color";
           detectedFormat = true;
-        }
-        else if (/^<u>([^<]+)<\/u>$/.test(selectedText)) {
+        } else if (/^<u>([^<]+)<\/u>$/.test(selectedText)) {
           this.lastExecutedCommand = "editor:toggle-underline";
           this.lastExecutedCommandName = "Underline";
           detectedFormat = true;
-        }
-        else if (/^<center>([^<]+)<\/center>$/.test(selectedText)) {
+        } else if (/^<center>([^<]+)<\/center>$/.test(selectedText)) {
           this.lastExecutedCommand = "editing-toolbar:center";
           this.lastExecutedCommandName = "Center";
           detectedFormat = true;
-        }
-        else if (/^<p align="left">(.*?)<\/p>$/.test(selectedText)) {
+        } else if (/^<p align="left">(.*?)<\/p>$/.test(selectedText)) {
           this.lastExecutedCommand = "editing-toolbar:left";
           this.lastExecutedCommandName = "Left Align";
           detectedFormat = true;
-        }
-        else if (/^<p align="right">(.*?)<\/p>$/.test(selectedText)) {
+        } else if (/^<p align="right">(.*?)<\/p>$/.test(selectedText)) {
           this.lastExecutedCommand = "editing-toolbar:right";
           this.lastExecutedCommandName = "Right Align";
           detectedFormat = true;
-        }
-        else if (/^<p align="justify">(.*?)<\/p>$/.test(selectedText)) {
+        } else if (/^<p align="justify">(.*?)<\/p>$/.test(selectedText)) {
           this.lastExecutedCommand = "editing-toolbar:justify";
           this.lastExecutedCommandName = "Justify";
           detectedFormat = true;
-        }
-        else if (/^<sup>(.*?)<\/sup>$/.test(selectedText)) {
+        } else if (/^<sup>(.*?)<\/sup>$/.test(selectedText)) {
           this.lastExecutedCommand = "editing-toolbar:superscript";
           this.lastExecutedCommandName = "Superscript";
           detectedFormat = true;
-        }
-        else if (/^<sub>(.*?)<\/sub>$/.test(selectedText)) {
+        } else if (/^<sub>(.*?)<\/sub>$/.test(selectedText)) {
           this.lastExecutedCommand = "editing-toolbar:subscript";
           this.lastExecutedCommandName = "Subscript";
           detectedFormat = true;
-        }
-        else if (
-          /^> \[!(note|tip|warning|danger|info|success|question|quote)\]/i.test(selectedText)
+        } else if (
+          /^> \[!(note|tip|warning|danger|info|success|question|quote)\]/i.test(
+            selectedText
+          )
         ) {
-          const match = selectedText.match(/^> \[!(note|tip|warning|danger|info|success|question|quote)\]/i);
+          const match = selectedText.match(
+            /^> \[!(note|tip|warning|danger|info|success|question|quote)\]/i
+          );
           if (match) {
             this.lastExecutedCommand = "editor:insert-callout";
             this.lastExecutedCommandName = "Callout-" + match[1].toLowerCase();
@@ -711,9 +725,7 @@ processAdmonitionTypes(pluginInstance: any) {
           this.lastExecutedCommandName = "Heading 6";
           detectedFormat = true;
         }
-
-      }
-      else {
+      } else {
         // 没有选中文本时，探测光标周围的格式
         const cursor = editor.getCursor();
         const lineText = editor.getLine(cursor.line);
@@ -732,7 +744,10 @@ processAdmonitionTypes(pluginInstance: any) {
             foundFormats.push({
               command: "editing-toolbar:toggle-underline",
               name: "Underline",
-              distance: Math.min(cursorPos - formatStart, formatEnd - cursorPos)
+              distance: Math.min(
+                cursorPos - formatStart,
+                formatEnd - cursorPos
+              ),
             });
           }
         }
@@ -746,7 +761,10 @@ processAdmonitionTypes(pluginInstance: any) {
             foundFormats.push({
               command: "editing-toolbar:center",
               name: "Center",
-              distance: Math.min(cursorPos - formatStart, formatEnd - cursorPos)
+              distance: Math.min(
+                cursorPos - formatStart,
+                formatEnd - cursorPos
+              ),
             });
           }
         }
@@ -760,7 +778,10 @@ processAdmonitionTypes(pluginInstance: any) {
             foundFormats.push({
               command: "editing-toolbar:left",
               name: "Left Align",
-              distance: Math.min(cursorPos - formatStart, formatEnd - cursorPos)
+              distance: Math.min(
+                cursorPos - formatStart,
+                formatEnd - cursorPos
+              ),
             });
           }
         }
@@ -774,7 +795,10 @@ processAdmonitionTypes(pluginInstance: any) {
             foundFormats.push({
               command: "editing-toolbar:right",
               name: "Right Align",
-              distance: Math.min(cursorPos - formatStart, formatEnd - cursorPos)
+              distance: Math.min(
+                cursorPos - formatStart,
+                formatEnd - cursorPos
+              ),
             });
           }
         }
@@ -788,7 +812,10 @@ processAdmonitionTypes(pluginInstance: any) {
             foundFormats.push({
               command: "editing-toolbar:justify",
               name: "Justify",
-              distance: Math.min(cursorPos - formatStart, formatEnd - cursorPos)
+              distance: Math.min(
+                cursorPos - formatStart,
+                formatEnd - cursorPos
+              ),
             });
           }
         }
@@ -802,7 +829,10 @@ processAdmonitionTypes(pluginInstance: any) {
             foundFormats.push({
               command: "editing-toolbar:superscript",
               name: "Superscript",
-              distance: Math.min(cursorPos - formatStart, formatEnd - cursorPos)
+              distance: Math.min(
+                cursorPos - formatStart,
+                formatEnd - cursorPos
+              ),
             });
           }
         }
@@ -816,11 +846,13 @@ processAdmonitionTypes(pluginInstance: any) {
             foundFormats.push({
               command: "editing-toolbar:subscript",
               name: "Subscript",
-              distance: Math.min(cursorPos - formatStart, formatEnd - cursorPos)
+              distance: Math.min(
+                cursorPos - formatStart,
+                formatEnd - cursorPos
+              ),
             });
           }
         }
-
 
         // 检测光标是否在粗体中
         const boldRegex = /\*\*([^*]+)\*\*/g;
@@ -832,11 +864,13 @@ processAdmonitionTypes(pluginInstance: any) {
             foundFormats.push({
               command: "editor:toggle-bold",
               name: "Bold",
-              distance: Math.min(cursorPos - formatStart, formatEnd - cursorPos)
+              distance: Math.min(
+                cursorPos - formatStart,
+                formatEnd - cursorPos
+              ),
             });
           }
         }
-
 
         // 检测删除线
 
@@ -848,11 +882,13 @@ processAdmonitionTypes(pluginInstance: any) {
             foundFormats.push({
               command: "editor:toggle-strikethrough",
               name: "Strikethrough",
-              distance: Math.min(cursorPos - formatStart, formatEnd - cursorPos)
+              distance: Math.min(
+                cursorPos - formatStart,
+                formatEnd - cursorPos
+              ),
             });
           }
         }
-
 
         // 检测高亮
 
@@ -864,11 +900,13 @@ processAdmonitionTypes(pluginInstance: any) {
             foundFormats.push({
               command: "editor:toggle-highlight",
               name: "Highlight",
-              distance: Math.min(cursorPos - formatStart, formatEnd - cursorPos)
+              distance: Math.min(
+                cursorPos - formatStart,
+                formatEnd - cursorPos
+              ),
             });
           }
         }
-
 
         // 检测代码
 
@@ -880,11 +918,13 @@ processAdmonitionTypes(pluginInstance: any) {
             foundFormats.push({
               command: "editor:toggle-code",
               name: "Code",
-              distance: Math.min(cursorPos - formatStart, formatEnd - cursorPos)
+              distance: Math.min(
+                cursorPos - formatStart,
+                formatEnd - cursorPos
+              ),
             });
           }
         }
-
 
         // 检测字体颜色
 
@@ -896,15 +936,18 @@ processAdmonitionTypes(pluginInstance: any) {
             foundFormats.push({
               command: "editing-toolbar:change-font-color",
               name: "Font Color",
-              distance: Math.min(cursorPos - formatStart, formatEnd - cursorPos)
+              distance: Math.min(
+                cursorPos - formatStart,
+                formatEnd - cursorPos
+              ),
             });
           }
         }
 
-
         // 检测背景颜色
 
-        const bgColorRegex = /<span style="background:([^"]+)">([^<]+)<\/span>/g;
+        const bgColorRegex =
+          /<span style="background:([^"]+)">([^<]+)<\/span>/g;
         while ((match = bgColorRegex.exec(lineText)) !== null) {
           const formatStart = match.index;
           const formatEnd = match.index + match[0].length;
@@ -912,7 +955,10 @@ processAdmonitionTypes(pluginInstance: any) {
             foundFormats.push({
               command: "editing-toolbar:change-background-color",
               name: "Background Color",
-              distance: Math.min(cursorPos - formatStart, formatEnd - cursorPos)
+              distance: Math.min(
+                cursorPos - formatStart,
+                formatEnd - cursorPos
+              ),
             });
           }
         }
@@ -940,7 +986,6 @@ processAdmonitionTypes(pluginInstance: any) {
 
         // 检测标题
         if (!detectedFormat) {
-
           if (/^# /.test(lineText) && cursorPos > 0) {
             this.lastExecutedCommand = "editor:set-heading-1";
             this.lastExecutedCommandName = "Heading 1";
@@ -970,16 +1015,18 @@ processAdmonitionTypes(pluginInstance: any) {
       }
     }
     if (!detectedFormat && !this.lastExecutedCommand) {
-      new Notice(t("Please execute a format command or select format text first, then enable the format brush"));
+      new Notice(
+        t(
+          "Please execute a format command or select format text first, then enable the format brush"
+        )
+      );
       return;
     }
 
     this.formatBrushActive = !this.formatBrushActive;
 
     if (this.formatBrushActive) {
-
-
-      activeDocument.body.classList.add('format-brush-cursor');
+      activeDocument.body.classList.add("format-brush-cursor");
       // 关闭其他格式刷
       this.EN_FontColor_Format_Brush = false;
       this.EN_BG_Format_Brush = false;
@@ -988,9 +1035,14 @@ processAdmonitionTypes(pluginInstance: any) {
       this.lastCalloutType = calloutType;
       // 显示通知，包含具体命令名称
       if (this.formatBrushNotice) this.formatBrushNotice.hide();
-      this.formatBrushNotice = new Notice(t("Format brush ON! Select text to apply【") + this.lastExecutedCommandName + t("】format"), 0);
+      this.formatBrushNotice = new Notice(
+        t("Format brush ON! Select text to apply【") +
+          this.lastExecutedCommandName +
+          t("】format"),
+        0
+      );
     } else {
-      activeDocument.body.classList.remove('format-brush-cursor');
+      activeDocument.body.classList.remove("format-brush-cursor");
       // 关闭通知
       if (this.formatBrushNotice) {
         this.formatBrushNotice.hide();
@@ -1001,17 +1053,18 @@ processAdmonitionTypes(pluginInstance: any) {
   // 应用 Callout 的方法
   applyCalloutFormat(editor: Editor, text: string, calloutType: string) {
     // 移除现有的 Callout 前缀（如果存在）
-    const calloutPrefixRegex = /^> \[!(note|tip|warning|danger|info|success|question|quote)\] ?/i;
-    const cleanedText = text.replace(calloutPrefixRegex, '').trim();
+    const calloutPrefixRegex =
+      /^> \[!(note|tip|warning|danger|info|success|question|quote)\] ?/i;
+    const cleanedText = text.replace(calloutPrefixRegex, "").trim();
 
     // 处理多行 Callout 文本，去除第二行及以后的行首 >
-    const lines = cleanedText.split('\n');
+    const lines = cleanedText.split("\n");
     const processedLines = lines.map((line, index) =>
-      line.replace(/^\s*>\s*/, '')
+      line.replace(/^\s*>\s*/, "")
     );
 
     // 构建新的 Callout 文本
-    const newText = `> [!${calloutType}]\n> ${processedLines.join('\n> ')}`;
+    const newText = `> [!${calloutType}]\n> ${processedLines.join("\n> ")}`;
 
     // 替换文本
     editor.replaceSelection(newText);
@@ -1024,7 +1077,10 @@ processAdmonitionTypes(pluginInstance: any) {
       command.callback();
     }
     if (command && command.editorCallback) {
-      command.editorCallback(editor, this.app.workspace.getActiveViewOfType(MarkdownView));
+      command.editorCallback(
+        editor,
+        this.app.workspace.getActiveViewOfType(MarkdownView)
+      );
     }
   }
 
@@ -1033,9 +1089,8 @@ processAdmonitionTypes(pluginInstance: any) {
     this.EN_FontColor_Format_Brush = false;
     this.EN_BG_Format_Brush = false;
     this.EN_Text_Format_Brush = false;
-    activeDocument.body.classList.remove('format-brush-cursor');
+    activeDocument.body.classList.remove("format-brush-cursor");
     if (this.formatBrushActive) {
-
       this.formatBrushActive = false;
       if (this.formatBrushNotice) {
         this.formatBrushNotice.hide();
@@ -1058,7 +1113,6 @@ processAdmonitionTypes(pluginInstance: any) {
     this.commandsManager.reloadCustomCommands();
   }
 
-
   init_evt(container: Document, editor: Editor) {
     // 重置状态
     this.resetFormatBrushStates();
@@ -1074,12 +1128,12 @@ processAdmonitionTypes(pluginInstance: any) {
 
       const mouseDownTime = Date.now(); // 记录按下时间
       if (e.button === 1) {
-          this.registerDomEvent(container, "mouseup", (e2: MouseEvent) => {
-              const mouseUpTime = Date.now(); // 记录释放时间
-              if (mouseUpTime - mouseDownTime < 300 && e2.button === 1) {
-                  this.handleMiddleClickToolbar(e2);
-              }
-          });
+        this.registerDomEvent(container, "mouseup", (e2: MouseEvent) => {
+          const mouseUpTime = Date.now(); // 记录释放时间
+          if (mouseUpTime - mouseDownTime < 300 && e2.button === 1) {
+            this.handleMiddleClickToolbar(e2);
+          }
+        });
       }
 
       // 格式刷重置
@@ -1122,25 +1176,43 @@ processAdmonitionTypes(pluginInstance: any) {
 
   private resetFormatBrushIfActive(container: Document, e: MouseEvent) {
     if (e.button === 2 && this.isFormatBrushActive()) {
-      this.registerDomEvent(container, "contextmenu", (e: MouseEvent) => {
-        e.preventDefault();
-        e.stopPropagation();
-      }, {capture: true});
+      // 1. 定义一个临时拦截函数
+      const preventMenu = (ev: MouseEvent) => {
+        ev.preventDefault();
+        ev.stopPropagation();
+        // 2. 拦截一次后立即移除自己，确保下次右键正常
+        container.removeEventListener("contextmenu", preventMenu, {
+          capture: true,
+        });
+      };
+      // 3. 注册拦截
+      container.addEventListener("contextmenu", preventMenu, { capture: true });
+      // 4. 执行退出格式刷逻辑
       quiteFormatbrushes(this);
     }
   }
 
   private isFormatBrushActive(): boolean {
-    return this.EN_FontColor_Format_Brush ||
+    return (
+      this.EN_FontColor_Format_Brush ||
       this.EN_BG_Format_Brush ||
       this.EN_Text_Format_Brush ||
-      this.formatBrushActive;
+      this.formatBrushActive
+    );
   }
 
   private handleKeyboardSelection = (e: KeyboardEvent) => {
     const selectionKeys = [
-      "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight",
-      "Home", "End", "PageUp", "PageDown", "ShiftLeft", "ShiftRight"
+      "ArrowUp",
+      "ArrowDown",
+      "ArrowLeft",
+      "ArrowRight",
+      "Home",
+      "End",
+      "PageUp",
+      "PageDown",
+      "ShiftLeft",
+      "ShiftRight",
     ];
 
     const cmEditor = this.commandsManager.getActiveEditor();
@@ -1150,7 +1222,7 @@ processAdmonitionTypes(pluginInstance: any) {
     } else if (!e.shiftKey && this.positionStyle === "following") {
       this.hideToolbarIfNotSelected();
     }
-  }
+  };
 
   private registerScrollAndBlurEvents(container: Document) {
     const hideToolbar = this.throttle(() => {
@@ -1177,7 +1249,6 @@ processAdmonitionTypes(pluginInstance: any) {
     const cmEditor = this.commandsManager.getActiveEditor();
     if (!cmEditor?.hasFocus()) return;
 
-
     if (cmEditor.somethingSelected()) {
       this.handleSelectedText(cmEditor);
     } else {
@@ -1192,13 +1263,15 @@ processAdmonitionTypes(pluginInstance: any) {
       setBackgroundcolor(this.settings.cMenuBackgroundColor, cmEditor);
     } else if (this.EN_Text_Format_Brush) {
       setFormateraser(this, cmEditor);
-    }
-    else if (this.formatBrushActive && this.lastCalloutType) {
-      this.applyCalloutFormat(cmEditor, cmEditor.getSelection(), this.lastCalloutType);
+    } else if (this.formatBrushActive && this.lastCalloutType) {
+      this.applyCalloutFormat(
+        cmEditor,
+        cmEditor.getSelection(),
+        this.lastCalloutType
+      );
     } else if (this.formatBrushActive && this.lastExecutedCommand) {
       this.applyFormatBrush(cmEditor);
-    }
-    else if (this.positionStyle === "following") {
+    } else if (this.positionStyle === "following") {
       this.showFollowingToolbar(cmEditor);
     }
   }
@@ -1210,7 +1283,7 @@ processAdmonitionTypes(pluginInstance: any) {
       if (!inThrottle) {
         func.apply(context, args);
         inThrottle = true;
-        setTimeout(() => inThrottle = false, limit);
+        setTimeout(() => (inThrottle = false), limit);
       }
     };
   }
@@ -1231,38 +1304,49 @@ processAdmonitionTypes(pluginInstance: any) {
     }
   }
 
-
   public onPositionStyleChange(newStyle: string): void {
     this.positionStyle = newStyle;
     // 如果启用了多配置模式，检查对应样式的配置是否存在
     if (this.settings.enableMultipleConfig) {
       switch (newStyle) {
-        case 'following':
-          if (!this.settings.followingCommands || this.settings.followingCommands.length === 0) {
+        case "following":
+          if (
+            !this.settings.followingCommands ||
+            this.settings.followingCommands.length === 0
+          ) {
             this.settings.followingCommands = [...this.settings.menuCommands];
             this.saveSettings();
-            new Notice(t('Following style commands successfully initialized'));
+            new Notice(t("Following style commands successfully initialized"));
           }
           break;
-        case 'top':
-          if (!this.settings.topCommands || this.settings.topCommands.length === 0) {
+        case "top":
+          if (
+            !this.settings.topCommands ||
+            this.settings.topCommands.length === 0
+          ) {
             this.settings.topCommands = [...this.settings.menuCommands];
             this.saveSettings();
-            new Notice(t('Top style commands successfully initialized'));
+            new Notice(t("Top style commands successfully initialized"));
           }
           break;
-        case 'fixed':
-          if (!this.settings.fixedCommands || this.settings.fixedCommands.length === 0) {
+        case "fixed":
+          if (
+            !this.settings.fixedCommands ||
+            this.settings.fixedCommands.length === 0
+          ) {
             this.settings.fixedCommands = [...this.settings.menuCommands];
             this.saveSettings();
-            new Notice(t('Fixed style commands successfully initialized'));
+            new Notice(t("Fixed style commands successfully initialized"));
           }
           break;
-        case 'mobile':
-          if (!this.settings.mobileCommands || this.settings.mobileCommands.length === 0) {
+        case "mobile":
+          if (
+            !this.settings.mobileCommands ||
+            this.settings.mobileCommands.length === 0
+          ) {
             this.settings.mobileCommands = [...this.settings.menuCommands];
             this.saveSettings();
-            new Notice(t('Mobile style commands successfully initialized'));
+            new Notice(t("Mobile style commands successfully initialized"));
           }
           break;
       }
