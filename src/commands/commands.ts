@@ -249,35 +249,57 @@ export class CommandsManager {
         try {
             // 获取选中的文本
             let selectedText = editor.getSelection();
-            const curserStart = editor.getCursor("from");
-            const curserEnd = editor.getCursor("to");
+            let curserStart = editor.getCursor("from");
+            let curserEnd = editor.getCursor("to");
             
-            // 如果没有选中文本，尝试从剪贴板读取
+            // 如果没有选中文本，根据设置决定行为
             if (!selectedText) {
-                try {
-                    const clipboardItems = await this.readClipboard();
- 
-                    if(clipboardItems['text/html']){
-                        selectedText = htmlToMarkdown(clipboardItems['text/html']);
-                    }else{
-                        selectedText = clipboardItems['text/markdown'] || 
-                                   clipboardItems['text/plain'];
-                    }
+                if (this.plugin.settings.useCurrentLineForRegex) {
+                    // 新行为：使用当前光标所在行的内容
+                    const currentLine = curserStart.line;
+                    const lineText = editor.getLine(currentLine);
                     
-                    if (!selectedText) {
-                        new Notice(t('Please select text or copy text to clipboard first'));
+                    if (!lineText || lineText.trim() === '') {
+                        new Notice(t('Current line is empty, please select text or move to a non-empty line'));
                         return;
                     }
                     
-                    // 将剪贴板文本插入到当前光标位置
-                    editor.replaceRange(selectedText, curserStart, curserStart);
-                    // 更新光标位置
-                    const newEnd = editor.offsetToPos(editor.posToOffset(curserStart) + selectedText.length);
-                    editor.setSelection(curserStart, newEnd);
-                } catch (error) {
-                    console.error('读取剪贴板失败:', error);
-                    new Notice(t('Please select text first'));
-                    return;
+                    // 使用当前行的内容
+                    selectedText = lineText;
+                    
+                    // 更新光标位置为整行
+                    curserStart = { line: currentLine, ch: 0 };
+                    curserEnd = { line: currentLine, ch: lineText.length };
+                    
+                    // 选中当前行
+                    editor.setSelection(curserStart, curserEnd);
+                } else {
+                    // 旧行为：尝试从剪贴板读取
+                    try {
+                        const clipboardItems = await this.readClipboard();
+     
+                        if(clipboardItems['text/html']){
+                            selectedText = htmlToMarkdown(clipboardItems['text/html']);
+                        }else{
+                            selectedText = clipboardItems['text/markdown'] || 
+                                       clipboardItems['text/plain'];
+                        }
+                        
+                        if (!selectedText) {
+                            new Notice(t('Please select text or copy text to clipboard first'));
+                            return;
+                        }
+                        
+                        // 将剪贴板文本插入到当前光标位置
+                        editor.replaceRange(selectedText, curserStart, curserStart);
+                        // 更新光标位置
+                        const newEnd = editor.offsetToPos(editor.posToOffset(curserStart) + selectedText.length);
+                        editor.setSelection(curserStart, newEnd);
+                    } catch (error) {
+                        console.error('读取剪贴板失败:', error);
+                        new Notice(t('Please select text first'));
+                        return;
+                    }
                 }
             }
 
