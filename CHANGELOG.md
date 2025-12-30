@@ -1,5 +1,213 @@
 # Changelog
 
+## 3.2.0 (2025-12-30)
+### Update styles.css
+### Update CHANGELOG.md
+### 更改正则命令相关选项的位置
+### Merge branch 'pr/265'
+### 修复子菜单被遮挡
+### 增加工具栏缓存优化响应速度
+### Merge branch 'pr/259'
+### 高亮背景色使用mark 标签废弃span
+### Merge branch 'pr/257'
+### 修复一些翻译错误
+### Merge branch 'pr/250'
+### 取消中键关闭支持右键关闭格式刷
+### feat: support reg with current line
+### Update CHANGELOG.md
+### Update zh-cn.ts
+### Update en-gb.ts
+### Update en.ts
+### Update zh-cn.ts
+### Update en-gb.ts
+### Update en.ts
+### Update settingsTab.ts
+### Update suggesterModals.ts
+### Update RegexCommandModal.ts
+### Update ImportExportModal.ts
+### Update commands.ts
+### Update zh-cn.ts
+### Update en-gb.ts
+### Update zh-cn.ts
+### Update en.ts
+### Update zh-cn.ts
+### Update settingsTab.ts
+### Update en-gb.ts
+### Update en.ts
+### Update en-gb.ts
+### Update en.ts
+### Update settingsTab.ts
+### Update en.ts
+### Update en.ts
+### Update settingsTab.ts
+### Update en.ts
+### Merge branch 'master' of https://github.com/MiserMagus/toolbar
+### final steps
+### Update settingsTab.ts
+### Update settingsTab.ts
+### Update editingToolbarModal.ts
+### Update settingsTab.ts
+### Update settingsTab.ts
+### Update settingsTab.ts
+### Update main.ts
+### Update main.ts
+### Update settingsTab.ts
+### Update settingsTab.ts
+### revert
+### Update settingsTab.ts
+### Update settingsTab.ts
+### Update editingToolbarModal.ts
+### Update editingToolbarModal.ts
+### Update editingToolbarModal.ts
+### Update main.ts
+### Update editingToolbarModal.ts
+### Update editingToolbarModal.ts
+### Update main.ts
+### Update main.ts
+### Update editingToolbarModal.ts
+### Update editingToolbarModal.ts
+### Update editingToolbarModal.ts
+### Update editingToolbarModal.ts
+### Update editingToolbarModal.ts
+### Update editingToolbarModal.ts
+### Update editingToolbarModal.ts
+### Update editingToolbarModal.ts
+### Update editingToolbarModal.ts
+### Update editingToolbarModal.ts
+### Update editingToolbarModal.ts
+### Update editingToolbarModal.ts
+### Update settingsTab.ts
+### Update editingToolbarModal.ts
+### Update main.ts
+### Update main.ts
+### Update main.ts
+### Update editingToolbarModal.ts
+### Update editingToolbarModal.ts
+### Update main.ts
+### Update main.ts
+### Update editingToolbarModal.ts
+### Update editingToolbarModal.ts
+### Update main.ts
+### Update editingToolbarModal.ts
+### Update helper.ts
+### revert
+### Update main.ts
+### revert
+### Update updateModal.ts
+### Update suggesterModals.ts
+### Update insertLinkModal.ts
+### Update insertCalloutModal.ts
+### Update editingToolbarModal.ts
+### Update RegexCommandModal.ts
+### Update ImportExportModal.ts
+### Update DeployCommand.ts
+### Update CustomCommandModal.ts
+### Update ConfirmModal.ts
+### Update settingsTab.ts
+### Update main.ts
+### Update updateModal.ts
+### Update suggesterModals.ts
+### Update insertLinkModal.ts
+### Update insertCalloutModal.ts
+### Update editingToolbarModal.ts
+### Update RegexCommandModal.ts
+### Update ImportExportModal.ts
+### Update DeployCommand.ts
+### Update CustomCommandModal.ts
+### Update ConfirmModal.ts
+### Update insertCalloutModal.ts
+### Update editingToolbarModal.ts
+### Update insertCalloutModal.ts
+### Update editingToolbarModal.ts
+### Update settingsTab.ts
+### Delete README-zh_cn.md
+### Delete src/translations directory
+### Delete src/translations/locale/da.ts
+### Delete src/translations/locale/cz.ts
+### Delete src/translations/locale/ar.ts
+### Stable
+### Stable
+### Stable
+### Stable
+### Update settingsTab.ts
+### Update settingsTab.ts
+### Update main.ts
+### Update settingsTab.ts
+### Update settingsTab.ts
+### Update settingsTab.ts
+### Update settingsTab.ts
+### Update settingsTab.ts
+### Update main.ts
+### Update settingsTab.ts
+### Update settingsTab.ts
+### Update settingsTab.ts
+### Update settingsTab.ts
+### Update settingsData.ts
+### top/following/fixed toolbar toggles
+### top/following/fixed toolbar toggles
+### patches 1 and 2
+### top/following/fixed toggles added
+### Update main.ts
+### Update main.ts
+### patch 1 and 2
+### patch 1 and 2
+### patches 1 and 2
+### patches 1 and 2
+### patches 1 and 2
+### patch 1 and 2
+### Update settingsTab.ts
+### Update settingsTab.ts
+### Update settingsTab.ts
+### Update settingsTab.ts
+### patch 1 fix
+### Update settingsTab.ts
+### Update settingsTab.ts
+### Update settingsTab.ts
+### Update settingsTab.ts
+### Update settingsTab.ts
+### Update main.ts
+### Update main.ts
+### Update settingsData.ts
+### patch 1 fix
+### revert
+### revert
+### patch 1 fix
+### Simplify appearance style assignment logic
+Refactor appearance style assignment to simplify logic.
+### Refactor appearance settings and initialization
+### Patch 1 fix
+Refactor appearance handling and position style logic.
+### Refactor position style assignment
+Refactor position style assignment to use onPositionStyleChange method.
+### admonition indent problems at 351
+### Implement appearance update method in settingsTab
+Added updateAppearanceBucketFromCurrent method to manage appearance settings.
+### Enhance appearance store and style application
+Refactor appearance handling and position style logic.
+### Enhance editingToolbarSettings with appearanceByStyle
+Added appearanceByStyle property to editingToolbarSettings interface.
+### Add optional appearanceByStyle to settingsData
+Added optional appearanceByStyle property for toolbar settings.
+### Add appearanceByStyle property to settingsData
+### Update updateCurrentCommands to use currentEditingConfig
+### Refactor updateCurrentCommands to support styles
+Refactor updateCurrentCommands to accept an optional style parameter and adjust command settings based on the specified style.
+### useless files gone
+### revert
+Refactor settings loading and updating to avoid shared references for arrays.
+### Deep clone arrays in loadSettings method
+Ensure arrays are deep cloned to avoid shared references when loading settings.
+### Clone commands array in updateCurrentCommands method
+Updated the updateCurrentCommands method to clone the commands array when assigning to settings properties.
+### Replace <span> tags with <mark> for highlights
+Applies changes following the suggestion in #256
+### Updated tool tip names
+### Updated commands for Command Palette
+### Updated names for Toolbar
+### Middle button activates toolbar, right button exits the format brush without context menu.
+### Update manifest.json and CHANGELOG.md for version 3.1.18
+
+
 ## 3.2.0 – Multi-toolbar and settings overhaul (2025-12-05)
 
 
