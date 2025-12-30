@@ -793,6 +793,15 @@ button[class^=editingToolbarCommandsubItem]::after {
   color: black;
 }
 
+:is(.cm-line, p) span[style^="background:rgba"] {
+  color: var(--text-normal);
+}
+
+:is(.cm-line, p) span[style^="background:#"] {
+  color: black;
+}
+
+
 .setting-item.toolbar-cta:after {
   content: "";
   position: absolute;
