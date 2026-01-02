@@ -632,6 +632,16 @@ export function editingToolbarPopover(
   // From here on, we are rendering a single toolbar instance for a specific style
   const effectiveStyle: ToolbarStyleKey = style as ToolbarStyleKey;
 
+  // If toolbar visibility is disabled globally, hide any existing toolbars and return early
+  // This prevents toolbars from being created when they should be hidden
+  if (!settings.cMenuVisibility) {
+    const existingToolbar = isExistoolbar(app, plugin, effectiveStyle);
+    if (existingToolbar) {
+      existingToolbar.style.display = "none";
+    }
+    return; // Don't create new toolbars when visibility is disabled
+  }
+
   // Per-style appearance for this toolbar instance
   const appearanceStore = (settings.appearanceByStyle || {}) as AppearanceByStyle;
   const appearanceForStyle =
@@ -688,6 +698,9 @@ export function editingToolbarPopover(
         editingToolbar.addClass("editingToolbarModalBar");
         editingToolbar.setAttribute("data-toolbar-style", effectiveStyle);
     
+        // Note: cMenuVisibility is already checked at function start, so we don't need to check here
+        // Toolbars should only be created when cMenuVisibility is true
+        
         if (effectiveStyle === "top") {
           editingToolbar.className += " top";
           if (settings.autohide) {
@@ -696,18 +709,18 @@ export function editingToolbarPopover(
           if (settings.Iscentered) {
             editingToolbar.className += " centered";
           }
+          // If cMenuVisibility is false, visibility is already set to hidden above
         } else if (effectiveStyle === "following") {
           // following 工具栏初始隐藏，待选中文本后定位并显示
           editingToolbar.style.visibility = "hidden";
-                } else if (effectiveStyle === "fixed") {
+        } else if (effectiveStyle === "fixed") {
           const Rowsize = resolvedIconSize || 18;
-          editingToolbar.setAttribute(
-            "style",
-            `left: calc(50% - calc(${settings.cMenuNumRows * (Rowsize + 10)}px / 2));
+          const baseStyle = `left: calc(50% - calc(${settings.cMenuNumRows * (Rowsize + 10)}px / 2));
            bottom: 4.25em; 
            grid-template-columns: repeat(${settings.cMenuNumRows}, ${Rowsize + 10}px);
-           gap: ${(Rowsize - 18) / 4}px`
-          );
+           gap: ${(Rowsize - 18) / 4}px`;
+          // Set the base style (cMenuVisibility is already checked at function start)
+          editingToolbar.setAttribute("style", baseStyle);
         }
       }
       // 继续保留旧的 id，以兼容当前 CSS
@@ -1144,10 +1157,15 @@ export function editingToolbarPopover(
       const existingToolbar = isExistoolbar(app, plugin, effectiveStyle);
       if (existingToolbar && effectiveStyle !== "top") {
         // 工具栏已存在，只需要更新可见性和样式
-        if (effectiveStyle === "following") {
+        // Check cMenuVisibility first - if disabled, hide all toolbars with display: none
+        if (!settings.cMenuVisibility) {
+          existingToolbar.style.display = "none";
+        } else if (effectiveStyle === "following") {
           existingToolbar.style.visibility = "hidden";
+          existingToolbar.style.display = ""; // Reset display to allow visibility to work
         } else {
           existingToolbar.style.visibility = "visible";
+          existingToolbar.style.display = ""; // Reset display to allow visibility to work
         }
 
         // 更新 CSS 变量（可能用户更改了设置）
@@ -1181,6 +1199,7 @@ export function editingToolbarPopover(
   
 
       // 缓存新创建的工具栏（但 top 工具栏不缓存，因为每个 leaf 都有独立的工具栏）
+      // Note: cMenuVisibility is already checked at function start, so toolbars are only created when visible
       if (effectiveStyle !== "top") {
         const newToolbar = isExistoolbar(app, plugin, effectiveStyle);
         if (newToolbar) {
