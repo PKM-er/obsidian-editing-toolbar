@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.2.1 (2026-01-04)
+### Fixed issue where it conflicted with the Settings Search plugin. If editing toolbar was hidden, and you reloaded Obsidian, it would show anyway, even though it was hidden. This fixes this conflict.
+### Update CHANGELOG.md
+### Update manifest.json and CHANGELOG.md for version 3.2.0
+
+
 
 ## 3.2.0 – Multi-toolbar and settings overhaul (2025-12-05)
 
