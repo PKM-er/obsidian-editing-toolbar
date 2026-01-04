@@ -427,6 +427,78 @@ export class CommandsManager {
             },
         });
 
+        // Top 工具栏开关命令
+        this.plugin.addCommand({
+            id: "toggle-top-toolbar",
+            name: "Toggle Top Toolbar",
+            callback: async () => {
+                const s = this.plugin.settings;
+                const prevStyle = this.plugin.positionStyle;
+                s.enableTopToolbar = !s.enableTopToolbar;
+                let nextStyle: string | null = null;
+                if (s.enableTopToolbar) {
+                    nextStyle = 'top';
+                } else if (prevStyle === 'top') {
+                    if (s.enableFollowingToolbar) nextStyle = 'following';
+                    else if (s.enableFixedToolbar) nextStyle = 'fixed';
+                    else nextStyle = null;
+                }
+                if (nextStyle && nextStyle !== prevStyle) {
+                    this.plugin.onPositionStyleChange(nextStyle);
+                }
+                await this.plugin.saveSettings();
+                this.plugin.handleeditingToolbar();
+            },
+        });
+
+        // Following 工具栏开关命令
+        this.plugin.addCommand({
+            id: "toggle-following-toolbar",
+            name: "Toggle Following Toolbar",
+            callback: async () => {
+                const s = this.plugin.settings;
+                const prevStyle = this.plugin.positionStyle;
+                s.enableFollowingToolbar = !s.enableFollowingToolbar;
+                let nextStyle: string | null = null;
+                if (s.enableFollowingToolbar) {
+                    nextStyle = 'following';
+                } else if (prevStyle === 'following') {
+                    if (s.enableTopToolbar) nextStyle = 'top';
+                    else if (s.enableFixedToolbar) nextStyle = 'fixed';
+                    else nextStyle = null;
+                }
+                if (nextStyle && nextStyle !== prevStyle) {
+                    this.plugin.onPositionStyleChange(nextStyle);
+                }
+                await this.plugin.saveSettings();
+                this.plugin.handleeditingToolbar();
+            },
+        });
+
+        // Fixed 工具栏开关命令
+        this.plugin.addCommand({
+            id: "toggle-fixed-toolbar",
+            name: "Toggle Fixed Toolbar",
+            callback: async () => {
+                const s = this.plugin.settings;
+                const prevStyle = this.plugin.positionStyle;
+                s.enableFixedToolbar = !s.enableFixedToolbar;
+                let nextStyle: string | null = null;
+                if (s.enableFixedToolbar) {
+                    nextStyle = 'fixed';
+                } else if (prevStyle === 'fixed') {
+                    if (s.enableTopToolbar) nextStyle = 'top';
+                    else if (s.enableFollowingToolbar) nextStyle = 'following';
+                    else nextStyle = null;
+                }
+                if (nextStyle && nextStyle !== prevStyle) {
+                    this.plugin.onPositionStyleChange(nextStyle);
+                }
+                await this.plugin.saveSettings();
+                this.plugin.handleeditingToolbar();
+            },
+        });
+
         // 格式擦相关命令
         this.plugin.addCommand({
             id: 'format-eraser',

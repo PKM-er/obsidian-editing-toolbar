@@ -210,6 +210,14 @@ export default class editingToolbarPlugin extends Plugin {
     this.app.workspace.onLayoutReady(() => {
       this.statusBar = new StatusBar(this);
       this.statusBar.init();
+      
+      // Ensure toolbar respects initial visibility state after Settings Search completes
+      // Use a small delay to ensure Settings Search has finished scanning settings tabs
+      setTimeout(() => {
+        if (!this.settings.cMenuVisibility) {
+          this.handleeditingToolbar();
+        }
+      }, 100);
     });
     this.init_evt(activeDocument, editor);
     if (requireApiVersion("0.15.0")) {
@@ -466,7 +474,7 @@ this.app.workspace.onLayoutReady(async () => {
     if (!this.settings.cMenuVisibility) {
       (["top", "following", "fixed"] as const).forEach((style) => {
         const el = isExistoolbar(this.app, this, style);
-        if (el) el.style.visibility = "hidden";
+        if (el) el.style.display = "none";
       });
       return;
     }

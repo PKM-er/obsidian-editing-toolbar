@@ -82,26 +82,104 @@ export class StatusBar {
       });
     });
 
-    // 添加位置样式切换
+    // 工具栏开关子菜单
     menu.addItem((item) => {
       item.setTitle(t("Toolbar Position"));
       requireApiVersion("0.15.0") ? item.setSection("settings") : true;
       item.setIcon("dock");
 
-      // 使用 setSubmenu 创建子菜单
       const submenu = item.setSubmenu();
-      
-      // 为每个位置样式添加选项
-      ["top", "fixed", "following"].forEach(position => {
-        submenu.addItem(subItem => {
-          subItem.setTitle(position);
-          subItem.setIcon(this.plugin.positionStyle === position ? "check" : "");
-          subItem.onClick(async () => {
-            this.plugin.settings.positionStyle = position;
-            await this.plugin.saveSettings();
-            // 调用插件的 onPositionStyleChange 方法
-            this.plugin.onPositionStyleChange(position);
-          });
+
+      // Top 工具栏开关
+      submenu.addItem((subItem) => {
+        subItem.setTitle(t("Top Toolbar"));
+        const itemDom = (subItem as any).dom as HTMLElement;
+        const toggleComponent = new ToggleComponent(itemDom)
+          .setValue(this.plugin.settings.enableTopToolbar || false)
+          .setDisabled(true);
+
+        subItem.onClick(async (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          const s = this.plugin.settings;
+          const prevStyle = this.plugin.positionStyle;
+          s.enableTopToolbar = !s.enableTopToolbar;
+          toggleComponent.setValue(s.enableTopToolbar);
+          let nextStyle: string | null = null;
+          if (s.enableTopToolbar) {
+            nextStyle = 'top';
+          } else if (prevStyle === 'top') {
+            if (s.enableFollowingToolbar) nextStyle = 'following';
+            else if (s.enableFixedToolbar) nextStyle = 'fixed';
+            else nextStyle = null;
+          }
+          if (nextStyle && nextStyle !== prevStyle) {
+            this.plugin.onPositionStyleChange(nextStyle);
+          }
+          await this.plugin.saveSettings();
+          this.plugin.handleeditingToolbar();
+        });
+      });
+
+      // Following 工具栏开关
+      submenu.addItem((subItem) => {
+        subItem.setTitle(t("Following Toolbar"));
+        const itemDom = (subItem as any).dom as HTMLElement;
+        const toggleComponent = new ToggleComponent(itemDom)
+          .setValue(this.plugin.settings.enableFollowingToolbar || false)
+          .setDisabled(true);
+
+        subItem.onClick(async (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          const s = this.plugin.settings;
+          const prevStyle = this.plugin.positionStyle;
+          s.enableFollowingToolbar = !s.enableFollowingToolbar;
+          toggleComponent.setValue(s.enableFollowingToolbar);
+          let nextStyle: string | null = null;
+          if (s.enableFollowingToolbar) {
+            nextStyle = 'following';
+          } else if (prevStyle === 'following') {
+            if (s.enableTopToolbar) nextStyle = 'top';
+            else if (s.enableFixedToolbar) nextStyle = 'fixed';
+            else nextStyle = null;
+          }
+          if (nextStyle && nextStyle !== prevStyle) {
+            this.plugin.onPositionStyleChange(nextStyle);
+          }
+          await this.plugin.saveSettings();
+          this.plugin.handleeditingToolbar();
+        });
+      });
+
+      // Fixed 工具栏开关
+      submenu.addItem((subItem) => {
+        subItem.setTitle(t("Fixed Toolbar"));
+        const itemDom = (subItem as any).dom as HTMLElement;
+        const toggleComponent = new ToggleComponent(itemDom)
+          .setValue(this.plugin.settings.enableFixedToolbar || false)
+          .setDisabled(true);
+
+        subItem.onClick(async (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          const s = this.plugin.settings;
+          const prevStyle = this.plugin.positionStyle;
+          s.enableFixedToolbar = !s.enableFixedToolbar;
+          toggleComponent.setValue(s.enableFixedToolbar);
+          let nextStyle: string | null = null;
+          if (s.enableFixedToolbar) {
+            nextStyle = 'fixed';
+          } else if (prevStyle === 'fixed') {
+            if (s.enableTopToolbar) nextStyle = 'top';
+            else if (s.enableFollowingToolbar) nextStyle = 'following';
+            else nextStyle = null;
+          }
+          if (nextStyle && nextStyle !== prevStyle) {
+            this.plugin.onPositionStyleChange(nextStyle);
+          }
+          await this.plugin.saveSettings();
+          this.plugin.handleeditingToolbar();
         });
       });
     });
