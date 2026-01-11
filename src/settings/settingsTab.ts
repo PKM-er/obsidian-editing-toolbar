@@ -1298,7 +1298,8 @@ export class editingToolbarSettingTab extends PluginSettingTab {
       delay: 800,
       delayOnTouchOnly: true,
       touchStartThreshold: 5,
-      filter: ".setting-item-control button",
+      filter: ".setting-item-control button, .dropdown, .editingToolbarMenuTypeDropdown",
+      preventOnFilter: false,
       onChoose: function (evt) {
         const item = evt.item;
         item.classList.add('sortable-chosen-feedback');
@@ -1356,6 +1357,29 @@ export class editingToolbarSettingTab extends PluginSettingTab {
                 new ChooseFromIconList(this.plugin, newCommand, false, null, this.currentEditingConfig).open();
               });
             checkHtml(newCommand.icon) ? addicon.buttonEl.innerHTML = newCommand.icon : addicon.setIcon(newCommand.icon)
+          })
+          .addButton((changename) => {
+            changename
+              .setIcon("pencil")
+              .setTooltip(t("Change Submenu Name"))
+              .setClass("editingToolbarSettingsButton")
+              .onClick(async () => {
+                new ChangeCmdname(this.app, this.plugin, newCommand, false, this.currentEditingConfig).open();
+              });
+          })
+          .addDropdown((dropdown) => {
+            dropdown
+              .addOption("submenu", t("Button Submenu"))
+              .addOption("dropdown", t("Dropdown Menu"))
+              .setValue(newCommand.menuType || "submenu")
+              .onChange(async (value: "submenu" | "dropdown") => {
+                newCommand.menuType = value;
+                this.plugin.updateCurrentCommands(currentCommands, this.currentEditingConfig);
+                await this.plugin.saveSettings();
+                this.triggerRefresh();
+                new Notice(t("Menu type changed to") + ": " + (value === "dropdown" ? t("Dropdown Menu") : t("Button Submenu")));
+              });
+            dropdown.selectEl.addClass("editingToolbarMenuTypeDropdown");
           })
           .addButton((deleteButton) => this.createDeleteButton(deleteButton, async () => {
             currentCommands.remove(newCommand);

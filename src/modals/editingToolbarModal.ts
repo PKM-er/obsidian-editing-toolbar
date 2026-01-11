@@ -1,5 +1,5 @@
 import type editingToolbarPlugin from "src/plugin/main";
-import { App, Notice, requireApiVersion, ItemView, MarkdownView, ButtonComponent, WorkspaceParent, WorkspaceWindow, WorkspaceParentExt } from "obsidian";
+import { App, Notice, requireApiVersion, ItemView, MarkdownView, ButtonComponent, WorkspaceParent, WorkspaceWindow, WorkspaceParentExt, Menu } from "obsidian";
 import { backcolorpicker, colorpicker } from "src/util/util";
 import { t } from "src/translations/helper";
 import {
@@ -865,55 +865,94 @@ export function editingToolbarPopover(
             ? (_btn.buttonEl.innerHTML = item.icon)
             : _btn.setIcon(item.icon);
 
-          // let __btnwidth;
-          // if (_btn.buttonEl.offsetWidth > 100) __btnwidth = 26;
-          // else {
-          //   if (_btn.buttonEl.offsetWidth < 26) __btnwidth = 26;
-          //   else __btnwidth = _btn.buttonEl.offsetWidth;
-          // }
           btnwidth += buttonWidth + 2;
-          let submenu = createDiv("subitem");
-          if (submenu) {
-            item.SubmenuCommands.forEach(
-              (subitem: { name: string; id: any; icon: string }) => {
-                let hotkey = getHotkey(app, subitem.id);
-                hotkey == "–" ? tip = subitem.name : tip = subitem.name + "(" + hotkey + ")";
-                let sub_btn = new ButtonComponent(submenu)
-                  .setTooltip(tip)
-                  .setClass("menu-item")
-                  .onClick(() => {
 
-                    app.commands.executeCommandById(subitem.id);
+          // 判断菜单类型：dropdown 或 submenu（默认）
+          const menuType = item.menuType || 'submenu';
 
-                    // 检查命令执行后是否仍有文本选中
-                    const editor = plugin.commandsManager.getActiveEditor();
-                    const hasSelection = editor && editor.somethingSelected();
-      
-                    if (settings.cMenuVisibility == false) {
-                      editingToolbar.style.visibility = "hidden";
-                    } else if (effectiveStyle === "following") {
-                      // For the following toolbar, only show when there is a selection.
-                      if (!hasSelection) {
+          if (menuType === 'dropdown') {
+            // 下拉菜单模式
+            _btn.setClass("editingToolbarDropdownButton");
+            let hotkey = getHotkey(app, item.id);
+            hotkey == "–" ? tip = item.name : tip = item.name + "(" + hotkey + ")";
+            _btn.setTooltip(tip);
+
+            _btn.onClick((evt: MouseEvent) => {
+              const menu = new Menu();
+
+              item.SubmenuCommands.forEach((subitem: { name: string; id: any; icon: string }) => {
+                menu.addItem((menuItem) => {
+                  menuItem
+                    .setTitle(subitem.name)
+                    .setIcon(subitem.icon)
+                    .onClick(() => {
+                      app.commands.executeCommandById(subitem.id);
+
+                      // 检查命令执行后是否仍有文本选中
+                      const editor = plugin.commandsManager.getActiveEditor();
+                      const hasSelection = editor && editor.somethingSelected();
+
+                      if (settings.cMenuVisibility == false) {
                         editingToolbar.style.visibility = "hidden";
+                      } else if (effectiveStyle === "following") {
+                        if (!hasSelection) {
+                          editingToolbar.style.visibility = "hidden";
+                        }
+                      } else {
+                        editingToolbar.style.visibility = "visible";
                       }
-                    } else {
-                      editingToolbar.style.visibility = "visible";
-                    }
+                    });
+                });
+              });
 
-                  });
-                if (index < settings.cMenuNumRows) {
-                  if (effectiveStyle !== "top")
-                    sub_btn.buttonEl.setAttribute('aria-label-position', 'top')
+              // 在按钮下方显示菜单
+              menu.showAtMouseEvent(evt);
+            });
+          } else {
+            // 原有的子按钮展开模式
+            let submenu = createDiv("subitem");
+            if (submenu) {
+              item.SubmenuCommands.forEach(
+                (subitem: { name: string; id: any; icon: string }) => {
+                  let hotkey = getHotkey(app, subitem.id);
+                  hotkey == "–" ? tip = subitem.name : tip = subitem.name + "(" + hotkey + ")";
+                  let sub_btn = new ButtonComponent(submenu)
+                    .setTooltip(tip)
+                    .setClass("menu-item")
+                    .onClick(() => {
+
+                      app.commands.executeCommandById(subitem.id);
+
+                      // 检查命令执行后是否仍有文本选中
+                      const editor = plugin.commandsManager.getActiveEditor();
+                      const hasSelection = editor && editor.somethingSelected();
+
+                      if (settings.cMenuVisibility == false) {
+                        editingToolbar.style.visibility = "hidden";
+                      } else if (effectiveStyle === "following") {
+                        // For the following toolbar, only show when there is a selection.
+                        if (!hasSelection) {
+                          editingToolbar.style.visibility = "hidden";
+                        }
+                      } else {
+                        editingToolbar.style.visibility = "visible";
+                      }
+
+                    });
+                  if (index < settings.cMenuNumRows) {
+                    if (effectiveStyle !== "top")
+                      sub_btn.buttonEl.setAttribute('aria-label-position', 'top')
+                  }
+                  if (subitem.id == "editingToolbar-Divider-Line")
+                    sub_btn.setClass("editingToolbar-Divider-Line");
+                  checkHtml(subitem.icon)
+                    ? (sub_btn.buttonEl.innerHTML = subitem.icon)
+                    : sub_btn.setIcon(subitem.icon);
+
+                  _btn.buttonEl.insertAdjacentElement("afterbegin", submenu);
                 }
-                if (subitem.id == "editingToolbar-Divider-Line")
-                  sub_btn.setClass("editingToolbar-Divider-Line");
-                checkHtml(subitem.icon)
-                  ? (sub_btn.buttonEl.innerHTML = subitem.icon)
-                  : sub_btn.setIcon(subitem.icon);
-
-                _btn.buttonEl.insertAdjacentElement("afterbegin", submenu);
-              }
-            );
+              );
+            }
           }
         } else {
           if (item.id == "editing-toolbar:change-font-color") {

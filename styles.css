@@ -90,6 +90,30 @@ height: var(--toolbar-icon-size) + 8px;
   background-color: var(--background-modifier-hover) !important;
 }
 
+/* 下拉菜单按钮样式 */
+
+
+/* 设置界面中的菜单类型选择器样式 */
+.editingToolbarMenuTypeDropdown {
+  min-width: 120px;
+  margin-left: 8px;
+  padding: 4px 8px;
+  border-radius: var(--radius-s);
+  background-color: var(--background-primary-alt);
+  border: 1px solid var(--background-modifier-border);
+  color: var(--text-normal);
+  cursor: pointer;
+}
+
+.editingToolbarMenuTypeDropdown:hover {
+  background-color: var(--background-modifier-hover);
+}
+
+.editingToolbarMenuTypeDropdown:focus {
+  border-color: var(--interactive-accent);
+  outline: none;
+}
+
 /* #editingToolbarModalBar button.editingToolbarCommandItem svg {
   width: 1.3em;
   height: 1.3em;

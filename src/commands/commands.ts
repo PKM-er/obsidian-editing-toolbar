@@ -9,6 +9,7 @@ import { InsertCalloutModal } from "src/modals/insertCalloutModal";
 import { InsertLinkModal } from "src/modals/insertLinkModal";
 import { CustomCommand } from "src/settings/settingsData";
 import { t } from 'src/translations/helper';
+import { TextEnhancement } from "src/util/textEnhancement";
 export class CommandsManager {
     private plugin: editingToolbarPlugin;
 
@@ -496,6 +497,55 @@ export class CommandsManager {
                 }
                 await this.plugin.saveSettings();
                 this.plugin.handleeditingToolbar();
+            },
+        });
+
+        // 文本增强功能命令
+        this.plugin.addCommand({
+            id: 'get-plain-text',
+            name: 'Get Plain Text',
+            editorCallback: (editor: Editor) => {
+                TextEnhancement.getPlainText(editor);
+            },
+        });
+
+        this.plugin.addCommand({
+            id: 'insert-blank-lines',
+            name: 'Insert Blank Lines',
+            editorCallback: (editor: Editor) => {
+                TextEnhancement.insertBlankLines(editor);
+            },
+        });
+
+        this.plugin.addCommand({
+            id: 'remove-blank-lines',
+            name: 'Remove Blank Lines',
+            editorCallback: (editor: Editor) => {
+                TextEnhancement.removeBlankLines(editor);
+            },
+        });
+
+        this.plugin.addCommand({
+            id: 'split-lines',
+            name: 'Split Lines',
+            editorCallback: (editor: Editor) => {
+                TextEnhancement.splitLines(editor);
+            },
+        });
+
+        this.plugin.addCommand({
+            id: 'smart-paste',
+            name: 'Smart Paste',
+            editorCallback: async (editor: Editor) => {
+                await TextEnhancement.smartPaste(editor);
+            },
+        });
+
+        this.plugin.addCommand({
+            id: 'smart-symbols',
+            name: 'Smart Symbols',
+            editorCallback: (editor: Editor) => {
+                TextEnhancement.smartSymbols(editor);
             },
         });
 
