@@ -881,29 +881,59 @@ export function editingToolbarPopover(
               const menu = new Menu();
 
               item.SubmenuCommands.forEach((subitem: { name: string; id: any; icon: string }) => {
-                menu.addItem((menuItem) => {
-                  menuItem
-                    .setTitle(subitem.name)
-                    .setIcon(subitem.icon)
-                    .onClick(() => {
-                      app.commands.executeCommandById(subitem.id);
+                // 检查是否是分割线
+                if (subitem.id === "editingToolbar-Divider-Line") {
+                  // 添加分割线和分类标题
+                  menu.addSeparator();
+                  // 添加一个禁用的菜单项作为分类标题，使用翻译函数
+                  menu.addItem((menuItem) => {
+                    menuItem
+                      .setTitle(t(subitem.name as any))  // 使用翻译函数，添加类型断言
+                      .setIcon("")
+                      .setDisabled(true);
+                  });
+                } else {
+                  // 添加普通菜单项，也使用翻译函数
+                  menu.addItem((menuItem) => {
+                    // 获取快捷键
+                    const hotkey = getHotkey(app, subitem.id, false);
+                    const title = t(subitem.name as any);
 
-                      // 检查命令执行后是否仍有文本选中
-                      const editor = plugin.commandsManager.getActiveEditor();
-                      const hasSelection = editor && editor.somethingSelected();
+                    // 如果有快捷键，添加到标题后面
+                    const displayTitle = hotkey !== "–" ? `${title}` : title;
 
-                      if (settings.cMenuVisibility == false) {
-                        editingToolbar.style.visibility = "hidden";
-                      } else if (effectiveStyle === "following") {
-                        if (!hasSelection) {
+                    menuItem
+                      .setTitle(displayTitle)  // 使用翻译函数进行国际化
+                      .setIcon(subitem.icon)
+                      .onClick(() => {
+                        app.commands.executeCommandById(subitem.id);
+
+                        // 检查命令执行后是否仍有文本选中
+                        const editor = plugin.commandsManager.getActiveEditor();
+                        const hasSelection = editor && editor.somethingSelected();
+
+                        if (settings.cMenuVisibility == false) {
                           editingToolbar.style.visibility = "hidden";
+                        } else if (effectiveStyle === "following") {
+                          if (!hasSelection) {
+                            editingToolbar.style.visibility = "hidden";
+                          }
+                        } else {
+                          editingToolbar.style.visibility = "visible";
                         }
-                      } else {
-                        editingToolbar.style.visibility = "visible";
-                      }
-                    });
-                });
+                      });
+
+                    // 如果有快捷键，添加到 DOM 元素
+                    if (hotkey !== "–") {
+                      const hotkeyEl = menuItem.dom.createSpan({ cls: "menu-item-hotkey" });
+                      hotkeyEl.setText(hotkey);
+                    }
+                  });
+                }
               });
+
+              // 给菜单添加自定义类
+              menu.dom.addClass("editing-toolbar-dropdown-menu");
 
               // 在按钮下方显示菜单
               menu.showAtMouseEvent(evt);
@@ -943,8 +973,11 @@ export function editingToolbarPopover(
                     if (effectiveStyle !== "top")
                       sub_btn.buttonEl.setAttribute('aria-label-position', 'top')
                   }
-                  if (subitem.id == "editingToolbar-Divider-Line")
+                  if (subitem.id == "editingToolbar-Divider-Line") {
                     sub_btn.setClass("editingToolbar-Divider-Line");
+                    
+                    sub_btn.buttonEl.setAttribute('aria-label', subitem.name);
+                  }
                   checkHtml(subitem.icon)
                     ? (sub_btn.buttonEl.innerHTML = subitem.icon)
                     : sub_btn.setIcon(subitem.icon);

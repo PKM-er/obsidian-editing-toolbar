@@ -389,6 +389,17 @@ export const DEFAULT_SETTINGS: editingToolbarSettings = {
             "name": "Get Plain Text",
             "icon": "lucide-file-text"
           },
+
+          {
+            "id": "editing-toolbar:smart-symbols",
+            "name": "Full Half Converter",
+            "icon": "lucide-at-sign"
+          },
+          {
+            "id": "editingToolbar-Divider-Line",
+            "name": "Line Operations",
+            "icon": "vertical-split"
+          },
           {
             "id": "editing-toolbar:insert-blank-lines",
             "name": "Insert Blank Lines",
@@ -405,14 +416,64 @@ export const DEFAULT_SETTINGS: editingToolbarSettings = {
             "icon": "lucide-split"
           },
           {
-            "id": "editing-toolbar:smart-paste",
-            "name": "Smart Paste",
-            "icon": "lucide-clipboard-paste"
+            "id": "editing-toolbar:merge-lines",
+            "name": "Merge Lines",
+            "icon": "lucide-merge"
           },
           {
-            "id": "editing-toolbar:smart-symbols",
-            "name": "Smart Symbols",
-            "icon": "lucide-at-sign"
+            "id": "editing-toolbar:dedupe-lines",
+            "name": "Dedupe Lines",
+            "icon": "lucide-filter"
+          },
+          {
+            "id": "editingToolbar-Divider-Line",
+            "name": "Text Processing",
+            "icon": "vertical-split"
+          },
+          {
+            "id": "editing-toolbar:add-wrap",
+            "name": "Add Prefix/Suffix",
+            "icon": "lucide-wrap-text"
+          },
+          {
+            "id": "editing-toolbar:number-lines",
+            "name": "Number Lines (Custom)",
+            "icon": "lucide-list-ordered"
+          },
+          {
+            "id": "editing-toolbar:remove-whitespace-trim",
+            "name": "Trim Line Ends",
+            "icon": "lucide-scissors"
+          },
+          {
+            "id": "editing-toolbar:remove-whitespace-compress",
+            "name": "Shrink Extra Spaces",
+            "icon": "lucide-minimize"
+          },
+          {
+            "id": "editing-toolbar:remove-whitespace-all",
+            "name": "Remove All Whitespace",
+            "icon": "lucide-eraser"
+          },
+          {
+            "id": "editingToolbar-Divider-Line",
+            "name": "Advanced Tools",
+            "icon": "vertical-split"
+          },
+          {
+            "id": "editing-toolbar:list-to-table",
+            "name": "List to Table",
+            "icon": "lucide-table"
+          },
+          {
+            "id": "editing-toolbar:table-to-list",
+            "name": "Table to List",
+            "icon": "lucide-list"
+          },
+          {
+            "id": "editing-toolbar:extract-between",
+            "name": "Extract Between Strings",
+            "icon": "lucide-brackets"
           }
         ]
       },

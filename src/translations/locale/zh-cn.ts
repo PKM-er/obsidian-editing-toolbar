@@ -423,4 +423,51 @@ export default {
   'Toolbar Settings': '工具栏设置',
   "Choose which toolbar style's appearance you want to edit.": '选择要编辑外观的工具栏样式。',
   "Vertical Split": '垂直分割',
+
+  // 文本增强工具
+  'Text Enhancement Tools': '文本增强工具',
+  'Get Plain Text': '获取无语法文本',
+
+  'Full Half Converter': '全角半角转换',
+  'Insert Blank Lines': '插入空行',
+  'Remove Blank Lines': '删除空行',
+  'Split Lines': '拆分行',
+  'Dedupe Lines': '去除重复行',
+  'Add Prefix/Suffix': '添加前后缀',
+  'Number Lines (Custom)': '添加行号（自定义）',
+  'Trim Line Ends': '去除行首尾空格',
+  'Shrink Extra Spaces': '压缩多余空格',
+  'Remove All Whitespace': '移除所有空白',
+  'Extract Between Strings': '提取字符串之间内容',
+  'Merge Lines': '合并行',
+  'List to Table': '多级列表转表格',
+  'Table to List': '表格转多级列表',
+
+  // 文本工具箱分类标题
+  'Line Operations': '行操作',
+  'Text Processing': '文本处理',
+  'Advanced Tools': '高级工具',
+
+  // 输入框标签
+  'Enter prefix': '输入前缀',
+  'Enter suffix': '输入后缀',
+  'Delimiter': '分隔符',
+  'Enter delimiter (e.g., comma, tab)': '输入分隔符（例如：逗号、制表符）',
+  'Column Number': '列号',
+  'Enter column number (starting from 1)': '输入列号（从1开始）',
+  'Start String': '起始字符串',
+  'Enter start string': '输入起始字符串',
+  'End String': '结束字符串',
+  'Enter end string': '输入结束字符串',
+
+  // Number Lines Configuration
+  'Number Lines Configuration': '行号配置',
+  'Start Number': '起始数字',
+  'Step': '步长',
+  'Separator': '分隔符',
+
+  // Merge Lines Configuration
+  'Merge Lines Settings': '合并行设置',
+  'Separator (leave empty for smart spacing)': '分隔符 (留空则开启智能中英间距)',
+  'e.g., comma, pipe, arrow': '例如: , 或 | 或 →',
 };

@@ -416,4 +416,51 @@ export default {
 'Toolbar Settings': 'Toolbar Settings',
 "Choose which toolbar style's appearance you want to edit.": "Choose which toolbar style's appearance you want to edit.",
 "Vertical Split": "Vertical Split",
+
+// Text Enhancement Tools
+'Text Enhancement Tools': 'Text Enhancement Tools',
+'Get Plain Text': 'Get Plain Text',
+
+'Full Half Converter': 'Full Half Converter',
+'Insert Blank Lines': 'Insert Blank Lines',
+'Remove Blank Lines': 'Remove Blank Lines',
+'Split Lines': 'Split Lines',
+'Dedupe Lines': 'Dedupe Lines',
+'Add Prefix/Suffix': 'Add Prefix/Suffix',
+'Number Lines (Custom)': 'Number Lines (Custom)',
+'Trim Line Ends': 'Trim Line Ends',
+'Shrink Extra Spaces': 'Shrink Extra Spaces',
+'Remove All Whitespace': 'Remove All Whitespace',
+'Extract Between Strings': 'Extract Between Strings',
+'Merge Lines': 'Merge Lines',
+'List to Table': 'List to Table',
+'Table to List': 'Table to List',
+
+// Text Toolbox Category Titles
+'Line Operations': 'Line Operations',
+'Text Processing': 'Text Processing',
+'Advanced Tools': 'Advanced Tools',
+
+// Input Field Labels
+'Enter prefix': 'Enter prefix',
+'Enter suffix': 'Enter suffix',
+'Delimiter': 'Delimiter',
+'Enter delimiter (e.g., comma, tab)': 'Enter delimiter (e.g., comma, tab)',
+'Column Number': 'Column Number',
+'Enter column number (starting from 1)': 'Enter column number (starting from 1)',
+'Start String': 'Start String',
+'Enter start string': 'Enter start string',
+'End String': 'End String',
+'Enter end string': 'Enter end string',
+
+// Number Lines Configuration
+'Number Lines Configuration': 'Number Lines Configuration',
+'Start Number': 'Start Number',
+'Step': 'Step',
+'Separator': 'Separator',
+
+// Merge Lines Configuration
+'Merge Lines Settings': 'Merge Lines Settings',
+'Separator (leave empty for smart spacing)': 'Separator (leave empty for smart spacing)',
+'e.g., comma, pipe, arrow': 'e.g., comma, pipe, arrow',
 }

@@ -5,7 +5,7 @@
       "src": ["src/*"]
     },
     "module": "ESNext",
-    "target": "es6",
+    "target": "ES2020",
     "jsx": "react",
     "allowJs": true,
     "noImplicitAny": true,
@@ -16,7 +16,7 @@
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "types": ["node"],
-    "lib": ["dom", "es5", "scripthost", "es2019"],
+    "lib": ["dom", "es5", "scripthost", "ES2020"],
     "typeRoots": [
       "./node_modules/@types",
       "./src/types"
