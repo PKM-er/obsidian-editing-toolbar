@@ -27,6 +27,7 @@
   -webkit-transition: none !important;
 }
 
+
 #editingToolbarModalBar.editingToolbarCustomAesthetic,
 :is(#editingToolbarModalBar, #editingToolbarPopoverBar).editingToolbarCustomAesthetic button[class^=editingToolbarCommandsubItem]>.subitem,
 #editingToolbarPopoverBar.editingToolbarCustomAesthetic {
@@ -86,7 +87,15 @@ height: var(--toolbar-icon-size) + 8px;
   background-color: var(--background-primary-alt);
   height: auto;
 }
-
+.editing-toolbar-content .editingToolbarCommandItem.editingToolbarCommandItem
+{
+flex-wrap: wrap;
+}
+.editing-toolbar-content .setting-item
+{
+  padding-left:1em;
+  padding-right:1em;
+}
 :is(#editingToolbarModalBar, #editingToolbarPopoverBar) button[class^=editingToolbarCommandsubItem]>.subitem button:hover,
 :is(#editingToolbarModalBar, #editingToolbarPopoverBar) button[class^=editingToolbarCommand]:hover,
 #editingToolbarSecond:hover {
