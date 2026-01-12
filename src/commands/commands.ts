@@ -695,7 +695,7 @@ export class CommandsManager {
       id: "list-to-table",
       name: t("List to Table"),
       editorCallback: (editor: Editor) => {
-        TextEnhancement.convertListToTable(editor);
+     TextEnhancement.convertListToTableMultiDim(editor);
       },
     });
 

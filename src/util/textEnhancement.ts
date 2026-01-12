@@ -1,4 +1,5 @@
 import { Editor, Notice } from "obsidian";
+import { t } from "src/translations/helper";
 
 export class TextEnhancement {
   /**
@@ -7,7 +8,7 @@ export class TextEnhancement {
   static getPlainText(editor: Editor): void {
     const selection = editor.getSelection();
     if (!selection) {
-      new Notice("请先选择文本");
+      new Notice(t("Please select text first"));
       return;
     }
 
@@ -20,7 +21,7 @@ export class TextEnhancement {
       .replace(/(\r\n|\n)+/gm, "\n");
 
     navigator.clipboard.writeText(plainText);
-    new Notice("无语法文本已复制到剪贴板");
+    new Notice(t("Plain text copied to clipboard"));
   }
 
   /**
@@ -51,7 +52,7 @@ export class TextEnhancement {
   ): void {
     const selection = editor.getSelection();
     if (!selection) {
-      new Notice("请先选择文本");
+      new Notice(t("Please select text first"));
       return;
     }
 
@@ -96,7 +97,7 @@ export class TextEnhancement {
     }
 
     editor.replaceSelection(result);
-    new Notice("空白字符清洗完成");
+    new Notice(t("Whitespace cleaning completed"));
   }
   /**
    * 拆分多行 - 将选中文本按指定分隔符拆分成多行
@@ -104,7 +105,7 @@ export class TextEnhancement {
   static splitLines(editor: Editor): void {
     const selection = editor.getSelection();
     if (!selection) {
-      new Notice("请先选择文本");
+      new Notice(t("Please select text first"));
       return;
     }
 
@@ -119,16 +120,16 @@ export class TextEnhancement {
         .split(listPattern)
         .map((item) => item.trim())
         .filter((item) => item.length > 0);
-      new Notice("检测到列表模式，已自动拆分");
+      new Notice(t("List pattern detected, auto-split"));
     } else {
       // 2. 否则退回到之前的智能字符统计
       const sep = this.detectSeparator(selection);
       if (!sep) {
-        new Notice("未识别到明显的分隔符或列表模式");
+        new Notice(t("No obvious separator or list pattern detected"));
         return;
       }
       result = this.smartSplit(selection, sep);
-      new Notice(`按字符 '${sep}' 拆分`);
+      new Notice(`${t("Merged with")} '${sep}' ${t("Merge completed")}`);
     }
 
     editor.replaceSelection(result.join("\n"));
@@ -237,7 +238,7 @@ export class TextEnhancement {
 
       editor.replaceSelection(processed);
     } catch (err) {
-      new Notice("粘贴失败");
+      new Notice(t("Paste failed"));
     }
   }
 
@@ -247,7 +248,7 @@ export class TextEnhancement {
   static smartTypography(editor: Editor): void {
     const selection = editor.getSelection();
     if (!selection || selection.trim().length === 0) {
-      new Notice("请先选择文本");
+      new Notice(t("Please select text first"));
       return;
     }
 
@@ -288,12 +289,12 @@ export class TextEnhancement {
         .replace(/!/g, "！")
         .replace(/\(/g, "（")
         .replace(/\)/g, "）")
-        .replace(/"([^"]*)"/g, "“$1”")
+        .replace(/"([^"]*)"/g, "\u201c$1\u201d")
         // 额外福利：自动优化中英间距
         .replace(/([\u4e00-\u9fa5])([a-zA-Z0-9])/g, "$1 $2")
         .replace(/([a-zA-Z0-9])([\u4e00-\u9fa5])/g, "$1 $2");
 
-      new Notice("检测为中文语境：已转换为全角符号");
+      new Notice(t("Detected Chinese context: converted to full-width symbols"));
     } else {
       // --- 目标：规范化为【半角】标点 ---
       result = result
@@ -305,10 +306,10 @@ export class TextEnhancement {
         .replace(/！/g, "! ")
         .replace(/（/g, "(")
         .replace(/）/g, ")")
-        .replace(/[“”]/g, '"')
+        .replace(/[""]/g, '"')
         .replace(/ {2,}/g, " "); // 压缩多余空格
 
-      new Notice("检测为代码/英文语境：已转换为半角符号");
+      new Notice(t("Detected code/English context: converted to half-width symbols"));
     }
 
     // 4. 还原保护内容
@@ -332,7 +333,7 @@ export class TextEnhancement {
     // 1. 仅处理选中文本，更安全
     const selection = editor.getSelection();
     if (!selection) {
-      new Notice("请先选择要去重的文本");
+      new Notice(t("Please select text to dedupe first"));
       return;
     }
 
@@ -370,7 +371,7 @@ export class TextEnhancement {
     }
 
     editor.replaceSelection(result.join("\n"));
-    new Notice(`去重完成，剩余 ${result.length} 行`);
+    new Notice(`${t("Deduplication completed, remaining")} ${result.length} ${t("lines")}`);
   }
 
   /**
@@ -403,7 +404,7 @@ export class TextEnhancement {
     } else {
       editor.setValue(result);
     }
-    new Notice("添加前后缀完成");
+    new Notice(t("Prefix/suffix added"));
   }
 
   /**
@@ -419,7 +420,7 @@ export class TextEnhancement {
     // 1. 只获取选中的文本
     const selection = editor.getSelection();
     if (!selection) {
-      new Notice("请先选择要编号的文本");
+      new Notice(t("Please select text to number first"));
       return;
     }
 
@@ -444,7 +445,7 @@ export class TextEnhancement {
 
     // 4. 只替换选中的部分，不触动文档其他内容
     editor.replaceSelection(result);
-    new Notice(`已完成编号：从 ${startNumber} 开始`);
+    new Notice(`${t("Numbering completed: starting from")} ${startNumber}`);
   }
 
   /**
@@ -456,7 +457,7 @@ export class TextEnhancement {
     endStr: string
   ): void {
     if (!startStr && !endStr) {
-      new Notice("请指定起始或结束字符串");
+      new Notice(t("Please specify start or end string"));
       return;
     }
 
@@ -482,33 +483,33 @@ export class TextEnhancement {
 
       if (matches.length > 0) {
         editor.setValue(matches.join("\n"));
-        new Notice(`提取了 ${matches.length} 个匹配项`);
+        new Notice(`${t("Extracted")} ${matches.length} ${t("matches")}`);
       } else {
-        new Notice("未找到匹配项");
+        new Notice(t("No matches found"));
       }
     } catch (e) {
-      new Notice("提取失败");
+      new Notice(t("Extraction failed"));
     }
   }
 
   /**
    * 智能合并行 - 自动识别中英环境并处理间距
    */
- /**
- * 智能/自定义合并行
- */
-static mergeLines(
-    editor: Editor, 
-    options: { 
-        separator?: string, 
-        preserveParagraphs?: boolean, 
-        trimLines?: boolean 
+  /**
+   * 智能/自定义合并行
+   */
+  static mergeLines(
+    editor: Editor,
+    options: {
+      separator?: string;
+      preserveParagraphs?: boolean;
+      trimLines?: boolean;
     }
-): void {
+  ): void {
     const selection = editor.getSelection();
     if (!selection || selection.trim() === "") {
-        new Notice("请先选择要合并的行");
-        return;
+      new Notice(t("Please select lines to merge first"));
+      return;
     }
 
     const lines = selection.split(/\r?\n/);
@@ -516,139 +517,294 @@ static mergeLines(
     let result = "";
 
     for (let i = 0; i < lines.length; i++) {
-        let currentLine = options.trimLines ? lines[i].trim() : lines[i];
-        
-        // 处理空行
-        if (currentLine === "") {
-            if (options.preserveParagraphs && !hasCustomSep) {
-                result += "\n\n";
-            }
-            continue;
-        }
+      let currentLine = options.trimLines ? lines[i].trim() : lines[i];
 
-        if (result !== "" && !result.endsWith("\n")) {
-            if (hasCustomSep) {
-                // --- 强制模式：使用用户指定的符号 ---
-                result += options.separator;
-            } else {
-                // --- 智能模式：判定中英连接 ---
-                const lastChar = result.slice(-1);
-                const firstChar = currentLine.charAt(0);
-                const isCjkConnection = /[\u4e00-\u9fa5]/.test(lastChar) && /[\u4e00-\u9fa5]/.test(firstChar);
-                if (!isCjkConnection) result += " "; 
-            }
+      // 处理空行
+      if (currentLine === "") {
+        if (options.preserveParagraphs && !hasCustomSep) {
+          result += "\n\n";
         }
+        continue;
+      }
 
-        result += currentLine;
+      if (result !== "" && !result.endsWith("\n")) {
+        if (hasCustomSep) {
+          // --- 强制模式：使用用户指定的符号 ---
+          result += options.separator;
+        } else {
+          // --- 智能模式：判定中英连接 ---
+          const lastChar = result.slice(-1);
+          const firstChar = currentLine.charAt(0);
+          const isCjkConnection =
+            /[\u4e00-\u9fa5]/.test(lastChar) &&
+            /[\u4e00-\u9fa5]/.test(firstChar);
+          if (!isCjkConnection) result += " ";
+        }
+      }
+
+      result += currentLine;
     }
 
     // 清理首尾和重复空格
     result = result.replace(/[ ]{2,}/g, " ").trim();
-    
+
     editor.replaceSelection(result);
-    new Notice(hasCustomSep ? `已按 '${options.separator}' 合并` : "已完成合并");
-}
-/**
- * 智能多级列表转表格 (Smart List to Table)
- * 借鉴正则逻辑，支持任务列表与层级分列
- */
-static convertListToTable(editor: Editor): void {
+    new Notice(
+      hasCustomSep ? `${t("Merged with")} '${options.separator}'` : t("Merge completed")
+    );
+  }
+
+  /**
+   * 列表转表格
+   * 逻辑：顶级列表项为“行”，第二子级/缩进项自动合并为右侧单元格的“软换行”内容
+   */
+  static convertListToTableMultiDim(editor: Editor): void {
     const selection = editor.getSelection();
-    if (!selection || selection.trim() === "") {
-        new Notice("请先选择要转换的列表");
-        return;
-    }
+    if (!selection || selection.trim() === "") return;
 
     const lines = selection.split(/\r?\n/);
-    
-    // 借鉴并增强的正则：捕获缩进、符号、任务状态和内容
-    // group(1): 缩进, group(2): 任务状态, group(3): 文本内容
-    const listItemRegex = /^(\s*)(?:[-*+]|\d+\.)\s+(?:\[([ xX])\]\s+)?(.*)$/;
+    const listRegex = /^((\s*)(?:[-*+]|\d+\.)\s+)(.*)/;
 
-    const tableRows: string[][] = [];
-    let maxCols = 1;
+    // 1. 探测缩进基准与最大深度
+    let maxLevel = 0;
+    const indents = lines
+      .map((l) => l.match(listRegex))
+      .filter((m) => m && m[2].length > 0)
+      .map((m) => {
+        const len = m![2].replace(/\t/g, "    ").length;
+        return len;
+      });
+    const finalTabSize = indents.length > 0 ? Math.min(...indents) : 4;
 
-    for (const line of lines) {
-        if (line.trim() === "") continue;
+    // 预扫描：确定选区内的最大层级
+    lines.forEach((line) => {
+      const m = line.match(listRegex);
+      if (m) {
+        const level = Math.round(
+          m[2].replace(/\t/g, " ".repeat(finalTabSize)).length / finalTabSize
+        );
+        if (level > maxLevel) maxLevel = level;
+      }
+    });
 
-        const match = line.match(listItemRegex);
-        if (match) {
-            const indent = match[1] || "";
-            const taskStatus = match[2] ? `[${match[2]}] ` : "";
-            const content = taskStatus + (match[3] || "");
+    // 2. 状态机解析
+    let preText: string[] = [];
+    let tableRows: string[][] = [];
+    let currentRow: string[] = [];
+    let isInsideTable = false;
 
-            // 计算层级（基于空格或制表符缩进）
-            // 假设 2 或 4 个空格为一个层级
-            const level = indent.length === 0 ? 0 : Math.floor(indent.length / 2);
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      const match = line.match(listRegex);
 
-            if (level === 0) {
-                // 第一层：新开一行
-                tableRows.push([content]);
-            } else {
-                // 子层级：存入当前行的后续列
-                if (tableRows.length > 0) {
-                    const currentRow = tableRows[tableRows.length - 1];
-                    currentRow[level] = content;
-                    maxCols = Math.max(maxCols, level + 1);
-                }
-            }
+      if (match) {
+        isInsideTable = true;
+        const content = match[3].trim();
+        const level = Math.round(
+          (match[2] || "").replace(/\t/g, " ".repeat(finalTabSize)).length /
+            finalTabSize
+        );
+
+        // --- 核心策略切换 ---
+        if (maxLevel === 1) {
+          // 【策略 A：只有两个层级】-> 固定两列，二级项转为软换行
+          if (level === 0) {
+            if (currentRow.length > 0) tableRows.push([...currentRow]);
+            currentRow = [content, ""]; // 初始化 [顶级, 描述]
+          } else {
+            // 二级项：追加到第二列
+            currentRow[1] = currentRow[1]
+              ? currentRow[1] + "<br>" + content
+              : content;
+          }
+        } else {
+          // 【策略 B：三个或更多层级】-> 保持之前的多维映射逻辑
+          if (currentRow[level] !== undefined) {
+            tableRows.push([...currentRow]);
+            currentRow = currentRow.slice(0, level);
+          }
+          currentRow[level] = content;
         }
+      } else {
+        // 处理非列表行 (软换行追加)
+        if (!isInsideTable) {
+          preText.push(line);
+        } else if (line.trim() !== "") {
+          const lastIdx = currentRow.length - 1;
+          if (lastIdx >= 0) currentRow[lastIdx] += "<br>" + line.trim();
+        }
+      }
+    }
+    if (currentRow.length > 0) tableRows.push(currentRow);
+
+    // 3. 渲染
+    const finalizedRows =
+      maxLevel === 1 ? tableRows : this.applyVisualMerge(tableRows);
+    this.renderFinalResult(editor, preText, finalizedRows, [], maxLevel + 1);
+  }
+  private static applyVisualMerge(tableRows: string[][]): string[][] {
+    let lastPushedRow: string[] = [];
+    return tableRows.map((row, rowIndex) => {
+      if (rowIndex === 0) {
+        lastPushedRow = [...row];
+        return row;
+      }
+      const processedRow = row.map((cell, colIndex) => {
+        const isPathSame = row
+          .slice(0, colIndex)
+          .every((c, i) => c === lastPushedRow[i] || c === "");
+        if (isPathSame && cell === lastPushedRow[colIndex]) return "";
+        return cell;
+      });
+      lastPushedRow = [...row];
+      return processedRow;
+    });
+  }
+
+  /**
+   * 渲染最终输出，包含 Markdown 环境补全
+   */
+  private static renderFinalResult(
+    editor: Editor,
+    pre: string[],
+    rows: string[][],
+    post: string[],
+    maxCols: number
+  ) {
+    const header =
+      "| " +
+      Array.from({ length: maxCols }, (_, i) =>
+        i === 0 ? t("Item") : `${t("Content")} ${i}`
+      ).join(" | ") +
+      " |\n";
+    const sep =
+      "| " + Array.from({ length: maxCols }, () => "---").join(" | ") + " |\n";
+    const body = rows
+      .map((row) => {
+        // 确保每一行都有足够的单元格，空位补白
+        const fullRow = Array.from({ length: maxCols }, (_, i) =>
+          (row[i] || "").replace(/\|/g, "\\|")
+        );
+        return `| ${fullRow.join(" | ")} |`;
+      })
+      .join("\n");
+
+    let tableMarkdown = header + sep + body;
+
+    // 组装前置、表格、后置内容
+    let finalContent = "";
+
+    if (pre.length > 0) {
+      finalContent += pre.join("\n").trimEnd() + "\n\n";
     }
 
-    if (tableRows.length === 0) {
-        new Notice("未发现有效的列表格式");
-        return;
+    finalContent += tableMarkdown;
+
+    if (post.length > 0) {
+      finalContent += "\n\n" + post.join("\n").trimStart();
     }
 
-    // 构建 Markdown 表格
-    let table = "| " + Array.from({ length: maxCols }, (_, i) => i === 0 ? "项目" : `内容 ${i}`).join(" | ") + " |\n";
-    table += "| " + Array.from({ length: maxCols }, () => "---").join(" | ") + " |\n";
-
-    for (const row of tableRows) {
-        // 填充长度一致
-        const rowData = Array.from({ length: maxCols }, (_, i) => row[i] || "");
-        table += `| ${rowData.join(" | ")} |\n`;
+    // --- 4. 智能环境修正 (防止与上方已有文字粘连) ---
+    const cursor = editor.getCursor("from");
+    if (cursor.line > 0 && pre.length === 0) {
+      const prevLine = editor.getLine(cursor.line - 1);
+      if (prevLine.trim() !== "") {
+        finalContent = "\n" + finalContent;
+      }
     }
 
-    editor.replaceSelection(table);
-    new Notice("列表已转换为多维表格");
-}
-   /**
- * 表格转列表 - 将 Markdown 表格还原为多级大纲
- */
-static convertTableToList(editor: Editor): void {
-    const selection = editor.getSelection();
+    editor.replaceSelection(finalContent);
+    new Notice(t("Super conversion completed: context preserved and layout optimized"));
+  }
+
+  /**
+   * 表格转列表 - 将 Markdown 表格还原为多级大纲
+   * 支持源码模式和实时预览模式
+   */
+  static convertTableToList(editor: Editor): void {
+    let selection = editor.getSelection();
+
+    // 如果选中的内容不包含 |，可能是在实时预览模式下
+    // 尝试从光标位置获取完整的表格
     if (!selection || !selection.includes("|")) {
-        new Notice("请先选择有效的 Markdown 表格");
-        return;
+      const cursor = editor.getCursor("from");
+      const totalLines = editor.lineCount();
+
+      // 向上查找表格开始
+      let startLine = cursor.line;
+      while (startLine > 0) {
+        const line = editor.getLine(startLine - 1);
+        if (line.includes("|")) {
+          startLine--;
+        } else {
+          break;
+        }
+      }
+
+      // 向下查找表格结束
+      let endLine = cursor.line;
+      while (endLine < totalLines - 1) {
+        const line = editor.getLine(endLine + 1);
+        if (line.includes("|")) {
+          endLine++;
+        } else {
+          break;
+        }
+      }
+
+      // 如果找到了表格，获取完整内容
+      if (startLine <= endLine) {
+        const tableLines: string[] = [];
+        for (let i = startLine; i <= endLine; i++) {
+          const line = editor.getLine(i);
+          if (line.includes("|")) {
+            tableLines.push(line);
+          }
+        }
+
+        if (tableLines.length > 0) {
+          selection = tableLines.join("\n");
+          // 选中整个表格
+          editor.setSelection(
+            { line: startLine, ch: 0 },
+            { line: endLine, ch: editor.getLine(endLine).length }
+          );
+        }
+      }
+    }
+
+    // 再次检查是否有有效的表格内容
+    if (!selection || !selection.includes("|")) {
+      new Notice(t("Please select a valid Markdown table"));
+      return;
     }
 
     const lines = selection.split(/\r?\n/);
     const result: string[] = [];
 
     for (const line of lines) {
-        // 跳过表头分割线 (如 | --- | --- |) 和空行
-        if (line.match(/^\s*\|?[\s\-:|]+\|?\s*$/) || line.trim() === "") continue;
+      // 跳过表头分割线 (如 | --- | --- |) 和空行
+      if (line.match(/^\s*\|?[\s\-:|]+\|?\s*$/) || line.trim() === "") continue;
 
-        // 解析单元格内容，去除首尾管道符并分割
-        const cells = line
-            .trim()
-            .replace(/^\|/, "")
-            .replace(/\|$/, "")
-            .split("|")
-            .map(c => c.trim());
+      // 解析单元格内容，去除首尾管道符并分割
+      const cells = line
+        .trim()
+        .replace(/^\|/, "")
+        .replace(/\|$/, "")
+        .split("|")
+        .map((c) => c.trim());
 
-        // 如果是表头行（通常是第一行），用户可能不需要转为列表，可以根据需求跳过
-        // 这里我们简单处理，把每一行非空单元格转为层级
-        cells.forEach((cell, index) => {
-            if (cell !== "" && cell !== "项目" && !cell.startsWith("内容 ")) {
-                const indent = "  ".repeat(index); // 每级增加两个空格
-                result.push(`${indent}- ${cell}`);
-            }
-        });
+      // 如果是表头行（通常是第一行），用户可能不需要转为列表，可以根据需求跳过
+      // 这里我们简单处理，把每一行非空单元格转为层级
+      cells.forEach((cell, index) => {
+        if (cell !== "" && cell !== t("Item") && !cell.startsWith(t("Content"))) {
+          const indent = "  ".repeat(index); // 每级增加两个空格
+          result.push(`${indent}- ${cell}`);
+        }
+      });
     }
 
     editor.replaceSelection(result.join("\n"));
-    new Notice("表格已还原为多级列表");
-}
+    new Notice(t("Table converted to multi-level list"));
+  }
 }
