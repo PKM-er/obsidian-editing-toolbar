@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.2.3 (2026-01-12)
+### fix：修复命令后工具栏文本箱不出现
+### Update CHANGELOG.md
+### Update manifest.json and CHANGELOG.md for version 3.2.2
+
+
 ## 3.2.2 (2026-01-12)
 ### 🐛 Bug Fixes
 #### Fixed multi-configuration command synchronization issue
