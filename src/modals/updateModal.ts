@@ -18,6 +18,7 @@ interface Command {
   name: string;
   icon?: string;
   SubmenuCommands?: Command[];
+  menuType?: 'submenu' | 'dropdown';
 }
 
 export class UpdateNoticeModal extends Modal {
@@ -190,116 +191,19 @@ export class UpdateNoticeModal extends Modal {
         if (!commands || !Array.isArray(commands)) return false;
 
         if (!checkTextTools(commands)) {
-          const textToolsSubmenu: Command = {
-            id: "SubmenuCommands-text-tools",
-            name: "Text Tools",
-            icon: "box",
-            SubmenuCommands: [
-              {
-                id: "editing-toolbar:get-plain-text",
-                name: "Get Plain Text",
-                icon: "lucide-file-text",
-              },
-              {
-                id: "editing-toolbar:smart-symbols",
-                name: "Full Half Converter",
-                icon: "lucide-at-sign",
-              },
-              {
-                id: "editingToolbar-Divider-Line",
-                name: "Line Operations",
-                icon: "vertical-split",
-              },
-              {
-                id: "editing-toolbar:insert-blank-lines",
-                name: "Insert Blank Lines",
-                icon: "lucide-space",
-              },
-              {
-                id: "editing-toolbar:remove-blank-lines",
-                name: "Remove Blank Lines",
-                icon: "lucide-minimize-2",
-              },
-              {
-                id: "editing-toolbar:split-lines",
-                name: "Split Lines",
-                icon: "lucide-split",
-              },
-              {
-                id: "editing-toolbar:merge-lines",
-                name: "Merge Lines",
-                icon: "lucide-merge",
-              },
-              {
-                id: "editing-toolbar:dedupe-lines",
-                name: "Dedupe Lines",
-                icon: "lucide-filter",
-              },
-              {
-                id: "editingToolbar-Divider-Line",
-                name: "Text Processing",
-                icon: "vertical-split",
-              },
-              {
-                id: "editing-toolbar:add-wrap",
-                name: "Add Prefix/Suffix",
-                icon: "lucide-wrap-text",
-              },
-              {
-                id: "editing-toolbar:number-lines",
-                name: "Number Lines (Custom)",
-                icon: "lucide-list-ordered",
-              },
-              {
-                id: "editing-toolbar:remove-whitespace-trim",
-                name: "Trim Line Ends",
-                icon: "lucide-scissors",
-              },
-              {
-                id: "editing-toolbar:remove-whitespace-compress",
-                name: "Shrink Extra Spaces",
-                icon: "lucide-minimize",
-              },
-              {
-                id: "editing-toolbar:remove-whitespace-all",
-                name: "Remove All Whitespace",
-                icon: "lucide-eraser",
-              },
-              {
-                id: "editingToolbar-Divider-Line",
-                name: "Advanced Tools",
-                icon: "vertical-split",
-              },
-              {
-                id: "editing-toolbar:list-to-table",
-                name: "List to Table",
-                icon: "lucide-table",
-              },
-              {
-                id: "editing-toolbar:table-to-list",
-                name: "Table to List",
-                icon: "lucide-list",
-              },
-              {
-                id: "editing-toolbar:extract-between",
-                name: "Extract Between Strings",
-                icon: "lucide-brackets",
-              },
-            ],
-          };
+          const textToolsSubmenu = DEFAULT_SETTINGS.menuCommands.find(
+            (cmd) => cmd.id === "SubmenuCommands-text-tools"
+          );
 
-          // 添加到命令列表末尾
-          //commands.push(textToolsSubmenu);
-          const targetIndex = 11;
-
-          if (commands.length >= targetIndex) {
-            // 序号 11 存在或刚好是下一个位置，直接插入到 11
-            commands.splice(targetIndex, 0, textToolsSubmenu);
-          } else {
-            // 序号 11 超出了当前数组长度，直接追加到末尾
-            commands.push(textToolsSubmenu);
+          if (textToolsSubmenu) {
+            const targetIndex = 11;
+            if (commands.length >= targetIndex) {
+              commands.splice(targetIndex, 0, textToolsSubmenu);
+            } else {
+              commands.push(textToolsSubmenu);
+            }
+            return true;
           }
-          return true;
         }
         return false;
       };
@@ -309,6 +213,9 @@ export class UpdateNoticeModal extends Modal {
       if (settings.menuCommands) {
         updateCommands(settings.menuCommands);
         if (addFormatBrushIfNeeded(settings.menuCommands)) {
+          hasChanges = true;
+        }
+        if (addTextToolsIfNeeded(settings.menuCommands)) {
           hasChanges = true;
         }
       }
@@ -329,7 +236,6 @@ export class UpdateNoticeModal extends Modal {
           if (addFormatBrushIfNeeded(settings.topCommands)) {
             hasChanges = true;
           }
-          // 添加文本工具子菜单到顶部工具栏
           if (addTextToolsIfNeeded(settings.topCommands)) {
             hasChanges = true;
           }

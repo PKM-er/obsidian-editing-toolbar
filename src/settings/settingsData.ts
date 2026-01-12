@@ -43,6 +43,7 @@ export interface CustomCommand {
 
 export interface editingToolbarSettings {
   lastVersion: string;
+  commandIdsFixed?: boolean;
   cMenuWidth: number;
   cMenuFontColor: string;
   cMenuBackgroundColor: string;

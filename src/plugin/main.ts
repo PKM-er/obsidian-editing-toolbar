@@ -244,8 +244,13 @@ export default class editingToolbarPlugin extends Plugin {
     }
     const needUpdateNotice =
       !isNewInstall &&
-      (lastVer.major < 3 || (lastVer.major === 3 && lastVer.minor < 1));
+      (lastVer.major < 3 || (lastVer.major === 3 && lastVer.minor < 2) || (lastVer.major === 3 && lastVer.minor === 2 && lastVer.patch < 2));
     if (needUpdateNotice) {
+      if (!this.settings.commandIdsFixed) {
+        await updateModal.fixCommandIds();
+        this.settings.commandIdsFixed = true;
+        await this.saveSettings();
+      }
       setTimeout(() => {
         updateModal.open();
       }, 3000);
