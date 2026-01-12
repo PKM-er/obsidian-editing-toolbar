@@ -1,8 +1,6 @@
 # Changelog
 
 ## 3.2.2 (2026-01-12)
-### Version 3.2.2 Release Notes
-## 3.2.2 (2026-01-12)
 ### 🐛 Bug Fixes
 #### Fixed multi-configuration command synchronization issue
 - **Problem**: When multiple toolbar configurations were enabled (top, following, fixed), adding commands in one configuration would incorrectly sync to other configurations
@@ -102,23 +100,7 @@ Fixed issue where it conflicted with the Settings Search plugin.
 ### Update manifest.json and CHANGELOG.md for version 3.2.1
 ### Fixed issue where it conflicted with the Settings Search plugin. If editing toolbar was hidden, and you reloaded Obsidian, it would show anyway, even though it was hidden. This fixes this conflict.
 
-
-## 3.2.2 (2026-01-12)
-
-### 🐛 Bug Fixes
-
-#### Fixed multi-configuration command synchronization issue
-- **Problem**: When multiple toolbar configurations were enabled (top, following, fixed), adding commands in one configuration would incorrectly sync to other configurations
-- **Root Cause**: The `updateCurrentCommands()` method was using `this.positionStyle` (the currently displayed toolbar style) instead of the configuration being edited in settings
-- **Solution**: Modified `CommandPicker` and `ChooseFromIconList` classes to properly pass the `currentEditingConfig` parameter when updating commands
-- **Impact**: Now each toolbar configuration maintains its own independent command list. Adding, modifying, deleting, and reordering commands in one configuration will not affect other configurations
-
-#### Auto-add Text Tools submenu to top toolbar
-- **Feature**: When users update the plugin and click the "Repair command" button, the system will automatically add the "Text Tools" submenu to the top toolbar if it doesn't exist
-- **Included Commands**: Get Plain Text, Full Half Converter, Insert Blank Lines, Remove Blank Lines, Split Lines, Merge Lines, Dedupe Lines, Add Prefix/Suffix, Number Lines, Trim Line Ends, Shrink Extra Spaces, Remove All Whitespace, List to Table, Table to List, Extract Between Strings
-
-### 📝 Technical Details
-**Modified Files**: `src/modals/suggesterModals.ts`, `src/modals/updateModal.ts`
+ 
 
 ---
 
