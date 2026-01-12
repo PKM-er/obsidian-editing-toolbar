@@ -103,13 +103,13 @@ export class ChooseFromIconList extends FuzzySuggestModal<string> {
       } else {
         currentCommands[menuID['index']].icon = item;
       }
-      // 更新当前配置
-      this.plugin.updateCurrentCommands(currentCommands);
+      // 更新当前配置，传递配置样式参数
+      this.plugin.updateCurrentCommands(currentCommands, this.currentEditingConfig);
     } else {
       this.command.icon = item;
       currentCommands.push(this.command);
-      // 更新当前配置
-      this.plugin.updateCurrentCommands(currentCommands);
+      // 更新当前配置，传递配置样式参数
+      this.plugin.updateCurrentCommands(currentCommands, this.currentEditingConfig);
     }
 
     await this.plugin.saveSettings();
@@ -246,8 +246,8 @@ export class CommandPicker extends FuzzySuggestModal<Command> {
       if (item.icon) {
         // 添加命令到当前配置
         currentCommands.push(item);
-        // 更新当前配置
-        this.plugin.updateCurrentCommands(currentCommands);
+        // 更新当前配置，传递配置样式参数
+        this.plugin.updateCurrentCommands(currentCommands, this.currentEditingConfig);
         await this.plugin.saveSettings();
         setTimeout(() => {
           dispatchEvent(new Event("editingToolbar-NewCommand"));
@@ -257,8 +257,8 @@ export class CommandPicker extends FuzzySuggestModal<Command> {
           "color: Violet"
         );
       } else {
-        // 使用统一的图标选择器
-        new ChooseFromIconList(this.plugin, item, false).open();
+        // 使用统一的图标选择器，传递当前编辑的配置
+        new ChooseFromIconList(this.plugin, item, false, null, this.currentEditingConfig).open();
       }
     }
   }

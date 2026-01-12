@@ -22,7 +22,10 @@
   z-index: var(--layer-modal);
   transform: translate(var(--toolbar-horizontal-offset), var(--toolbar-vertical-offset));
 }
-
+#editingToolbarModalBar[data-toolbar-style="following"] {
+ transition: none !important;
+  -webkit-transition: none !important;
+}
 
 #editingToolbarModalBar.editingToolbarCustomAesthetic,
 :is(#editingToolbarModalBar, #editingToolbarPopoverBar).editingToolbarCustomAesthetic button[class^=editingToolbarCommandsubItem]>.subitem,
