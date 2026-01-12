@@ -1,6 +1,109 @@
 # Changelog
 
 ## 3.2.2 (2026-01-12)
+### Version 3.2.2 Release Notes
+## 3.2.2 (2026-01-12)
+### 🐛 Bug Fixes
+#### Fixed multi-configuration command synchronization issue
+- **Problem**: When multiple toolbar configurations were enabled (top, following, fixed), adding commands in one configuration would incorrectly sync to other configurations
+- **Root Cause**: The `updateCurrentCommands()` method was using `this.positionStyle` (the currently displayed toolbar style) instead of the configuration being edited in settings
+- **Solution**: Modified `CommandPicker` and `ChooseFromIconList` classes to properly pass the `currentEditingConfig` parameter when updating commands
+- **Impact**: Now each toolbar configuration maintains its own independent command list. Adding, modifying, deleting, and reordering commands in one configuration will not affect other configurations
+#### Auto-add Text Tools submenu to top toolbar
+- **Feature**: When users update the plugin and click the "Repair command" button, the system will automatically add the "Text Tools" submenu to the top toolbar if it doesn't exist
+- **Included Commands**:
+  - Get Plain Text (获取无语法文本)
+  - Full Half Converter (全角半角转换)
+  - Insert Blank Lines (插入空行)
+  - Remove Blank Lines (删除空行)
+  - Split Lines (拆分行)
+  - Merge Lines (合并行)
+  - Dedupe Lines (去重行)
+  - Add Prefix/Suffix (添加前后缀)
+  - Number Lines (Custom) (添加行号)
+  - Trim Line Ends (去除行首尾空格)
+  - Shrink Extra Spaces (压缩多余空格)
+  - Remove All Whitespace (移除所有空白)
+  - List to Table (列表转表格)
+  - Table to List (表格转列表)
+  - Extract Between Strings (提取字符串之间内容)
+### 📝 Technical Details
+**Modified Files**:
+- `src/modals/suggesterModals.ts`: Fixed command synchronization in `CommandPicker` and `ChooseFromIconList` classes
+- `src/modals/updateModal.ts`: Added `checkTextTools()` and `addTextToolsIfNeeded()` functions to automatically add text tools submenu
+### 🔧 How to Update
+1. Update the plugin to version 3.2.2
+2. Reload Obsidian (Ctrl+R or complete restart)
+3. Open Settings → Editing Toolbar
+4. Click "Repair command ID" button to apply the text tools submenu (if using top toolbar)
+---
+## 3.2.2 版本说明 (2026-01-12)
+### 🐛 Bug 修复
+#### 修复多配置模式下命令同步问题
+- **问题描述**：当同时启用多个工具栏配置（顶部、跟随、固定）时，在一个配置中添加命令会错误地同步到其他配置
+- **根本原因**：`updateCurrentCommands()` 方法使用了 `this.positionStyle`（当前实际显示的工具栏样式）而不是设置页面正在编辑的配置
+- **解决方案**：修改了 `CommandPicker` 和 `ChooseFromIconList` 类，在更新命令时正确传递 `currentEditingConfig` 参数
+- **影响**：现在每个工具栏配置都能维护自己独立的命令列表。在一个配置中添加、修改、删除、调整命令顺序都不会影响其他配置
+#### 自动添加文本工具子菜单到顶部工具栏
+- **功能说明**：当用户更新插件并点击"修复命令"按钮时，如果顶部工具栏中没有"文本工具"子菜单，系统会自动添加
+- **包含的命令**：
+  - 获取无语法文本 (Get Plain Text)
+  - 全角半角转换 (Full Half Converter)
+  - 插入空行 (Insert Blank Lines)
+  - 删除空行 (Remove Blank Lines)
+  - 拆分行 (Split Lines)
+  - 合并行 (Merge Lines)
+  - 去重行 (Dedupe Lines)
+  - 添加前后缀 (Add Prefix/Suffix)
+  - 添加行号（自定义）(Number Lines)
+  - 去除行首尾空格 (Trim Line Ends)
+  - 压缩多余空格 (Shrink Extra Spaces)
+  - 移除所有空白 (Remove All Whitespace)
+  - 列表转表格 (List to Table)
+  - 表格转列表 (Table to List)
+  - 提取字符串之间内容 (Extract Between Strings)
+### 📝 技术细节
+**修改的文件**：
+- `src/modals/suggesterModals.ts`：修复了 `CommandPicker` 和 `ChooseFromIconList` 类中的命令同步问题
+- `src/modals/updateModal.ts`：添加了 `checkTextTools()` 和 `addTextToolsIfNeeded()` 函数来自动添加文本工具子菜单
+### 🔧 如何更新
+1. 将插件更新到 3.2.2 版本
+2. 重新加载 Obsidian（Ctrl+R 或完全重启）
+3. 打开设置 → Editing Toolbar
+4. 点击"修复命令 ID"按钮以应用文本工具子菜单（如果使用顶部工具栏）
+### 🙏 致谢
+感谢所有报告问题和提供反馈的用户！
+### #266 支持子菜单改名
+### #272 #274 fixed
+### 相关命令国际化
+### Feat:增加文本处理工具
+  Line Operations（行操作）：
+  - Get Plain Text
+  - Full Half Converter
+  - Insert Blank Lines
+  - Remove Blank Lines
+  - Split Lines
+  - Merge Lines
+  - Dedupe Lines
+  Text Processing（文本处理）：
+  - Add Prefix/Suffix ✨ 新增
+  - Number Lines (Custom) ✨ 更新名称
+  - Trim Line Ends
+  - Shrink Extra Spaces ✨ 更新名称
+  - Remove All Whitespace
+  Advanced Tools（高级工具）：
+  - List to Table
+  - Table to List
+  - Extract Between Strings
+### 子菜单可以改名可以设置为按钮和菜单两种形式
+### Add Portuguese translations for Editing Toolbar settings and commands
+### Merge pull request #268 from davidvkimball/master
+Fixed issue where it conflicted with the Settings Search plugin.
+### Update manifest.json and CHANGELOG.md for version 3.2.1
+### Fixed issue where it conflicted with the Settings Search plugin. If editing toolbar was hidden, and you reloaded Obsidian, it would show anyway, even though it was hidden. This fixes this conflict.
+
+
+## 3.2.2 (2026-01-12)
 
 ### 🐛 Bug Fixes
 
