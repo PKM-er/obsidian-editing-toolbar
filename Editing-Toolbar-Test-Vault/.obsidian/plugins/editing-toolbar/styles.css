@@ -22,7 +22,10 @@
   z-index: var(--layer-modal);
   transform: translate(var(--toolbar-horizontal-offset), var(--toolbar-vertical-offset));
 }
-
+#editingToolbarModalBar[data-toolbar-style="following"] {
+ transition: none !important;
+  -webkit-transition: none !important;
+}
 
 #editingToolbarModalBar.editingToolbarCustomAesthetic,
 :is(#editingToolbarModalBar, #editingToolbarPopoverBar).editingToolbarCustomAesthetic button[class^=editingToolbarCommandsubItem]>.subitem,
@@ -88,6 +91,30 @@ height: var(--toolbar-icon-size) + 8px;
 :is(#editingToolbarModalBar, #editingToolbarPopoverBar) button[class^=editingToolbarCommand]:hover,
 #editingToolbarSecond:hover {
   background-color: var(--background-modifier-hover) !important;
+}
+
+/* 下拉菜单按钮样式 */
+
+
+/* 设置界面中的菜单类型选择器样式 */
+.editingToolbarMenuTypeDropdown {
+  min-width: 120px;
+  margin-left: 8px;
+  padding: 4px 8px;
+  border-radius: var(--radius-s);
+  background-color: var(--background-primary-alt);
+  border: 1px solid var(--background-modifier-border);
+  color: var(--text-normal);
+  cursor: pointer;
+}
+
+.editingToolbarMenuTypeDropdown:hover {
+  background-color: var(--background-modifier-hover);
+}
+
+.editingToolbarMenuTypeDropdown:focus {
+  border-color: var(--interactive-accent);
+  outline: none;
 }
 
 /* #editingToolbarModalBar button.editingToolbarCommandItem svg {
@@ -417,7 +444,7 @@ button[class^=editingToolbarCommandsubItem]::after {
   max-height: 1.3em;
 }
 
-:is(#editingToolbarModalBar, #editingToolbarPopoverBar) button[class^=editingToolbarCommandsubItem]>.subitem button.menu-item {
+:is(#editingToolbarModalBar, #editingToolbarPopoverBar) button[class^=editingToolbarCommandsubItem]>.subitem button.menu-item:not(.editingToolbar-Divider-Line) {
   background-color: transparent;
   line-height: 2em;
   display: inline-flex;
@@ -906,19 +933,9 @@ button[class^=editingToolbarCommandsubItem]::after {
   height: 22px;
   opacity: 0.8;
   margin: 0;
-}
-:is(#editingToolbarModalBar, #editingToolbarPopoverBar) button[class^=editingToolbarCommandsubItem]>.subitem button.menu-item.editingToolbar-Divider-Line
-{  min-width: unset;
-  flex-shrink: 0;
-  display: inline-flex;
-  width: 0.6px;
-  background-color: var(--background-modifier-border);
-  height: 22px;
-  opacity: 0.8;
-  margin: 0;
-  padding: 0;
-  height: auto;
-}
+  padding:0;
+  align-self: center;
+} 
 
 .theme-dark :is(#editingToolbarModalBar, #editingToolbarPopoverBar) button.editingToolbar-Divider-Line {
 
@@ -928,6 +945,55 @@ button[class^=editingToolbarCommandsubItem]::after {
 
 :is(#editingToolbarModalBar, #editingToolbarPopoverBar) button.editingToolbar-Divider-Line svg {
   display: none;
+}
+
+/* 下拉菜单中的分类标题样式 - 文字在线条中间 */
+.menu.editing-toolbar-dropdown-menu .menu-separator
+{
+  display:none;
+}
+.menu.editing-toolbar-dropdown-menu .menu-item.is-disabled {
+  opacity: 0.7 !important;
+  cursor: default !important;
+  font-size: 10px;
+  font-weight: 400;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  padding: 8px 12px;
+  background-color: transparent !important;
+  display: flex !important;
+  align-items: center;
+  gap: 6px;
+    color: var(--text-muted); /* 文字直接变透明背景色 */
+    filter: contrast(0.5);
+}
+.theme-dark .menu.editing-toolbar-dropdown-menu .menu-item.is-disabled
+{
+    color: var(--menu-background); /* 文字直接变透明背景色 */
+    filter: brightness(0.7) contrast(1.2);
+}
+
+/* 左侧线条 */
+.menu.editing-toolbar-dropdown-menu .menu-item.is-disabled::before {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background-color: var(--background-modifier-border);
+  opacity: 0.5;
+}
+
+/* 右侧线条 */
+.menu.editing-toolbar-dropdown-menu .menu-item.is-disabled::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background-color: var(--background-modifier-border);
+  opacity: 0.5;
+}
+
+.menu.editing-toolbar-dropdown-menu .menu-item.is-disabled:hover {
+  background-color: transparent !important;
 }
 
 .workspace-tabs.mod-stacked .workspace-tab-header:not(.is-active)+.workspace-leaf #editingToolbarModalBar {
@@ -950,7 +1016,14 @@ button[class^=editingToolbarCommandsubItem]::after {
   color: black;
 }
 
-
+/* 快捷键样式 */                                                                
+.menu.editing-toolbar-dropdown-menu .menu-item-hotkey {                         
+        margin-left: auto;                                                            
+        font-size: 11px;                                                              
+        color: var(--text-muted);                                                     
+        opacity: 0.7;                                                                 
+        font-family: var(--font-monospace);                                           
+      }
 .setting-item.toolbar-cta:after {
   content: "";
   position: absolute;
