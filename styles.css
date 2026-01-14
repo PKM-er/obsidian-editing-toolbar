@@ -1462,3 +1462,28 @@ body.auto-hide-header .workspace-tab-header-container + .workspace-tab-container
   align-self: flex-end;
   border-radius: var(--radius-m);
 }
+/* 3) FIXED – For Mobile */
+.is-phone:not(.is-hidden-nav) #editingToolbarModalBar.top
+{
+    margin-top: var(--view-header-height);
+  
+}
+.is-phone #editingToolbarModalBar.top
+{
+    margin-right 0;  
+}
+
+.is-phone .mod-root .workspace-leaf-content[data-type="markdown"] .view-content:has(.editingToolbarModalBar){
+  mask-image: none;
+} 
+
+ 
+.is-mobile.is-hidden-nav .mod-root .workspace-leaf-content[data-type="markdown"]:has(.editingToolbarModalBar) .view-header
+{
+
+    display:none;
+}
+
+.is-phone .markdown-source-view.mod-cm6 #editingToolbarPopoverBar {
+    margin-top: calc(var(--toolbar-icon-size) + var(--view-header-height) + 20px);
+}
