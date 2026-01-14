@@ -1,5 +1,10 @@
 # Changelog
 
+## 3.2.4 (2026-01-14)
+### #276 修复移动端工具栏顶部遮挡（适配Obsidian Mobile1.11.4）
+### Update manifest.json and CHANGELOG.md for version 3.2.3
+
+
 ## 3.2.3 (2026-01-12)
 ### fix：修复命令后工具栏文本箱不出现
 ### Update CHANGELOG.md
