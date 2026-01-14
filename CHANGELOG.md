@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.2.6 (2026-01-14)
+### 移动端适配其他主题
+### Merge branch 'master' of https://github.com/PKM-er/obsidian-editing-toolbar
+### Update manifest.json and CHANGELOG.md for version 3.2.4
+
+
 ## 3.2.4 (2026-01-14)
 ### #276 修复移动端工具栏顶部遮挡（适配Obsidian Mobile1.11.4）
 ### Update manifest.json and CHANGELOG.md for version 3.2.3
