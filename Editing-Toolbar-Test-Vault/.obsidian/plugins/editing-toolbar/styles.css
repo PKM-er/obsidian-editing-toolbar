@@ -1463,14 +1463,21 @@ body.auto-hide-header .workspace-tab-header-container + .workspace-tab-container
   border-radius: var(--radius-m);
 }
 /* 3) FIXED – For Mobile */
+
+.is-phone.is-hidden-nav #editingToolbarModalBar.top
+{
+    margin-top: calc(var(--safe-area-inset-top) );
+  
+}
+
 .is-phone:not(.is-hidden-nav) #editingToolbarModalBar.top
 {
-    margin-top: var(--view-header-height);
+    margin-top: calc(var(--safe-area-inset-top) + var(--view-header-height));
   
 }
 .is-phone #editingToolbarModalBar.top
 {
-    margin-right 0;  
+    margin-right:0px;  
 }
 
 .is-phone .mod-root .workspace-leaf-content[data-type="markdown"] .view-content:has(.editingToolbarModalBar){
