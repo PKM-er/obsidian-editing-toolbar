@@ -1494,3 +1494,13 @@ body.auto-hide-header .workspace-tab-header-container + .workspace-tab-container
 .is-phone .markdown-source-view.mod-cm6 #editingToolbarPopoverBar {
     margin-top: calc(var(--toolbar-icon-size) + var(--view-header-height) + 20px);
 }
+
+.is-phone .mod-root .workspace-leaf-content .view-content:has(.editingToolbarModalBar) .markdown-source-view > .cm-editor > .cm-scroller {
+  padding-top: 0px;
+}
+ 
+
+.is-phone .mod-root .workspace-leaf-content .view-content:has(.editingToolbarModalBar) .markdown-reading-view > .markdown-preview-view
+ {
+  padding-top: calc(var(--safe-area-inset-top) + var(--view-header-height) + 36px);
+}
