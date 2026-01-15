@@ -1,5 +1,10 @@
 # Changelog
 
+## 3.2.7 (2026-01-15)
+### #277 修复 移动端顶部有空白
+### Update manifest.json and CHANGELOG.md for version 3.2.6
+
+
 ## 3.2.6 (2026-01-14)
 ### 移动端适配其他主题
 ### Merge branch 'master' of https://github.com/PKM-er/obsidian-editing-toolbar
