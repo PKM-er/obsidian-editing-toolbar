@@ -34,7 +34,7 @@ import { InsertCalloutModal } from "src/modals/insertCalloutModal";
 let activeDocument: Document;
 
 // ---- Per-style appearance support (patch v3, integrated) ----
-import type { AppearanceByStyle, ToolbarStyleKey, StyleAppearanceSettings} from "src/settings/settingsData";
+import type { AppearanceByStyle, ToolbarStyleKey, StyleAppearanceSettings } from "src/settings/settingsData";
 
 const STYLE_KEYS: ToolbarStyleKey[] = ["top", "following", "fixed", "mobile"];
 
@@ -78,7 +78,7 @@ function ensureAppearanceStore(
   }
 }
 // ---- end per-style appearance helpers ----
-export interface AdmonitionDefinition  {
+export interface AdmonitionDefinition {
   type: string;
   title?: string;
   icon: string;
@@ -103,10 +103,10 @@ export default class editingToolbarPlugin extends Plugin {
   statusBar: StatusBar;
   public toolbarIconSize: number; // 新增全局变量
   public positionStyle: string;
-  
+
   // NEW: which style's appearance is being edited in the settings UI
   public appearanceEditStyle: ToolbarStyleKey | null = null;
-  
+
   // 修改为公共属性
   commandsManager: CommandsManager;
   public admonitionDefinitions: Record<string, AdmonitionDefinition> | null =
@@ -137,7 +137,7 @@ export default class editingToolbarPlugin extends Plugin {
 
 
 
-    // Initialise per-style appearance (patch v3 logic, but limited to this plugin)
+  // Initialise per-style appearance (patch v3 logic, but limited to this plugin)
   private initPerStyleAppearance(): void {
     const settings = this.settings;
     if (!settings) return;
@@ -146,7 +146,7 @@ export default class editingToolbarPlugin extends Plugin {
     ensureAppearanceStore(settings, migratingFromGlobal);
 
     const store = settings.appearanceByStyle as AppearanceByStyle;
-    
+
     const getCurrentStyle = (): ToolbarStyleKey => {
       const raw = (
         this.appearanceEditStyle ||       // 1. style we are editing in settings
@@ -191,14 +191,14 @@ export default class editingToolbarPlugin extends Plugin {
   async onload(): Promise<void> {
     const currentVersion = this.manifest.version; // 设置当前版本号
     console.log("editingToolbar v" + currentVersion + " loaded");
-  
+
     requireApiVersion("0.15.0") ? activeDocument = activeWindow.document : activeDocument = window.document;
-  
+
     await this.loadSettings();
-  
+
     // IMPORTANT: wire up per-style getters/setters before we start using appearance fields
     this.initPerStyleAppearance();
-  
+
     this.settingTab = new editingToolbarSettingTab(this.app, this);
     this.addSettingTab(this.settingTab);
 
@@ -210,7 +210,7 @@ export default class editingToolbarPlugin extends Plugin {
     this.app.workspace.onLayoutReady(() => {
       this.statusBar = new StatusBar(this);
       this.statusBar.init();
-      
+
       // Ensure toolbar respects initial visibility state after Settings Search completes
       // Use a small delay to ensure Settings Search has finished scanning settings tabs
       setTimeout(() => {
@@ -261,7 +261,7 @@ export default class editingToolbarPlugin extends Plugin {
     const isThinoEnabled = app.plugins.enabledPlugins.has("obsidian-memos");
     if (isThinoEnabled) {
       // @ts-ignore - 自定义事件
-      this.registerEvent( this.app.workspace.on("thino-editor-created", this.handleeditingToolbar)
+      this.registerEvent(this.app.workspace.on("thino-editor-created", this.handleeditingToolbar)
       );
     }
     this.registerEvent(
@@ -297,10 +297,10 @@ export default class editingToolbarPlugin extends Plugin {
       },
     );
 
-// 最好等待工作区布局准备好，确保所有插件都已加载
-this.app.workspace.onLayoutReady(async () => {
-  await this.tryGetAdmonitionTypes();
-});
+    // 最好等待工作区布局准备好，确保所有插件都已加载
+    this.app.workspace.onLayoutReady(async () => {
+      await this.tryGetAdmonitionTypes();
+    });
 
     // // 注册右键菜单
     // this.registerEvent(
@@ -400,10 +400,10 @@ this.app.workspace.onLayoutReady(async () => {
     // @ts-ignore
     const admonitionPluginInstance = this.app.plugins?.getPlugin(ADMONITION_PLUGIN_ID);
     if (admonitionPluginInstance) {
-       
-        this.processAdmonitionTypes(admonitionPluginInstance);
-      }  
+
+      this.processAdmonitionTypes(admonitionPluginInstance);
     }
+  }
 
   processAdmonitionTypes(pluginInstance: any) {
     const admonitionPlugin = pluginInstance as {
@@ -421,12 +421,12 @@ this.app.workspace.onLayoutReady(async () => {
     ) {
       registeredTypes = Object.keys(admonitionPlugin.admonitions);
       this.admonitionDefinitions = admonitionPlugin.admonitions;
-   
-  }  else {
-    console.warn('未能从 admonitionPlugin.admonitions (作为对象) 获取类型。');
-    this.admonitionDefinitions = null; 
+
+    } else {
+      console.warn('未能从 admonitionPlugin.admonitions (作为对象) 获取类型。');
+      this.admonitionDefinitions = null;
+    }
   }
-}
 
   isLoadMobile() {
     let screenWidth = window.innerWidth > 0 ? window.innerWidth : screen.width;
@@ -490,7 +490,10 @@ this.app.workspace.onLayoutReady(async () => {
     if (!ViewUtils.isAllowedViewType(view)) {
       (["top", "following", "fixed"] as const).forEach((style) => {
         const el = isExistoolbar(this.app, this, style);
-        if (el) el.style.visibility = "hidden";
+        if (el) {
+          el.style.display = "none";
+          el.style.visibility = "hidden";
+        }
       });
       return;
     }
@@ -504,7 +507,10 @@ this.app.workspace.onLayoutReady(async () => {
     if (isMarkdownView && !inSourceMode) {
       (["top", "following", "fixed"] as const).forEach((style) => {
         const el = isExistoolbar(this.app, this, style);
-        if (el) el.style.visibility = "hidden";
+        if (el) {
+          el.style.display = "none";
+          el.style.visibility = "hidden";
+        }
       });
       return;
     }
@@ -517,17 +523,17 @@ this.app.workspace.onLayoutReady(async () => {
       typeof (this as any).isTopToolbarActive === "function"
         ? (this as any).isTopToolbarActive()
         : this.settings.enableTopToolbar ||
-          (!this.settings.enableFollowingToolbar &&
-            !this.settings.enableFixedToolbar &&
-            this.positionStyle === "top");
+        (!this.settings.enableFollowingToolbar &&
+          !this.settings.enableFixedToolbar &&
+          this.positionStyle === "top");
 
     const followingEnabled =
       typeof (this as any).isFollowingToolbarActive === "function"
         ? this.isFollowingToolbarActive()
         : this.settings.enableFollowingToolbar ||
-          (!this.settings.enableTopToolbar &&
-            !this.settings.enableFixedToolbar &&
-            this.positionStyle === "following");
+        (!this.settings.enableTopToolbar &&
+          !this.settings.enableFixedToolbar &&
+          this.positionStyle === "following");
 
     const fixedEnabled =
       this.settings.enableFixedToolbar ||
@@ -536,9 +542,9 @@ this.app.workspace.onLayoutReady(async () => {
         this.positionStyle === "fixed");
 
     const styles: { key: "top" | "following" | "fixed"; enabled: boolean }[] = [
-      { key: "top",       enabled: topEnabled },
+      { key: "top", enabled: topEnabled },
       { key: "following", enabled: followingEnabled },
-      { key: "fixed",     enabled: fixedEnabled },
+      { key: "fixed", enabled: fixedEnabled },
     ];
 
     // ---- Per-style handling: create / show / hide independently ----
@@ -547,7 +553,10 @@ this.app.workspace.onLayoutReady(async () => {
 
       if (!enabled) {
         // Style disabled in settings → hide any existing toolbar of that style.
-        if (existing) existing.style.visibility = "hidden";
+        if (existing) {
+          existing.style.display = "none";
+          existing.style.visibility = "hidden";
+        }
         continue;
       }
 
@@ -564,14 +573,17 @@ this.app.workspace.onLayoutReady(async () => {
         // Following toolbar only works in markdown source mode
         // For other views (Canvas, etc.), hide it
         if (!inSourceMode) {
+          toolbar.style.display = "none";
           toolbar.style.visibility = "hidden";
         } else {
           // In markdown source mode, stays hidden until text is selected.
           // Your `showFollowingToolbar` / selection handlers will reveal it.
+          toolbar.style.display = "none";
           toolbar.style.visibility = "hidden";
         }
       } else {
         // Top / Fixed: visible in markdown source mode and other allowed views
+        toolbar.style.display = "";
         toolbar.style.visibility = "visible";
       }
     }
@@ -582,34 +594,34 @@ this.app.workspace.onLayoutReady(async () => {
     // just recompute toolbar creation/visibility using the main handler.
     this.handleeditingToolbar();
   };
-  
+
   handleeditingToolbar_resize = () => {
     // Only care about resizing when the toolbar is visible and top-style is active
     if (!this.settings.cMenuVisibility || !this.isTopToolbarActive()) {
       return false;
     }
-  
+
     const view = app.workspace.getActiveViewOfType(ItemView);
     if (!ViewUtils.isSourceMode(view)) {
       return false;
     }
-  
+
     const leafwidth = this.app.workspace.activeLeaf.view.leaf.width ?? 0;
     // No width, or nothing changed → nothing to do
     if (leafwidth <= 0 || this.Leaf_Width === leafwidth) {
       return false;
     }
-  
+
     this.Leaf_Width = leafwidth;
-  
+
     if (this.settings.cMenuWidth && leafwidth) {
       const diff = leafwidth - this.settings.cMenuWidth;
-  
+
       // Same guard as before: don't rebuild if the configured width still fits
       if (diff < 78 && leafwidth > this.settings.cMenuWidth) {
         return;
       }
-  
+
       setTimeout(() => {
         resetToolbar(this);
         editingToolbarPopover(app, this);
@@ -689,41 +701,41 @@ this.app.workspace.onLayoutReady(async () => {
   }
 
   // 更新指定样式对应的命令配置（设置页可以显式指定样式）
-updateCurrentCommands(commands: any[], style?: string): void {
-  // 单一配置模式：一直使用 menuCommands
-  if (!this.settings.enableMultipleConfig) {
-    this.settings.menuCommands = commands;
-    return;
-  }
+  updateCurrentCommands(commands: any[], style?: string): void {
+    // 单一配置模式：一直使用 menuCommands
+    if (!this.settings.enableMultipleConfig) {
+      this.settings.menuCommands = commands;
+      return;
+    }
 
-  // 如果没有显式传入 style，则保持旧逻辑：根据当前环境决定目标样式
-  let targetStyle = style;
+    // 如果没有显式传入 style，则保持旧逻辑：根据当前环境决定目标样式
+    let targetStyle = style;
 
-  if (!targetStyle) {
-    if (this.settings.isLoadOnMobile && Platform.isMobileApp) {
-      targetStyle = 'mobile';
-    } else {
-      targetStyle = this.positionStyle;
+    if (!targetStyle) {
+      if (this.settings.isLoadOnMobile && Platform.isMobileApp) {
+        targetStyle = 'mobile';
+      } else {
+        targetStyle = this.positionStyle;
+      }
+    }
+
+    switch (targetStyle) {
+      case 'following':
+        this.settings.followingCommands = commands;
+        break;
+      case 'top':
+        this.settings.topCommands = commands;
+        break;
+      case 'fixed':
+        this.settings.fixedCommands = commands;
+        break;
+      case 'mobile':
+        this.settings.mobileCommands = commands;
+        break;
+      default:
+        this.settings.menuCommands = commands;
     }
   }
-
-  switch (targetStyle) {
-    case 'following':
-      this.settings.followingCommands = commands;
-      break;
-    case 'top':
-      this.settings.topCommands = commands;
-      break;
-    case 'fixed':
-      this.settings.fixedCommands = commands;
-      break;
-    case 'mobile':
-      this.settings.mobileCommands = commands;
-      break;
-    default:
-      this.settings.menuCommands = commands;
-  }
-}
 
   async saveSettings() {
     await this.saveData(this.settings);
@@ -1168,8 +1180,8 @@ updateCurrentCommands(commands: any[], style?: string): void {
       if (this.formatBrushNotice) this.formatBrushNotice.hide();
       this.formatBrushNotice = new Notice(
         t("Format brush ON! Select text to apply【") +
-          this.lastExecutedCommandName +
-          t("】format"),
+        this.lastExecutedCommandName +
+        t("】format"),
         0
       );
     } else {
@@ -1303,7 +1315,7 @@ updateCurrentCommands(commands: any[], style?: string): void {
     const cached = this.toolbarCache.get(style);
     // 验证缓存的元素是否仍在 DOM 中
     if (cached && cached.isConnected) {
-    
+
       return cached;
     }
     // 缓存失效，清除
@@ -1354,7 +1366,7 @@ updateCurrentCommands(commands: any[], style?: string): void {
     if (this.settings.enableTopToolbar) {
       return true;
     }
-  
+
     // Backwards compatibility fallback:
     // if neither following nor fixed have been explicitly enabled,
     // and the old global positionStyle is "top", behave like old single-mode.
@@ -1365,7 +1377,7 @@ updateCurrentCommands(commands: any[], style?: string): void {
     ) {
       return true;
     }
-  
+
     return false;
   }
 
@@ -1461,6 +1473,7 @@ updateCurrentCommands(commands: any[], style?: string): void {
   private hideToolbarIfNotSelected() {
     const followingToolbar = isExistoolbar(this.app, this, "following");
     if (followingToolbar && this.isFollowingToolbarActive()) {
+      followingToolbar.style.display = "none";
       followingToolbar.style.visibility = "hidden";
     }
   }
@@ -1518,6 +1531,7 @@ updateCurrentCommands(commands: any[], style?: string): void {
     const followingToolbar = isExistoolbar(this.app, this, "following");
 
     if (followingToolbar) {
+      followingToolbar.style.display = "";
       followingToolbar.style.visibility = "visible";
       followingToolbar.classList.add("editingToolbarFlex");
       followingToolbar.classList.remove("editingToolbarGrid");
@@ -1534,11 +1548,11 @@ updateCurrentCommands(commands: any[], style?: string): void {
     // Temporarily ignore any "editing style" override while we update the live toolbar
     const previousEditStyle = this.appearanceEditStyle;
     this.appearanceEditStyle = null;
-  
+
     // Track the new style both in-memory and in settings
     this.positionStyle = newStyle;
     this.settings.positionStyle = newStyle;
-  
+
     // If multi-config is enabled, ensure the command arrays for this style exist
     if (this.settings.enableMultipleConfig) {
       switch (newStyle) {
@@ -1572,10 +1586,10 @@ updateCurrentCommands(commands: any[], style?: string): void {
           break;
       }
     }
-  
+
     // Keep the in-memory size in sync with the active style
     this.toolbarIconSize = this.settings.toolbarIconSize;
-  
+
     // Refresh the global CSS variables from the *active* style's appearance
     const doc = activeDocument ?? document;
     if (doc && doc.documentElement) {
@@ -1592,9 +1606,9 @@ updateCurrentCommands(commands: any[], style?: string): void {
         `${this.settings.toolbarIconSize}px`
       );
     }
-  
+
     dispatchEvent(new Event("editingToolbar-NewCommand"));
-  
+
     // Restore whatever the settings UI was editing
     this.appearanceEditStyle = previousEditStyle;
   }

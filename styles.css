@@ -15,8 +15,8 @@
   user-select: none;
   border-radius: var(--radius-m);
   position: absolute;
-  transition: 100ms cubic-bezier(0.92, -0.53, 0.65, 1.21);
-  -webkit-transition: 100ms cubic-bezier(0.92, -0.53, 0.65, 1.21);
+  transition: transform 100ms cubic-bezier(0.92, -0.53, 0.65, 1.21), opacity 100ms cubic-bezier(0.92, -0.53, 0.65, 1.21), top 100ms cubic-bezier(0.92, -0.53, 0.65, 1.21), left 100ms cubic-bezier(0.92, -0.53, 0.65, 1.21);
+  -webkit-transition: -webkit-transform 100ms cubic-bezier(0.92, -0.53, 0.65, 1.21), opacity 100ms cubic-bezier(0.92, -0.53, 0.65, 1.21), top 100ms cubic-bezier(0.92, -0.53, 0.65, 1.21), left 100ms cubic-bezier(0.92, -0.53, 0.65, 1.21);
   min-width: fit-content;
   justify-content: space-around;
   z-index: var(--layer-modal);
@@ -411,8 +411,8 @@ button[class^=editingToolbarCommandsubItem]::after {
   background-color: var(--background-secondary);
   z-index:1;
   visibility: hidden;
-  transition: all 0.15s linear;
-  -webkit-transition: all 0.15s linear;
+  transition: transform 0.15s linear, opacity 0.15s linear;
+  -webkit-transition: -webkit-transform 0.15s linear, opacity 0.15s linear;
 }
 
 
@@ -421,8 +421,8 @@ button[class^=editingToolbarCommandsubItem]::after {
 
 :is(#editingToolbarModalBar, #editingToolbarPopoverBar) button[class^=editingToolbarCommandsubItem] >.subitem:hover  {
   visibility:visible;
-  transition: all 0.3s linear;
-  -webkit-transition:  all 0.3s linear;
+  transition: transform 0.3s linear, opacity 0.3s linear;
+  -webkit-transition: -webkit-transform 0.3s linear, opacity 0.3s linear;
 }
 
 :is(#editingToolbarModalBar, #editingToolbarPopoverBar) button[class^=editingToolbarCommandsubItem]:first-child>.subitem
@@ -513,20 +513,20 @@ button[class^=editingToolbarCommandsubItem]::after {
 
 :is(#editingToolbarModalBar, #editingToolbarPopoverBar) button.editingToolbarCommandsubItem-font-color .subitem {
   visibility: hidden;
-  transition: all 0.15s linear;
-  -webkit-transition: all 0.15s linear;
+  transition: transform 0.15s linear, opacity 0.15s linear;
+  -webkit-transition: -webkit-transform 0.15s linear, opacity 0.15s linear;
 }
 
 :is(#editingToolbarModalBar, #editingToolbarPopoverBar) button.editingToolbarCommandsubItem-font-color .subitem:hover {
   visibility: visible;
-  transition: all 0.3s linear;
-  -webkit-transition: all 0.3s linear;
+  transition: transform 0.3s linear, opacity 0.3s linear;
+  -webkit-transition: -webkit-transform 0.3s linear, opacity 0.3s linear;
 }
 
 :is(#editingToolbarModalBar, #editingToolbarPopoverBar) button[class^=editingToolbarCommandsubItem]:hover>.subitem {
   visibility: visible;
-  transition: all 0.3s linear;
-  -webkit-transition: all 0.3s linear;
+  transition: transform 0.3s linear, opacity 0.3s linear;
+  -webkit-transition: -webkit-transform 0.3s linear, opacity 0.3s linear;
   z-index:1;
 }
 
@@ -755,8 +755,8 @@ button[class^=editingToolbarCommandsubItem]::after {
   position: relative;
   height: calc(var(--toolbar-icon-size) + 18px);
   align-items: center;
-  transition: all 0.2s linear;
-  -webkit-transition: all 0.2s linear;
+  transition: transform 0.2s linear, opacity 0.2s linear, top 0.2s linear, left 0.2s linear;
+  -webkit-transition: -webkit-transform 0.2s linear, opacity 0.2s linear, top 0.2s linear, left 0.2s linear;
   transform: none;
   z-index: var(--layer-status-bar);
 }
@@ -774,8 +774,8 @@ button[class^=editingToolbarCommandsubItem]::after {
 }
 #editingToolbarModalBar.top.autohide {
   opacity: 0;
-  transition: all 0.5s linear;
-  -webkit-transition: all 0.5s linear;
+  transition: opacity 0.5s linear;
+  -webkit-transition: opacity 0.5s linear;
 }
 #editingToolbarModalBar.top.centered {
   max-width: var(--file-line-width) ;
@@ -784,8 +784,8 @@ button[class^=editingToolbarCommandsubItem]::after {
 
 #editingToolbarModalBar.top.autohide:hover {
   opacity: 1;
-  transition: all 1s linear;
-  -webkit-transition: all 1s linear;
+  transition: opacity 1s linear;
+  -webkit-transition: opacity 1s linear;
 }
 
 
@@ -832,8 +832,8 @@ button[class^=editingToolbarCommandsubItem]::after {
   border-radius: var(--radius-m);
   margin-left: 25px;
   margin-right: 25px;
-  transition: all 0.1s linear;
-  -webkit-transition: all 0.1s linear;
+  transition: transform 0.1s linear, opacity 0.1s linear, top 0.1s linear, left 0.1s linear, background-color 0.1s linear;
+  -webkit-transition: -webkit-transform 0.1s linear, opacity 0.1s linear, top 0.1s linear, left 0.1s linear, background-color 0.1s linear;
   position: absolute;
   right: 0;
 }
@@ -866,8 +866,8 @@ button[class^=editingToolbarCommandsubItem]::after {
   display: inline-flex;
   justify-content: center;
   align-items: center;
-  transition: all 0.2s linear;
-  -webkit-transition: all 0.2s linear;
+  transition: transform 0.2s linear, opacity 0.2s linear;
+  -webkit-transition: -webkit-transform 0.2s linear, opacity 0.2s linear;
 
 }
 
@@ -1503,4 +1503,16 @@ body.auto-hide-header .workspace-tab-header-container + .workspace-tab-container
 .is-phone .mod-root .workspace-leaf-content .view-content:has(.editingToolbarModalBar) .markdown-reading-view > .markdown-preview-view
  {
   padding-top: calc(var(--safe-area-inset-top) + var(--view-header-height) + 36px);
+}
+/* Robust fix for staggered disappearance by bypassing transitions */
+[class*="editingToolbarModalBar"][style*="visibility: hidden"],
+#editingToolbarPopoverBar[style*="visibility: hidden"] {
+    display: none !important;
+}
+
+/* Also ensure no transitions linger on icons */
+[class*="editingToolbarModalBar"] *,
+#editingToolbarPopoverBar * {
+    transition: none !important;
+    animation: none !important;
 }

@@ -332,6 +332,7 @@ export function createMoremenu(app: App, plugin: editingToolbarPlugin, selector:
         Morecontainer.style.visibility = "visible";
         Morecontainer.style.height = "32px";
       } else {
+        Morecontainer.style.display = "none";
         Morecontainer.style.visibility = "hidden";
         Morecontainer.style.height = "0";
       }
@@ -450,6 +451,7 @@ export function createFollowingbar(
   const view = app.workspace.getActiveViewOfType(ItemView);
   if (!ViewUtils.isAllowedViewType(view)) {
     if (editingToolbarModalBar) {
+      editingToolbarModalBar.style.display = "none";
       editingToolbarModalBar.style.visibility = "hidden";
     }
     return;
@@ -483,10 +485,16 @@ export function createFollowingbar(
       if (editingToolbarModalBar) {
         // 当 forceShow 为 true 或有文本选中时显示工具栏
         const shouldShow = forceShow || editor.somethingSelected();
-        editingToolbarModalBar.style.visibility = shouldShow ? "visible" : "hidden";
+        if (shouldShow) {
+          editingToolbarModalBar.style.display = "";
+          editingToolbarModalBar.style.visibility = "visible";
+        } else {
+          editingToolbarModalBar.style.display = "none";
+          editingToolbarModalBar.style.visibility = "hidden";
+        }
 
         // 仅在工具栏可见时执行后续操作
-        if (editingToolbarModalBar.style.visibility === "visible") {
+        if (shouldShow) {
           // 设置工具栏样式
           editingToolbarModalBar.style.height = height + "px";
           editingToolbarModalBar.addClass("editingToolbarFlex");
@@ -499,12 +507,14 @@ export function createFollowingbar(
     } else {
       // 阅读模式隐藏工具栏
       if (editingToolbarModalBar) {
+        editingToolbarModalBar.style.display = "none";
         editingToolbarModalBar.style.visibility = "hidden";
       }
     }
   } else {
     // 处理其他视图类型（canvas等）
     if (editingToolbarModalBar) {
+      editingToolbarModalBar.style.display = "";
       editingToolbarModalBar.style.visibility = "visible";
       editingToolbarModalBar.style.height = height + "px";
       editingToolbarModalBar.addClass("editingToolbarFlex");
@@ -690,17 +700,17 @@ export function editingToolbarPopover(
       let btnwidth = 0;
       let leafwidth = 0;
       let buttonWidth = resolvedIconSize + 8;
-    
+
       // 主工具栏容器
       let editingToolbar = createEl("div");
       if (editingToolbar) {
         // 标记为编辑工具栏，并带上样式信息
         editingToolbar.addClass("editingToolbarModalBar");
         editingToolbar.setAttribute("data-toolbar-style", effectiveStyle);
-    
+
         // Note: cMenuVisibility is already checked at function start, so we don't need to check here
         // Toolbars should only be created when cMenuVisibility is true
-        
+
         if (effectiveStyle === "top") {
           editingToolbar.className += " top";
           if (settings.autohide) {
@@ -712,6 +722,7 @@ export function editingToolbarPopover(
           // If cMenuVisibility is false, visibility is already set to hidden above
         } else if (effectiveStyle === "following") {
           // following 工具栏初始隐藏，待选中文本后定位并显示
+          editingToolbar.style.display = "none";
           editingToolbar.style.visibility = "hidden";
         } else if (effectiveStyle === "fixed") {
           const Rowsize = resolvedIconSize || 18;
@@ -725,22 +736,23 @@ export function editingToolbarPopover(
       }
       // 继续保留旧的 id，以兼容当前 CSS
       editingToolbar.setAttribute("id", "editingToolbarModalBar");
-    
+
       // 二级弹出菜单
       let PopoverMenu = createEl("div");
       PopoverMenu.addClass("editingToolbarpopover");
       PopoverMenu.addClass("editingToolbarTinyAesthetic");
-    
+
       // 标记为 Popover 工具栏，并带上样式信息
       PopoverMenu.addClass("editingToolbarPopoverBar");
       PopoverMenu.setAttribute("data-toolbar-style", effectiveStyle);
-    
+
       // 继续保留旧的 id，以兼容当前 CSS
       PopoverMenu.setAttribute("id", "editingToolbarPopoverBar");
-    
+
+      PopoverMenu.style.display = "none";
       PopoverMenu.style.visibility = "hidden";
       PopoverMenu.style.height = "0";
-    
+
       // Apply per-style aesthetic
       applyAestheticStyle(editingToolbar, resolvedAestheticStyle);
       applyAestheticStyle(PopoverMenu, resolvedAestheticStyle);
@@ -809,19 +821,19 @@ export function editingToolbarPopover(
 
         // 只有在没有工具栏时才添加 PopoverMenu
         if (!currentleaf?.querySelector("#editingToolbarPopoverBar")) {
-         if (viewType == "excalidraw") {
-          targetDom.insertAdjacentElement("afterend", PopoverMenu);
-         } else {
-          targetDom.insertAdjacentElement("afterbegin", PopoverMenu);
-         }
+          if (viewType == "excalidraw") {
+            targetDom.insertAdjacentElement("afterend", PopoverMenu);
+          } else {
+            targetDom.insertAdjacentElement("afterbegin", PopoverMenu);
+          }
         }
 
         // 添加编辑工具栏
-       if (viewType == "excalidraw") {
-        targetDom.insertAdjacentElement("afterend", editingToolbar);
-       } else {
-        targetDom.insertAdjacentElement("afterbegin", editingToolbar);
-       }
+        if (viewType == "excalidraw") {
+          targetDom.insertAdjacentElement("afterend", editingToolbar);
+        } else {
+          targetDom.insertAdjacentElement("afterbegin", editingToolbar);
+        }
 
         // 获取宽度
         leafwidth = targetDom?.offsetWidth;
@@ -913,12 +925,15 @@ export function editingToolbarPopover(
                         const hasSelection = editor && editor.somethingSelected();
 
                         if (settings.cMenuVisibility == false) {
+                          editingToolbar.style.display = "none";
                           editingToolbar.style.visibility = "hidden";
                         } else if (effectiveStyle === "following") {
                           if (!hasSelection) {
+                            editingToolbar.style.display = "none";
                             editingToolbar.style.visibility = "hidden";
                           }
                         } else {
+                          editingToolbar.style.display = "";
                           editingToolbar.style.visibility = "visible";
                         }
                       });
@@ -958,13 +973,16 @@ export function editingToolbarPopover(
                       const hasSelection = editor && editor.somethingSelected();
 
                       if (settings.cMenuVisibility == false) {
+                        editingToolbar.style.display = "none";
                         editingToolbar.style.visibility = "hidden";
                       } else if (effectiveStyle === "following") {
                         // For the following toolbar, only show when there is a selection.
                         if (!hasSelection) {
+                          editingToolbar.style.display = "none";
                           editingToolbar.style.visibility = "hidden";
                         }
                       } else {
+                        editingToolbar.style.display = "";
                         editingToolbar.style.visibility = "visible";
                       }
 
@@ -975,7 +993,7 @@ export function editingToolbarPopover(
                   }
                   if (subitem.id == "editingToolbar-Divider-Line") {
                     sub_btn.setClass("editingToolbar-Divider-Line");
-                    
+
                     sub_btn.buttonEl.setAttribute('aria-label', subitem.name);
                   }
                   checkHtml(subitem.icon)
@@ -1000,15 +1018,18 @@ export function editingToolbarPopover(
                 // 检查命令执行后是否仍有文本选中
                 const editor = plugin.commandsManager.getActiveEditor();
                 const hasSelection = editor && editor.somethingSelected();
-  
+
                 if (settings.cMenuVisibility == false) {
+                  editingToolbar.style.display = "none";
                   editingToolbar.style.visibility = "hidden";
                 } else if (effectiveStyle === "following") {
                   // For the following toolbar, only show when there is a selection.
                   if (!hasSelection) {
+                    editingToolbar.style.display = "none";
                     editingToolbar.style.visibility = "hidden";
                   }
                 } else {
+                  editingToolbar.style.display = "";
                   editingToolbar.style.visibility = "visible";
                 }
 
@@ -1084,15 +1105,18 @@ export function editingToolbarPopover(
                 // 检查命令执行后是否仍有文本选中
                 const editor = plugin.commandsManager.getActiveEditor();
                 const hasSelection = editor && editor.somethingSelected();
-  
+
                 if (settings.cMenuVisibility == false) {
+                  editingToolbar.style.display = "none";
                   editingToolbar.style.visibility = "hidden";
                 } else if (effectiveStyle === "following") {
                   // For the following toolbar, only show when there is a selection.
                   if (!hasSelection) {
+                    editingToolbar.style.display = "none";
                     editingToolbar.style.visibility = "hidden";
                   }
                 } else {
+                  editingToolbar.style.display = "";
                   editingToolbar.style.visibility = "visible";
                 }
 
@@ -1174,13 +1198,16 @@ export function editingToolbarPopover(
               const hasSelection = editor && editor.somethingSelected();
 
               if (settings.cMenuVisibility == false) {
+                editingToolbar.style.display = "none";
                 editingToolbar.style.visibility = "hidden";
               } else if (effectiveStyle === "following") {
                 // For the following toolbar, only show when there is a selection.
                 if (!hasSelection) {
+                  editingToolbar.style.display = "none";
                   editingToolbar.style.visibility = "hidden";
                 }
               } else {
+                editingToolbar.style.display = "";
                 editingToolbar.style.visibility = "visible";
               }
 
@@ -1264,11 +1291,11 @@ export function editingToolbarPopover(
       }
 
       // 工具栏不存在，创建新的
-  
-      generateMenu();
-     
 
-  
+      generateMenu();
+
+
+
 
       // 缓存新创建的工具栏（但 top 工具栏不缓存，因为每个 leaf 都有独立的工具栏）
       // Note: cMenuVisibility is already checked at function start, so toolbars are only created when visible
