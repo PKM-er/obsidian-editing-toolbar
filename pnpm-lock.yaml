@@ -39,6 +39,12 @@ importers:
       '@codemirror/language':
         specifier: ^6.11.0
         version: 6.12.1
+      '@codemirror/state':
+        specifier: ^6.5.2
+        version: 6.5.3
+      '@codemirror/view':
+        specifier: ^6.36.3
+        version: 6.39.8
       '@rollup/plugin-commonjs':
         specifier: ^18.1.0
         version: 18.1.0(rollup@2.79.2)
@@ -223,7 +229,7 @@ packages:
     engines: {node: '>= 8.0.0'}
 
   '@simonwep/pickr@https://github.com/nothingislost/pickr/archive/a17739f7aa1871b44da778cbb79ae76dae77d839.tar.gz':
-    resolution: {tarball: https://github.com/nothingislost/pickr/archive/a17739f7aa1871b44da778cbb79ae76dae77d839.tar.gz}
+    resolution: {integrity: sha512-VOphUjenpUXHMrYo+uNREruBB/xhMsvqqnJMUShctn1pQXWMDp41a9NJ6XyhISwlyRNoubkuXEn/7/3MuvAhyg==, tarball: https://github.com/nothingislost/pickr/archive/a17739f7aa1871b44da778cbb79ae76dae77d839.tar.gz}
     version: 1.8.4
 
   '@trysound/sax@0.2.0':

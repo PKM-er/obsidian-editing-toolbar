@@ -12,6 +12,8 @@
   "author": "Cuman",
   "license": "MIT",
   "devDependencies": {
+    "@codemirror/state": "^6.5.2",
+    "@codemirror/view": "^6.36.3",
     "@codemirror/language": "^6.11.0",
     "@rollup/plugin-commonjs": "^18.1.0",
     "@rollup/plugin-node-resolve": "^11.2.1",

@@ -55,6 +55,11 @@ const SETTING_TABS: SettingTab[] = [
     icon: 'lucide-command'
   },
   {
+    id: 'ai',
+    name: t('AI'),
+    icon: 'lucide-sparkles'
+  },
+  {
     id: 'importexport',
     name: t('Import/Export'),
     icon: 'lucide-import'
@@ -164,6 +169,9 @@ export class editingToolbarSettingTab extends PluginSettingTab {
         break;
       case 'commands':
         this.displayCommandSettings(contentContainer);
+        break;
+      case 'ai':
+        this.displayAISettings(contentContainer);
         break;
       case 'importexport':
         this.displayImportExportSettings(contentContainer);
@@ -1651,6 +1659,329 @@ export class editingToolbarSettingTab extends PluginSettingTab {
       }
     }
   }
+
+  private displayAISettings(containerEl: HTMLElement): void {
+    const grid = containerEl.createDiv('editing-toolbar-ai-grid');
+    const aiEnabled = this.plugin.settings.ai.enabled;
+    const inlineCompletionEnabled = aiEnabled && this.plugin.settings.ai.enableInlineCompletion;
+    const autoCompletionEnabled = inlineCompletionEnabled && this.plugin.settings.ai.completionTrigger === 'auto';
+    const rewriteEnabled = aiEnabled && this.plugin.settings.ai.enableRewrite;
+    const rewriteToolbarEnabled = rewriteEnabled && this.plugin.settings.ai.showRewriteToolbarOnSelection;
+    const customModelEnabled = aiEnabled && this.plugin.settings.ai.enableCustomModel;
+
+    const createCard = (options: {
+      title: string;
+      desc: string;
+      badge?: string;
+      collapsible?: boolean;
+      open?: boolean;
+    }): HTMLElement => {
+      const root = options.collapsible
+        ? grid.createEl('details', { cls: 'editing-toolbar-ai-card editing-toolbar-ai-disclosure' })
+        : grid.createDiv('editing-toolbar-ai-card');
+
+      if (options.collapsible && options.open) {
+        (root as HTMLDetailsElement).open = true;
+      }
+
+      const headerHost = options.collapsible
+        ? root.createEl('summary', { cls: 'editing-toolbar-ai-card-summary' })
+        : root.createDiv('editing-toolbar-ai-card-summary editing-toolbar-ai-card-summary-static');
+
+      const header = headerHost.createDiv('editing-toolbar-ai-card-header');
+      const copy = header.createDiv('editing-toolbar-ai-card-copy');
+      copy.createDiv({ cls: 'editing-toolbar-ai-card-title', text: options.title });
+      copy.createDiv({ cls: 'editing-toolbar-ai-card-desc', text: options.desc });
+
+      if (options.badge) {
+        header.createDiv({ cls: 'editing-toolbar-ai-card-badge', text: options.badge });
+      }
+
+      return root.createDiv('editing-toolbar-ai-card-body');
+    };
+
+    const basicBody = createCard({
+      title: t('AI Editor'),
+      desc: t('Enable AI editor features such as inline completion and selection rewrite.'),
+      badge: this.plugin.settings.ai.enabled ? t('Enabled') : t('Disabled'),
+    });
+
+    new Setting(basicBody)
+      .setName(t('Enable AI Editor'))
+      .setDesc(t('Enable AI editor features such as inline completion and selection rewrite.'))
+      .addToggle((toggle) => {
+        toggle.setValue(this.plugin.settings.ai.enabled).onChange(async (value) => {
+          this.plugin.settings.ai.enabled = value;
+          await this.plugin.saveSettings();
+          this.display();
+        });
+      });
+
+    if (aiEnabled) {
+      const accountBody = createCard({
+        title: t('PKMer AI'),
+        desc: t('Log in to PKMer AI to get free AI features without manual model setup.'),
+        badge: this.plugin.settings.ai.pkmer.userInfo ? t('Logged in') : t('Not logged in'),
+      });
+
+      const pkmerAccountDesc = document.createDocumentFragment();
+      pkmerAccountDesc.append(this.plugin.aiManager.getPKMerStatusText());
+      if (this.plugin.settings.ai.pkmer.userInfo?.ai_quota?.quota !== undefined) {
+        pkmerAccountDesc.append(' ');
+        const quotaLink = document.createElement('a');
+        quotaLink.textContent = t('More Quota');
+        quotaLink.href = 'https://pkmer.cn/products/UserProfile/#tab-ai-token';
+        quotaLink.target = '_blank';
+        quotaLink.rel = 'noopener noreferrer';
+        pkmerAccountDesc.appendChild(quotaLink);
+      }
+
+      new Setting(accountBody)
+        .setName(t('PKMer Account'))
+        .setDesc(pkmerAccountDesc)
+        .addButton((button) => {
+          if (this.plugin.settings.ai.pkmer.userInfo) {
+            button.setButtonText(t('Logout')).onClick(async () => {
+              await this.plugin.aiManager.logoutFromPKMer();
+              this.display();
+            });
+            return;
+          }
+
+          button.setButtonText(t('Login')).setCta().onClick(async () => {
+            await this.plugin.aiManager.loginWithPKMer();
+            this.display();
+          });
+        })
+        .addButton((button) => {
+          if (!this.plugin.settings.ai.pkmer.userInfo) {
+            button.buttonEl.style.display = 'none';
+            return;
+          }
+
+          button.setButtonText(t('Check Quota')).onClick(async () => {
+            await this.plugin.aiManager.refreshPKMerQuota();
+            this.display();
+          });
+        });
+
+       
+
+      if (!this.plugin.settings.ai.pkmer.userInfo) {
+        const accountLinkNote = accountBody.createDiv({ cls: 'editing-toolbar-ai-note' });
+        accountLinkNote.appendText(`${t('Need a PKMer AI account?')} `);
+        const accountLink = accountLinkNote.createEl('a', { text: t('Open PKMer AI') });
+        accountLink.href = 'https://pkmer.cn/products/UserProfile/';
+        accountLink.target = '_blank';
+        accountLink.rel = 'noopener noreferrer';
+      }
+
+      const routeNote = accountBody.createDiv({
+        cls: 'editing-toolbar-ai-note',
+        text: t('Checking current AI route...'),
+      });
+      void this.plugin.aiManager.getProviderRouteStatusText().then((text) => {
+        routeNote.setText(text);
+      });
+
+      const featuresBody = createCard({
+        title: t('Editor Features'),
+        desc: t('Configure inline completion and rewrite after your AI provider is ready.'),
+      });
+
+      new Setting(featuresBody)
+        .setName(t('Enable Inline Completion'))
+        .setDesc(t('Show ghost text suggestions inside the editor.'))
+        .addToggle((toggle) => {
+          toggle.setValue(this.plugin.settings.ai.enableInlineCompletion).onChange(async (value) => {
+            this.plugin.settings.ai.enableInlineCompletion = value;
+            await this.plugin.saveSettings();
+            this.display();
+          });
+        });
+
+      if (inlineCompletionEnabled) {
+        new Setting(featuresBody)
+          .setName(t('Completion Mode'))
+          .setDesc(t('Choose whether completion is triggered manually or automatically after a short pause.'))
+          .addDropdown((dropdown) => {
+            dropdown
+              .addOption('manual', t('Manual'))
+              .addOption('auto', t('Auto'))
+              .setValue(this.plugin.settings.ai.completionTrigger)
+              .onChange(async (value) => {
+                this.plugin.settings.ai.completionTrigger = value as 'manual' | 'auto';
+                await this.plugin.saveSettings();
+                this.display();
+              });
+          });
+
+        if (this.plugin.settings.ai.completionTrigger === 'manual') {
+          new Setting(featuresBody)
+            .setName(t('Manual Completion Shortcut'))
+            .setDesc(t('Default shortcut is Ctrl+J. You can customize it in Obsidian Hotkeys.'))
+            .addButton((button) => {
+              button.setButtonText(t('Open Hotkey Settings')).onClick(() => {
+                this.app.setting.open();
+                this.app.setting.openTabById('hotkeys');
+              });
+            });
+        }
+
+        if (autoCompletionEnabled) {
+          new Setting(featuresBody)
+            .setName(t('Completion Delay (ms)'))
+            .setDesc(t('Delay before auto-triggering inline completion.'))
+            .addText((text) => {
+              text.setValue(String(this.plugin.settings.ai.completionDelay)).onChange(async (value) => {
+                const parsed = Number.parseInt(value, 10);
+                if (!Number.isNaN(parsed) && parsed >= 0) {
+                  this.plugin.settings.ai.completionDelay = parsed;
+                  await this.plugin.saveSettings();
+                }
+              });
+            });
+        }
+      }
+
+      new Setting(featuresBody)
+        .setName(t('Enable AI Rewrite'))
+        .setDesc(t('Enable selection rewrite result panel and rewrite commands.'))
+        .addToggle((toggle) => {
+          toggle.setValue(this.plugin.settings.ai.enableRewrite).onChange(async (value) => {
+            this.plugin.settings.ai.enableRewrite = value;
+            await this.plugin.saveSettings();
+            this.display();
+          });
+        });
+
+      if (rewriteEnabled) {
+        new Setting(featuresBody)
+          .setName(t('Show AI Rewrite Toolbar On Selection'))
+          .setDesc(t('Show the floating AI rewrite toolbar whenever text is selected.'))
+          .addToggle((toggle) => {
+            toggle.setValue(this.plugin.settings.ai.showRewriteToolbarOnSelection).onChange(async (value) => {
+              this.plugin.settings.ai.showRewriteToolbarOnSelection = value;
+              await this.plugin.saveSettings();
+              this.display();
+            });
+          });
+      }
+
+      if (rewriteToolbarEnabled) {
+        new Setting(featuresBody)
+          .setName(t('Rewrite Minimum Selection Length'))
+          .setDesc(t('Minimum selection length before the rewrite toolbar appears.'))
+          .addText((text) => {
+            text.setValue(String(this.plugin.settings.ai.rewriteMinSelectionLength)).onChange(async (value) => {
+              const parsed = Number.parseInt(value, 10);
+              if (!Number.isNaN(parsed) && parsed >= 1) {
+                this.plugin.settings.ai.rewriteMinSelectionLength = parsed;
+                await this.plugin.saveSettings();
+              }
+            });
+          });
+      }
+
+      const customBody = createCard({
+        title: t('Custom Model (Optional)'),
+        desc: t('Custom model is used automatically when PKMer AI is unavailable.'),
+        badge: customModelEnabled ? t('Enabled') : t('Disabled'),
+      });
+
+      new Setting(customBody)
+        .setName(t('Enable Custom Model'))
+        .setDesc(t('Use your own OpenAI-compatible provider as a fallback.'))
+        .addToggle((toggle) => {
+          toggle.setValue(this.plugin.settings.ai.enableCustomModel).onChange(async (value) => {
+            this.plugin.settings.ai.enableCustomModel = value;
+            await this.plugin.saveSettings();
+            this.display();
+          });
+        });
+
+      if (customModelEnabled) {
+        new Setting(customBody)
+          .setName(t('Custom API Base URL'))
+          .setDesc(t('OpenAI-compatible endpoint for your own provider.'))
+          .addText((text) => {
+            text.setPlaceholder('https://api.openai.com').setValue(this.plugin.settings.ai.customModel.baseUrl).onChange(async (value) => {
+              this.plugin.settings.ai.customModel.baseUrl = value.trim();
+              await this.plugin.saveSettings();
+            });
+          });
+
+        new Setting(customBody)
+          .setName(t('Custom Model Name'))
+          .setDesc(t('Model identifier used for inline completion and rewrite requests.'))
+          .addText((text) => {
+            text.setPlaceholder('gpt-4o-mini').setValue(this.plugin.settings.ai.customModel.model).onChange(async (value) => {
+              this.plugin.settings.ai.customModel.model = value.trim();
+              await this.plugin.saveSettings();
+            });
+          });
+
+        new Setting(customBody)
+          .setName(t('Custom API Key'))
+          .setDesc(this.plugin.aiManager.hasSecureStorage()
+            ? (this.plugin.aiManager.hasCustomModelApiKey() ? t('Stored securely in Obsidian secret storage.') : t('Will be stored securely in Obsidian secret storage.'))
+            : t('Current Obsidian version does not support secure secret storage.'))
+          .addText((text) => {
+            text.inputEl.type = 'password';
+            text.setPlaceholder(this.plugin.aiManager.hasCustomModelApiKey() ? t('Stored securely') : t('Enter API key'));
+            text.setValue('').onChange(async (value) => {
+              if (value.trim()) {
+                this.plugin.aiManager.saveCustomModelApiKey(value);
+              } else {
+                this.plugin.aiManager.clearCustomModelApiKey();
+              }
+              await this.plugin.saveSettings();
+            });
+          })
+          .addButton((button) => {
+            button.setButtonText(t('Clear')).onClick(async () => {
+              this.plugin.aiManager.clearCustomModelApiKey();
+              await this.plugin.saveSettings();
+              this.display();
+            });
+          });
+
+        new Setting(customBody)
+          .setName(t('Test Connection'))
+          .setDesc(t('Send a lightweight request to verify your custom model settings.'))
+          .addButton((button) => {
+            button.setButtonText(t('Test Connection')).onClick(async () => {
+              button.setDisabled(true);
+              button.setButtonText(t('Testing...'));
+              try {
+                await this.plugin.aiManager.testCustomModelConnection();
+              } finally {
+                button.setDisabled(false);
+                button.setButtonText(t('Test Connection'));
+              }
+            });
+          });
+
+        const moreOptions = customBody.createEl('details', { cls: 'editing-toolbar-ai-inline-disclosure' });
+        moreOptions.createEl('summary', { cls: 'editing-toolbar-ai-inline-summary', text: t('More Options') });
+        const moreOptionsBody = moreOptions.createDiv('editing-toolbar-ai-inline-body');
+
+        new Setting(moreOptionsBody)
+          .setName(t('Temperature'))
+          .setDesc(t('Lower values are more stable; higher values are more creative.'))
+          .addText((text) => {
+            text.setValue(String(this.plugin.settings.ai.customModel.temperature)).onChange(async (value) => {
+              const parsed = Number.parseFloat(value);
+              if (!Number.isNaN(parsed) && parsed >= 0) {
+                this.plugin.settings.ai.customModel.temperature = parsed;
+                await this.plugin.saveSettings();
+              }
+            });
+          });
+      }
+    }
+  }
+
   // 添加导入导出设置显示方法
   private displayImportExportSettings(containerEl: HTMLElement): void {
     // 添加样式

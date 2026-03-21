@@ -1,4 +1,5 @@
 import type { Command } from "obsidian";
+import { DEFAULT_AI_SETTINGS, type AIPluginSettings } from "src/ai/types";
 export const APPEND_METHODS = ["body", "workspace"];
 export const AESTHETIC_STYLES = ["default", "tiny", "glass", "custom"];
 export const POSITION_STYLES = ["following", "top", "fixed"];
@@ -94,6 +95,7 @@ export interface editingToolbarSettings {
   toolbarIconColor: string;
   toolbarIconSize: number;
   useCurrentLineForRegex: boolean;
+  ai: AIPluginSettings;
   
 }
 
@@ -557,5 +559,6 @@ export const DEFAULT_SETTINGS: editingToolbarSettings = {
     "toolbarBackgroundColor": "rgba(var(--background-secondary-rgb), 0.7)",
     "toolbarIconColor": "var(--text-normal)",
     "toolbarIconSize": 18,
-    "useCurrentLineForRegex": false
+    "useCurrentLineForRegex": false,
+    "ai": DEFAULT_AI_SETTINGS
   }

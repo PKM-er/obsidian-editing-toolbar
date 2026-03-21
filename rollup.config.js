@@ -22,7 +22,18 @@ export default {
     exports: "default",
     banner,
   },
-  external: ["obsidian"],
+  external: [
+    "obsidian",
+    "@codemirror/state",
+    "@codemirror/view",
+    "@codemirror/language",
+    "@codemirror/autocomplete",
+    "@codemirror/commands",
+    "@codemirror/search",
+    "@lezer/common",
+    "@lezer/highlight",
+    "@lezer/lr",
+  ],
   plugins: [
     typescript(),
     nodeResolve({

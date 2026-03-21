@@ -30,6 +30,7 @@ import { StatusBar } from "src/components/StatusBar";
 import { CommandsManager } from "src/commands/commands";
 import { InsertLinkModal } from "src/modals/insertLinkModal";
 import { InsertCalloutModal } from "src/modals/insertCalloutModal";
+import { AIEditorManager } from "src/ai/AIEditorManager";
 
 let activeDocument: Document;
 
@@ -130,6 +131,7 @@ export default class editingToolbarPlugin extends Plugin {
 
   // 添加设置标签页引用
   settingTab: editingToolbarSettingTab;
+  aiManager: AIEditorManager;
 
   // 性能优化：工具栏 DOM 缓存
   private toolbarCache: Map<ToolbarStyleKey, HTMLElement> = new Map();
@@ -195,6 +197,13 @@ export default class editingToolbarPlugin extends Plugin {
     requireApiVersion("0.15.0") ? activeDocument = activeWindow.document : activeDocument = window.document;
   
     await this.loadSettings();
+
+    this.aiManager = new AIEditorManager(this);
+    this.aiManager.onload();
+
+    if (requireApiVersion("0.15.0") && typeof this.registerEditorExtension === "function") {
+      this.registerEditorExtension(this.aiManager.createExtension());
+    }
   
     // IMPORTANT: wire up per-style getters/setters before we start using appearance fields
     this.initPerStyleAppearance();
@@ -444,6 +453,8 @@ this.app.workspace.onLayoutReady(async () => {
   }
 
   onunload(): void {
+    this.aiManager?.onunload();
+
     // 注销工作区事件
     this.app.workspace.off("active-leaf-change", this.handleeditingToolbar);
     this.app.workspace.off("layout-change", this.handleeditingToolbar_layout);
@@ -634,7 +645,27 @@ this.app.workspace.onLayoutReady(async () => {
   }
 
   async loadSettings() {
-    this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+    const loadedData = await this.loadData();
+    const legacyCustomModelConfigured = !!(
+      loadedData?.ai?.customModel?.baseUrl?.trim?.() ||
+      loadedData?.ai?.customModel?.model?.trim?.() ||
+      loadedData?.ai?.customModel?.apiKey?.trim?.()
+    );
+
+    this.settings = Object.assign({}, DEFAULT_SETTINGS, loadedData);
+    this.settings.ai = {
+      ...DEFAULT_SETTINGS.ai,
+      ...(loadedData?.ai || {}),
+      enableCustomModel: loadedData?.ai?.enableCustomModel ?? legacyCustomModelConfigured,
+      pkmer: {
+        ...DEFAULT_SETTINGS.ai.pkmer,
+        ...(loadedData?.ai?.pkmer || {}),
+      },
+      customModel: {
+        ...DEFAULT_SETTINGS.ai.customModel,
+        ...(loadedData?.ai?.customModel || {}),
+      },
+    };
 
     // 配置迁移逻辑：将旧的 positionStyle 配置迁移到新的 enable 开关
     // 判断条件：所有新开关都是 false（说明用户还没有配置过新版）

@@ -8,6 +8,17 @@ declare module "obsidian" {
 		plugins: Plugins
 		commands: Commands
 		setting: SettingsManager
+		secretStorage: SecretStorage
+	}
+
+	interface SecretStorage {
+		getSecret(key: string): string | null;
+		setSecret(key: string, value: string): void;
+	}
+
+	interface Plugin {
+		registerEditorExtension?(extension: any): void;
+		registerObsidianProtocolHandler?(action: string, callback: (params: Record<string, string>) => any): void;
 	}
 
 	interface SettingsManager {
@@ -336,4 +347,3 @@ declare module "obsidian" {
 	}
 
 }
-

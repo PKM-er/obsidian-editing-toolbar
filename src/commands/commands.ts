@@ -25,6 +25,7 @@ import { InsertLinkModal } from "src/modals/insertLinkModal";
 import { CustomCommand } from "src/settings/settingsData";
 import { t } from "src/translations/helper";
 import { TextEnhancement } from "src/util/textEnhancement";
+import type { RewriteInstruction } from "src/ai/types";
 import {
   TextInputModal,
   IWrapInputResult,
@@ -567,6 +568,57 @@ export class CommandsManager {
       name: "Remove Blank Lines",
       editorCallback: (editor) =>
         TextEnhancement.processWhitespace(editor, { removeEmptyLines: true }),
+    });
+
+    this.plugin.addCommand({
+      id: "ai-login-pkmer",
+      name: "Login to PKMer AI",
+      icon: "lucide-log-in",
+      callback: async () => {
+        await this.plugin.aiManager.loginWithPKMer();
+      },
+    });
+
+    this.plugin.addCommand({
+      id: "ai-logout-pkmer",
+      name: "Logout from PKMer AI",
+      icon: "lucide-log-out",
+      callback: async () => {
+        await this.plugin.aiManager.logoutFromPKMer();
+      },
+    });
+
+    this.plugin.addCommand({
+      id: "ai-inline-completion",
+      name: "Trigger AI Inline Completion",
+      icon: "lucide-sparkles",
+      hotkeys: [{ modifiers: ["Mod"], key: "j" }],
+      editorCallback: (editor: Editor) => {
+        this.plugin.aiManager.triggerInlineCompletion(editor);
+      },
+    });
+
+    const registerRewriteCommand = (id: string, name: string, instruction: RewriteInstruction, icon: string) => {
+      this.plugin.addCommand({
+        id,
+        name,
+        icon,
+        editorCallback: (editor: Editor) => {
+          void this.plugin.aiManager.startRewrite(editor, instruction);
+        },
+      });
+    };
+
+    registerRewriteCommand("ai-rewrite-improve", "AI Improve Selection", "improve", "lucide-wand-2");
+    registerRewriteCommand("ai-rewrite-continue", "AI Continue Writing", "continue", "lucide-pencil-line");
+
+    this.plugin.addCommand({
+      id: "ai-rewrite-custom",
+      name: "AI Custom Rewrite",
+      icon: "lucide-message-square",
+      editorCallback: (editor: Editor) => {
+        this.plugin.aiManager.openCustomRewrite(editor);
+      },
     });
 
     this.plugin.addCommand({
