@@ -23,7 +23,7 @@ import addIcons, {
   // addRemixIcons
   // addBoxIcons
 } from "src/icons/customIcons";
-import { setFontcolor, setBackgroundcolor, renumberSelection } from "src/util/util";
+import { setFontcolor, setBackgroundcolor } from "src/util/util";
 import { ViewUtils } from 'src/util/viewUtils';
 import { UpdateNoticeModal } from "src/modals/updateModal";
 import { StatusBar } from "src/components/StatusBar";
@@ -96,6 +96,13 @@ interface AdmonitionPluginPublic {
   postprocessors: Map<string, any>;
 }
 // ... 常量定义 ...
+interface EditorContextMenuAction {
+  title: string;
+  commandId?: string;
+  callback?: () => void;
+  disabled?: boolean;
+}
+
 const ADMONITION_PLUGIN_ID = "obsidian-admonition";
 
 export default class editingToolbarPlugin extends Plugin {
@@ -234,6 +241,151 @@ export default class editingToolbarPlugin extends Plugin {
       dispatchEvent(new Event("editingToolbar-NewCommand"));
     }, 100);
   }
+
+  private getPluginCommandId(commandId: string): string {
+    return `${this.manifest.id}:${commandId}`;
+  }
+
+  private executePluginCommand(commandId: string): void {
+    this.app.commands.executeCommandById(this.getPluginCommandId(commandId));
+  }
+
+  private openPluginSettingsTab(tabId: string = this.manifest.id): void {
+    this.app.setting.open();
+    this.app.setting.openTabById(tabId);
+  }
+
+  private addEditorContextAction(menu: Menu, action: EditorContextMenuAction): void {
+    menu.addItem((item) => {
+      item.setTitle(action.title);
+
+      if (action.disabled) {
+        item.setDisabled(true);
+        return;
+      }
+
+      item.onClick(() => {
+        if (action.callback) {
+          action.callback();
+          return;
+        }
+
+        if (action.commandId) {
+          this.executePluginCommand(action.commandId);
+        }
+      });
+    });
+  }
+
+  private addEditorContextSubmenu(
+    menu: Menu,
+    title: string,
+    icon: string,
+    actions: EditorContextMenuAction[],
+  ): void {
+    if (!actions.length) {
+      return;
+    }
+
+    menu.addItem((item) => {
+      item.setTitle(title).setIcon(icon);
+      requireApiVersion("0.15.0") ? item.setSection("info") : true;
+
+      const submenu = item.setSubmenu();
+      actions.forEach((action) => this.addEditorContextAction(submenu, action));
+    });
+  }
+
+  private buildTextContextActions(editor: Editor): EditorContextMenuAction[] {
+    const actions: EditorContextMenuAction[] = [];
+    const hasSelection = editor.somethingSelected();
+    const cursor = editor.getCursor();
+    const lineText = editor.getLine(cursor.line);
+    const isOrderedListLine = /^\d+\.\s/.test(lineText);
+    const isTableContext = lineText.includes("|");
+
+    if (hasSelection) {
+      actions.push(
+        { title: t("Split Lines"), commandId: "split-lines" },
+        { title: t("Merge Lines"), commandId: "merge-lines" },
+        { title: t("Full Half Converter"), commandId: "smart-symbols" },
+        { title: t("Dedupe Lines"), commandId: "dedupe-lines" },
+        { title: t("Add Prefix/Suffix"), commandId: "add-wrap" },
+        { title: t("Number Lines (Custom)"), commandId: "number-lines" },
+        { title: t("Trim Line Ends"), commandId: "remove-whitespace-trim" },
+        { title: t("Shrink Extra Spaces"), commandId: "remove-whitespace-compress" },
+        { title: t("Remove All Whitespace"), commandId: "remove-whitespace-all" },
+        { title: t("Extract Between Strings"), commandId: "extract-between" },
+        { title: t("List to Table"), commandId: "list-to-table" },
+        { title: t("Table to List"), commandId: "table-to-list" },
+      );
+    }
+
+    if (!hasSelection) {
+      actions.push(
+        { title: t("Add Prefix/Suffix"), commandId: "add-wrap" },
+        { title: t("Insert Blank Lines"), commandId: "insert-blank-lines" },
+        { title: t("Extract Between Strings"), commandId: "extract-between" },
+      );
+    }
+
+    if (isOrderedListLine) {
+      actions.push({ title: t("Renumber List"), commandId: "renumber-ordered-list" });
+    }
+
+    if (!hasSelection && isTableContext) {
+      actions.push({ title: t("Table to List"), commandId: "table-to-list" });
+    }
+
+    if (!actions.length) {
+      actions.push({ title: t("Select text to see more tools"), disabled: true });
+    }
+
+    return actions;
+  }
+
+  private buildAIContextActions(editor: Editor): EditorContextMenuAction[] {
+    if (!this.settings.ai.enabled) {
+      return [
+        {
+          title: t("Enable AI Editor"),
+          callback: () => this.openPluginSettingsTab(),
+        },
+      ];
+    }
+
+    if (editor.somethingSelected()) {
+      return [
+        { title: t("Improve writing"), commandId: "ai-rewrite-improve" },
+        { title: t("Fix spelling & grammar"), commandId: "ai-rewrite-fix-grammar" },
+        { title: t("Summarize"), commandId: "ai-rewrite-summarize" },
+        { title: t("Explain this"), commandId: "ai-rewrite-explain" },
+        { title: t("Continue writing"), commandId: "ai-rewrite-continue" },
+        { title: t("AI Custom Rewrite"), commandId: "ai-rewrite-custom" },
+        { title: t("Convert to list"), commandId: "ai-toolbox-list" },
+        { title: t("Convert to table"), commandId: "ai-toolbox-table" },
+        { title: t("Generate frontmatter"), commandId: "ai-toolbox-frontmatter" },
+        { title: t("Convert to canvas"), commandId: "ai-toolbox-canvas" },
+      ];
+    }
+
+    return [
+      { title: t("Inline Completion"), commandId: "ai-inline-completion" },
+      { title: t("Continue writing"), commandId: "ai-rewrite-continue" },
+      { title: t("AI Custom Rewrite"), commandId: "ai-rewrite-custom" },
+      { title: t("Generate frontmatter"), commandId: "ai-toolbox-frontmatter" },
+      { title: t("Convert to canvas"), commandId: "ai-toolbox-canvas" },
+    ];
+  }
+
+  private handleEditorContextMenu = (
+    menu: Menu,
+    editor: Editor,
+    _view: MarkdownView,
+  ): void => {
+    this.addEditorContextSubmenu(menu, t("Text Tools"), "whole-word", this.buildTextContextActions(editor));
+    this.addEditorContextSubmenu(menu, t("AI Tools"), "sparkles", this.buildAIContextActions(editor));
+  };
 
   async onload(): Promise<void> {
     const currentVersion = this.manifest.version; // 设置当前版本号
@@ -401,23 +553,8 @@ this.app.workspace.onLayoutReady(async () => {
     // );
     // 注册右键菜单
     this.registerEvent(
-      this.app.workspace.on(
-        "editor-menu",
-        (menu: Menu, editor: Editor, view: MarkdownView) => {
-          const cursor = editor.getCursor();
-          const lineText = editor.getLine(cursor.line);
+      this.app.workspace.on("editor-menu", this.handleEditorContextMenu)
           // 判断光标是否在有序列表行（简单匹配数字开头）
-          if (/^\d+\.\s/.test(lineText)) {
-            menu.addItem((item) =>
-              item
-                .setSection("info")
-                .setTitle(t("Renumber List"))
-                .setIcon("list-restart")
-                .onClick(() => renumberSelection(editor))
-            );
-          }
-        }
-      )
     );
     this.registerEvent(
       // @ts-ignore
