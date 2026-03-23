@@ -534,6 +534,166 @@ button[class^=editingToolbarCommandsubItem]::after {
   background-color: transparent;
 }
 
+:is(#editingToolbarModalBar, #editingToolbarPopoverBar) button.editingToolbarCommandsubItem-ai {
+  position: relative;
+  overflow: visible;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding-right: 0px !important;
+}
+
+
+:is(#editingToolbarModalBar[data-toolbar-style="following"], #editingToolbarModalBar.top, #editingToolbarPopoverBar) button.editingToolbarCommandsubItem-ai.editing-toolbar-ai-button-inline .editing-toolbar-ai-button-label {
+  max-width: 5.2em;
+}
+
+:is(#editingToolbarModalBar, #editingToolbarPopoverBar) button.editingToolbarCommandsubItem-ai.editing-toolbar-ai-button-fixed {
+  gap: 2px;
+  justify-content: center;
+  padding-left: 4px !important;
+  padding-right: 4px !important;
+}
+
+:is(#editingToolbarModalBar, #editingToolbarPopoverBar) button.editingToolbarCommandsubItem-ai::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: 12px;
+  background: rgba(99, 102, 241, 0.08);
+  opacity: 0;
+  transition: opacity 0.16s ease;
+  pointer-events: none;
+}
+
+:is(#editingToolbarModalBar, #editingToolbarPopoverBar) button.editingToolbarCommandsubItem-ai:hover::before {
+  opacity: 1;
+}
+
+:is(#editingToolbarModalBar, #editingToolbarPopoverBar) button.editingToolbarCommandsubItem-ai::after {
+  content: none;
+}
+
+:is(#editingToolbarModalBar, #editingToolbarPopoverBar) button.editingToolbarCommandsubItem-ai > svg {
+  flex-shrink: 0;
+}
+
+.editing-toolbar-ai-button-main {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.editing-toolbar-ai-button-label {
+  display: inline-block;
+  max-width: 6em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--text-normal);
+}
+
+.editing-toolbar-ai-button-arrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  min-height: 16px;
+  margin-left: 1px;
+  padding-left: 4px;
+  border-left: 1px solid var(--background-modifier-border-hover);
+  color: var(--text-muted);
+  font-size: 9px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+:is(#editingToolbarModalBar, #editingToolbarPopoverBar) button.editingToolbarCommandsubItem-ai.editing-toolbar-ai-button-fixed .editing-toolbar-ai-button-arrow {
+  width: 10px;
+  min-height: 14px;
+  margin-left: 0;
+  padding-left: 2px;
+  border-left: none;
+}
+
+.menu.editing-toolbar-ai-dropdown-menu {
+  min-width: 240px;
+}
+
+.menu.editing-toolbar-ai-dropdown-menu .menu-item.is-disabled {
+  opacity: 0.72;
+}
+
+.editing-toolbar-ai-inline-prompt {
+  position: fixed;
+  z-index: 1001;
+  width: min(360px, calc(100vw - 24px));
+  padding: 10px;
+  border: 1px solid var(--background-modifier-border-hover);
+  border-radius: 14px;
+  background: var(--background-primary);
+  box-shadow: 0 16px 32px rgba(15, 23, 42, 0.16);
+}
+
+.editing-toolbar-ai-inline-prompt-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.editing-toolbar-ai-inline-prompt-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-normal);
+}
+
+.editing-toolbar-ai-inline-prompt-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.editing-toolbar-ai-inline-prompt-close:hover {
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
+
+.editing-toolbar-ai-inline-prompt-input {
+  width: 100%;
+  min-height: 72px;
+  resize: none;
+  padding: 10px 12px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 10px;
+  background: var(--background-secondary);
+  color: var(--text-normal);
+  line-height: 1.5;
+}
+
+.editing-toolbar-ai-inline-prompt-input:focus {
+  outline: none;
+  border-color: var(--interactive-accent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--interactive-accent) 28%, transparent);
+}
+
+.editing-toolbar-ai-inline-prompt-hint {
+  margin-top: 8px;
+  font-size: 11px;
+  color: var(--text-faint);
+}
 
 .editingToolbarSettingsTabsContainer .editingToolbarCommandItem .setting-item-info {
 
@@ -1418,6 +1578,96 @@ body.auto-hide-header .workspace-tab-header-container + .workspace-tab-container
 .confirm-modal p{
   margin: 0;
   line-height: 1.6;
+}
+
+.modal.editing-toolbar-ai-consent-modal {
+  width: min(560px, calc(100vw - 32px));
+}
+
+.editing-toolbar-ai-consent {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.editing-toolbar-ai-consent-hero h2 {
+  margin: 10px 0 0;
+  font-size: 24px;
+  line-height: 1.25;
+}
+
+.editing-toolbar-ai-consent-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--interactive-accent) 14%, var(--background-secondary));
+  color: var(--interactive-accent);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.editing-toolbar-ai-consent-desc {
+  margin-top: 12px;
+  color: var(--text-muted);
+  line-height: 1.7;
+}
+
+.editing-toolbar-ai-consent-note {
+  margin-top: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 14px;
+  background: var(--background-secondary);
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+.editing-toolbar-ai-consent-section {
+  padding: 14px 16px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 16px;
+  background: var(--background-secondary);
+}
+
+.editing-toolbar-ai-consent-section-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-normal);
+}
+
+.editing-toolbar-ai-consent-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.editing-toolbar-ai-consent-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.editing-toolbar-ai-consent-dot {
+  flex-shrink: 0;
+  width: 7px;
+  height: 7px;
+  margin-top: 0.55em;
+  border-radius: 999px;
+  background: var(--interactive-accent);
+  opacity: 0.9;
+}
+
+.editing-toolbar-ai-consent-text {
+  color: var(--text-muted);
+  line-height: 1.65;
+}
+
+.editing-toolbar-ai-consent-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding-top: 4px;
 }
 .format-brush-cursor .cm-content {
   cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1024 1024' width='18' height='18'%3E%3Cpath d='M786.285714 56.888889h121.93727A20.280889 20.280889 0 0 0 928.507937 36.591746v-16.294603A20.284952 20.284952 0 0 0 908.222984 0h-398.287238A20.280889 20.280889 0 0 0 489.650794 20.297143v16.294603A20.284952 20.284952 0 0 0 509.935746 56.888889H635.936508v910.222222h-126.000762A20.280889 20.280889 0 0 0 489.650794 987.408254v16.294603a20.284952 20.284952 0 0 0 20.284952 20.297143h398.287238a20.280889 20.280889 0 0 0 20.284953-20.297143v-16.294603a20.284952 20.284952 0 0 0-20.284953-20.297143H786.285714V56.888889zM359.619048 903.233016H310.857143V690.793651H266.15873v213.577143H217.396825V690.793651H172.698413v213.577143h-29.415619c-49.290159 0-42.573206-44.901587-42.573207-44.901588S97.076825 722.306032 97.10527 642.031746H480.467302c-0.008127 80.428698-3.604317 216.299683-3.604318 216.299683s6.716952 44.901587-42.57727 44.901587H404.31746V690.793651H359.619048v212.439365zM97.828571 597.333333l0.065016-1.235301c2.816-50.704254-5.640127-98.588444 66.186159-123.936508 71.830349-25.35619 47.896381-35.210159 54.934349-83.098413 7.037968-47.88419-18.310095-71.826286-18.310095-207.034921 0-109.04381 51.301587-125.456254 79.766349-127.723682 0.353524-0.934603 0.723302-1.414095 1.113397-1.414095 16.420571 0 95.288889-7.200508 95.288889 128 0 135.208635-25.348063 159.15073-18.314159 207.03492 7.037968 47.888254-16.891937 57.742222 54.938413 83.098413 71.822222 25.348063 63.370159 73.236317 66.186159 123.936508l0.121904 2.373079H97.824508zM288.507937 166.603175a34.539683 34.539683 0 1 0 0-69.079365 34.539683 34.539683 0 0 0 0 69.079365z' fill='%235c5c5c'/%3E%3C/svg%3E") 16 16, auto;

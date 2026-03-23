@@ -31,6 +31,7 @@ import { CommandsManager } from "src/commands/commands";
 import { InsertLinkModal } from "src/modals/insertLinkModal";
 import { InsertCalloutModal } from "src/modals/insertCalloutModal";
 import { AIEditorManager } from "src/ai/AIEditorManager";
+import { AI_TOOLBAR_COMMAND_ID, createAIToolbarCommand } from "src/ai/toolbarCommand";
 
 let activeDocument: Document;
 
@@ -190,6 +191,50 @@ export default class editingToolbarPlugin extends Plugin {
     });
   }
 
+  private removeToolbarCommandById(commands: any[] | undefined, commandId: string): void {
+    if (!Array.isArray(commands)) return;
+
+    for (let index = commands.length - 1; index >= 0; index--) {
+      const command = commands[index];
+      if (!command || typeof command !== "object") continue;
+
+      if (command.id === commandId) {
+        commands.splice(index, 1);
+        continue;
+      }
+
+      if (Array.isArray(command.SubmenuCommands)) {
+        this.removeToolbarCommandById(command.SubmenuCommands, commandId);
+      }
+    }
+  }
+
+  private syncAIToolbarCommandVisibility(): void {
+    const commandGroups = [
+      this.settings.menuCommands,
+      this.settings.followingCommands,
+      this.settings.topCommands,
+      this.settings.fixedCommands,
+      this.settings.mobileCommands,
+    ];
+
+    commandGroups.forEach((commands) => {
+      if (!Array.isArray(commands)) return;
+
+      this.removeToolbarCommandById(commands, AI_TOOLBAR_COMMAND_ID);
+
+      if (this.settings.ai.enabled) {
+        commands.unshift(createAIToolbarCommand());
+      }
+    });
+  }
+  public refreshAIAvailability(): void {
+    this.syncAIToolbarCommandVisibility();
+    setTimeout(() => {
+      dispatchEvent(new Event("editingToolbar-NewCommand"));
+    }, 100);
+  }
+
   async onload(): Promise<void> {
     const currentVersion = this.manifest.version; // 设置当前版本号
     console.log("editingToolbar v" + currentVersion + " loaded");
@@ -227,6 +272,10 @@ export default class editingToolbarPlugin extends Plugin {
           this.handleeditingToolbar();
         }
       }, 100);
+
+      setTimeout(() => {
+        void this.aiManager.maybeShowAIOnboarding();
+      }, 1200);
     });
     this.init_evt(activeDocument, editor);
     if (requireApiVersion("0.15.0")) {
@@ -599,33 +648,34 @@ this.app.workspace.onLayoutReady(async () => {
     if (!this.settings.cMenuVisibility || !this.isTopToolbarActive()) {
       return false;
     }
-  
+
     const view = app.workspace.getActiveViewOfType(ItemView);
     if (!ViewUtils.isSourceMode(view)) {
       return false;
     }
-  
+
     const leafwidth = this.app.workspace.activeLeaf.view.leaf.width ?? 0;
-    // No width, or nothing changed → nothing to do
     if (leafwidth <= 0 || this.Leaf_Width === leafwidth) {
       return false;
     }
-  
+
     this.Leaf_Width = leafwidth;
-  
+
     if (this.settings.cMenuWidth && leafwidth) {
       const diff = leafwidth - this.settings.cMenuWidth;
-  
+
       // Same guard as before: don't rebuild if the configured width still fits
       if (diff < 78 && leafwidth > this.settings.cMenuWidth) {
         return;
       }
-  
+
       setTimeout(() => {
         resetToolbar(this);
         editingToolbarPopover(app, this);
       }, 200);
     }
+
+    return true;
   };
 
   setIS_MORE_Button(status: boolean): void {
@@ -657,6 +707,10 @@ this.app.workspace.onLayoutReady(async () => {
       ...DEFAULT_SETTINGS.ai,
       ...(loadedData?.ai || {}),
       enableCustomModel: loadedData?.ai?.enableCustomModel ?? legacyCustomModelConfigured,
+      pkmerModelRouting: {
+        ...DEFAULT_SETTINGS.ai.pkmerModelRouting,
+        ...(loadedData?.ai?.pkmerModelRouting || {}),
+      },
       pkmer: {
         ...DEFAULT_SETTINGS.ai.pkmer,
         ...(loadedData?.ai?.pkmer || {}),
@@ -666,6 +720,26 @@ this.app.workspace.onLayoutReady(async () => {
         ...(loadedData?.ai?.customModel || {}),
       },
     };
+
+    const loadedAI = loadedData?.ai;
+    if (loadedAI?.consentAccepted === undefined && loadedAI?.enabled === true) {
+      this.settings.ai.consentAccepted = true;
+    }
+    if (loadedAI !== undefined && loadedAI?.onboardingShown === undefined) {
+      this.settings.ai.onboardingShown = true;
+    }
+    if (loadedAI?.pkmerModelRouting === undefined && loadedAI?.pkmerModel?.trim?.()) {
+      const legacyModel = loadedAI.pkmerModel.trim();
+      this.settings.ai.pkmerModelRouting = {
+        mode: "manual",
+        completion: legacyModel,
+        rewrite: legacyModel,
+        reasoning: legacyModel,
+        artifact: legacyModel,
+      };
+    }
+
+    this.syncAIToolbarCommandVisibility();
 
     // 配置迁移逻辑：将旧的 positionStyle 配置迁移到新的 enable 开关
     // 判断条件：所有新开关都是 false（说明用户还没有配置过新版）
@@ -757,6 +831,7 @@ updateCurrentCommands(commands: any[], style?: string): void {
 }
 
   async saveSettings() {
+    this.syncAIToolbarCommandVisibility();
     await this.saveData(this.settings);
   }
 

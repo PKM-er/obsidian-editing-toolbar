@@ -1,6 +1,7 @@
 import { requestUrl } from "obsidian";
 import type EditingToolbarPlugin from "src/plugin/main";
-import type { CompletionParams, IAIService, RewriteInstruction, RewriteParams } from "./types";
+import { resolvePKMerModelForScene } from "./types";
+import type { CompletionParams, IAIService, PKMerModelScene, RewriteArtifactKind, RewriteInstruction, RewriteParams } from "./types";
 import { PKMerAuthService } from "./PKMerAuthService";
 
 interface ResolvedProvider {
@@ -17,6 +18,7 @@ interface CustomProviderValidationResult {
 
 interface ChatCompletionOptions {
   maxTokens?: number;
+  pkmerScene?: PKMerModelScene;
 }
 
 interface ChatCompletionResult {
@@ -83,7 +85,7 @@ export class ToolbarAIService implements IAIService {
     const localPrefix = params.prefix.slice(-2000);
     const localSuffix = params.suffix.slice(0, 800);
     const contextBlock = params.context ? `\n\nLocal cursor metadata:\n${params.context}` : "";
-    const provider = await this.resolveProvider();
+    const provider = await this.resolveProvider("completion");
     let accumulated = "";
 
     for (let round = 0; round < 3; round++) {
@@ -92,6 +94,7 @@ export class ToolbarAIService implements IAIService {
         signal,
         {
           maxTokens: this.getCompletionTokenBudget(localPrefix, localSuffix, accumulated, round),
+          pkmerScene: "completion",
         },
         provider,
       );
@@ -117,18 +120,11 @@ export class ToolbarAIService implements IAIService {
 
   private async requestRewrite(params: RewriteParams, signal?: AbortSignal): Promise<string> {
     return this.requestChatCompletion(
-      [
-        {
-          role: "system",
-          content:
-            "You are an editor assistant inside Obsidian. Rewrite the selected text according to the instruction. Return only the rewritten text, with no explanations and no markdown fences.",
-        },
-        {
-          role: "user",
-          content: `Instruction: ${this.buildRewriteInstruction(params.instruction, params.customPrompt)}\n\nSelected text:\n${params.selectedText}`,
-        },
-      ],
+      this.buildRewriteMessages(params),
       signal,
+      {
+        pkmerScene: this.resolveRewriteScene(params),
+      },
     );
   }
 
@@ -151,7 +147,7 @@ export class ToolbarAIService implements IAIService {
       throw new DOMException("Aborted", "AbortError");
     }
 
-    const resolvedProvider = provider ?? (await this.resolveProvider());
+    const resolvedProvider = provider ?? (await this.resolveProvider(options.pkmerScene));
     const response = await requestUrl({
       url: this.buildChatCompletionsUrl(resolvedProvider.baseUrl),
       method: "POST",
@@ -180,8 +176,8 @@ export class ToolbarAIService implements IAIService {
     };
   }
 
-  private async resolveProvider(): Promise<ResolvedProvider> {
-    const pkmerProvider = await this.getPKMerProvider();
+  private async resolveProvider(scene: PKMerModelScene = "rewrite"): Promise<ResolvedProvider> {
+    const pkmerProvider = await this.getPKMerProvider(scene);
     if (pkmerProvider) {
       return pkmerProvider;
     }
@@ -194,7 +190,7 @@ export class ToolbarAIService implements IAIService {
     throw new Error("No AI provider is configured. Please log in to PKMer or fill in custom model settings.");
   }
 
-  private async getPKMerProvider(): Promise<ResolvedProvider | null> {
+  private async getPKMerProvider(scene: PKMerModelScene): Promise<ResolvedProvider | null> {
     const settings = this.plugin.settings.ai;
     const verified = await this.authService.verify();
     if (!verified || !this.authService.aiToken) {
@@ -204,7 +200,7 @@ export class ToolbarAIService implements IAIService {
     return {
       baseUrl: settings.pkmerApiBaseUrl,
       apiKey: this.authService.aiToken,
-      model: settings.pkmerModel || "04-fast",
+      model: resolvePKMerModelForScene(settings, scene),
       temperature: settings.customModel.temperature,
     };
   }
@@ -276,6 +272,75 @@ export class ToolbarAIService implements IAIService {
         content: `Continue the text at <CURSOR>. Use the local cursor context below, not the whole document.${continuationNote}\n\nText before cursor:\n${effectivePrefix}\n\n<CURSOR>\n\nText after cursor:\n${localSuffix}${contextBlock}`,
       },
     ];
+  }
+
+  private resolveRewriteScene(params: RewriteParams): PKMerModelScene {
+    if (params.artifactKind) {
+      return "artifact";
+    }
+
+    if (
+      params.instruction === "explain" ||
+      params.instruction === "summarize" ||
+      params.instruction === "custom"
+    ) {
+      return "reasoning";
+    }
+
+    return "rewrite";
+  }
+
+  private buildRewriteMessages(params: RewriteParams): Array<{ role: string; content: string }> {
+    const instruction = this.buildRewriteInstruction(params.instruction, params.customPrompt);
+    const hasTargetText = params.selectedText.trim().length > 0;
+    const contextBlock = params.context ? `\n\nLocal document context:\n${params.context}` : "";
+    const systemPrompt = this.buildRewriteSystemPrompt(params.artifactKind);
+    const outputRequirement = this.buildRewriteOutputRequirement(params.artifactKind);
+
+    return [
+      {
+        role: "system",
+        content: systemPrompt,
+      },
+      {
+        role: "user",
+        content: hasTargetText
+          ? `Instruction:\n${instruction}\n\nTarget text:\n${params.selectedText}${contextBlock}\n\nRequirements:\n- Use the local context only to keep terminology, links, and structure consistent.\n- ${outputRequirement}`
+          : `Instruction:\n${instruction}\n\nTarget text:\n(none - use the local cursor context)${contextBlock}\n\nRequirements:\n- There is no explicit selection, so generate text that fits naturally at the cursor location.\n- ${outputRequirement}`,
+      },
+    ];
+  }
+
+  private buildRewriteSystemPrompt(artifactKind?: RewriteArtifactKind): string {
+    if (artifactKind === "canvas") {
+      return "You are an expert Obsidian Canvas generator. Generate production-ready JSON Canvas files that obey the JSON Canvas structure exactly. Return only valid JSON, never explanations, never markdown fences, and never partial structures. The output must be directly saveable as a .canvas file and open cleanly in Obsidian. Ensure nodes and edges are coherent, spatially organized, and semantically useful rather than generic placeholders.";
+    }
+
+    if (artifactKind === "base") {
+      return "You are an expert Obsidian Bases generator. Generate production-ready .base YAML files that obey Obsidian Bases conventions. Return only valid YAML, never explanations, never markdown fences, and never partial structures. The output must be directly saveable as a .base file and open cleanly in Obsidian. Prefer practical fields, formulas, and views over placeholder content.";
+    }
+
+    if (artifactKind === "frontmatter") {
+      return "You are an expert Obsidian note metadata assistant. Generate concise, practical YAML frontmatter for the current note. Return only one complete YAML frontmatter block wrapped by --- lines, never explanations, never markdown fences, and never partial YAML. Prefer real-world note properties that help filtering, browsing, and vault consistency. Follow existing folder conventions when they are provided in context.";
+    }
+
+    return "You are an editor assistant inside Obsidian. Rewrite, transform, or generate text according to the instruction. Preserve valid Obsidian Flavored Markdown whenever possible, including wikilinks, embeds, callouts, task lists, tables, properties, and inline formatting unless the instruction explicitly changes the format. Return only the final text, with no explanations, no markdown fences, and no surrounding quotes. Never stop mid-list-item, mid-table-row, mid-YAML block, or mid-JSON structure.";
+  }
+
+  private buildRewriteOutputRequirement(artifactKind?: RewriteArtifactKind): string {
+    if (artifactKind === "canvas") {
+      return "Return one complete JSON Canvas document with top-level nodes and edges arrays only. Make it visually useful, not minimal.";
+    }
+
+    if (artifactKind === "base") {
+      return "Return one complete .base YAML document only. Make it practical and directly usable in Obsidian.";
+    }
+
+    if (artifactKind === "frontmatter") {
+      return "Return one complete YAML frontmatter block only, wrapped in --- delimiters, ready to insert at the top of the note.";
+    }
+
+    return "Return only the final text ready to paste into the note.";
   }
 
   private getCompletionTokenBudget(prefix: string, suffix: string, accumulated: string, round: number): number {

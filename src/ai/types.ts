@@ -26,12 +26,26 @@ export interface RewriteParams {
   instruction: RewriteInstruction;
   customPrompt?: string;
   context?: string;
+  artifactKind?: RewriteArtifactKind;
 }
 
 export interface RewriteActionMeta {
   instruction: RewriteInstruction;
   label: string;
   group: string;
+}
+
+export type RewriteArtifactKind = "base" | "canvas" | "frontmatter";
+
+export interface RewriteArtifactRequest {
+  kind: RewriteArtifactKind;
+  content: string;
+  sourceText: string;
+}
+
+export interface RewriteArtifactResult {
+  path: string;
+  embedSyntax: string;
 }
 
 export interface IAIService {
@@ -48,6 +62,7 @@ export interface RewriteConfig {
   actions?: RewriteActionMeta[];
   minSelectionLength?: number;
   showToolbarOnSelection?: boolean;
+  createGeneratedArtifact?: (request: RewriteArtifactRequest) => Promise<RewriteArtifactResult>;
 }
 
 export interface PKMerUserInfo {
@@ -74,8 +89,21 @@ export interface CustomModelSettings {
   temperature: number;
 }
 
+export type PKMerModelRoutingMode = "smart" | "manual";
+export type PKMerModelScene = "completion" | "rewrite" | "reasoning" | "artifact";
+
+export interface PKMerModelRoutingSettings {
+  mode: PKMerModelRoutingMode;
+  completion: string;
+  rewrite: string;
+  reasoning: string;
+  artifact: string;
+}
+
 export interface AIPluginSettings {
   enabled: boolean;
+  consentAccepted: boolean;
+  onboardingShown: boolean;
   providerMode: "pkmer-first" | "custom-only";
   enableInlineCompletion: boolean;
   completionTrigger: "manual" | "auto";
@@ -85,9 +113,33 @@ export interface AIPluginSettings {
   rewriteMinSelectionLength: number;
   pkmerApiBaseUrl: string;
   pkmerModel: string;
+  pkmerModelRouting: PKMerModelRoutingSettings;
   pkmer: PKMerAuthSettings;
   enableCustomModel: boolean;
   customModel: CustomModelSettings;
+}
+
+export const PKMER_MODEL_OPTIONS = [
+  { value: "04-fast", label: "04-fast" },
+  { value: "03-agent", label: "03-agent" },
+] as const;
+
+export const DEFAULT_PKMER_MODEL_ROUTING: PKMerModelRoutingSettings = {
+  mode: "smart",
+  completion: "04-fast",
+  rewrite: "04-fast",
+  reasoning: "03-agent",
+  artifact: "03-agent",
+};
+
+export function resolvePKMerModelForScene(settings: AIPluginSettings, scene: PKMerModelScene): string {
+  const routing = settings.pkmerModelRouting ?? DEFAULT_PKMER_MODEL_ROUTING;
+  if (routing.mode === "smart") {
+    return DEFAULT_PKMER_MODEL_ROUTING[scene];
+  }
+
+  const configuredModel = routing[scene]?.trim();
+  return configuredModel || DEFAULT_PKMER_MODEL_ROUTING[scene];
 }
 
 export const DEFAULT_PKMER_AUTH_SETTINGS: PKMerAuthSettings = {
@@ -96,7 +148,9 @@ export const DEFAULT_PKMER_AUTH_SETTINGS: PKMerAuthSettings = {
 };
 
 export const DEFAULT_AI_SETTINGS: AIPluginSettings = {
-  enabled: true,
+  enabled: false,
+  consentAccepted: false,
+  onboardingShown: false,
   providerMode: "pkmer-first",
   enableInlineCompletion: true,
   completionTrigger: "manual",
@@ -106,6 +160,7 @@ export const DEFAULT_AI_SETTINGS: AIPluginSettings = {
   rewriteMinSelectionLength: 1,
   pkmerApiBaseUrl: "https://newapi.pkmer.cn",
   pkmerModel: "04-fast",
+  pkmerModelRouting: DEFAULT_PKMER_MODEL_ROUTING,
   pkmer: DEFAULT_PKMER_AUTH_SETTINGS,
   enableCustomModel: false,
   customModel: {

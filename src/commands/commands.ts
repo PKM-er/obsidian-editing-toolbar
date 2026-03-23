@@ -25,7 +25,8 @@ import { InsertLinkModal } from "src/modals/insertLinkModal";
 import { CustomCommand } from "src/settings/settingsData";
 import { t } from "src/translations/helper";
 import { TextEnhancement } from "src/util/textEnhancement";
-import type { RewriteInstruction } from "src/ai/types";
+import { AI_TOOLBOX_ACTIONS } from "src/ai/toolboxActions";
+import { DEFAULT_REWRITE_ACTIONS, type RewriteInstruction } from "src/ai/types";
 import {
   TextInputModal,
   IWrapInputResult,
@@ -35,6 +36,27 @@ import {
 
 export class CommandsManager {
   private plugin: editingToolbarPlugin;
+
+  private formatAICommandName(...segments: string[]): string {
+    return ["AI", ...segments].join(" / ");
+  }
+
+  private aiRewriteCommandIcons: Record<RewriteInstruction, string> = {
+    improve: "lucide-wand-2",
+    "fix-grammar": "lucide-spell-check-2",
+    "make-shorter": "lucide-minimize-2",
+    "make-longer": "lucide-maximize-2",
+    simplify: "lucide-align-left",
+    professional: "lucide-briefcase",
+    casual: "lucide-message-circle-more",
+    "translate-en": "lucide-languages",
+    "translate-zh": "lucide-languages",
+    "translate-ja": "lucide-languages",
+    explain: "lucide-info",
+    summarize: "lucide-file-text",
+    continue: "lucide-pencil-line",
+    custom: "lucide-message-square",
+  };
 
   constructor(plugin: editingToolbarPlugin) {
     this.plugin = plugin;
@@ -572,7 +594,7 @@ export class CommandsManager {
 
     this.plugin.addCommand({
       id: "ai-login-pkmer",
-      name: "Login to PKMer AI",
+      name: this.formatAICommandName("Account", "Login to PKMer"),
       icon: "lucide-log-in",
       callback: async () => {
         await this.plugin.aiManager.loginWithPKMer();
@@ -581,7 +603,7 @@ export class CommandsManager {
 
     this.plugin.addCommand({
       id: "ai-logout-pkmer",
-      name: "Logout from PKMer AI",
+      name: this.formatAICommandName("Account", "Logout from PKMer"),
       icon: "lucide-log-out",
       callback: async () => {
         await this.plugin.aiManager.logoutFromPKMer();
@@ -589,8 +611,20 @@ export class CommandsManager {
     });
 
     this.plugin.addCommand({
+      id: "ai-tools",
+      name: this.formatAICommandName("Complete", "Quick Trigger"),
+      icon: "lucide-sparkles",
+      callback: () => {
+        const editor = this.getActiveEditor();
+        if (editor) {
+          this.plugin.aiManager.triggerInlineCompletion(editor);
+        }
+      },
+    });
+
+    this.plugin.addCommand({
       id: "ai-inline-completion",
-      name: "Trigger AI Inline Completion",
+      name: this.formatAICommandName("Complete", "Inline Completion"),
       icon: "lucide-sparkles",
       hotkeys: [{ modifiers: ["Mod"], key: "j" }],
       editorCallback: (editor: Editor) => {
@@ -601,7 +635,7 @@ export class CommandsManager {
     const registerRewriteCommand = (id: string, name: string, instruction: RewriteInstruction, icon: string) => {
       this.plugin.addCommand({
         id,
-        name,
+        name: this.formatAICommandName("Rewrite", name),
         icon,
         editorCallback: (editor: Editor) => {
           void this.plugin.aiManager.startRewrite(editor, instruction);
@@ -609,16 +643,41 @@ export class CommandsManager {
       });
     };
 
-    registerRewriteCommand("ai-rewrite-improve", "AI Improve Selection", "improve", "lucide-wand-2");
-    registerRewriteCommand("ai-rewrite-continue", "AI Continue Writing", "continue", "lucide-pencil-line");
+    registerRewriteCommand("ai-rewrite-improve", "Improve Selection", "improve", "lucide-wand-2");
+    registerRewriteCommand("ai-rewrite-continue", "Continue Writing", "continue", "lucide-pencil-line");
+
+    DEFAULT_REWRITE_ACTIONS.forEach((action) => {
+      const commandId = `ai-rewrite-${action.instruction}`;
+      if (action.instruction === "improve" || action.instruction === "continue") {
+        return;
+      }
+
+      registerRewriteCommand(
+        commandId,
+        t(action.label as any),
+        action.instruction,
+        this.aiRewriteCommandIcons[action.instruction],
+      );
+    });
 
     this.plugin.addCommand({
       id: "ai-rewrite-custom",
-      name: "AI Custom Rewrite",
+      name: this.formatAICommandName("Rewrite", "Custom Rewrite"),
       icon: "lucide-message-square",
       editorCallback: (editor: Editor) => {
         this.plugin.aiManager.openCustomRewrite(editor);
       },
+    });
+
+    AI_TOOLBOX_ACTIONS.forEach((action) => {
+      this.plugin.addCommand({
+        id: `ai-toolbox-${action.id}`,
+        name: this.formatAICommandName("Toolbox", t(action.label as any)),
+        icon: action.icon,
+        editorCallback: (editor: Editor) => {
+          void this.plugin.aiManager.runToolboxAction(editor, action.id);
+        },
+      });
     });
 
     this.plugin.addCommand({

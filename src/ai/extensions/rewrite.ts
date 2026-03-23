@@ -1,7 +1,10 @@
 import { Prec, StateEffect, StateField, type Extension } from "@codemirror/state";
-import { EditorView, ViewPlugin, type Tooltip, type TooltipView, type ViewUpdate, keymap, showTooltip } from "@codemirror/view";
+import { Notice } from "obsidian";
+import { Decoration, EditorView, ViewPlugin, WidgetType, type Tooltip, type TooltipView, type ViewUpdate, keymap, showTooltip } from "@codemirror/view";
 import { t } from "src/translations/helper";
-import { DEFAULT_REWRITE_ACTIONS, type IAIService, type RewriteActionMeta, type RewriteConfig, type RewriteInstruction } from "../types";
+import { normalizeGeneratedFrontmatter } from "../artifactNormalizer";
+import { resolveRewriteContext } from "../editorContext";
+import { type IAIService, type RewriteArtifactKind, type RewriteConfig, type RewriteInstruction } from "../types";
 
 interface RewriteStartParams {
   from: number;
@@ -9,6 +12,9 @@ interface RewriteStartParams {
   originalText: string;
   instruction: RewriteInstruction;
   customPrompt?: string;
+  context?: string;
+  artifactKind?: RewriteArtifactKind;
+  preferredFrontmatterKeys?: Record<string, string>;
 }
 
 interface RewriteOperation {
@@ -19,7 +25,6 @@ interface RewriteOperation {
 
 interface RewriteFieldValue {
   operation: RewriteOperation | null;
-  toolbarTooltip: Tooltip | null;
   resultTooltip: Tooltip | null;
 }
 
@@ -28,93 +33,55 @@ const updateRewriteResultEffect = StateEffect.define<string>();
 const finishRewriteEffect = StateEffect.define<void>();
 const cancelRewriteEffect = StateEffect.define<void>();
 
-function createToolbarTooltipView(view: EditorView, actions: RewriteActionMeta[]): TooltipView {
-  const dom = document.createElement("div");
-  dom.className = "cm-ai-toolbar";
-
-  const inputRow = document.createElement("div");
-  inputRow.className = "cm-ai-toolbar-input-row";
-
-  const input = document.createElement("input");
-  input.type = "text";
-  input.className = "cm-ai-toolbar-input";
-  input.placeholder = t("Ask AI to edit or generate...");
-
-  const submitBtn = document.createElement("button");
-  submitBtn.className = "cm-ai-toolbar-submit";
-  submitBtn.textContent = "↵";
-  submitBtn.title = t("Submit custom instruction");
-
-  inputRow.appendChild(input);
-  inputRow.appendChild(submitBtn);
-  dom.appendChild(inputRow);
-
-  dom.addEventListener("mousedown", (event) => event.preventDefault());
-
-  input.addEventListener("keydown", (event) => {
-    event.stopPropagation();
-    if (event.key === "Enter" && input.value.trim()) {
-      event.preventDefault();
-      dispatchRewrite(view, "custom", input.value.trim());
-    }
-    if (event.key === "Escape") {
-      event.preventDefault();
-      input.blur();
-      view.focus();
-    }
-  });
-
-  submitBtn.addEventListener("click", () => {
-    if (input.value.trim()) {
-      dispatchRewrite(view, "custom", input.value.trim());
-    }
-  });
-
-  const actionsContainer = document.createElement("div");
-  actionsContainer.className = "cm-ai-toolbar-actions";
-  const groups = new Map<string, RewriteActionMeta[]>();
-  for (const action of actions) {
-    const group = groups.get(action.group) || [];
-    group.push(action);
-    groups.set(action.group, group);
-  }
-
-  for (const [groupName, groupActions] of groups) {
-    const group = document.createElement("div");
-    group.className = "cm-ai-toolbar-group";
-
-    const label = document.createElement("div");
-    label.className = "cm-ai-toolbar-group-label";
-    label.textContent = groupName;
-    group.appendChild(label);
-
-    for (const action of groupActions) {
-      const btn = document.createElement("button");
-      btn.className = "cm-ai-toolbar-action";
-      btn.textContent = action.label;
-      btn.addEventListener("click", () => {
-        dispatchRewrite(view, action.instruction);
-      });
-      group.appendChild(btn);
-    }
-
-    actionsContainer.appendChild(group);
-  }
-
-  dom.appendChild(actionsContainer);
-  return { dom };
-}
-
 function dispatchRewrite(view: EditorView, instruction: RewriteInstruction, customPrompt?: string): void {
   const { from, to } = view.state.selection.main;
   if (from === to) return;
-  const originalText = view.state.sliceDoc(from, to);
+  const rewriteContext = resolveRewriteContext(view, from, to);
   view.dispatch({
-    effects: startRewriteEffect.of({ from, to, originalText, instruction, customPrompt }),
+    effects: startRewriteEffect.of({
+      from: rewriteContext.from,
+      to: rewriteContext.to,
+      originalText: rewriteContext.selectedText,
+      instruction,
+      customPrompt,
+      context: rewriteContext.context,
+    }),
   });
 }
 
-function createResultPanelTooltipView(view: EditorView, rewriteField: StateField<RewriteFieldValue>): TooltipView {
+class RewriteLoadingWidget extends WidgetType {
+  eq(): boolean {
+    return true;
+  }
+
+  toDOM(): HTMLElement {
+    const wrapper = document.createElement("span");
+    wrapper.className = "cm-ai-loading cm-ai-loading-pill cm-ai-rewrite-loading";
+    wrapper.setAttribute("aria-label", t("AI is writing..."));
+
+    const spinner = document.createElement("span");
+    spinner.className = "cm-ai-loading-spinner";
+
+    const label = document.createElement("span");
+    label.className = "cm-ai-loading-label";
+    label.textContent = t("AI generating");
+
+    wrapper.append(spinner, label);
+    return wrapper;
+  }
+
+  ignoreEvent(): boolean {
+    return true;
+  }
+}
+
+function createResultPanelTooltipView(
+  view: EditorView,
+  rewriteField: StateField<RewriteFieldValue>,
+  getConfig: () => {
+    createGeneratedArtifact?: RewriteConfig["createGeneratedArtifact"];
+  },
+): TooltipView {
   const dom = document.createElement("div");
   dom.className = "cm-ai-result-panel";
   dom.addEventListener("mousedown", (event) => event.preventDefault());
@@ -136,7 +103,92 @@ function createResultPanelTooltipView(view: EditorView, rewriteField: StateField
     dom.style.display = "none";
   }
 
+  async function handleArtifact(mode: "create" | "embed"): Promise<void> {
+    const state = view.state.field(rewriteField);
+    if (!state.operation?.params.artifactKind) {
+      return;
+    }
+
+    const artifactCreator = getConfig().createGeneratedArtifact;
+    if (!artifactCreator) {
+      new Notice(t("AI file creation is unavailable."));
+      return;
+    }
+
+    try {
+      const artifact = await artifactCreator({
+        kind: state.operation.params.artifactKind,
+        content: state.operation.result,
+        sourceText: state.operation.params.originalText,
+      });
+
+      hidePanel();
+      view.dispatch({ effects: cancelRewriteEffect.of(undefined) });
+
+      if (mode === "embed") {
+        const insertText = state.operation.params.from === state.operation.params.to
+          ? artifact.embedSyntax
+          : `\n\n${artifact.embedSyntax}`;
+        const insertFrom = state.operation.params.to;
+
+        view.dispatch({
+          changes: { from: insertFrom, insert: insertText },
+          selection: { anchor: insertFrom + insertText.length },
+        });
+      }
+
+      view.focus();
+    } catch (error) {
+      const message = error instanceof Error && error.message ? error.message : t("Failed to create AI file.");
+      new Notice(message);
+      console.error("[AI Artifact] Failed to create file:", error);
+    }
+  }
+
+  function isFileArtifactOperation(): boolean {
+    const operation = view.state.field(rewriteField).operation;
+    return operation?.params.artifactKind === "base" || operation?.params.artifactKind === "canvas";
+  }
+
+  function isFrontmatterOperation(): boolean {
+    return view.state.field(rewriteField).operation?.params.artifactKind === "frontmatter";
+  }
+
+  function applyFrontmatter(): void {
+    const state = view.state.field(rewriteField);
+    if (!state.operation) {
+      return;
+    }
+
+    try {
+      const normalized = normalizeGeneratedFrontmatter(
+        state.operation.result,
+        state.operation.params.preferredFrontmatterKeys,
+      );
+      hidePanel();
+      view.dispatch({ effects: cancelRewriteEffect.of(undefined) });
+      view.dispatch({
+        changes: { from: state.operation.params.from, to: state.operation.params.to, insert: normalized },
+        selection: { anchor: normalized.length },
+      });
+      view.focus();
+    } catch (error) {
+      const message = error instanceof Error && error.message ? error.message : t("Failed to apply frontmatter.");
+      new Notice(message);
+    }
+  }
+
   const replaceBtn = createActionButton(t("Replace"), "cm-ai-btn-primary", () => {
+    if (isFileArtifactOperation()) {
+      void handleArtifact("create");
+      return;
+    }
+
+    if (isFrontmatterOperation()) {
+      applyFrontmatter();
+      return;
+    }
+
     const state = view.state.field(rewriteField);
     if (!state.operation) return;
     const { from, to } = state.operation.params;
@@ -151,6 +203,16 @@ function createResultPanelTooltipView(view: EditorView, rewriteField: StateField
   });
 
   const insertBtn = createActionButton(t("Insert below"), "cm-ai-btn-secondary", () => {
+    if (isFileArtifactOperation()) {
+      void handleArtifact("embed");
+      return;
+    }
+
+    if (isFrontmatterOperation()) {
+      applyFrontmatter();
+      return;
+    }
+
     const state = view.state.field(rewriteField);
     if (!state.operation) return;
     const { to } = state.operation.params;
@@ -190,9 +252,31 @@ function createResultPanelTooltipView(view: EditorView, rewriteField: StateField
 
       dom.style.display = "";
       content.textContent = state.operation.result || "";
+      if (state.operation.params.artifactKind === "base" || state.operation.params.artifactKind === "canvas") {
+        header.textContent = t("AI file suggestion");
+        replaceBtn.textContent = t("Create");
+        insertBtn.textContent = t("Create & Embed");
+        insertBtn.style.display = "";
+      } else if (state.operation.params.artifactKind === "frontmatter") {
+        header.textContent = t("AI frontmatter suggestion");
+        replaceBtn.textContent = state.operation.params.from === state.operation.params.to
+          ? t("Insert frontmatter")
+          : t("Replace frontmatter");
+        insertBtn.style.display = "none";
+      } else {
+        replaceBtn.textContent = state.operation.params.from === state.operation.params.to
+          ? t("Insert at cursor")
+          : t("Replace");
+        insertBtn.textContent = t("Insert below");
+        insertBtn.style.display = "";
+      }
 
       if (state.operation.phase === "done") {
-        header.textContent = t("AI suggestion");
+        if (state.operation.params.artifactKind !== "base" && state.operation.params.artifactKind !== "canvas") {
+          if (state.operation.params.artifactKind !== "frontmatter") {
+            header.textContent = t("AI suggestion");
+          }
+        }
         actionsBar.style.display = "flex";
       } else {
         header.textContent = t("AI is writing...");
@@ -214,24 +298,19 @@ export function selectionRewrite(
   getService: () => IAIService | null,
   getConfig?: () => RewriteConfig,
 ): Extension {
-  const resolveConfig = (): Required<RewriteConfig> => {
+    const resolveConfig = () => {
     const config = getConfig?.() ?? {};
     return {
-      actions: config.actions ?? DEFAULT_REWRITE_ACTIONS,
-      minSelectionLength: config.minSelectionLength ?? 1,
-      showToolbarOnSelection: config.showToolbarOnSelection ?? true,
+      createGeneratedArtifact: config.createGeneratedArtifact,
     };
   };
 
   const rewriteField = StateField.define<RewriteFieldValue>({
     create: () => ({
       operation: null,
-      toolbarTooltip: null,
       resultTooltip: null,
     }),
-    update(prev, tr) {
-      const config = resolveConfig();
-      let operation = prev.operation;
+    update(prev, tr) {      let operation = prev.operation;
 
       for (const effect of tr.effects) {
         if (effect.is(startRewriteEffect)) {
@@ -259,42 +338,40 @@ export function selectionRewrite(
         };
       }
 
-      const selection = tr.state.selection.main;
-      const selectionLength = selection.to - selection.from;
-      let toolbarTooltip: Tooltip | null = null;
       let resultTooltip: Tooltip | null = null;
 
-      if (operation === null && config.showToolbarOnSelection && selectionLength >= config.minSelectionLength) {
-        if (prev.toolbarTooltip && prev.toolbarTooltip.pos === selection.from) {
-          toolbarTooltip = prev.toolbarTooltip;
-        } else {
-          toolbarTooltip = {
-            pos: selection.from,
-            above: true,
-            create: (view) => createToolbarTooltipView(view, config.actions),
-          };
-        }
-      }
-
-      if (operation !== null) {
+      if (operation?.phase === "done") {
         if (prev.resultTooltip && prev.resultTooltip.pos === operation.params.from) {
           resultTooltip = prev.resultTooltip;
         } else {
           resultTooltip = {
             pos: operation.params.from,
             above: false,
-            create: (view) => createResultPanelTooltipView(view, rewriteField),
+            create: (view) => createResultPanelTooltipView(view, rewriteField, resolveConfig),
           };
         }
       }
 
       return {
         operation,
-        toolbarTooltip,
         resultTooltip,
       };
     },
-    provide: (field) => showTooltip.from(field, (value) => value.resultTooltip ?? value.toolbarTooltip ?? null),
+    provide: (field) => [
+      showTooltip.from(field, (value) => value.resultTooltip ?? null),
+      EditorView.decorations.from(field, (value) => {
+        if (value.operation?.phase !== "streaming") {
+          return Decoration.none;
+        }
+
+        return Decoration.set([
+          Decoration.widget({
+            widget: new RewriteLoadingWidget(),
+            side: 1,
+          }).range(value.operation.params.to),
+        ]);
+      }),
+    ],
   });
 
   const rewritePlugin = ViewPlugin.fromClass(
@@ -335,6 +412,8 @@ export function selectionRewrite(
             selectedText: params.originalText,
             instruction: params.instruction,
             customPrompt: params.customPrompt,
+            context: params.context,
+            artifactKind: params.artifactKind,
           }, signal)) {
             if (signal.aborted) return;
             result += chunk;

@@ -18,6 +18,7 @@ import { ImportExportModal } from "src/modals/ImportExportModal";
 import { RegexCommandModal } from "src/modals/RegexCommandModal";
 import { ButtonComponent } from "obsidian";
 import { ConfirmModal } from "src/modals/ConfirmModal";
+import { PKMER_MODEL_OPTIONS, resolvePKMerModelForScene } from "src/ai/types";
 // 添加类型定义
 interface SubmenuCommand {
   id: string;
@@ -1665,10 +1666,24 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     const aiEnabled = this.plugin.settings.ai.enabled;
     const inlineCompletionEnabled = aiEnabled && this.plugin.settings.ai.enableInlineCompletion;
     const autoCompletionEnabled = inlineCompletionEnabled && this.plugin.settings.ai.completionTrigger === 'auto';
-    const rewriteEnabled = aiEnabled && this.plugin.settings.ai.enableRewrite;
-    const rewriteToolbarEnabled = rewriteEnabled && this.plugin.settings.ai.showRewriteToolbarOnSelection;
     const customModelEnabled = aiEnabled && this.plugin.settings.ai.enableCustomModel;
-
+    const pkmerModelRoutingMode = this.plugin.settings.ai.pkmerModelRouting.mode;
+    const getPkmerModelLabel = (model: string): string => {
+      switch (model) {
+        case '04-fast':
+          return t('Light model (0.01 pt)');
+        case '03-agent':
+          return t('Reasoning model (1 pt)');
+        default:
+          return model;
+      }
+    };
+    const addPkmerModelOptions = (dropdown: any) => {
+      PKMER_MODEL_OPTIONS.forEach((option) => {
+        dropdown.addOption(option.value, getPkmerModelLabel(option.value));
+      });
+      return dropdown;
+    };
     const createCard = (options: {
       title: string;
       desc: string;
@@ -1711,8 +1726,11 @@ export class editingToolbarSettingTab extends PluginSettingTab {
       .setDesc(t('Enable AI editor features such as inline completion and selection rewrite.'))
       .addToggle((toggle) => {
         toggle.setValue(this.plugin.settings.ai.enabled).onChange(async (value) => {
-          this.plugin.settings.ai.enabled = value;
-          await this.plugin.saveSettings();
+          if (value) {
+            await this.plugin.aiManager.requestEnableAIWithConsent('settings');
+          } else {
+            await this.plugin.aiManager.disableAI();
+          }
           this.display();
         });
       });
@@ -1783,7 +1801,6 @@ export class editingToolbarSettingTab extends PluginSettingTab {
       void this.plugin.aiManager.getProviderRouteStatusText().then((text) => {
         routeNote.setText(text);
       });
-
       const featuresBody = createCard({
         title: t('Editor Features'),
         desc: t('Configure inline completion and rewrite after your AI provider is ready.'),
@@ -1843,46 +1860,92 @@ export class editingToolbarSettingTab extends PluginSettingTab {
             });
         }
       }
+
 
-      new Setting(featuresBody)
-        .setName(t('Enable AI Rewrite'))
-        .setDesc(t('Enable selection rewrite result panel and rewrite commands.'))
-        .addToggle((toggle) => {
-          toggle.setValue(this.plugin.settings.ai.enableRewrite).onChange(async (value) => {
-            this.plugin.settings.ai.enableRewrite = value;
-            await this.plugin.saveSettings();
-            this.display();
-          });
-        });
 
-      if (rewriteEnabled) {
-        new Setting(featuresBody)
-          .setName(t('Show AI Rewrite Toolbar On Selection'))
-          .setDesc(t('Show the floating AI rewrite toolbar whenever text is selected.'))
-          .addToggle((toggle) => {
-            toggle.setValue(this.plugin.settings.ai.showRewriteToolbarOnSelection).onChange(async (value) => {
-              this.plugin.settings.ai.showRewriteToolbarOnSelection = value;
+      const pkmerModelBody = createCard({
+        title: t('PKMer Model'),
+        desc: t('Choose models by task.'),
+        badge: pkmerModelRoutingMode === 'smart' ? t('Default') : t('Manual'),
+        collapsible: true,
+        open: pkmerModelRoutingMode === 'manual',
+      });
+
+      new Setting(pkmerModelBody)
+        .setName(t('Mode'))
+        .setDesc(t('Light tasks use the light model. Complex tasks use the reasoning model.'))
+        .addDropdown((dropdown) => {
+          dropdown
+            .addOption('smart', t('Default'))
+            .addOption('manual', t('Manual'))
+            .setValue(pkmerModelRoutingMode)
+            .onChange(async (value) => {
+              this.plugin.settings.ai.pkmerModelRouting.mode = value as 'smart' | 'manual';
               await this.plugin.saveSettings();
               this.display();
             });
-          });
-      }
+        });
 
-      if (rewriteToolbarEnabled) {
-        new Setting(featuresBody)
-          .setName(t('Rewrite Minimum Selection Length'))
-          .setDesc(t('Minimum selection length before the rewrite toolbar appears.'))
-          .addText((text) => {
-            text.setValue(String(this.plugin.settings.ai.rewriteMinSelectionLength)).onChange(async (value) => {
-              const parsed = Number.parseInt(value, 10);
-              if (!Number.isNaN(parsed) && parsed >= 1) {
-                this.plugin.settings.ai.rewriteMinSelectionLength = parsed;
+      if (pkmerModelRoutingMode === 'smart') {
+        const smartSummary = pkmerModelBody.createDiv({ cls: 'editing-toolbar-ai-note' });
+        smartSummary.createDiv({ text: `${t('Completion')}: ${getPkmerModelLabel(resolvePKMerModelForScene(this.plugin.settings.ai, 'completion'))}` });
+        smartSummary.createDiv({ text: `${t('Rewrite')}: ${getPkmerModelLabel(resolvePKMerModelForScene(this.plugin.settings.ai, 'rewrite'))}` });
+        smartSummary.createDiv({ text: `${t('Reasoning')}: ${getPkmerModelLabel(resolvePKMerModelForScene(this.plugin.settings.ai, 'reasoning'))}` });
+        smartSummary.createDiv({ text: `${t('Structured')}: ${getPkmerModelLabel(resolvePKMerModelForScene(this.plugin.settings.ai, 'artifact'))}` });
+      } else {
+        new Setting(pkmerModelBody)
+          .setName(t('Completion'))
+          .setDesc(t('Used for inline completion.'))
+          .addDropdown((dropdown) => {
+            addPkmerModelOptions(dropdown)
+              .setValue(this.plugin.settings.ai.pkmerModelRouting.completion)
+              .onChange(async (value: string) => {
+                this.plugin.settings.ai.pkmerModelRouting.completion = value;
                 await this.plugin.saveSettings();
-              }
-            });
+              });
+          });
+
+        new Setting(pkmerModelBody)
+          .setName(t('Rewrite'))
+          .setDesc(t('Used for normal rewrite.'))
+          .addDropdown((dropdown) => {
+            addPkmerModelOptions(dropdown)
+              .setValue(this.plugin.settings.ai.pkmerModelRouting.rewrite)
+              .onChange(async (value: string) => {
+                this.plugin.settings.ai.pkmerModelRouting.rewrite = value;
+                await this.plugin.saveSettings();
+              });
+          });
+
+        new Setting(pkmerModelBody)
+          .setName(t('Reasoning'))
+          .setDesc(t('Used for explain, summarize, and custom prompts.'))
+          .addDropdown((dropdown) => {
+            addPkmerModelOptions(dropdown)
+              .setValue(this.plugin.settings.ai.pkmerModelRouting.reasoning)
+              .onChange(async (value: string) => {
+                this.plugin.settings.ai.pkmerModelRouting.reasoning = value;
+                await this.plugin.saveSettings();
+              });
+          });
+
+        new Setting(pkmerModelBody)
+          .setName(t('Structured'))
+          .setDesc(t('Used for frontmatter and canvas.'))
+          .addDropdown((dropdown) => {
+            addPkmerModelOptions(dropdown)
+              .setValue(this.plugin.settings.ai.pkmerModelRouting.artifact)
+              .onChange(async (value: string) => {
+                this.plugin.settings.ai.pkmerModelRouting.artifact = value;
+                await this.plugin.saveSettings();
+              });
           });
       }
 
+      pkmerModelBody.createDiv({
+        cls: 'editing-toolbar-ai-note',
+        text: t('PKMer route only.'),
+      });
       const customBody = createCard({
         title: t('Custom Model (Optional)'),
         desc: t('Custom model is used automatically when PKMer AI is unavailable.'),
