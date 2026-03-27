@@ -590,10 +590,10 @@ button[class^=editingToolbarCommandsubItem]::after {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   line-height: 1.2;
-  color: var(--text-normal);
+  color: var(--text-accent);
 }
 
 .editing-toolbar-ai-button-arrow {
@@ -1588,6 +1588,7 @@ body.auto-hide-header .workspace-tab-header-container + .workspace-tab-container
   display: flex;
   flex-direction: column;
   gap: 16px;
+  font-size: var(--font-ui-small);
 }
 
 .editing-toolbar-ai-consent-hero h2 {

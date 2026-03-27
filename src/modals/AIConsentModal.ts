@@ -29,10 +29,7 @@ export class AIConsentModal extends Modal {
     contentEl.addClass("editing-toolbar-ai-consent");
 
     const hero = contentEl.createDiv("editing-toolbar-ai-consent-hero");
-    hero.createDiv({
-      cls: "editing-toolbar-ai-consent-badge",
-      text: this.options.source === "startup" ? t("Try AI Editing") : t("Enable AI Editor"),
-    });
+  
     hero.createEl("h2", { text: t("Enable AI Editor") });
     hero.createDiv({
       cls: "editing-toolbar-ai-consent-desc",

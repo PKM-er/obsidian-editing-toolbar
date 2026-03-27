@@ -38,7 +38,7 @@ export class CommandsManager {
   private plugin: editingToolbarPlugin;
 
   private formatAICommandName(...segments: string[]): string {
-    return ["AI", ...segments].join(" / ");
+    return [t("AI"), ...segments.map((segment) => t(segment as any))].join(" / ");
   }
 
   private aiRewriteCommandIcons: Record<RewriteInstruction, string> = {
@@ -594,7 +594,7 @@ export class CommandsManager {
 
     this.plugin.addCommand({
       id: "ai-login-pkmer",
-      name: this.formatAICommandName("Account", "Login to PKMer"),
+      name: this.formatAICommandName("Account", "Login to PKMer AI"),
       icon: "lucide-log-in",
       callback: async () => {
         await this.plugin.aiManager.loginWithPKMer();
@@ -611,20 +611,8 @@ export class CommandsManager {
     });
 
     this.plugin.addCommand({
-      id: "ai-tools",
-      name: this.formatAICommandName("Complete", "Quick Trigger"),
-      icon: "lucide-sparkles",
-      callback: () => {
-        const editor = this.getActiveEditor();
-        if (editor) {
-          this.plugin.aiManager.triggerInlineCompletion(editor);
-        }
-      },
-    });
-
-    this.plugin.addCommand({
       id: "ai-inline-completion",
-      name: this.formatAICommandName("Complete", "Inline Completion"),
+      name: this.formatAICommandName("Complete", "Quick Trigger"),
       icon: "lucide-sparkles",
       hotkeys: [{ modifiers: ["Mod"], key: "j" }],
       editorCallback: (editor: Editor) => {
@@ -644,7 +632,7 @@ export class CommandsManager {
     };
 
     registerRewriteCommand("ai-rewrite-improve", "Improve Selection", "improve", "lucide-wand-2");
-    registerRewriteCommand("ai-rewrite-continue", "Continue Writing", "continue", "lucide-pencil-line");
+    registerRewriteCommand("ai-rewrite-continue", "Continue writing", "continue", "lucide-pencil-line");
 
     DEFAULT_REWRITE_ACTIONS.forEach((action) => {
       const commandId = `ai-rewrite-${action.instruction}`;
@@ -654,7 +642,7 @@ export class CommandsManager {
 
       registerRewriteCommand(
         commandId,
-        t(action.label as any),
+        action.label,
         action.instruction,
         this.aiRewriteCommandIcons[action.instruction],
       );
@@ -672,7 +660,7 @@ export class CommandsManager {
     AI_TOOLBOX_ACTIONS.forEach((action) => {
       this.plugin.addCommand({
         id: `ai-toolbox-${action.id}`,
-        name: this.formatAICommandName("Toolbox", t(action.label as any)),
+        name: this.formatAICommandName("Toolbox", action.label),
         icon: action.icon,
         editorCallback: (editor: Editor) => {
           void this.plugin.aiManager.runToolboxAction(editor, action.id);

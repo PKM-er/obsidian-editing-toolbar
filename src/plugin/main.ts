@@ -370,7 +370,7 @@ export default class editingToolbarPlugin extends Plugin {
     }
 
     return [
-      { title: t("Inline Completion"), commandId: "ai-inline-completion" },
+      { title: t("Trigger AI Inline Completion"), disabled: true },
       { title: t("Continue writing"), commandId: "ai-rewrite-continue" },
       { title: t("AI Custom Rewrite"), commandId: "ai-rewrite-custom" },
       { title: t("Generate frontmatter"), commandId: "ai-toolbox-frontmatter" },

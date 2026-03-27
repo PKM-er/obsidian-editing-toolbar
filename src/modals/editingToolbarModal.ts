@@ -1237,6 +1237,20 @@ export function editingToolbarPopover(
                 });
               };
 
+              const addHint = (title: string, hotkey?: string) => {
+                menu.addItem((menuItem) => {
+                  menuItem
+                    .setTitle(t(title as any))
+                    .setIcon("")
+                    .setDisabled(true);
+
+                  if (hotkey) {
+                    const hotkeyEl = menuItem.dom.createSpan({ cls: "menu-item-hotkey" });
+                    hotkeyEl.setText(hotkey);
+                  }
+                });
+              };
+
               const addSubmenu = (
                 title: string,
                 icon: string,
@@ -1279,15 +1293,7 @@ export function editingToolbarPopover(
                 });
               };
 
-              addAction({
-                title: "Trigger AI Inline Completion",
-                icon: "lucide-sparkles",
-                hotkey: inlineBadge,
-                commandIdForLabel: "editing-toolbar:ai-inline-completion",
-                action: () => {
-                  return plugin.aiManager.triggerInlineCompletion(editor);
-                },
-              });
+              addHint("Trigger AI Inline Completion", inlineBadge);
 
               const groupedActions = new Map<string, typeof DEFAULT_REWRITE_ACTIONS>();
               DEFAULT_REWRITE_ACTIONS.forEach((action) => {
