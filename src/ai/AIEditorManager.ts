@@ -10,6 +10,7 @@ import { PKMerAuthService } from "./PKMerAuthService";
 import { getAIToolboxArtifactKind, getAIToolboxPrompt } from "./toolboxActions";
 import { DEFAULT_REWRITE_ACTIONS, type RewriteArtifactKind, type RewriteArtifactRequest, type RewriteArtifactResult, type RewriteInstruction } from "./types";
 import { createAIEditorExtensions, startRewriteEffect, triggerCompletionEffect } from "./extensions";
+import { shouldShowAIFeatures } from "src/util/locale";
 
 interface FrontmatterStats {
   keyCounts: Map<string, number>;
@@ -80,6 +81,10 @@ export class AIEditorManager {
     this.authService.onunload();
   }
   async maybeShowAIOnboarding(): Promise<void> {
+    if (!shouldShowAIFeatures()) {
+      return;
+    }
+
     if (this.plugin.settings.ai.enabled || this.plugin.settings.ai.onboardingShown) {
       return;
     }
@@ -99,6 +104,11 @@ export class AIEditorManager {
   }
 
   async requestEnableAIWithConsent(source: "startup" | "settings"): Promise<boolean> {
+    if (!shouldShowAIFeatures()) {
+      new Notice(t('AI settings are currently available only in Simplified and Traditional Chinese.'));
+      return false;
+    }
+
     if (this.plugin.settings.ai.enabled) {
       return true;
     }

@@ -32,6 +32,7 @@ import { InsertLinkModal } from "src/modals/insertLinkModal";
 import { InsertCalloutModal } from "src/modals/insertCalloutModal";
 import { AIEditorManager } from "src/ai/AIEditorManager";
 import { AI_TOOLBAR_COMMAND_ID, createAIToolbarCommand } from "src/ai/toolbarCommand";
+import { shouldShowAIFeatures } from "src/util/locale";
 
 let activeDocument: Document;
 
@@ -230,7 +231,7 @@ export default class editingToolbarPlugin extends Plugin {
 
       this.removeToolbarCommandById(commands, AI_TOOLBAR_COMMAND_ID);
 
-      if (this.settings.ai.enabled) {
+      if (this.settings.ai.enabled && shouldShowAIFeatures()) {
         commands.unshift(createAIToolbarCommand());
       }
     });
@@ -345,6 +346,10 @@ export default class editingToolbarPlugin extends Plugin {
   }
 
   private buildAIContextActions(editor: Editor): EditorContextMenuAction[] {
+    if (!shouldShowAIFeatures()) {
+      return [];
+    }
+
     if (!this.settings.ai.enabled) {
       return [
         {
@@ -384,7 +389,9 @@ export default class editingToolbarPlugin extends Plugin {
     _view: MarkdownView,
   ): void => {
     this.addEditorContextSubmenu(menu, t("Text Tools"), "whole-word", this.buildTextContextActions(editor));
-    this.addEditorContextSubmenu(menu, t("AI Tools"), "sparkles", this.buildAIContextActions(editor));
+    if (shouldShowAIFeatures()) {
+      this.addEditorContextSubmenu(menu, t("AI Tools"), "sparkles", this.buildAIContextActions(editor));
+    }
   };
 
   async onload(): Promise<void> {
@@ -426,7 +433,9 @@ export default class editingToolbarPlugin extends Plugin {
       }, 100);
 
       setTimeout(() => {
-        void this.aiManager.maybeShowAIOnboarding();
+        if (shouldShowAIFeatures()) {
+          void this.aiManager.maybeShowAIOnboarding();
+        }
       }, 1200);
     });
     this.init_evt(activeDocument, editor);

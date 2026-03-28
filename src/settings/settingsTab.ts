@@ -19,6 +19,7 @@ import { RegexCommandModal } from "src/modals/RegexCommandModal";
 import { ButtonComponent } from "obsidian";
 import { ConfirmModal } from "src/modals/ConfirmModal";
 import { PKMER_MODEL_OPTIONS, resolvePKMerModelForScene } from "src/ai/types";
+import { shouldShowAIFeatures } from "src/util/locale";
 // 添加类型定义
 interface SubmenuCommand {
   id: string;
@@ -141,7 +142,12 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     });
 
     // 创建标签页按钮
-    SETTING_TABS.forEach(tab => {
+    const visibleTabs = SETTING_TABS.filter((tab) => tab.id !== 'ai' || shouldShowAIFeatures());
+    if (this.activeTab === 'ai' && !shouldShowAIFeatures()) {
+      this.activeTab = 'general';
+    }
+
+    visibleTabs.forEach(tab => {
       const tabButton = tabContainer.createEl('div', {
         cls: `editing-toolbar-tab ${this.activeTab === tab.id ? 'active' : ''}`
       });
@@ -1662,6 +1668,14 @@ export class editingToolbarSettingTab extends PluginSettingTab {
   }
 
   private displayAISettings(containerEl: HTMLElement): void {
+    if (!shouldShowAIFeatures()) {
+      containerEl.createDiv({
+        cls: 'editing-toolbar-ai-note',
+        text: t('AI settings are currently available only in Simplified and Traditional Chinese.'),
+      });
+      return;
+    }
+
     const grid = containerEl.createDiv('editing-toolbar-ai-grid');
     const aiEnabled = this.plugin.settings.ai.enabled;
     const inlineCompletionEnabled = aiEnabled && this.plugin.settings.ai.enableInlineCompletion;

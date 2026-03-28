@@ -1,6 +1,7 @@
 import { Notice, Platform, requestUrl } from "obsidian";
 import type EditingToolbarPlugin from "src/plugin/main";
 import { t } from "src/translations/helper";
+import { getPKMerAuthorizationEntryUrl } from "./pkmerWeb";
 import { PKMER_OAUTH_CONFIG, PKMER_SECRET_KEYS, type PKMerUserInfo } from "./types";
 
 function base64url(buffer: ArrayBuffer): string {
@@ -154,17 +155,22 @@ export class PKMerAuthService {
     this.pendingState = state;
     const codeChallenge = await this.computeCodeChallenge(codeVerifier);
 
+    const authorizationParams = new URLSearchParams({
+      response_type: "code",
+      client_id: PKMER_OAUTH_CONFIG.clientId,
+      redirect_uri: Platform.isMobile
+        ? PKMER_OAUTH_CONFIG.mobileRedirectUri
+        : PKMER_OAUTH_CONFIG.desktopRedirectUri,
+      scope: PKMER_OAUTH_CONFIG.scopes,
+      state,
+      code_challenge: codeChallenge,
+      code_challenge_method: "S256",
+    });
+    const authorizationUrl = `${PKMER_OAUTH_CONFIG.authorizationUrl}?${authorizationParams.toString()}`;
+    const loginEntryUrl = getPKMerAuthorizationEntryUrl(authorizationUrl);
+
     if (Platform.isMobile) {
-      const params = new URLSearchParams({
-        response_type: "code",
-        client_id: PKMER_OAUTH_CONFIG.clientId,
-        redirect_uri: PKMER_OAUTH_CONFIG.mobileRedirectUri,
-        scope: PKMER_OAUTH_CONFIG.scopes,
-        state,
-        code_challenge: codeChallenge,
-        code_challenge_method: "S256",
-      });
-      window.open(`${PKMER_OAUTH_CONFIG.authorizationUrl}?${params.toString()}`);
+      window.open(loginEntryUrl);
       setTimeout(() => {
         if (this.pendingState === state) {
           this.pendingState = null;
@@ -175,16 +181,7 @@ export class PKMerAuthService {
     }
 
     const codePromise = this.startCallbackServer(state);
-    const params = new URLSearchParams({
-      response_type: "code",
-      client_id: PKMER_OAUTH_CONFIG.clientId,
-      redirect_uri: PKMER_OAUTH_CONFIG.desktopRedirectUri,
-      scope: PKMER_OAUTH_CONFIG.scopes,
-      state,
-      code_challenge: codeChallenge,
-      code_challenge_method: "S256",
-    });
-    window.open(`${PKMER_OAUTH_CONFIG.authorizationUrl}?${params.toString()}`);
+    window.open(loginEntryUrl);
 
     try {
       const code = await codePromise;
