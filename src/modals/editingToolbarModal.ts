@@ -224,6 +224,31 @@ export function checkHtml(htmlStr: string) {
   return reg.test(htmlStr);
 }
 
+function applyMenuItemIcon(menuItem: any, icon: string) {
+  if (!icon) {
+    menuItem.setIcon("");
+    if (menuItem.iconEl) {
+      menuItem.iconEl.empty();
+    }
+    return;
+  }
+
+  if (checkHtml(icon)) {
+    menuItem.setIcon("lucide-square");
+    if (menuItem.iconEl) {
+      menuItem.iconEl.empty();
+      menuItem.iconEl.innerHTML = icon;
+    }
+    return;
+  }
+
+  menuItem.setIcon(icon);
+
+  if (menuItem.iconEl && menuItem.iconEl.childElementCount === 0) {
+    setIcon(menuItem.iconEl, icon);
+  }
+}
+
 function syncToolbarVisibilityAfterAction(
   editingToolbar: HTMLElement,
   settings: editingToolbarSettings,
@@ -1050,8 +1075,9 @@ export function editingToolbarPopover(
                   menu.addItem((menuItem) => {
                     menuItem
                       .setTitle(t(subitem.name as any))  // 使用翻译函数，添加类型断言
-                      .setIcon("")
                       .setDisabled(true);
+
+                    applyMenuItemIcon(menuItem, "");
                   });
                 } else {
                   // 添加普通菜单项，也使用翻译函数
@@ -1065,7 +1091,6 @@ export function editingToolbarPopover(
 
                     menuItem
                       .setTitle(displayTitle)  // 使用翻译函数进行国际化
-                      .setIcon(subitem.icon)
                       .onClick(() => {
                         app.commands.executeCommandById(subitem.id);
 
@@ -1084,8 +1109,10 @@ export function editingToolbarPopover(
                         }
                       });
 
+                    applyMenuItemIcon(menuItem, subitem.icon);
+
                     // 如果有快捷键，添加到 DOM 元素
-                    if (hotkey !== "–") {
+                    if (hotkey !== "—") {
                       const hotkeyEl = menuItem.dom.createSpan({ cls: "menu-item-hotkey" });
                       hotkeyEl.setText(hotkey);
                     }
