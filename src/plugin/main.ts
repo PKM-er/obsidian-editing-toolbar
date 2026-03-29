@@ -442,6 +442,25 @@ export default class editingToolbarPlugin extends Plugin {
     if (requireApiVersion("0.15.0")) {
       this.app.workspace.on("window-open", (leaf) => {
         this.init_evt(leaf.doc, editor);
+        setTimeout(() => {
+          if (!this.settings.cMenuVisibility) {
+            return;
+          }
+
+          if (this.isFollowingToolbarActive()) {
+            editingToolbarPopover(this.app, this, "following", leaf.doc);
+          }
+
+          const fixedEnabled =
+            this.settings.enableFixedToolbar ||
+            (!this.settings.enableTopToolbar &&
+              !this.settings.enableFollowingToolbar &&
+              this.positionStyle === "fixed");
+
+          if (fixedEnabled) {
+            editingToolbarPopover(this.app, this, "fixed", leaf.doc);
+          }
+        }, 50);
       });
     }
     const lastVersion = this.settings?.lastVersion || "0.0.0";
@@ -1698,20 +1717,34 @@ updateCurrentCommands(commands: any[], style?: string): void {
     }
   };
 
+  private getToolbarHostDocument(editor?: Editor): Document {
+    return (
+      (editor as any)?.cm?.dom?.ownerDocument ||
+      (editor as any)?.cm?.contentDOM?.ownerDocument ||
+      this.app.workspace.activeLeaf?.view?.containerEl?.ownerDocument ||
+      (requireApiVersion("0.15.0") ? activeWindow.document : window.document)
+    );
+  }
+
   private registerScrollAndBlurEvents(container: Document) {
     const hideToolbar = this.throttle(() => {
       if (!this.isFollowingToolbarActive()) return;
-      this.hideToolbarIfNotSelected();
+      this.hideToolbarIfNotSelected(container);
     }, 200);
 
-    this.registerDomEvent(activeDocument, "wheel", hideToolbar);
+    this.registerDomEvent(container, "wheel", hideToolbar);
     this.registerDomEvent(container, "blur", () => {
-      this.hideToolbarIfNotSelected();
+      this.hideToolbarIfNotSelected(container);
     });
   }
 
-  private hideToolbarIfNotSelected() {
-    const followingToolbar = isExistoolbar(this.app, this, "following");
+  private hideToolbarIfNotSelected(hostDocument?: Document) {
+    const followingToolbar = isExistoolbar(
+      this.app,
+      this,
+      "following",
+      hostDocument || this.getToolbarHostDocument(this.commandsManager.getActiveEditor())
+    );
     if (followingToolbar && this.isFollowingToolbarActive()) {
       followingToolbar.style.visibility = "hidden";
     }
@@ -1726,7 +1759,7 @@ updateCurrentCommands(commands: any[], style?: string): void {
     if (cmEditor.somethingSelected()) {
       this.handleSelectedText(cmEditor);
     } else {
-      this.hideToolbarIfNotSelected();
+      this.hideToolbarIfNotSelected(this.getToolbarHostDocument(cmEditor));
     }
   }
 
@@ -1767,7 +1800,9 @@ updateCurrentCommands(commands: any[], style?: string): void {
   private showFollowingToolbar(editor: Editor) {
     if (!this.isFollowingToolbarActive()) return;
 
-    const followingToolbar = isExistoolbar(this.app, this, "following");
+    const targetDocument = this.getToolbarHostDocument(editor);
+
+    const followingToolbar = isExistoolbar(this.app, this, "following", targetDocument);
 
     if (followingToolbar) {
       followingToolbar.style.visibility = "visible";
@@ -1775,10 +1810,10 @@ updateCurrentCommands(commands: any[], style?: string): void {
       followingToolbar.classList.remove("editingToolbarGrid");
 
       // 使用 createFollowingbar 的定位逻辑（会根据选择重新定位）
-      createFollowingbar(this.app, this.toolbarIconSize, this, editor, true);
+      createFollowingbar(this.app, this.toolbarIconSize, this, editor, true, targetDocument);
     } else {
       // 如果还没有构建 following 工具栏，则创建并定位
-      createFollowingbar(this.app, this.toolbarIconSize, this, editor, true);
+      createFollowingbar(this.app, this.toolbarIconSize, this, editor, true, targetDocument);
     }
   }
 

@@ -125,11 +125,15 @@ export function selfDestruct(plugin?: editingToolbarPlugin) {
 export function isExistoolbar(
   app: App,
   plugin: editingToolbarPlugin,
-  style?: ToolbarStyleKey
+  style?: ToolbarStyleKey,
+  hostDocument?: Document
 ): HTMLElement {
-  requireApiVersion("0.15.0")
-    ? (activeDocument = activeWindow.document)
-    : (activeDocument = window.document);
+  const targetDocument =
+    hostDocument ||
+    app.workspace.activeLeaf?.view?.containerEl?.ownerDocument ||
+    (requireApiVersion("0.15.0") ? activeWindow.document : window.document);
+
+  activeDocument = targetDocument;
 
   // 决定要查找的样式；未显式传入时，保持原有行为
   const targetStyle: ToolbarStyleKey =
@@ -142,7 +146,7 @@ export function isExistoolbar(
   // 注意：Top 工具栏不使用缓存，因为每个 leaf 都有独立的工具栏
   if (targetStyle !== "top") {
     const cached = plugin.getCachedToolbar(targetStyle);
-    if (cached) {
+    if (cached && cached.ownerDocument === targetDocument) {
       return cached;
     }
   }
@@ -160,7 +164,7 @@ export function isExistoolbar(
       ) as HTMLElement) || null;
   } else {
     // 其它样式的工具栏在整个文档范围查找
-    container = activeDocument.querySelector(selector) as HTMLElement;
+    container = targetDocument.querySelector(selector) as HTMLElement;
   }
 
   // 如果找到，缓存起来（但 top 工具栏不缓存）
@@ -627,10 +631,18 @@ export function createFollowingbar(
   iconSize: number,
   plugin: editingToolbarPlugin,
   editor: Editor,
-  forceShow: boolean = false
+  forceShow: boolean = false,
+  hostDocument?: Document
 ) {
+  const targetDocument =
+    hostDocument ||
+    (editor as any)?.cm?.dom?.ownerDocument ||
+    (editor as any)?.cm?.contentDOM?.ownerDocument ||
+    app.workspace.activeLeaf?.view?.containerEl?.ownerDocument ||
+    (requireApiVersion("0.15.0") ? activeWindow.document : window.document);
+
   // 获取或创建“following”样式的工具栏
-  let editingToolbarModalBar = isExistoolbar(app, plugin, "following");
+  let editingToolbarModalBar = isExistoolbar(app, plugin, "following", targetDocument);
 
   // 检查视图类型
   const view = app.workspace.getActiveViewOfType(ItemView);
@@ -651,6 +663,11 @@ export function createFollowingbar(
       plugin.positionStyle === "following");
 
   if (!followingEnabled) return;
+
+  if (!editingToolbarModalBar) {
+    editingToolbarPopover(app, plugin, "following", targetDocument);
+    editingToolbarModalBar = isExistoolbar(app, plugin, "following", targetDocument);
+  }
 
   const viewType = view?.getViewType();
   const isMarkdownView = viewType === "markdown";
@@ -706,7 +723,7 @@ function positionToolbar(toolbar: HTMLElement, editor: Editor) {
   const toolbarHeight = toolbar.offsetHeight;
 
   const rightMargin = 12;
-  const windowWidth = window.innerWidth;
+  const windowWidth = toolbar.ownerDocument.defaultView?.innerWidth ?? window.innerWidth;
 
   // 获取选择的起点和终点位置
   const from = editor.getCursor("from");
@@ -783,12 +800,16 @@ function calculateTopPosition(
 export function editingToolbarPopover(
   app: App,
   plugin: editingToolbarPlugin,
-  style?: ToolbarStyleKey
+  style?: ToolbarStyleKey,
+  hostDocument?: Document
 ): void {
   const settings = plugin.settings;
-  requireApiVersion("0.15.0")
-    ? (activeDocument = activeWindow.document)
-    : (activeDocument = window.document);
+  const targetDocument =
+    hostDocument ||
+    app.workspace.activeLeaf?.view?.containerEl?.ownerDocument ||
+    (requireApiVersion("0.15.0") ? activeWindow.document : window.document);
+
+  activeDocument = targetDocument;
 
   // NEW: if no explicit style is provided, render toolbars for all enabled styles.
   if (!style) {
@@ -809,7 +830,7 @@ export function editingToolbarPopover(
 
     stylesToRender.forEach((styleKey) => {
       // Each call below runs the rest of this function with an explicit style.
-      editingToolbarPopover(app, plugin, styleKey);
+      editingToolbarPopover(app, plugin, styleKey, targetDocument);
     });
 
     return;
@@ -821,7 +842,7 @@ export function editingToolbarPopover(
   // If toolbar visibility is disabled globally, hide any existing toolbars and return early
   // This prevents toolbars from being created when they should be hidden
   if (!settings.cMenuVisibility) {
-    const existingToolbar = isExistoolbar(app, plugin, effectiveStyle);
+    const existingToolbar = isExistoolbar(app, plugin, effectiveStyle, targetDocument);
     if (existingToolbar) {
       existingToolbar.style.display = "none";
     }
@@ -1013,15 +1034,18 @@ export function editingToolbarPopover(
         leafwidth = targetDom?.offsetWidth;
 
       } else if (settings.appendMethod == "body") {
-        activeDocument.body.appendChild(editingToolbar);
+        targetDocument.body.appendChild(editingToolbar);
       } else if (settings.appendMethod == "workspace") {
-        activeDocument.body
+        targetDocument.body
           ?.querySelector(".mod-vertical.mod-root")
           .insertAdjacentElement("afterbegin", editingToolbar);
       }
 
-      let editingToolbarPopoverBar = app.workspace.activeLeaf.view.containerEl
-        ?.querySelector("#editingToolbarPopoverBar") as HTMLElement;
+      let editingToolbarPopoverBar = effectiveStyle === "top"
+        ? app.workspace.activeLeaf.view.containerEl?.querySelector("#editingToolbarPopoverBar") as HTMLElement
+        : targetDocument.querySelector(
+            `.editingToolbarPopoverBar[data-toolbar-style="${effectiveStyle}"]`
+          ) as HTMLElement;
 
       // Use per-style commands based on the toolbar we are rendering
       const currentCommands = plugin.getCurrentCommands(effectiveStyle);
@@ -1648,7 +1672,7 @@ export function editingToolbarPopover(
     if (ViewUtils.isAllowedViewType(view)) {
       // 性能优化：检查是否已存在工具栏，如果存在则复用
       // 注意：Top 工具栏每个 leaf 都有独立的，不能复用
-      const existingToolbar = isExistoolbar(app, plugin, effectiveStyle);
+      const existingToolbar = isExistoolbar(app, plugin, effectiveStyle, targetDocument);
       if (existingToolbar && effectiveStyle !== "top") {
         // 工具栏已存在，只需要更新可见性和样式
         // Check cMenuVisibility first - if disabled, hide all toolbars with display: none
@@ -1695,7 +1719,7 @@ export function editingToolbarPopover(
       // 缓存新创建的工具栏（但 top 工具栏不缓存，因为每个 leaf 都有独立的工具栏）
       // Note: cMenuVisibility is already checked at function start, so toolbars are only created when visible
       if (effectiveStyle !== "top") {
-        const newToolbar = isExistoolbar(app, plugin, effectiveStyle);
+        const newToolbar = isExistoolbar(app, plugin, effectiveStyle, targetDocument);
         if (newToolbar) {
           plugin.setCachedToolbar(effectiveStyle, newToolbar);
         }
