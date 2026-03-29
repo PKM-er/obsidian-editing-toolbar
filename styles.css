@@ -966,8 +966,15 @@ button[class^=editingToolbarCommandsubItem]::after {
   justify-content: center;
   align-items: center;
  contain: none;
+  
 }
 
+:is(#editingToolbarModalBar, #editingToolbarPopoverBar) :is(.editingToolbarCommandItem, button[class^=editingToolbarCommandsubItem]):not(.editingToolbar-Divider-Line) *:not(.subitem)
+{
+animation: none ;
+transition: none ;
+ 
+}
 #editingToolbarModalBar ~.canvas-controls{
   top: calc(var(--size-4-2) + 50px);
 }
