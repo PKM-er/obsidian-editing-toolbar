@@ -370,7 +370,16 @@ function shouldMoveButtonToMoreMenu(
   leafwidth: number,
   buttonWidth: number,
 ): boolean {
-  return currentWidth + nextWidth >= leafwidth - buttonWidth * 7 && leafwidth > 100;
+  if (leafwidth <= 100) {
+    return false;
+  }
+
+  const estimatedButtonCount = Math.max(1, Math.round(currentWidth / Math.max(buttonWidth, 1)));
+  const estimatedGapWidth = estimatedButtonCount * 6;
+  const reservedMoreButtonWidth = buttonWidth + 12;
+  const availableWidth = Math.max(leafwidth - 16, buttonWidth * 2);
+
+  return currentWidth + nextWidth + estimatedGapWidth + reservedMoreButtonWidth >= availableWidth;
 }
 
 async function executeAIToolbarAction(
@@ -1031,14 +1040,23 @@ export function editingToolbarPopover(
        }
 
         // 获取宽度
-        leafwidth = targetDom?.offsetWidth;
+        const targetWidth = targetDom?.clientWidth || targetDom?.offsetWidth || 0;
+        const leafWidth = currentleaf?.clientWidth || currentleaf?.getBoundingClientRect().width || 0;
+        const viewportWidth = targetDocument.defaultView?.innerWidth || 0;
+        const widthCandidates = [targetWidth, leafWidth, viewportWidth].filter((width) => width > 0);
+        leafwidth = widthCandidates.length > 0 ? Math.min(...widthCandidates) : 0;
 
       } else if (settings.appendMethod == "body") {
         targetDocument.body.appendChild(editingToolbar);
+        leafwidth = targetDocument.defaultView?.innerWidth || targetDocument.body?.clientWidth || 0;
       } else if (settings.appendMethod == "workspace") {
         targetDocument.body
           ?.querySelector(".mod-vertical.mod-root")
           .insertAdjacentElement("afterbegin", editingToolbar);
+        const workspaceWidth = targetDocument.body?.clientWidth || 0;
+        const viewportWidth = targetDocument.defaultView?.innerWidth || 0;
+        const widthCandidates = [workspaceWidth, viewportWidth].filter((width) => width > 0);
+        leafwidth = widthCandidates.length > 0 ? Math.min(...widthCandidates) : 0;
       }
 
       let editingToolbarPopoverBar = effectiveStyle === "top"
