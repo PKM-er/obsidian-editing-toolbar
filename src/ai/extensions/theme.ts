@@ -66,8 +66,9 @@ export const aiTheme = EditorView.baseTheme({
   "&dark .cm-ai-ghost-text": {
     color: "#666",
   },
-  ".cm-ai-result-panel": {
+  ".cm-ai-result-panel.cm-tooltip": {
     background: "var(--background-primary)",
+    backgroundColor: "var(--background-primary)",
     border: "1px solid var(--background-modifier-border)",
     borderRadius: "12px",
     boxShadow: "0 14px 40px rgba(0,0,0,0.16)",
@@ -87,6 +88,8 @@ export const aiTheme = EditorView.baseTheme({
     color: "var(--text-normal)",
     maxHeight: "260px",
     overflowY: "auto",
+    userSelect: "text",
+    cursor: "text",
   },
   ".cm-ai-result-actions": {
     display: "flex",

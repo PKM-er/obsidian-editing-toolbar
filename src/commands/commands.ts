@@ -445,12 +445,6 @@ export class CommandsManager {
   }
 
   public getActiveEditor(): any {
-    // 首先尝试获取常规的 Markdown 视图
-    // const markdownView = this.plugin.app.workspace.getActiveViewOfType(MarkdownView);
-    // if (markdownView) {
-    //     return markdownView.editor;
-    // }
-
     // @ts-ignore
     const activeEditor = this.plugin.app.workspace?.activeEditor;
     if (activeEditor && activeEditor.editor) {
@@ -458,9 +452,13 @@ export class CommandsManager {
     }
 
     // 最后尝试从活跃叶子获取编辑器
-    const activeLeafEditor = this.plugin.app.workspace.activeLeaf?.view?.editor;
-    if (activeLeafEditor) {
-      return activeLeafEditor;
+    try {
+      const activeLeafEditor = this.plugin.app.workspace.activeLeaf?.view?.editor;
+      if (activeLeafEditor) {
+        return activeLeafEditor;
+      }
+    } catch {
+      // 第三方插件可能导致 view.editor 访问抛出异常
     }
     return null;
   }

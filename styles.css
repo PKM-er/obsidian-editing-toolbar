@@ -1146,8 +1146,8 @@ transition: none ;
 }
 .theme-dark .menu.editing-toolbar-dropdown-menu .menu-item.is-disabled
 {
-    color: var(--menu-background); /* 文字直接变透明背景色 */
-    filter: brightness(0.7) contrast(1.2);
+    color: var(--text-muted); /* 文字直接变透明背景色 */
+     opacity: 0.7;    
 }
 
 /* 左侧线条 */
@@ -1195,7 +1195,7 @@ transition: none ;
 /* 快捷键样式 */                                                                
 .menu.editing-toolbar-dropdown-menu .menu-item-hotkey {                         
         margin-left: auto;                                                            
-        font-size: 11px;                                                              
+        font-size:10px;                                               
         color: var(--text-muted);                                                     
         opacity: 0.7;                                                                 
         font-family: var(--font-monospace);                                           
@@ -1846,6 +1846,21 @@ body.auto-hide-header .workspace-tab-header-container + .workspace-tab-container
   color: var(--text-muted);
   font-size: 12px;
   font-weight: 600;
+}
+
+.editing-toolbar-ai-card-toggle {
+  flex-shrink: 0;
+}
+
+.editing-toolbar-ai-card-header-select {
+  flex-shrink: 0;
+  font-size: 12px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--background-modifier-border);
+  
+  color: var(--text-normal);
+  cursor: pointer;
 }
 
 .editing-toolbar-ai-card-body {

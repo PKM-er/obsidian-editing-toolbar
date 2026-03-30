@@ -45,6 +45,20 @@ export class PKMerAuthService {
     this.memCustomModelApiKey = this.secrets.getSecret(PKMER_SECRET_KEYS.customModelApiKey) ?? null;
   }
 
+  async syncLoginState(): Promise<void> {
+    // token 存在但 userInfo 为空（如重装插件后），自动补全登录状态
+    if (this.memAccessToken && !this.plugin.settings.ai.pkmer.userInfo) {
+      const valid = await this.verify();
+      if (valid) {
+        await this.fetchUserInfo();
+        this.cachedVerified = true;
+      } else {
+        // token 已失效，清理残留
+        this.clearSecrets();
+      }
+    }
+  }
+
   private setAccessToken(token: string): void {
     this.memAccessToken = token;
     if (this.supportsSecretStorage) this.secrets.setSecret(PKMER_SECRET_KEYS.accessToken, token);

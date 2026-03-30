@@ -1702,6 +1702,8 @@ export class editingToolbarSettingTab extends PluginSettingTab {
       title: string;
       desc: string;
       badge?: string;
+      toggle?: { value: boolean; onChange: (value: boolean) => void };
+      headerDropdown?: { options: {value: string; label: string}[]; value: string; onChange: (value: string) => void };
       collapsible?: boolean;
       open?: boolean;
     }): HTMLElement => {
@@ -1722,7 +1724,29 @@ export class editingToolbarSettingTab extends PluginSettingTab {
       copy.createDiv({ cls: 'editing-toolbar-ai-card-title', text: options.title });
       copy.createDiv({ cls: 'editing-toolbar-ai-card-desc', text: options.desc });
 
-      if (options.badge) {
+      if (options.toggle) {
+        const { toggle } = options;
+        const toggleEl = header.createEl('div', { cls: 'editing-toolbar-ai-card-toggle checkbox-container' });
+        if (toggle.value) toggleEl.addClass('is-enabled');
+        toggleEl.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const newVal = !toggleEl.hasClass('is-enabled');
+          newVal ? toggleEl.addClass('is-enabled') : toggleEl.removeClass('is-enabled');
+          toggle.onChange(newVal);
+        });
+      } else if (options.headerDropdown) {
+        const { headerDropdown } = options;
+        const sel = header.createEl('select', { cls: 'editing-toolbar-ai-card-header-select dropdown' });
+        headerDropdown.options.forEach(opt => {
+          const o = sel.createEl('option', { text: opt.label });
+          o.value = opt.value;
+          if (opt.value === headerDropdown.value) o.selected = true;
+        });
+        sel.addEventListener('click', (e) => e.stopPropagation());
+        sel.addEventListener('change', (e) => {
+          headerDropdown.onChange((e.target as HTMLSelectElement).value);
+        });
+      } else if (options.badge) {
         header.createDiv({ cls: 'editing-toolbar-ai-card-badge', text: options.badge });
       }
 
@@ -1732,22 +1756,18 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     const basicBody = createCard({
       title: t('AI Editor'),
       desc: t('Enable AI editor features such as inline completion and selection rewrite.'),
-      badge: this.plugin.settings.ai.enabled ? t('Enabled') : t('Disabled'),
-    });
-
-    new Setting(basicBody)
-      .setName(t('Enable AI Editor'))
-      .setDesc(t('Enable AI editor features such as inline completion and selection rewrite.'))
-      .addToggle((toggle) => {
-        toggle.setValue(this.plugin.settings.ai.enabled).onChange(async (value) => {
+      toggle: {
+        value: this.plugin.settings.ai.enabled,
+        onChange: async (value) => {
           if (value) {
             await this.plugin.aiManager.requestEnableAIWithConsent('settings');
           } else {
             await this.plugin.aiManager.disableAI();
           }
           this.display();
-        });
-      });
+        },
+      },
+    });
 
     if (aiEnabled) {
       const accountBody = createCard({
@@ -1769,7 +1789,6 @@ export class editingToolbarSettingTab extends PluginSettingTab {
       }
 
       new Setting(accountBody)
-        .setName(t('PKMer Account'))
         .setDesc(pkmerAccountDesc)
         .addButton((button) => {
           if (this.plugin.settings.ai.pkmer.userInfo) {
@@ -1818,18 +1837,15 @@ export class editingToolbarSettingTab extends PluginSettingTab {
       const featuresBody = createCard({
         title: t('Editor Features'),
         desc: t('Configure inline completion and rewrite after your AI provider is ready.'),
-      });
-
-      new Setting(featuresBody)
-        .setName(t('Enable Inline Completion'))
-        .setDesc(t('Show ghost text suggestions inside the editor.'))
-        .addToggle((toggle) => {
-          toggle.setValue(this.plugin.settings.ai.enableInlineCompletion).onChange(async (value) => {
+        toggle: {
+          value: this.plugin.settings.ai.enableInlineCompletion,
+          onChange: async (value) => {
             this.plugin.settings.ai.enableInlineCompletion = value;
             await this.plugin.saveSettings();
             this.display();
-          });
-        });
+          },
+        },
+      });
 
       if (inlineCompletionEnabled) {
         new Setting(featuresBody)
@@ -1880,25 +1896,21 @@ export class editingToolbarSettingTab extends PluginSettingTab {
       const pkmerModelBody = createCard({
         title: t('PKMer Model'),
         desc: t('Choose models by task.'),
-        badge: pkmerModelRoutingMode === 'smart' ? t('Default') : t('Manual'),
+        headerDropdown: {
+          options: [
+            { value: 'smart', label: t('Default') },
+            { value: 'manual', label: t('Manual') },
+          ],
+          value: pkmerModelRoutingMode,
+          onChange: async (value) => {
+            this.plugin.settings.ai.pkmerModelRouting.mode = value as 'smart' | 'manual';
+            await this.plugin.saveSettings();
+            this.display();
+          },
+        },
         collapsible: true,
         open: pkmerModelRoutingMode === 'manual',
       });
-
-      new Setting(pkmerModelBody)
-        .setName(t('Mode'))
-        .setDesc(t('Light tasks use the light model. Complex tasks use the reasoning model.'))
-        .addDropdown((dropdown) => {
-          dropdown
-            .addOption('smart', t('Default'))
-            .addOption('manual', t('Manual'))
-            .setValue(pkmerModelRoutingMode)
-            .onChange(async (value) => {
-              this.plugin.settings.ai.pkmerModelRouting.mode = value as 'smart' | 'manual';
-              await this.plugin.saveSettings();
-              this.display();
-            });
-        });
 
       if (pkmerModelRoutingMode === 'smart') {
         const smartSummary = pkmerModelBody.createDiv({ cls: 'editing-toolbar-ai-note' });
@@ -1963,19 +1975,15 @@ export class editingToolbarSettingTab extends PluginSettingTab {
       const customBody = createCard({
         title: t('Custom Model (Optional)'),
         desc: t('Custom model is used automatically when PKMer AI is unavailable.'),
-        badge: customModelEnabled ? t('Enabled') : t('Disabled'),
-      });
-
-      new Setting(customBody)
-        .setName(t('Enable Custom Model'))
-        .setDesc(t('Use your own OpenAI-compatible provider as a fallback.'))
-        .addToggle((toggle) => {
-          toggle.setValue(this.plugin.settings.ai.enableCustomModel).onChange(async (value) => {
+        toggle: {
+          value: this.plugin.settings.ai.enableCustomModel,
+          onChange: async (value) => {
             this.plugin.settings.ai.enableCustomModel = value;
             await this.plugin.saveSettings();
             this.display();
-          });
-        });
+          },
+        },
+      });
 
       if (customModelEnabled) {
         new Setting(customBody)

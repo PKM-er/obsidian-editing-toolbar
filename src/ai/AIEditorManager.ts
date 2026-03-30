@@ -44,6 +44,7 @@ export class AIEditorManager {
 
   onload(): void {
     this.authService.loadSecrets();
+    void this.authService.syncLoginState();
     void this.authService.migrateCustomModelApiKeyFromSettings();
     const registerHandler = (this.plugin as any).registerObsidianProtocolHandler;
     if (typeof registerHandler === "function") {
@@ -767,7 +768,7 @@ export class AIEditorManager {
 
         const result = await this.startRewrite(this.inlineCustomPromptEditor ?? editor, "custom", prompt);
         if (result) {
-          textarea.focus();
+          this.closeInlineCustomPrompt();
         }
       };
 
@@ -839,7 +840,11 @@ export class AIEditorManager {
     if (editor) {
       return editor;
     }
-    return this.plugin.commandsManager?.getActiveEditor() ?? ((this.plugin.app.workspace.getActiveViewOfType(MarkdownView) as MarkdownView | null)?.editor ?? null);
+    try {
+      return this.plugin.commandsManager?.getActiveEditor() ?? ((this.plugin.app.workspace.getActiveViewOfType(MarkdownView) as MarkdownView | null)?.editor ?? null);
+    } catch {
+      return null;
+    }
   }
 
   private getEditorView(editor?: Editor | null): EditorView | null {

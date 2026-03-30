@@ -84,7 +84,11 @@ function createResultPanelTooltipView(
 ): TooltipView {
   const dom = document.createElement("div");
   dom.className = "cm-ai-result-panel";
-  dom.addEventListener("mousedown", (event) => event.preventDefault());
+  dom.addEventListener("mousedown", (event) => {
+    if (!(event.target as HTMLElement).closest(".cm-ai-result-content")) {
+      event.preventDefault();
+    }
+  });
 
   const header = document.createElement("div");
   header.className = "cm-ai-result-header";
