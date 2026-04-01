@@ -1,5 +1,7 @@
-import { requestUrl } from "obsidian";
+import { requestUrl, type RequestUrlResponse } from "obsidian";
 import type EditingToolbarPlugin from "src/plugin/main";
+import { t } from "src/translations/helper";
+import { AIUserNoticeError, getAIErrorMessage, getRequestErrorStatus } from "./errorHandling";
 import { resolvePKMerModelForScene } from "./types";
 import type { CompletionParams, IAIService, PKMerModelScene, RewriteArtifactKind, RewriteInstruction, RewriteParams } from "./types";
 import { PKMerAuthService } from "./PKMerAuthService";
@@ -148,21 +150,28 @@ export class ToolbarAIService implements IAIService {
     }
 
     const resolvedProvider = provider ?? (await this.resolveProvider(options.pkmerScene));
-    const response = await requestUrl({
-      url: this.buildChatCompletionsUrl(resolvedProvider.baseUrl),
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${resolvedProvider.apiKey}`,
-      },
-      body: JSON.stringify({
-        model: resolvedProvider.model,
-        temperature: resolvedProvider.temperature,
-        max_tokens: options.maxTokens,
-        stream: false,
-        messages,
-      }),
-    });
+    const requestUrlValue = this.buildChatCompletionsUrl(resolvedProvider.baseUrl);
+    let response: RequestUrlResponse;
+
+    try {
+      response = await requestUrl({
+        url: requestUrlValue,
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${resolvedProvider.apiKey}`,
+        },
+        body: JSON.stringify({
+          model: resolvedProvider.model,
+          temperature: resolvedProvider.temperature,
+          max_tokens: options.maxTokens,
+          stream: false,
+          messages,
+        }),
+      });
+    } catch (error) {
+      await this.rethrowUserFacingRequestError(error, requestUrlValue);
+    }
 
     if (signal?.aborted) {
       throw new DOMException("Aborted", "AbortError");
@@ -248,6 +257,38 @@ export class ToolbarAIService implements IAIService {
       return `${normalized}/chat/completions`;
     }
     return `${normalized}/v1/chat/completions`;
+  }
+
+  private async rethrowUserFacingRequestError(error: unknown, requestUrlValue: string): Promise<never> {
+    if (await this.isPKMerQuotaError(error, requestUrlValue)) {
+      throw new AIUserNoticeError(
+        t("PKMer AI request failed because your quota is insufficient. Please get more quota in PKMer and try again."),
+      );
+    }
+
+    throw error;
+  }
+
+  private async isPKMerQuotaError(error: unknown, requestUrlValue: string): Promise<boolean> {
+    if (!/pkmer\.cn/i.test(requestUrlValue)) {
+      return false;
+    }
+
+    if (getRequestErrorStatus(error) !== 403) {
+      return false;
+    }
+
+    const quota = await this.authService.refreshQuota().catch(() => null);
+    const rawQuota = quota?.quota ?? quota?.remainingQuota;
+    if (typeof rawQuota === "number") {
+      const normalizedQuota = Number((rawQuota / 500000).toFixed(2));
+      if (normalizedQuota <= 1) {
+        return true;
+      }
+    }
+
+    const message = getAIErrorMessage(error).toLowerCase();
+    return /quota|credit|balance|insufficient|额度|点数|余量不足|余额不足/.test(message);
   }
 
   private buildCompletionMessages(

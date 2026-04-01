@@ -2,6 +2,7 @@ import { Prec, StateEffect, StateField, type Extension } from "@codemirror/state
 import { Decoration, EditorView, ViewPlugin, type Command, type ViewUpdate, WidgetType, keymap } from "@codemirror/view";
 import { t } from "src/translations/helper";
 import { buildLocalCompletionContext } from "../editorContext";
+import { showAIErrorNotice } from "../errorHandling";
 import type { CompletionConfig, IAIService } from "../types";
 
 interface CompletionState {
@@ -271,7 +272,9 @@ export function inlineCompletion(
           if (error instanceof DOMException && error.name === "AbortError") {
             return;
           }
-          console.error("[AI Completion] Error:", error);
+          if (!showAIErrorNotice(error)) {
+            console.error("[AI Completion] Error:", error);
+          }
           this.view.dispatch({ effects: setCompletionEffect.of(null) });
         }
       }

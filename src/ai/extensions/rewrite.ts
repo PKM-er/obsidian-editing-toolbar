@@ -1,9 +1,10 @@
 import { Prec, StateEffect, StateField, type Extension } from "@codemirror/state";
 import { Notice } from "obsidian";
-import { Decoration, EditorView, ViewPlugin, WidgetType, type Tooltip, type TooltipView, type ViewUpdate, keymap, showTooltip } from "@codemirror/view";
+import { EditorView, ViewPlugin, type Tooltip, type TooltipView, type ViewUpdate, keymap, showTooltip } from "@codemirror/view";
 import { t } from "src/translations/helper";
 import { normalizeGeneratedFrontmatter } from "../artifactNormalizer";
 import { resolveRewriteContext } from "../editorContext";
+import { showAIErrorNotice } from "../errorHandling";
 import { type IAIService, type RewriteArtifactKind, type RewriteConfig, type RewriteInstruction } from "../types";
 
 interface RewriteStartParams {
@@ -49,32 +50,6 @@ function dispatchRewrite(view: EditorView, instruction: RewriteInstruction, cust
   });
 }
 
-class RewriteLoadingWidget extends WidgetType {
-  eq(): boolean {
-    return true;
-  }
-
-  toDOM(): HTMLElement {
-    const wrapper = document.createElement("span");
-    wrapper.className = "cm-ai-loading cm-ai-loading-pill cm-ai-rewrite-loading";
-    wrapper.setAttribute("aria-label", t("AI is writing..."));
-
-    const spinner = document.createElement("span");
-    spinner.className = "cm-ai-loading-spinner";
-
-    const label = document.createElement("span");
-    label.className = "cm-ai-loading-label";
-    label.textContent = t("AI generating");
-
-    wrapper.append(spinner, label);
-    return wrapper;
-  }
-
-  ignoreEvent(): boolean {
-    return true;
-  }
-}
-
 function createResultPanelTooltipView(
   view: EditorView,
   rewriteField: StateField<RewriteFieldValue>,
@@ -84,6 +59,8 @@ function createResultPanelTooltipView(
 ): TooltipView {
   const dom = document.createElement("div");
   dom.className = "cm-ai-result-panel";
+  let copyResetTimer: number | null = null;
+
   dom.addEventListener("mousedown", (event) => {
     if (!(event.target as HTMLElement).closest(".cm-ai-result-content")) {
       event.preventDefault();
@@ -105,6 +82,14 @@ function createResultPanelTooltipView(
 
   function hidePanel(): void {
     dom.style.display = "none";
+  }
+
+  function resetCopyButtonLabel(): void {
+    if (copyResetTimer !== null) {
+      window.clearTimeout(copyResetTimer);
+      copyResetTimer = null;
+    }
+    copyBtn.textContent = t("Copy to Clipboard");
   }
 
   async function handleArtifact(mode: "create" | "embed"): Promise<void> {
@@ -230,19 +215,45 @@ function createResultPanelTooltipView(
     view.focus();
   });
 
+  const copyBtn = createActionButton(t("Copy to Clipboard"), "cm-ai-btn-secondary", () => {
+    const state = view.state.field(rewriteField);
+    const result = state.operation?.result;
+    if (!result) {
+      return;
+    }
+
+    void navigator.clipboard.writeText(result)
+      .then(() => {
+        if (copyResetTimer !== null) {
+          window.clearTimeout(copyResetTimer);
+        }
+        copyBtn.textContent = t("Copied!");
+        copyResetTimer = window.setTimeout(() => {
+          copyResetTimer = null;
+          copyBtn.textContent = t("Copy to Clipboard");
+        }, 1500);
+      })
+      .catch((error) => {
+        console.error("[AI Rewrite] Failed to copy result:", error);
+        new Notice(error instanceof Error && error.message ? error.message : t("Copy to Clipboard"));
+      });
+  });
+
   const retryBtn = createActionButton(t("Try again"), "cm-ai-btn-secondary", () => {
     const state = view.state.field(rewriteField);
     if (!state.operation) return;
+    resetCopyButtonLabel();
     view.dispatch({ effects: startRewriteEffect.of(state.operation.params) });
   });
 
   const discardBtn = createActionButton(t("Discard"), "cm-ai-btn-danger", () => {
+    resetCopyButtonLabel();
     hidePanel();
     view.dispatch({ effects: cancelRewriteEffect.of(undefined) });
     view.focus();
   });
 
-  actionsBar.append(replaceBtn, insertBtn, retryBtn, discardBtn);
+  actionsBar.append(replaceBtn, insertBtn, copyBtn, retryBtn, discardBtn);
   dom.appendChild(actionsBar);
 
   return {
@@ -281,10 +292,17 @@ function createResultPanelTooltipView(
             header.textContent = t("AI suggestion");
           }
         }
+        copyBtn.style.display = "";
         actionsBar.style.display = "flex";
       } else {
+        resetCopyButtonLabel();
         header.textContent = t("AI is writing...");
         actionsBar.style.display = "none";
+      }
+    },
+    destroy() {
+      if (copyResetTimer !== null) {
+        window.clearTimeout(copyResetTimer);
       }
     },
   };
@@ -344,7 +362,7 @@ export function selectionRewrite(
 
       let resultTooltip: Tooltip | null = null;
 
-      if (operation?.phase === "done") {
+      if (operation) {
         if (prev.resultTooltip && prev.resultTooltip.pos === operation.params.from) {
           resultTooltip = prev.resultTooltip;
         } else {
@@ -361,21 +379,7 @@ export function selectionRewrite(
         resultTooltip,
       };
     },
-    provide: (field) => [
-      showTooltip.from(field, (value) => value.resultTooltip ?? null),
-      EditorView.decorations.from(field, (value) => {
-        if (value.operation?.phase !== "streaming") {
-          return Decoration.none;
-        }
-
-        return Decoration.set([
-          Decoration.widget({
-            widget: new RewriteLoadingWidget(),
-            side: 1,
-          }).range(value.operation.params.to),
-        ]);
-      }),
-    ],
+    provide: (field) => showTooltip.from(field, (value) => value.resultTooltip ?? null),
   });
 
   const rewritePlugin = ViewPlugin.fromClass(
@@ -428,7 +432,9 @@ export function selectionRewrite(
           if (error instanceof DOMException && error.name === "AbortError") {
             return;
           }
-          console.error("[AI Rewrite] Error:", error);
+          if (!showAIErrorNotice(error)) {
+            console.error("[AI Rewrite] Error:", error);
+          }
           this.view.dispatch({ effects: cancelRewriteEffect.of(undefined) });
         }
       }

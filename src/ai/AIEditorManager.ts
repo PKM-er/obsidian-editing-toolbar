@@ -6,6 +6,7 @@ import { AIConsentModal } from "src/modals/AIConsentModal";
 import { ToolbarAIService } from "./AIService";
 import { normalizeGeneratedArtifactContent } from "./artifactNormalizer";
 import { resolveRewriteContext } from "./editorContext";
+import { getAIErrorMessage } from "./errorHandling";
 import { PKMerAuthService } from "./PKMerAuthService";
 import { getAIToolboxArtifactKind, getAIToolboxPrompt } from "./toolboxActions";
 import { DEFAULT_REWRITE_ACTIONS, type RewriteArtifactKind, type RewriteArtifactRequest, type RewriteArtifactResult, type RewriteInstruction } from "./types";
@@ -271,7 +272,7 @@ export class AIEditorManager {
       new Notice(`${t("Custom model connection succeeded.")} ${model}`.trim());
       return true;
     } catch (error) {
-      const message = this.getErrorMessage(error);
+      const message = getAIErrorMessage(error);
       new Notice(`${t("Custom model connection failed:")} ${message}`);
       return false;
     }
@@ -859,23 +860,5 @@ export class AIEditorManager {
   private async isPKMerAvailable(): Promise<boolean> {
     const verified = await this.authService.verify();
     return verified && !!this.authService.aiToken;
-  }
-
-  private getErrorMessage(error: unknown): string {
-    if (error instanceof Error && error.message.trim()) {
-      return error.message.trim();
-    }
-
-    if (typeof error === "string" && error.trim()) {
-      return error.trim();
-    }
-
-    const response = (error as any)?.response;
-    const responseMessage = response?.json?.error?.message || response?.json?.message || response?.text;
-    if (typeof responseMessage === "string" && responseMessage.trim()) {
-      return responseMessage.trim();
-    }
-
-    return t("Unknown connection error.");
   }
 }

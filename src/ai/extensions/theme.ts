@@ -86,6 +86,7 @@ export const aiTheme = EditorView.baseTheme({
     whiteSpace: "pre-wrap",
     lineHeight: "1.6",
     color: "var(--text-normal)",
+    minHeight: "1.6em",
     maxHeight: "260px",
     overflowY: "auto",
     userSelect: "text",

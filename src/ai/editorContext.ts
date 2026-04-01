@@ -15,6 +15,11 @@ export interface RewriteContextPayload {
   context: string;
 }
 
+export interface RewriteContextOptions {
+  preferBlockWhenCollapsed?: boolean;
+  noteTitle?: string;
+}
+
 function isBlankLine(text: string): boolean {
   return text.trim().length === 0;
 }

@@ -213,7 +213,7 @@ export default {
 'Export Content': 'Export Content',
 'Copy this content to share with others': 'Copy this content to share with others',
 'Loading...': 'Loading...',
-'Copy to Clipboard': 'Copy to Clipboard',
+'Copy to Clipboard': 'Copy',
 'Configuration copied to clipboard': 'Configuration copied to clipboard',
 'Failed to copy configuration': 'Failed to copy configuration',
 'Paste the configuration JSON here': 'Paste the configuration JSON here',
