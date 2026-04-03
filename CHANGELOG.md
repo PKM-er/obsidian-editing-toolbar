@@ -1,5 +1,20 @@
 # Changelog
 
+## 4.0.2 (2026-04-03)
+### Update manifest.json
+4.0.2 目前AI功能仅对中文用户生效
+### 1.AI工具箱
+- **智能改写**：优化表达、修正语法、总结提炼、解释说明
+- **格式转换**：一键转为列表/表格/Canvas可视化
+- **生成Frontmatter**：自动提取关键信息生成文档属性
+- 🎨**自定义AI指令**：支持个性化改写需求
+- 📊**生成**Canvas: 根据内容生成思维导图
+### 2.AI内联自动补全
+开启后享受**无缝写作体验**，AI实时预测并建议后续内容，按`Tab`即可快速采纳，不打断创作思路
+### Merge branch 'master' of https://github.com/PKM-er/obsidian-editing-toolbar
+### Update manifest.json and CHANGELOG.md for version 4.0.0
+
+
 ## 4.0.0 (2026-04-03)
 ### 4.0.0(2026-04-03)
 ## ✨NewFeatures
