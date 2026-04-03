@@ -619,9 +619,6 @@ button[class^=editingToolbarCommandsubItem]::after {
   border-left: none;
 }
 
-.menu.editing-toolbar-ai-dropdown-menu {
-  min-width: 240px;
-}
 
 .menu.editing-toolbar-ai-dropdown-menu .menu-item.is-disabled {
   opacity: 0.72;
