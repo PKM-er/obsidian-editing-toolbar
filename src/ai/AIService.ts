@@ -7,6 +7,7 @@ import type { CompletionParams, IAIService, PKMerModelScene, RewriteArtifactKind
 import { PKMerAuthService } from "./PKMerAuthService";
 
 interface ResolvedProvider {
+  kind: "pkmer" | "custom";
   baseUrl: string;
   apiKey: string;
   model: string;
@@ -31,6 +32,7 @@ interface ChatCompletionResult {
 export class ToolbarAIService implements IAIService {
   private plugin: EditingToolbarPlugin;
   private authService: PKMerAuthService;
+  private customChatCompletionsUrlCache = new Map<string, string>();
 
   constructor(plugin: EditingToolbarPlugin, authService: PKMerAuthService) {
     this.plugin = plugin;
@@ -57,30 +59,23 @@ export class ToolbarAIService implements IAIService {
       throw new Error(`Missing custom model settings: ${validation.missing.join(", ")}`);
     }
 
-    await requestUrl({
-      url: this.buildChatCompletionsUrl(validation.provider.baseUrl),
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${validation.provider.apiKey}`,
+    await this.requestChatCompletionResult(
+      [
+        {
+          role: "system",
+          content: "Reply with OK only.",
+        },
+        {
+          role: "user",
+          content: "ping",
+        },
+      ],
+      undefined,
+      {
+        maxTokens: 1,
       },
-      body: JSON.stringify({
-        model: validation.provider.model,
-        temperature: 0,
-        max_tokens: 1,
-        stream: false,
-        messages: [
-          {
-            role: "system",
-            content: "Reply with OK only.",
-          },
-          {
-            role: "user",
-            content: "ping",
-          },
-        ],
-      }),
-    });
+      validation.provider,
+    );
   }
 
   private async requestCompletion(params: CompletionParams, signal?: AbortSignal): Promise<string> {
@@ -150,28 +145,7 @@ export class ToolbarAIService implements IAIService {
     }
 
     const resolvedProvider = provider ?? (await this.resolveProvider(options.pkmerScene));
-    const requestUrlValue = this.buildChatCompletionsUrl(resolvedProvider.baseUrl);
-    let response: RequestUrlResponse;
-
-    try {
-      response = await requestUrl({
-        url: requestUrlValue,
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${resolvedProvider.apiKey}`,
-        },
-        body: JSON.stringify({
-          model: resolvedProvider.model,
-          temperature: resolvedProvider.temperature,
-          max_tokens: options.maxTokens,
-          stream: false,
-          messages,
-        }),
-      });
-    } catch (error) {
-      await this.rethrowUserFacingRequestError(error, requestUrlValue);
-    }
+    const { response } = await this.requestChatCompletionsWithFallback(resolvedProvider, messages, signal, options);
 
     if (signal?.aborted) {
       throw new DOMException("Aborted", "AbortError");
@@ -183,6 +157,69 @@ export class ToolbarAIService implements IAIService {
       text,
       finishReason: payload?.choices?.[0]?.finish_reason,
     };
+  }
+
+  private async requestChatCompletionsWithFallback(
+    provider: ResolvedProvider,
+    messages: Array<{ role: string; content: string }>,
+    signal?: AbortSignal,
+    options: ChatCompletionOptions = {},
+  ): Promise<{ response: RequestUrlResponse; requestUrlValue: string }> {
+    const candidateUrls = this.getChatCompletionsCandidateUrls(provider);
+    let lastError: unknown = null;
+
+    for (let index = 0; index < candidateUrls.length; index += 1) {
+      const requestUrlValue = candidateUrls[index];
+      try {
+        const response = await this.executeChatCompletionsRequest(requestUrlValue, provider, messages, signal, options);
+        if (provider.kind === "custom") {
+          this.rememberCustomChatCompletionsUrl(provider.baseUrl, requestUrlValue);
+        }
+        return { response, requestUrlValue };
+      } catch (error) {
+        lastError = error;
+        const canRetryWithNextUrl = provider.kind === "custom"
+          && index < candidateUrls.length - 1
+          && this.isRetryableEndpointError(error);
+        if (canRetryWithNextUrl) {
+          continue;
+        }
+
+        await this.rethrowUserFacingRequestError(error, requestUrlValue);
+      }
+    }
+
+    await this.rethrowUserFacingRequestError(lastError, candidateUrls[0] ?? provider.baseUrl);
+  }
+
+  private async executeChatCompletionsRequest(
+    requestUrlValue: string,
+    provider: ResolvedProvider,
+    messages: Array<{ role: string; content: string }>,
+    signal?: AbortSignal,
+    options: ChatCompletionOptions = {},
+  ): Promise<RequestUrlResponse> {
+    const response = await requestUrl({
+      url: requestUrlValue,
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${provider.apiKey}`,
+      },
+      body: JSON.stringify({
+        model: provider.model,
+        temperature: provider.temperature,
+        max_tokens: options.maxTokens,
+        stream: false,
+        messages,
+      }),
+    });
+
+    if (response.status >= 200 && response.status < 300) {
+      return response;
+    }
+
+    throw this.createRequestResponseError(response, requestUrlValue);
   }
 
   private async resolveProvider(scene: PKMerModelScene = "rewrite"): Promise<ResolvedProvider> {
@@ -207,6 +244,7 @@ export class ToolbarAIService implements IAIService {
     }
 
     return {
+      kind: "pkmer",
       baseUrl: settings.pkmerApiBaseUrl,
       apiKey: this.authService.aiToken,
       model: resolvePKMerModelForScene(settings, scene),
@@ -239,6 +277,7 @@ export class ToolbarAIService implements IAIService {
 
     return {
       provider: {
+        kind: "custom",
         baseUrl: custom.baseUrl.trim(),
         apiKey: customApiKey,
         model: custom.model.trim(),
@@ -249,14 +288,96 @@ export class ToolbarAIService implements IAIService {
   }
 
   private buildChatCompletionsUrl(baseUrl: string): string {
-    const normalized = baseUrl.trim().replace(/\/+$/, "");
-    if (/\/v1\/chat\/completions$/i.test(normalized)) {
-      return normalized;
+    return this.buildChatCompletionsCandidateUrls(baseUrl)[0] ?? baseUrl.trim().replace(/\/+$/, "");
+  }
+
+  private getChatCompletionsCandidateUrls(provider: ResolvedProvider): string[] {
+    if (provider.kind !== "custom") {
+      return [this.buildChatCompletionsUrl(provider.baseUrl)];
     }
-    if (/\/v1$/i.test(normalized)) {
-      return `${normalized}/chat/completions`;
+
+    const cacheKey = this.normalizeProviderBaseUrl(provider.baseUrl);
+    const cachedUrl = this.customChatCompletionsUrlCache.get(cacheKey);
+    const urls = this.buildChatCompletionsCandidateUrls(provider.baseUrl);
+    if (!cachedUrl) {
+      return urls;
     }
-    return `${normalized}/v1/chat/completions`;
+
+    return [cachedUrl, ...urls.filter((url) => url !== cachedUrl)];
+  }
+
+  private buildChatCompletionsCandidateUrls(baseUrl: string): string[] {
+    const normalized = this.normalizeProviderBaseUrl(baseUrl);
+    if (!normalized) {
+      return [];
+    }
+
+    if (/\/chat\/completions$/i.test(normalized)) {
+      return [normalized];
+    }
+
+    if (/\/v\d+$/i.test(normalized)) {
+      return [`${normalized}/chat/completions`];
+    }
+
+    const directUrl = `${normalized}/chat/completions`;
+    const v1Url = `${normalized}/v1/chat/completions`;
+    const v3Url = `${normalized}/v3/chat/completions`;
+
+    if (this.hasPathSegment(normalized)) {
+      return [directUrl, v1Url, v3Url];
+    }
+
+    return [v1Url, directUrl, v3Url];
+  }
+
+  private normalizeProviderBaseUrl(baseUrl: string): string {
+    return baseUrl.trim().replace(/\/+$/, "");
+  }
+
+  private hasPathSegment(baseUrl: string): boolean {
+    try {
+      const { pathname } = new URL(baseUrl);
+      const normalizedPath = pathname.replace(/\/+$/, "");
+      return normalizedPath.length > 0 && normalizedPath !== "/";
+    } catch {
+      return false;
+    }
+  }
+
+  private rememberCustomChatCompletionsUrl(baseUrl: string, requestUrlValue: string): void {
+    this.customChatCompletionsUrlCache.set(this.normalizeProviderBaseUrl(baseUrl), requestUrlValue);
+  }
+
+  private isRetryableEndpointError(error: unknown): boolean {
+    const status = getRequestErrorStatus(error);
+    if (status === 404 || status === 405 || status === 410) {
+      return true;
+    }
+
+    if (status === 400 || status === 422) {
+      const message = getAIErrorMessage(error).toLowerCase();
+      return /not found|no route|unknown path|unknown endpoint|invalid url|invalid path|unsupported path|unsupported endpoint/.test(message);
+    }
+
+    return false;
+  }
+
+  private createRequestResponseError(response: RequestUrlResponse, requestUrlValue: string): Error & {
+    status: number;
+    response: RequestUrlResponse;
+  } {
+    const errorMessage = response.json?.error?.message
+      || response.json?.message
+      || response.text
+      || `Request failed with status ${response.status} (${requestUrlValue})`;
+    const error = new Error(typeof errorMessage === "string" ? errorMessage.trim() : String(errorMessage)) as Error & {
+      status: number;
+      response: RequestUrlResponse;
+    };
+    error.status = response.status;
+    error.response = response;
+    return error;
   }
 
   private async rethrowUserFacingRequestError(error: unknown, requestUrlValue: string): Promise<never> {
