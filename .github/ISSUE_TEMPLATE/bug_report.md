@@ -1,7 +1,7 @@
 ---
-name: Bug report
+name: Bug report/报告问题
 about: Create a report to help us improve
-title: ''
+title: '[Bug]'
 labels: ''
 assignees: ''
 
