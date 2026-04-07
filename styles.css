@@ -215,20 +215,23 @@ editingToolbar CLASS CHANGES
   background-color: var(--color-base-10, --background-primary);
 }
 
-/*
-#editingToolbarModalBar.editingToolbarGlassAesthetic {
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-  box-shadow: none;
-  background-color: transparent;
-}  */
 
-#editingToolbarModalBar.editingToolbarGlassAesthetic~#editingToolbarPopoverBar {
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
+:is(#editingToolbarModalBar, #editingToolbarPopoverBar).editingToolbarGlassAesthetic {
+  backdrop-filter: var(--raised-blur, blur(6px));
+  -webkit-backdrop-filter: var(--raised-blur, blur(6px));
+  box-shadow: var(--raised-shadow, none);
+  background-clip: padding-box;
+  border: var(--raised-mask-border-width, 1px) solid transparent;
+  background-color: var(--raised-background, color-mix(in srgb, var(--background-secondary) 60%, transparent));
+}
+
+.is-phone:not(.is-floating-nav) :is(#editingToolbarModalBar, #editingToolbarPopoverBar).editingToolbarGlassAesthetic {
+  --raised-background: transparent;
+}
+
+:is(#editingToolbarModalBar, #editingToolbarPopoverBar).editingToolbarGlassAesthetic :is(.editingToolbarCommandItem, button[class^=editingToolbarCommandsubItem]) {
+  background-color: transparent;
   box-shadow: none;
-  border: 1px solid var(--background-modifier-border-hover);
-  background-color: color-mix(in srgb, var(--background-secondary) 60%, transparent);
 }
 
 #editingToolbarModalBar.editingToolbarGlassAesthetic:not(.top) button[class^=editingToolbarCommandsubItem] {
@@ -247,13 +250,6 @@ editingToolbar CLASS CHANGES
   height: 28px;
 }
 
-#editingToolbarModalBar.editingToolbarGlassAesthetic:not(.top) {
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-  box-shadow: none;
-  border: 1px solid var(--background-modifier-border-hover);
-  background-color: color-mix(in srgb, var(--background-secondary) 60%, transparent);
-}
 
 /*----------------------------------------------------------------
 editingToolbar ICONS
@@ -617,6 +613,27 @@ button[class^=editingToolbarCommandsubItem]::after {
   margin-left: 0;
   padding-left: 2px;
   border-left: none;
+}
+
+@media screen and (max-width: 768px) {
+  :is(#editingToolbarModalBar, #editingToolbarPopoverBar) button.editingToolbarCommandsubItem-ai.editing-toolbar-ai-button-inline {
+    gap: 2px;
+    justify-content: center;
+    padding-left: 4px !important;
+    padding-right: 4px !important;
+  }
+
+  :is(#editingToolbarModalBar, #editingToolbarPopoverBar) button.editingToolbarCommandsubItem-ai.editing-toolbar-ai-button-inline .editing-toolbar-ai-button-label {
+    display: none;
+  }
+
+  :is(#editingToolbarModalBar, #editingToolbarPopoverBar) button.editingToolbarCommandsubItem-ai.editing-toolbar-ai-button-inline .editing-toolbar-ai-button-arrow {
+    width: 10px;
+    min-height: 14px;
+    margin-left: 0;
+    padding-left: 2px;
+    border-left: none;
+  }
 }
 
 
@@ -1733,6 +1750,31 @@ body.auto-hide-header .workspace-tab-header-container + .workspace-tab-container
 .is-phone #editingToolbarModalBar.top
 {
     margin-right:0px;  
+}
+
+.is-phone #editingToolbarModalBar.top {
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  justify-content: flex-start;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  touch-action: pan-x;
+  scrollbar-width: none;
+}
+
+.is-phone #editingToolbarModalBar.top::-webkit-scrollbar {
+  display: none;
+}
+
+.is-phone #editingToolbarModalBar.top .more-menu {
+  order: -1;
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  margin-right: 4px;
+  padding-right: 2px;
+  background: color-mix(in srgb, var(--background-primary) 82%, transparent);
 }
 
 .is-phone .mod-root .workspace-leaf-content[data-type="markdown"] .view-content:has(.editingToolbarModalBar){
