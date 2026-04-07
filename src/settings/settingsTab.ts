@@ -554,7 +554,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
       // 添加导入按钮
       configSwitcher.addButton(button => button
         .setButtonText(this.currentEditingConfig + ' ' + t('Import'))
-        .setTooltip('Copy commands from selected style.')
+        .setTooltip(t('Copy commands from selected style.'))
         .onClick(async () => {
           // 获取源样式的命令数组
           const sourceCommands = this.getCommandsArrayByType(selectedSourceStyle);
@@ -1233,7 +1233,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
       const button = new ButtonComponent(editingToolbar);
       button.setClass("editingToolbarCommandItem");
       button.buttonEl.classList.add("preview-button");
-      button.setTooltip(item.name);
+      button.setTooltip(t(item.name as any));
 
       // 设置图标
       if (item.icon) {

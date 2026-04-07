@@ -41,7 +41,7 @@ class GhostTextWidget extends WidgetType {
   toDOM(): HTMLElement {
     const wrapper = document.createElement("span");
     wrapper.className = "cm-ai-ghost-text";
-    wrapper.setAttribute("aria-label", "AI suggestion");
+    wrapper.setAttribute("aria-label", t("AI suggestion"));
 
     const lines = this.text.split("\n");
     const firstLine = document.createElement("span");
@@ -98,7 +98,7 @@ class LoadingWidget extends WidgetType {
   toDOM(): HTMLElement {
     const wrapper = document.createElement("span");
     wrapper.className = "cm-ai-loading";
-    wrapper.setAttribute("aria-label", "AI is generating");
+    wrapper.setAttribute("aria-label", t("AI is generating"));
 
     const spinner = document.createElement("span");
     spinner.className = "cm-ai-loading-spinner";

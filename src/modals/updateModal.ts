@@ -322,7 +322,7 @@ export class UpdateNoticeModal extends Modal {
     const { contentEl } = this;
 
     contentEl.createEl("h2", {
-      text: "" + this.plugin.manifest.version + "⚡Tips",
+      text: `${this.plugin.manifest.name} v${this.plugin.manifest.version} · ${t("Tips")}`,
     });
 
     // 版本更新说明
