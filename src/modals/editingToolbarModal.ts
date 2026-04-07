@@ -1024,20 +1024,32 @@ export function editingToolbarPopover(
         }
 
         // 只有在没有工具栏时才添加 PopoverMenu
-        if (!currentleaf?.querySelector("#editingToolbarPopoverBar")) {
+        const canvasToolbarAnchor =
+          viewType === "canvas"
+            ? currentleaf?.querySelector<HTMLElement>(".view-content")
+            : null;
+
+        if (viewType === "canvas" && canvasToolbarAnchor) {
+          canvasToolbarAnchor.insertAdjacentElement("beforebegin", editingToolbar);
+
+          if (!currentleaf?.querySelector("#editingToolbarPopoverBar")) {
+            canvasToolbarAnchor.insertAdjacentElement("beforebegin", PopoverMenu);
+          }
+        } else {
+          if (!currentleaf?.querySelector("#editingToolbarPopoverBar")) {
+           if (viewType == "excalidraw") {
+            targetDom.insertAdjacentElement("afterend", PopoverMenu);
+           } else {
+            targetDom.insertAdjacentElement("afterbegin", PopoverMenu);
+           }
+          }
+
          if (viewType == "excalidraw") {
-          targetDom.insertAdjacentElement("afterend", PopoverMenu);
+          targetDom.insertAdjacentElement("afterend", editingToolbar);
          } else {
-          targetDom.insertAdjacentElement("afterbegin", PopoverMenu);
+          targetDom.insertAdjacentElement("afterbegin", editingToolbar);
          }
         }
-
-        // 添加编辑工具栏
-       if (viewType == "excalidraw") {
-        targetDom.insertAdjacentElement("afterend", editingToolbar);
-       } else {
-        targetDom.insertAdjacentElement("afterbegin", editingToolbar);
-       }
 
         // 获取宽度
         const targetWidth = targetDom?.clientWidth || targetDom?.offsetWidth || 0;
