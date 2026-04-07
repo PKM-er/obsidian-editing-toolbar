@@ -1,5 +1,44 @@
 # Changelog
 
+## 4.0.3 (2026-04-07)
+### AI 兼容性、移动端/iPad 体验，以及工具栏界面的细节打磨。
+AI 兼容性
+优化自定义模型的 API 地址解析逻辑，不再强依赖 v1 协议。
+支持直接填写完整的 .../chat/completions 地址，插件将原样使用。
+支持 .../v1、.../v3 等版本根地址，自动补全为对应的 .../chat/completions。
+对仅填写基础地址的情况增加更稳健的智能探测与回退策略，提升对不同厂商接口的兼容性。
+已验证可正常兼容火山引擎 https://ark.cn-beijing.volces.com/api/v3 这类地址。
+移动端 / iPad AI 体验优化
+移动端点击 AI 主按钮时，始终弹出菜单，不再直接执行上一次 AI 指令，降低误触风险。
+AI 菜单中的“触发 AI 行内补全”改为可直接点击的动作，不再只是快捷键提示。
+部分 AI 改写类指令在移动端不再强依赖选中文本；无选区时会优先使用当前光标所在段落/块作为上下文。
+AI Custom Rewrite 针对移动端优化为“回车换行 + 单独发送按钮”，避免误发送。
+AI 菜单在成功触发指令后才会关闭；若只是弹出提示或条件不满足，菜单会保持打开。
+AI 生成期间，工具栏 AI 按钮会进入忙碌态并临时禁用，避免连续点击重复触发。
+工具栏移动端布局优化
+手机上启用 AI 功能后，AI 按钮自动切换为更紧凑的显示方式，减少对主工具栏宽度的挤占。
+调整 shouldMoveButtonToMoreMenu 的移动端判断策略，额外预留一个按钮位，避免最后一个按钮贴边难点。
+优化手机端 More/更多入口的可达性，减轻横向滑动与 Obsidian 侧边栏手势冲突的问题。
+界面与视觉改进
+glass 风格调整为优先复用 Obsidian 官方的 raised/glassy CSS 变量，不再依赖额外 JS 注入，兼容新版原生视觉体系。
+Changelog / 更新日志窗口标题现在会显示插件名称，信息更完整清晰。
+英文 tooltip 中不再显示 Editing Toolbar: 前缀，提示内容更简洁。
+国际化改进
+修复工具栏 tooltip 在中文环境下仍显示英文的问题。
+工具栏按钮、子菜单、预览按钮及部分 AI 可访问性标签补齐国际化。
+补充一批默认工具栏命令和 AI 文案的中英文翻译。
+### 移动端 / iPad AI 体验优化
+### #289 fixed
+### #304 fixed
+### #302 进一步对按钮文字国际化
+### Merge branch 'master' of https://github.com/PKM-er/obsidian-editing-toolbar
+### Update feature_request.md
+### Update bug_report.md
+### Update bug_report.md
+### 自定义模型支持完整url
+### Update manifest.json and CHANGELOG.md for version 4.0.2
+
+
 ## 4.0.2 (2026-04-03)
 ### Update manifest.json
 4.0.2 目前AI功能仅对中文用户生效
