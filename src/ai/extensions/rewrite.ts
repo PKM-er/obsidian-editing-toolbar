@@ -59,6 +59,7 @@ function createResultPanelTooltipView(
 ): TooltipView {
   const dom = document.createElement("div");
   dom.className = "cm-ai-result-panel";
+  dom.dataset.phase = "streaming";
   let copyResetTimer: number | null = null;
 
   dom.addEventListener("mousedown", (event) => {
@@ -262,10 +263,12 @@ function createResultPanelTooltipView(
       const state = update.state.field(rewriteField);
       if (!state.operation) {
         dom.style.display = "none";
+        dom.dataset.phase = "idle";
         return;
       }
 
       dom.style.display = "";
+      dom.dataset.phase = state.operation.phase;
       content.textContent = state.operation.result || "";
       if (state.operation.params.artifactKind === "base" || state.operation.params.artifactKind === "canvas") {
         header.textContent = t("AI file suggestion");

@@ -35,7 +35,18 @@
   gap: calc(var(--toolbar-icon-size) / 15) !important;
 }
 
-
+:is(#editingToolbarModalBar, #editingToolbarPopoverBar).editingToolbarCustomAesthetic button[class^=editingToolbarCommandsubItem]>.subitem::before {
+ 
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px); /* Safari 兼容 */
+  
+  border-radius: inherit; /* 继承父元素圆角 */
+}
 #editingToolbarModalBar.editingToolbarCustomAesthetic
 {
   padding:calc(var(--toolbar-icon-size) / 4);
@@ -457,12 +468,12 @@ button[class^=editingToolbarCommandsubItem]::after {
   align-items: center;
 }
 
-/*
+
 :is(#editingToolbarModalBar, #editingToolbarPopoverBar) button[class^=editingToolbarCommandsubItem]>.subitem .menu-item {
   margin-left: 2px;
   margin-right: 2px;
-  padding: 0px 4px 0px 4px;
-} */
+  padding: 6px 8px;
+}
 
 
 
@@ -637,6 +648,32 @@ button[class^=editingToolbarCommandsubItem]::after {
 }
 
 
+.workspace-leaf-content:has(.cm-ai-loading, .cm-ai-result-panel[data-phase="streaming"])
+  :is(#editingToolbarModalBar, #editingToolbarPopoverBar) button.editingToolbarCommandsubItem-ai,
+body:has(.workspace-leaf.mod-active .cm-ai-loading, .workspace-leaf.mod-active .cm-ai-result-panel[data-phase="streaming"])
+  :is(#editingToolbarModalBar[data-toolbar-style="fixed"], #editingToolbarModalBar[data-toolbar-style="mobile"], #editingToolbarPopoverBar[data-toolbar-style="fixed"], #editingToolbarPopoverBar[data-toolbar-style="mobile"]) button.editingToolbarCommandsubItem-ai {
+  opacity: 0.72;
+  pointer-events: none;
+}
+
+.workspace-leaf-content:has(.cm-ai-loading, .cm-ai-result-panel[data-phase="streaming"])
+  :is(#editingToolbarModalBar, #editingToolbarPopoverBar) button.editingToolbarCommandsubItem-ai > svg,
+body:has(.workspace-leaf.mod-active .cm-ai-loading, .workspace-leaf.mod-active .cm-ai-result-panel[data-phase="streaming"])
+  :is(#editingToolbarModalBar[data-toolbar-style="fixed"], #editingToolbarModalBar[data-toolbar-style="mobile"], #editingToolbarPopoverBar[data-toolbar-style="fixed"], #editingToolbarPopoverBar[data-toolbar-style="mobile"]) button.editingToolbarCommandsubItem-ai > svg {
+  animation: cm-ai-spin 0.8s linear infinite;
+}
+
+.workspace-leaf-content:has(.cm-ai-loading, .cm-ai-result-panel[data-phase="streaming"])
+  :is(#editingToolbarModalBar, #editingToolbarPopoverBar) button.editingToolbarCommandsubItem-ai .editing-toolbar-ai-button-label,
+.workspace-leaf-content:has(.cm-ai-loading, .cm-ai-result-panel[data-phase="streaming"])
+  :is(#editingToolbarModalBar, #editingToolbarPopoverBar) button.editingToolbarCommandsubItem-ai .editing-toolbar-ai-button-arrow,
+body:has(.workspace-leaf.mod-active .cm-ai-loading, .workspace-leaf.mod-active .cm-ai-result-panel[data-phase="streaming"])
+  :is(#editingToolbarModalBar[data-toolbar-style="fixed"], #editingToolbarModalBar[data-toolbar-style="mobile"], #editingToolbarPopoverBar[data-toolbar-style="fixed"], #editingToolbarPopoverBar[data-toolbar-style="mobile"]) button.editingToolbarCommandsubItem-ai .editing-toolbar-ai-button-label,
+body:has(.workspace-leaf.mod-active .cm-ai-loading, .workspace-leaf.mod-active .cm-ai-result-panel[data-phase="streaming"])
+  :is(#editingToolbarModalBar[data-toolbar-style="fixed"], #editingToolbarModalBar[data-toolbar-style="mobile"], #editingToolbarPopoverBar[data-toolbar-style="fixed"], #editingToolbarPopoverBar[data-toolbar-style="mobile"]) button.editingToolbarCommandsubItem-ai .editing-toolbar-ai-button-arrow {
+  color: var(--text-muted);
+}
+
 .menu.editing-toolbar-ai-dropdown-menu .menu-item.is-disabled {
   opacity: 0.72;
 }
@@ -708,6 +745,43 @@ button[class^=editingToolbarCommandsubItem]::after {
   font-size: 11px;
   color: var(--text-faint);
 }
+
+.editing-toolbar-ai-inline-prompt-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.editing-toolbar-ai-inline-prompt-action {
+  min-width: 72px;
+  padding: 8px 12px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 10px;
+  background: var(--background-secondary);
+  color: var(--text-normal);
+  cursor: pointer;
+}
+
+.editing-toolbar-ai-inline-prompt-action:hover:not(:disabled) {
+  background: var(--background-modifier-hover);
+}
+
+.editing-toolbar-ai-inline-prompt-action.mod-cta {
+  border-color: var(--interactive-accent);
+  background: var(--interactive-accent);
+  color: var(--text-on-accent, #fff);
+}
+
+.editing-toolbar-ai-inline-prompt-action:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.is-mobile .editing-toolbar-ai-inline-prompt-action {
+  flex: 1;
+}
+
 
 .editingToolbarSettingsTabsContainer .editingToolbarCommandItem .setting-item-info {
 
@@ -1021,8 +1095,8 @@ transition: none ;
 
 @media screen and (max-width: 768px) {
   #editingToolbarPopoverBar {
-   left: 50%;
-   transform: translateX(-50%);
+   left: 15%;
+   transform: translateX(-15%);
    right: unset;
   }
 }
@@ -1750,32 +1824,15 @@ body.auto-hide-header .workspace-tab-header-container + .workspace-tab-container
 .is-phone #editingToolbarModalBar.top
 {
     margin-right:0px;  
+    padding:0;
 }
 
-.is-phone #editingToolbarModalBar.top {
-  max-width: 100%;
-  overflow-x: auto;
-  overflow-y: hidden;
-  justify-content: flex-start;
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior-x: contain;
-  touch-action: pan-x;
-  scrollbar-width: none;
-}
-
+ 
 .is-phone #editingToolbarModalBar.top::-webkit-scrollbar {
   display: none;
 }
 
-.is-phone #editingToolbarModalBar.top .more-menu {
-  order: -1;
-  position: sticky;
-  left: 0;
-  z-index: 2;
-  margin-right: 4px;
-  padding-right: 2px;
-  background: color-mix(in srgb, var(--background-primary) 82%, transparent);
-}
+ 
 
 .is-phone .mod-root .workspace-leaf-content[data-type="markdown"] .view-content:has(.editingToolbarModalBar){
   mask-image: none;
@@ -1788,8 +1845,11 @@ body.auto-hide-header .workspace-tab-header-container + .workspace-tab-container
     display:none;
 }
 
+ 
+
 .is-phone .markdown-source-view.mod-cm6 #editingToolbarPopoverBar {
-    margin-top: calc(var(--toolbar-icon-size) + var(--view-header-height) + 20px);
+    /* margin-top: calc(var(--toolbar-icon-size) + var(--view-header-height) + 20px); */
+     margin-top: calc(var(--safe-area-inset-top) + var(--view-header-height) + var(--toolbar-icon-size) + 10px);
 }
 
 .is-phone .mod-root .workspace-leaf-content .view-content:has(.editingToolbarModalBar) .markdown-source-view > .cm-editor > .cm-scroller {

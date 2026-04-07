@@ -1,4 +1,4 @@
-import { MarkdownView, Notice, type Editor } from "obsidian";
+import { MarkdownView, Notice, Platform, type Editor } from "obsidian";
 import type { EditorView } from "@codemirror/view";
 import type EditingToolbarPlugin from "src/plugin/main";
 import { t } from "src/translations/helper";
@@ -311,7 +311,7 @@ export class AIEditorManager {
 
     const resolvedEditor = this.resolveEditor(editor);
     if (!resolvedEditor) {
-      new Notice("Please select text first");
+      new Notice(t("Please select text first"));
       return false;
     }
 
@@ -327,10 +327,11 @@ export class AIEditorManager {
       new Notice("Please select text first");
       return false;
     }
-
-    const rewriteContext = resolveRewriteContext(view, from, to, {
+     const rewriteContext = resolveRewriteContext(view, from, to, {
       preferBlockWhenCollapsed: instruction === "custom",
     });
+
+     
 
     view.dispatch({
       effects: startRewriteEffect.of({
@@ -687,16 +688,17 @@ export class AIEditorManager {
     throw new Error(t("Unable to allocate a file name for the generated artifact."));
   }
 
-  openCustomRewrite(editor?: Editor | null): void {
+  openCustomRewrite(editor?: Editor | null): boolean {
     const resolvedEditor = this.resolveEditor(editor);
     const view = this.getEditorView(resolvedEditor);
     if (!resolvedEditor || !view) {
       new Notice(t("Current editor does not support AI rewrite."));
-      return;
+      return false;
     }
 
     this.inlineCustomPromptEditor = resolvedEditor;
     this.renderInlineCustomPrompt(resolvedEditor, view);
+    return true;
   }
 
   closeInlineCustomPrompt(): void {
@@ -727,7 +729,6 @@ export class AIEditorManager {
       const closeBtn = doc.createElement("button");
       closeBtn.type = "button";
       closeBtn.className = "editing-toolbar-ai-inline-prompt-close";
-      closeBtn.textContent = "×";
       closeBtn.title = t("Close" as any);
       closeBtn.textContent = "×";
 
@@ -741,14 +742,31 @@ export class AIEditorManager {
 
       const hint = doc.createElement("div");
       hint.className = "editing-toolbar-ai-inline-prompt-hint";
-      hint.textContent = `${t("Press Enter to send, Shift+Enter for newline, Esc to close." as any)} ${t("If nothing is selected, AI will use the current block or cursor context." as any)}`;
+      const promptHint = Platform.isMobileApp
+        ? t("Enter inserts a newline. Tap Send to submit." as any)
+        : t("Press Enter to send, Shift+Enter for newline, Esc to close." as any);
+      hint.textContent = promptHint + " " + t("If nothing is selected, AI will use the current block or cursor context." as any);
 
-      promptEl.append(header, textarea, hint);
+      const actions = doc.createElement("div");
+      actions.className = "editing-toolbar-ai-inline-prompt-actions";
+
+      const cancelBtn = doc.createElement("button");
+      cancelBtn.type = "button";
+      cancelBtn.className = "editing-toolbar-ai-inline-prompt-action";
+      cancelBtn.textContent = t("Cancel" as any);
+
+      const sendBtn = doc.createElement("button");
+      sendBtn.type = "button";
+      sendBtn.className = "editing-toolbar-ai-inline-prompt-action mod-cta";
+      sendBtn.textContent = t("Send" as any);
+
+      actions.append(cancelBtn, sendBtn);
+      promptEl.append(header, textarea, hint, actions);
       doc.body.appendChild(promptEl);
 
       const resizeTextarea = () => {
         textarea.style.height = "0px";
-        textarea.style.height = `${Math.min(Math.max(textarea.scrollHeight, 72), 180)}px`;
+        textarea.style.height = String(Math.min(Math.max(textarea.scrollHeight, 72), 180)) + "px";
       };
 
       const closePrompt = () => {
@@ -773,8 +791,21 @@ export class AIEditorManager {
         }
       };
 
+      const reposition = () => this.positionInlineCustomPrompt(editor, view);
+      const updateSendButtonState = () => {
+        sendBtn.disabled = textarea.value.trim().length === 0;
+      };
+
       closeBtn.addEventListener("click", closePrompt);
-      textarea.addEventListener("input", resizeTextarea);
+      cancelBtn.addEventListener("click", closePrompt);
+      sendBtn.addEventListener("click", () => {
+        void submitPrompt();
+      });
+      textarea.addEventListener("input", () => {
+        resizeTextarea();
+        updateSendButtonState();
+        reposition();
+      });
       textarea.addEventListener("keydown", (event) => {
         if (event.key === "Escape") {
           event.preventDefault();
@@ -782,13 +813,18 @@ export class AIEditorManager {
           return;
         }
 
-        if (event.key === "Enter" && !event.shiftKey) {
+        if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
+          event.preventDefault();
+          void submitPrompt();
+          return;
+        }
+
+        if (!Platform.isMobileApp && event.key === "Enter" && !event.shiftKey) {
           event.preventDefault();
           void submitPrompt();
         }
       });
 
-      const reposition = () => this.positionInlineCustomPrompt(editor, view);
       const win = doc.defaultView ?? window;
       win.addEventListener("resize", reposition);
       doc.addEventListener("scroll", reposition, true);
@@ -801,6 +837,7 @@ export class AIEditorManager {
       this.inlineCustomPromptEl = promptEl;
       this.inlineCustomPromptTextarea = textarea;
       resizeTextarea();
+      updateSendButtonState();
     }
 
     this.positionInlineCustomPrompt(editor, view);

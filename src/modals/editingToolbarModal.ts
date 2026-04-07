@@ -1,5 +1,5 @@
 import type editingToolbarPlugin from "src/plugin/main";
-import { App, Notice, requireApiVersion, ItemView, MarkdownView, ButtonComponent, WorkspaceParent, WorkspaceWindow, WorkspaceParentExt, Menu, setIcon } from "obsidian";
+import { App, Notice, requireApiVersion, ItemView, MarkdownView, ButtonComponent, WorkspaceParent, WorkspaceWindow, WorkspaceParentExt, Menu, setIcon, Platform } from "obsidian";
 import { backcolorpicker, colorpicker } from "src/util/util";
 import { t } from "src/translations/helper";
 import {
@@ -369,6 +369,7 @@ function shouldMoveButtonToMoreMenu(
   nextWidth: number,
   leafwidth: number,
   buttonWidth: number,
+  toolbarStyle?: ToolbarStyleKey | string,
 ): boolean {
   if (leafwidth <= 100) {
     return false;
@@ -377,9 +378,11 @@ function shouldMoveButtonToMoreMenu(
   const estimatedButtonCount = Math.max(1, Math.round(currentWidth / Math.max(buttonWidth, 1)));
   const estimatedGapWidth = estimatedButtonCount * 6;
   const reservedMoreButtonWidth = buttonWidth + 12;
+  const shouldReserveExtraTouchSpace = Platform.isMobileApp || toolbarStyle === "mobile";
+  const reservedTouchBufferWidth = shouldReserveExtraTouchSpace ? 14 : 0;
   const availableWidth = Math.max(leafwidth - 16, buttonWidth * 2);
 
-  return currentWidth + nextWidth + estimatedGapWidth + reservedMoreButtonWidth >= availableWidth;
+  return currentWidth + nextWidth + estimatedGapWidth + reservedMoreButtonWidth + reservedTouchBufferWidth >= availableWidth;
 }
 
 async function executeAIToolbarAction(
@@ -397,8 +400,7 @@ async function executeAIToolbarAction(
   }
 
   if (actionId === "editing-toolbar:ai-tools:custom" || actionId === "editing-toolbar:ai-rewrite-custom") {
-    plugin.aiManager.openCustomRewrite(editor);
-    return true;
+    return plugin.aiManager.openCustomRewrite(editor);
   }
 
   if (actionId.startsWith("editing-toolbar:ai-toolbox:")) {
@@ -1085,7 +1087,7 @@ export function editingToolbarPopover(
         if ("SubmenuCommands" in item) {
           let _btn: any;
 
-          if (shouldMoveButtonToMoreMenu(btnwidth, buttonWidth, leafwidth, buttonWidth)) {
+          if (shouldMoveButtonToMoreMenu(btnwidth, buttonWidth, leafwidth, buttonWidth, effectiveStyle)) {
             //说明已经溢出
             plugin.setIS_MORE_Button(true);
             // globalThis.IS_MORE_Button = true; //需要添加更多按钮
@@ -1232,7 +1234,7 @@ export function editingToolbarPopover(
         } else {
           if (item.id == AI_TOOLBAR_COMMAND_ID) {
             const estimatedAIButtonWidth = estimateAIToolbarButtonWidth(plugin, effectiveStyle, buttonWidth);
-            const shouldUseMoreMenu = shouldMoveButtonToMoreMenu(btnwidth, estimatedAIButtonWidth, leafwidth, buttonWidth);
+            const shouldUseMoreMenu = shouldMoveButtonToMoreMenu(btnwidth, estimatedAIButtonWidth, leafwidth, buttonWidth, effectiveStyle);
             if (shouldUseMoreMenu) {
               plugin.setIS_MORE_Button(true);
             }
@@ -1284,6 +1286,10 @@ export function editingToolbarPopover(
               const inlineBadge = completionHotkey.includes("+") ? completionHotkey : "";
               const menu = new Menu();
 
+              const closeAIMenu = () => {
+                menu.hide();
+              };
+
               const addAction = (options: {
                 title: string;
                 icon: string;
@@ -1298,7 +1304,13 @@ export function editingToolbarPopover(
                   }
 
                   const result = await options.action();
-                  if (result !== false && options.commandIdForLabel) {
+                  if (result === false) {
+                    return;
+                  }
+
+                  closeAIMenu();
+
+                  if (options.commandIdForLabel) {
                     setLastAIAction(plugin, options.commandIdForLabel);
                     if (aiLabel) aiLabel.textContent = getAIToolbarButtonLabel(plugin);
                   }
@@ -1314,20 +1326,6 @@ export function editingToolbarPopover(
                   if (options.hotkey) {
                     const hotkeyEl = menuItem.dom.createSpan({ cls: "menu-item-hotkey" });
                     hotkeyEl.setText(options.hotkey);
-                  }
-                });
-              };
-
-              const addHint = (title: string, hotkey?: string) => {
-                menu.addItem((menuItem) => {
-                  menuItem
-                    .setTitle(t(title as any))
-                    .setIcon("")
-                    .setDisabled(true);
-
-                  if (hotkey) {
-                    const hotkeyEl = menuItem.dom.createSpan({ cls: "menu-item-hotkey" });
-                    hotkeyEl.setText(hotkey);
                   }
                 });
               };
@@ -1358,7 +1356,13 @@ export function editingToolbarPopover(
                           }
 
                           const result = await action.action();
-                          if (result !== false && action.commandIdForLabel) {
+                          if (result === false) {
+                            return;
+                          }
+
+                          closeAIMenu();
+
+                          if (action.commandIdForLabel) {
                             setLastAIAction(plugin, action.commandIdForLabel);
                             if (aiLabel) aiLabel.textContent = getAIToolbarButtonLabel(plugin);
                           }
@@ -1373,8 +1377,15 @@ export function editingToolbarPopover(
                   });
                 });
               };
-
-              addHint("Trigger AI Inline Completion", inlineBadge);
+              addAction({
+                title: "Trigger AI Inline Completion",
+                icon: "lucide-sparkles",
+                hotkey: inlineBadge || undefined,
+                commandIdForLabel: "editing-toolbar:ai-inline-completion",
+                action: () => {
+                  return plugin.aiManager.triggerInlineCompletion(editor);
+                },
+              });
 
               const groupedActions = new Map<string, typeof DEFAULT_REWRITE_ACTIONS>();
               DEFAULT_REWRITE_ACTIONS.forEach((action) => {
@@ -1410,7 +1421,7 @@ export function editingToolbarPopover(
                 icon: AI_REWRITE_ICON_MAP.custom,
                 commandIdForLabel: "editing-toolbar:ai-tools:custom",
                 action: () => {
-                  plugin.aiManager.openCustomRewrite(editor);
+                  return plugin.aiManager.openCustomRewrite(editor);
                 },
               });
 
@@ -1450,6 +1461,11 @@ export function editingToolbarPopover(
 
               const target = evt.target as HTMLElement | null;
               if (target?.closest(".editing-toolbar-ai-button-arrow")) {
+                await openAIMenu(evt);
+                return;
+              }
+
+              if (Platform.isMobileApp || effectiveStyle === "mobile") {
                 await openAIMenu(evt);
                 return;
               }
@@ -1634,7 +1650,7 @@ export function editingToolbarPopover(
             }
           } else {
             let button;
-            if (shouldMoveButtonToMoreMenu(btnwidth, buttonWidth, leafwidth, buttonWidth)) {
+            if (shouldMoveButtonToMoreMenu(btnwidth, buttonWidth, leafwidth, buttonWidth, effectiveStyle)) {
               //说明已经溢出
               plugin.setIS_MORE_Button(true);
               //globalpluginIS_MORE_Button = true; //需要添加更多按钮

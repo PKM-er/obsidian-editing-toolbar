@@ -359,23 +359,32 @@ export default class editingToolbarPlugin extends Plugin {
       ];
     }
 
-    if (editor.somethingSelected()) {
-      return [
-        { title: t("Improve writing"), commandId: "ai-rewrite-improve" },
-        { title: t("Fix spelling & grammar"), commandId: "ai-rewrite-fix-grammar" },
-        { title: t("Summarize"), commandId: "ai-rewrite-summarize" },
-        { title: t("Explain this"), commandId: "ai-rewrite-explain" },
-        { title: t("Continue writing"), commandId: "ai-rewrite-continue" },
-        { title: t("AI Custom Rewrite"), commandId: "ai-rewrite-custom" },
-        { title: t("Convert to list"), commandId: "ai-toolbox-list" },
-        { title: t("Convert to table"), commandId: "ai-toolbox-table" },
-        { title: t("Generate frontmatter"), commandId: "ai-toolbox-frontmatter" },
-        { title: t("Convert to canvas"), commandId: "ai-toolbox-canvas" },
-      ];
+    const hasSelection = editor.somethingSelected();
+    const canUseImplicitBlockRewrite = Platform.isMobileApp;
+
+    const primaryActions: EditorContextMenuAction[] = [
+      { title: t("Trigger AI Inline Completion"), commandId: "ai-inline-completion" },
+    ];
+
+    const rewriteActions: EditorContextMenuAction[] = [
+      { title: t("Improve writing"), commandId: "ai-rewrite-improve" },
+      { title: t("Fix spelling & grammar"), commandId: "ai-rewrite-fix-grammar" },
+      { title: t("Summarize"), commandId: "ai-rewrite-summarize" },
+      { title: t("Explain this"), commandId: "ai-rewrite-explain" },
+      { title: t("Continue writing"), commandId: "ai-rewrite-continue" },
+      { title: t("AI Custom Rewrite"), commandId: "ai-rewrite-custom" },
+      { title: t("Convert to list"), commandId: "ai-toolbox-list" },
+      { title: t("Convert to table"), commandId: "ai-toolbox-table" },
+      { title: t("Generate frontmatter"), commandId: "ai-toolbox-frontmatter" },
+      { title: t("Convert to canvas"), commandId: "ai-toolbox-canvas" },
+    ];
+
+    if (hasSelection || canUseImplicitBlockRewrite) {
+      return [...primaryActions, ...rewriteActions];
     }
 
     return [
-      { title: t("Trigger AI Inline Completion"), disabled: true },
+      ...primaryActions,
       { title: t("Continue writing"), commandId: "ai-rewrite-continue" },
       { title: t("AI Custom Rewrite"), commandId: "ai-rewrite-custom" },
       { title: t("Generate frontmatter"), commandId: "ai-toolbox-frontmatter" },
