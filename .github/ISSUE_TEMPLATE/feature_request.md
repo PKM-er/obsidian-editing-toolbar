@@ -1,7 +1,7 @@
 ---
-name: Feature request
+name: Feature request/提交需求
 about: Suggest an idea for this project
-title: ''
+title: '[FR]:'
 labels: ''
 assignees: ''
 
