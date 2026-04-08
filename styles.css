@@ -1057,11 +1057,15 @@ body:has(.workspace-leaf.mod-active .cm-ai-loading, .workspace-leaf.mod-active .
   
 }
 
-:is(#editingToolbarModalBar, #editingToolbarPopoverBar) :is(.editingToolbarCommandItem, button[class^=editingToolbarCommandsubItem]):not(.editingToolbar-Divider-Line) *:not(.subitem)
-{
-animation: none ;
-transition: none ;
- 
+/* Some themes animate all workspace SVG icons. Opt toolbar controls out so
+   inherited visibility changes hide the whole toolbar in one frame. */
+:is(#editingToolbarModalBar, #editingToolbarPopoverBar) :is(.editingToolbarCommandItem, button[class^=editingToolbarCommandsubItem]):not(.editingToolbar-Divider-Line),
+:is(#editingToolbarModalBar, #editingToolbarPopoverBar) :is(.editingToolbarCommandItem, button[class^=editingToolbarCommandsubItem]):not(.editingToolbar-Divider-Line) *:not(.subitem),
+:is(#editingToolbarModalBar, #editingToolbarPopoverBar) svg.svg-icon,
+:is(#editingToolbarModalBar, #editingToolbarPopoverBar) svg.svg-icon * {
+animation: none;
+transition: none !important;
+-webkit-transition: none !important;
 }
 #editingToolbarModalBar ~.canvas-controls{
   top: calc(var(--size-4-2) + 50px);
