@@ -520,8 +520,18 @@ export function createMoremenu(app: App, plugin: editingToolbarPlugin, selector:
   const view = app.workspace.getActiveViewOfType(ItemView);
   if (!ViewUtils.isAllowedViewType(view)) return;
 
-  let Morecontainer = view.containerEl.querySelector("#editingToolbarPopoverBar") as HTMLElement
   if (!plugin.IS_MORE_Button) return;
+
+  const toolbarStyle = selector.getAttribute("data-toolbar-style");
+  const Morecontainer = (toolbarStyle
+    ? selector.ownerDocument?.querySelector(`.editingToolbarPopoverBar[data-toolbar-style="${toolbarStyle}"]`)
+    : view.containerEl.querySelector("#editingToolbarPopoverBar")) as HTMLElement | null;
+
+  if (!Morecontainer) {
+    plugin.setIS_MORE_Button(false);
+    return;
+  }
+
   let cMoreMenu = selector.createEl("span");
   cMoreMenu.addClass("more-menu");
   let morebutton = new ButtonComponent(cMoreMenu);
@@ -1061,12 +1071,30 @@ export function editingToolbarPopover(
         leafwidth = widthCandidates.length > 0 ? Math.min(...widthCandidates) : 0;
 
       } else if (settings.appendMethod == "body") {
+        const existingPopover = targetDocument.querySelector(
+          `.editingToolbarPopoverBar[data-toolbar-style="${effectiveStyle}"]`
+        ) as HTMLElement | null;
+        if (!existingPopover) {
+          targetDocument.body.appendChild(PopoverMenu);
+        }
         targetDocument.body.appendChild(editingToolbar);
         leafwidth = targetDocument.defaultView?.innerWidth || targetDocument.body?.clientWidth || 0;
       } else if (settings.appendMethod == "workspace") {
-        targetDocument.body
-          ?.querySelector(".mod-vertical.mod-root")
-          .insertAdjacentElement("afterbegin", editingToolbar);
+        const workspaceRoot = targetDocument.body
+          ?.querySelector(".mod-vertical.mod-root") as HTMLElement | null;
+
+        if (!workspaceRoot) {
+          return;
+        }
+
+        const existingPopover = workspaceRoot.querySelector(
+          `.editingToolbarPopoverBar[data-toolbar-style="${effectiveStyle}"]`
+        ) as HTMLElement | null;
+        if (!existingPopover) {
+          workspaceRoot.insertAdjacentElement("afterbegin", PopoverMenu);
+        }
+
+        workspaceRoot.insertAdjacentElement("afterbegin", editingToolbar);
         const workspaceWidth = targetDocument.body?.clientWidth || 0;
         const viewportWidth = targetDocument.defaultView?.innerWidth || 0;
         const widthCandidates = [workspaceWidth, viewportWidth].filter((width) => width > 0);
@@ -1077,7 +1105,20 @@ export function editingToolbarPopover(
         ? app.workspace.activeLeaf.view.containerEl?.querySelector("#editingToolbarPopoverBar") as HTMLElement
         : targetDocument.querySelector(
             `.editingToolbarPopoverBar[data-toolbar-style="${effectiveStyle}"]`
-          ) as HTMLElement;
+          ) as HTMLElement | null;
+
+      const resolveButtonHost = (shouldUseMoreMenu: boolean): HTMLElement => {
+        if (!shouldUseMoreMenu) {
+          return editingToolbar;
+        }
+
+        if (editingToolbarPopoverBar) {
+          return editingToolbarPopoverBar;
+        }
+
+        console.warn(`Editing Toolbar: missing popover host for style "${effectiveStyle}", falling back to toolbar host.`);
+        return editingToolbar;
+      };
 
       // Use per-style commands based on the toolbar we are rendering
       const currentCommands = plugin.getCurrentCommands(effectiveStyle);
@@ -1091,7 +1132,7 @@ export function editingToolbarPopover(
             //说明已经溢出
             plugin.setIS_MORE_Button(true);
             // globalThis.IS_MORE_Button = true; //需要添加更多按钮
-            _btn = new ButtonComponent(editingToolbarPopoverBar);
+            _btn = new ButtonComponent(resolveButtonHost(true));
           } else _btn = new ButtonComponent(editingToolbar);
 
           _btn.setClass("editingToolbarCommandsubItem" + index);
@@ -1238,7 +1279,7 @@ export function editingToolbarPopover(
             if (shouldUseMoreMenu) {
               plugin.setIS_MORE_Button(true);
             }
-            const aiButtonHost = shouldUseMoreMenu ? editingToolbarPopoverBar : editingToolbar;
+            const aiButtonHost = resolveButtonHost(shouldUseMoreMenu);
             let button2 = new ButtonComponent(aiButtonHost);
             button2
               .setClass("editingToolbarCommandsubItem" + index)
@@ -1654,7 +1695,7 @@ export function editingToolbarPopover(
               //说明已经溢出
               plugin.setIS_MORE_Button(true);
               //globalpluginIS_MORE_Button = true; //需要添加更多按钮
-              button = new ButtonComponent(editingToolbarPopoverBar);
+              button = new ButtonComponent(resolveButtonHost(true));
             } else button = new ButtonComponent(editingToolbar);
             let hotkey = getHotkey(app, item.id);
             hotkey == "–" ? tip = item.name : tip = item.name + "(" + hotkey + ")";
