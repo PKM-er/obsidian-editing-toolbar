@@ -20,6 +20,7 @@ export class PKMerAuthService {
   private callbackServer: any = null;
   private pendingCodeVerifier: string | null = null;
   private pendingState: string | null = null;
+  private pendingAuthorizationUrl: string | null = null;
   private memAccessToken: string | null = null;
   private memRefreshToken: string | null = null;
   private memAiToken: string | null = null;
@@ -163,6 +164,16 @@ export class PKMerAuthService {
       return;
     }
 
+    if (this.hasPendingOAuthRequest()) {
+      if (this.pendingAuthorizationUrl) {
+        window.open(this.pendingAuthorizationUrl);
+      }
+      new Notice(t("PKMer login is already in progress. Please continue in the opened browser window."));
+      return;
+    }
+
+    this.closeCallbackServer();
+
     const state = this.generateRandom();
     const codeVerifier = this.generateRandom();
     this.pendingCodeVerifier = codeVerifier;
@@ -182,26 +193,24 @@ export class PKMerAuthService {
     });
     const authorizationUrl = `${PKMER_OAUTH_CONFIG.authorizationUrl}?${authorizationParams.toString()}`;
     const loginEntryUrl = getPKMerAuthorizationEntryUrl(authorizationUrl);
+    this.pendingAuthorizationUrl = loginEntryUrl;
 
     if (Platform.isMobile) {
       window.open(loginEntryUrl);
       setTimeout(() => {
-        if (this.pendingState === state) {
-          this.pendingState = null;
-          this.pendingCodeVerifier = null;
+        if (this.isPendingStateMatch(state)) {
+          this.clearPendingOAuthRequest();
         }
       }, 5 * 60 * 1000);
       return;
     }
 
-    const codePromise = this.startCallbackServer(state);
+    const codePromise = this.startCallbackServer();
     window.open(loginEntryUrl);
 
     try {
       const code = await codePromise;
       if (!code) {
-        this.pendingCodeVerifier = null;
-        this.pendingState = null;
         new Notice(t("Login cancelled or timed out."));
         return;
       }
@@ -217,16 +226,14 @@ export class PKMerAuthService {
       console.error("PKMer OAuth login error:", error);
       new Notice(t("Login failed. Please try again."));
     } finally {
-      this.pendingCodeVerifier = null;
-      this.pendingState = null;
+      this.clearPendingOAuthRequest({ closeServer: true });
     }
   }
 
   async handleOAuthCallback(code: string, state: string): Promise<boolean> {
-    if (!this.pendingState || state !== this.pendingState) {
+    if (!this.isPendingStateMatch(state)) {
       new Notice(t("OAuth state mismatch. Please try logging in again."));
-      this.pendingState = null;
-      this.pendingCodeVerifier = null;
+      this.clearPendingOAuthRequest();
       return false;
     }
 
@@ -244,8 +251,7 @@ export class PKMerAuthService {
       new Notice(t("Login failed. Please try again."));
       return false;
     } finally {
-      this.pendingState = null;
-      this.pendingCodeVerifier = null;
+      this.clearPendingOAuthRequest();
     }
   }
 
@@ -277,7 +283,7 @@ export class PKMerAuthService {
     return base64url(digest);
   }
 
-  private startCallbackServer(expectedState: string): Promise<string | null> {
+  private startCallbackServer(): Promise<string | null> {
     return new Promise((resolve) => {
       try {
         const http = (window as any).require("node:http");
@@ -293,9 +299,9 @@ export class PKMerAuthService {
           const code = url.searchParams.get("code");
           const state = url.searchParams.get("state");
 
-          if (state !== expectedState) {
+          if (!this.isPendingStateMatch(state)) {
             res.writeHead(400, { "Content-Type": "text/html; charset=utf-8" });
-            res.end("<html><body><h2>State mismatch. Please try again.</h2></body></html>");
+            res.end("<html><body><h2>State mismatch.</h2><p>Another Obsidian window may have intercepted this callback.</p><p>Please close other Obsidian and try again.</p></body></html>");
             resolve(null);
           } else if (code) {
             res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
@@ -341,6 +347,23 @@ export class PKMerAuthService {
       // ignore
     }
     this.callbackServer = null;
+  }
+
+  private hasPendingOAuthRequest(): boolean {
+    return !!this.pendingState && !!this.pendingCodeVerifier;
+  }
+
+  private isPendingStateMatch(state: string | null): boolean {
+    return !!state && !!this.pendingState && state === this.pendingState;
+  }
+
+  private clearPendingOAuthRequest(options?: { closeServer?: boolean }): void {
+    this.pendingState = null;
+    this.pendingCodeVerifier = null;
+    this.pendingAuthorizationUrl = null;
+    if (options?.closeServer) {
+      this.closeCallbackServer();
+    }
   }
 
   private async exchangeCodeForTokens(code: string, redirectUri: string): Promise<boolean> {
