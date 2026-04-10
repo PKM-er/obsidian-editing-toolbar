@@ -1122,6 +1122,11 @@ export function editingToolbarPopover(
 
       // Use per-style commands based on the toolbar we are rendering
       const currentCommands = plugin.getCurrentCommands(effectiveStyle);
+      const getLocalizedLabel = (label: string): string => t(label as any);
+      const getLocalizedTooltip = (label: string, hotkey: string): string => {
+        const localizedLabel = getLocalizedLabel(label);
+        return hotkey === "–" ? localizedLabel : `${localizedLabel}(${hotkey})`;
+      };
 
       currentCommands.forEach((item, index) => {
         let tip;
@@ -1157,7 +1162,7 @@ export function editingToolbarPopover(
             // 下拉菜单模式
             _btn.setClass("editingToolbarDropdownButton");
             let hotkey = getHotkey(app, item.id);
-            hotkey == "–" ? tip = item.name : tip = item.name + "(" + hotkey + ")";
+            tip = getLocalizedTooltip(item.name, hotkey);
             _btn.setTooltip(tip);
 
             _btn.onClick((evt: MouseEvent) => {
@@ -1230,7 +1235,7 @@ export function editingToolbarPopover(
               item.SubmenuCommands.forEach(
                 (subitem: { name: string; id: any; icon: string }) => {
                   let hotkey = getHotkey(app, subitem.id);
-                  hotkey == "–" ? tip = subitem.name : tip = subitem.name + "(" + hotkey + ")";
+                  tip = getLocalizedTooltip(subitem.name, hotkey);
                   let sub_btn = new ButtonComponent(submenu)
                     .setTooltip(tip)
                     .setClass("menu-item")
@@ -1261,7 +1266,7 @@ export function editingToolbarPopover(
                   if (subitem.id == "editingToolbar-Divider-Line") {
                     sub_btn.setClass("editingToolbar-Divider-Line");
                     
-                    sub_btn.buttonEl.setAttribute('aria-label', subitem.name);
+                    sub_btn.buttonEl.setAttribute('aria-label', getLocalizedLabel(subitem.name));
                   }
                   checkHtml(subitem.icon)
                     ? (sub_btn.buttonEl.innerHTML = subitem.icon)
@@ -1698,7 +1703,7 @@ export function editingToolbarPopover(
               button = new ButtonComponent(resolveButtonHost(true));
             } else button = new ButtonComponent(editingToolbar);
             let hotkey = getHotkey(app, item.id);
-            hotkey == "–" ? tip = item.name : tip = item.name + "(" + hotkey + ")";
+            tip = getLocalizedTooltip(item.name, hotkey);
             button.setTooltip(tip).onClick(() => {
               app.commands.executeCommandById(item.id);
 
