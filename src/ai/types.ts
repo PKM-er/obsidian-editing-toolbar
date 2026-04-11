@@ -16,6 +16,9 @@ export type RewriteInstruction =
   | "translate-en"
   | "translate-zh"
   | "translate-ja"
+  | "translate-de"
+  | "translate-fr"
+  | "translate-es"
   | "explain"
   | "summarize"
   | "continue"
@@ -182,6 +185,9 @@ export const DEFAULT_REWRITE_ACTIONS: RewriteActionMeta[] = [
   { instruction: "translate-en", label: "English", group: "Translate" },
   { instruction: "translate-zh", label: "Chinese", group: "Translate" },
   { instruction: "translate-ja", label: "Japanese", group: "Translate" },
+  { instruction: "translate-de", label: "German", group: "Translate" },
+  { instruction: "translate-fr", label: "French", group: "Translate" },
+  { instruction: "translate-es", label: "Spanish", group: "Translate" },
   { instruction: "explain", label: "Explain this", group: "Generate" },
   { instruction: "summarize", label: "Summarize", group: "Generate" },
   { instruction: "continue", label: "Continue writing", group: "Generate" },

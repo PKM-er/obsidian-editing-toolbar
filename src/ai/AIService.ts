@@ -655,6 +655,12 @@ export class ToolbarAIService implements IAIService {
         return "Translate the text into Simplified Chinese.";
       case "translate-ja":
         return "Translate the text into Japanese.";
+      case "translate-de":
+        return "Translate the text into German.";
+      case "translate-fr":
+        return "Translate the text into French.";
+      case "translate-es":
+        return "Translate the text into Spanish.";
       case "explain":
         return "Explain the text in a clear, structured way.";
       case "summarize":
