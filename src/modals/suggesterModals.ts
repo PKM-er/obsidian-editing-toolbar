@@ -228,7 +228,7 @@ export class CommandPicker extends FuzzySuggestModal<Command> {
   }
 
   getItemText(item: Command): string {
-    return item.name;
+    return t(item.name as any);
   }
 
   async onChooseItem(item: Command): Promise<void> {
@@ -240,7 +240,7 @@ export class CommandPicker extends FuzzySuggestModal<Command> {
 
     if (index > -1) // 命令已存在
     {
-      new Notice(t("The command") + item.name + t("already exists"), 3000);
+      new Notice(t("The command") + t(item.name as any) + t("already exists"), 3000);
       return;
     } else {
       if (item.icon) {

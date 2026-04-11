@@ -834,7 +834,7 @@ body:has(.workspace-leaf.mod-active .cm-ai-loading, .workspace-leaf.mod-active .
 
 
 .setting-item button.editingToolbarSettingsIcon {
-  display: block;
+  display: flex;
   transform: translateX(-30%);
   -webkit-transform: translateX(-30%);
 }

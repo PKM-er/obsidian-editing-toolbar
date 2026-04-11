@@ -117,6 +117,10 @@ export class editingToolbarSettingTab extends PluginSettingTab {
   activeTab: string = 'general';
   // 添加一个属性来跟踪当前正在编辑的配置
   private currentEditingConfig: string;
+
+  private getLocalizedCommandName(name: string): string {
+    return t(name as any);
+  }
   constructor(app: App, plugin: editingToolbarPlugin) {
     super(app, plugin);
     this.plugin = plugin;
@@ -1364,7 +1368,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
         setting
           .setClass("editingToolbarCommandItem")
           .setClass("editingToolbarCommandsubItem")
-          .setName(newCommand.name)
+          .setName(this.getLocalizedCommandName(newCommand.name))
           .addButton((addicon) => {
             addicon
               .setClass("editingToolbarSettingsIcon")
@@ -1499,7 +1503,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
                 });
               checkHtml(subCommand?.icon) ? addicon.buttonEl.innerHTML = subCommand.icon : addicon.setIcon(subCommand.icon)
             })
-            .setName(subCommand.name)
+            .setName(this.getLocalizedCommandName(subCommand.name))
             .addButton((changename) => {
               changename
                 .setIcon("pencil")
@@ -1532,7 +1536,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
         if (newCommand.id == "editingToolbar-Divider-Line") setting.setClass("editingToolbar-Divider-Line")
         setting
           .setClass("editingToolbarCommandItem")
-          .setName(newCommand.name)
+          .setName(this.getLocalizedCommandName(newCommand.name))
           .addButton((changename) => {
             changename
               .setIcon("pencil")
