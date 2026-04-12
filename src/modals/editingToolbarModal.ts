@@ -384,11 +384,12 @@ function shouldMoveButtonToMoreMenu(
   const estimatedButtonCount = Math.max(1, Math.round(currentWidth / Math.max(buttonWidth, 1)));
   const estimatedGapWidth = estimatedButtonCount * 6;
   const reservedMoreButtonWidth = buttonWidth + 12;
+  const reservedFollowingBufferWidth = toolbarStyle === "following" ? buttonWidth + 10 : 0;
   const shouldReserveExtraTouchSpace = Platform.isMobileApp || toolbarStyle === "mobile";
   const reservedTouchBufferWidth = shouldReserveExtraTouchSpace ? 14 : 0;
   const availableWidth = Math.max(leafwidth - 16, buttonWidth * 2);
 
-  return currentWidth + nextWidth + estimatedGapWidth + reservedMoreButtonWidth + reservedTouchBufferWidth >= availableWidth;
+  return currentWidth + nextWidth + estimatedGapWidth + reservedMoreButtonWidth + reservedFollowingBufferWidth + reservedTouchBufferWidth >= availableWidth;
 }
 
 async function executeAIToolbarAction(
@@ -538,6 +539,50 @@ export function createMoremenu(app: App, plugin: editingToolbarPlugin, selector:
     return;
   }
 
+  const resetMorePopoverPosition = (popoverEl: HTMLElement) => {
+    popoverEl.style.removeProperty("left");
+    popoverEl.style.removeProperty("top");
+    popoverEl.style.removeProperty("right");
+    popoverEl.style.removeProperty("bottom");
+    popoverEl.style.removeProperty("transform");
+    popoverEl.style.removeProperty("margin");
+    popoverEl.style.removeProperty("position");
+  };
+
+  const positionMorePopover = (anchorEl: HTMLElement, popoverEl: HTMLElement, currentToolbarStyle?: string | null) => {
+    if (currentToolbarStyle !== "following") {
+      resetMorePopoverPosition(popoverEl);
+      return;
+    }
+
+    const ownerWindow = popoverEl.ownerDocument.defaultView ?? window;
+    const anchorRect = anchorEl.getBoundingClientRect();
+    const popoverWidth = Math.max(popoverEl.offsetWidth, popoverEl.scrollWidth);
+    const popoverHeight = Math.max(popoverEl.offsetHeight, popoverEl.scrollHeight);
+    const horizontalPadding = 12;
+    const verticalGap = 8;
+    const maxLeft = Math.max(horizontalPadding, ownerWindow.innerWidth - popoverWidth - horizontalPadding);
+
+    let left = anchorRect.right - popoverWidth;
+    if (popoverWidth <= 0) {
+      left = anchorRect.left;
+    }
+    left = Math.min(Math.max(left, horizontalPadding), maxLeft);
+
+    let top = anchorRect.bottom + verticalGap;
+    if (popoverHeight > 0 && top + popoverHeight > ownerWindow.innerHeight - horizontalPadding) {
+      top = Math.max(horizontalPadding, anchorRect.top - popoverHeight - verticalGap);
+    }
+
+    popoverEl.style.position = "fixed";
+    popoverEl.style.left = `${left}px`;
+    popoverEl.style.top = `${top}px`;
+    popoverEl.style.right = "auto";
+    popoverEl.style.bottom = "auto";
+    popoverEl.style.transform = "none";
+    popoverEl.style.margin = "0";
+  };
+
   let cMoreMenu = selector.createEl("span");
   cMoreMenu.addClass("more-menu");
   let morebutton = new ButtonComponent(cMoreMenu);
@@ -548,6 +593,7 @@ export function createMoremenu(app: App, plugin: editingToolbarPlugin, selector:
       if (Morecontainer.style.visibility == "hidden") {
         Morecontainer.style.visibility = "visible";
         Morecontainer.style.height = "32px";
+        positionMorePopover(morebutton.buttonEl, Morecontainer, toolbarStyle);
       } else {
         Morecontainer.style.visibility = "hidden";
         Morecontainer.style.height = "0";
@@ -830,6 +876,11 @@ export function editingToolbarPopover(
   style?: ToolbarStyleKey,
   hostDocument?: Document
 ): void {
+  const diagnosticStart = typeof performance !== "undefined" && typeof performance.now === "function"
+    ? performance.now()
+    : Date.now();
+
+  try {
   const settings = plugin.settings;
   const targetDocument =
     hostDocument ||
@@ -1833,6 +1884,12 @@ export function editingToolbarPopover(
     }
   }
   createMenu();
+  } finally {
+    const diagnosticEnd = typeof performance !== "undefined" && typeof performance.now === "function"
+      ? performance.now()
+      : Date.now();
+    plugin.recordDiagnosticEvent("editingToolbarPopover", diagnosticEnd - diagnosticStart);
+  }
 }
 
 function setsvgColor(fontcolor: string, bgcolor: string) {
