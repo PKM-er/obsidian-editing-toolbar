@@ -1,5 +1,15 @@
 # Changelog
 
+## 4.0.4 (2026-04-10)
+### 4.0.4
+### Merge branch 'pr/305'
+### #306 修复按钮中文化
+### 优化授权登录提示
+### Fix toolbar icon transition on hide
+### 修复设置面板报错
+### Update manifest.json and CHANGELOG.md for version 4.0.3
+
+
 ## 4.0.3 (2026-04-07)
 ### AI 兼容性、移动端/iPad 体验，以及工具栏界面的细节打磨。
 AI 兼容性
