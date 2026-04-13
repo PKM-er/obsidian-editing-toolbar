@@ -876,11 +876,6 @@ export function editingToolbarPopover(
   style?: ToolbarStyleKey,
   hostDocument?: Document
 ): void {
-  const diagnosticStart = typeof performance !== "undefined" && typeof performance.now === "function"
-    ? performance.now()
-    : Date.now();
-
-  try {
   const settings = plugin.settings;
   const targetDocument =
     hostDocument ||
@@ -1884,12 +1879,6 @@ export function editingToolbarPopover(
     }
   }
   createMenu();
-  } finally {
-    const diagnosticEnd = typeof performance !== "undefined" && typeof performance.now === "function"
-      ? performance.now()
-      : Date.now();
-    plugin.recordDiagnosticEvent("editingToolbarPopover", diagnosticEnd - diagnosticStart);
-  }
 }
 
 function setsvgColor(fontcolor: string, bgcolor: string) {

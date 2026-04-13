@@ -19,6 +19,8 @@ import { RegexCommandModal } from "src/modals/RegexCommandModal";
 import { ButtonComponent } from "obsidian";
 import { ConfirmModal } from "src/modals/ConfirmModal";
 import { PKMER_MODEL_OPTIONS, resolvePKMerModelForScene } from "src/ai/types";
+import type { CustomModelApiFormat } from "src/ai/types";
+import { getAIErrorMessage } from "src/ai/errorHandling";
 import { shouldShowAIFeatures } from "src/util/locale";
 // 添加类型定义
 interface SubmenuCommand {
@@ -115,6 +117,9 @@ export class editingToolbarSettingTab extends PluginSettingTab {
   appendMethod: string;
   pickrs: Pickr[] = [];
   activeTab: string = 'general';
+  private cachedCustomOllamaModels: string[] = [];
+  private cachedCustomOllamaModelsBaseUrl = '';
+  private cachedCustomOllamaModelsError = '';
   // 添加一个属性来跟踪当前正在编辑的配置
   private currentEditingConfig: string;
 
@@ -133,6 +138,29 @@ export class editingToolbarSettingTab extends PluginSettingTab {
       this.display();
     });
   }
+
+  private async refreshCustomOllamaModels(): Promise<void> {
+    const baseUrl = this.plugin.settings.ai.customModel.baseUrl.trim();
+
+    try {
+      const models = await this.plugin.aiManager.listCustomOllamaModels();
+      this.cachedCustomOllamaModels = models;
+      this.cachedCustomOllamaModelsBaseUrl = baseUrl;
+      this.cachedCustomOllamaModelsError = '';
+
+      if (models.length === 0) {
+        new Notice(t('No Ollama models found at this endpoint.'));
+      }
+    } catch (error) {
+      this.cachedCustomOllamaModels = [];
+      this.cachedCustomOllamaModelsBaseUrl = baseUrl;
+      this.cachedCustomOllamaModelsError = getAIErrorMessage(error);
+      new Notice(`${t('Failed to load Ollama models:')} ${this.cachedCustomOllamaModelsError}`);
+    }
+
+    this.display();
+  }
+
   display(): void {
     this.destroyPickrs();
     const { containerEl } = this;
@@ -1689,9 +1717,9 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     const getPkmerModelLabel = (model: string): string => {
       switch (model) {
         case '04-fast':
-          return t('Light model (0.01 pt)');
+          return t('Light model');
         case '03-agent':
-          return t('Reasoning model (1 pt)');
+          return t('Reasoning model');
         default:
           return model;
       }
@@ -1894,7 +1922,8 @@ export class editingToolbarSettingTab extends PluginSettingTab {
             });
         }
       }
-
+
+
 
 
       const pkmerModelBody = createCard({
@@ -1990,11 +2019,46 @@ export class editingToolbarSettingTab extends PluginSettingTab {
       });
 
       if (customModelEnabled) {
+        const customApiFormat = (this.plugin.settings.ai.customModel.apiFormat ?? 'openai-compatible') as CustomModelApiFormat;
+        const isOllamaFormat = customApiFormat === 'ollama';
+        const customModelBaseUrl = this.plugin.settings.ai.customModel.baseUrl.trim();
+        const cachedOllamaModels = isOllamaFormat && this.cachedCustomOllamaModelsBaseUrl === customModelBaseUrl
+          ? this.cachedCustomOllamaModels
+          : [];
+        const cachedOllamaModelsError = isOllamaFormat && this.cachedCustomOllamaModelsBaseUrl === customModelBaseUrl
+          ? this.cachedCustomOllamaModelsError
+          : '';
+        const secureStorageDesc = this.plugin.aiManager.hasSecureStorage()
+          ? (this.plugin.aiManager.hasCustomModelApiKey()
+            ? t('Stored securely in Obsidian secret storage.')
+            : t('Will be stored securely in Obsidian secret storage.'))
+          : t('Current Obsidian version does not support secure secret storage.');
+        const apiKeyDesc = isOllamaFormat
+          ? `${t('Optional for Ollama. Leave empty unless your gateway requires authentication.')} ${secureStorageDesc}`.trim()
+          : secureStorageDesc;
+
+        new Setting(customBody)
+          .setName(t('Custom API Format'))
+          .setDesc(t('Choose whether the custom model uses an OpenAI-compatible endpoint or the native Ollama API.'))
+          .addDropdown((dropdown) => {
+            dropdown
+              .addOption('openai-compatible', t('OpenAI-compatible'))
+              .addOption('ollama', t('Ollama'))
+              .setValue(customApiFormat)
+              .onChange(async (value) => {
+                this.plugin.settings.ai.customModel.apiFormat = value as CustomModelApiFormat;
+                await this.plugin.saveSettings();
+                this.display();
+              });
+          });
+
         new Setting(customBody)
           .setName(t('Custom API Base URL'))
-          .setDesc(t('OpenAI-compatible endpoint for your own provider.'))
+          .setDesc(isOllamaFormat
+            ? t('Native Ollama endpoint. The root URL, /api, /api/chat, or /api/generate are all supported.')
+            : t('OpenAI-compatible endpoint for your own provider.'))
           .addText((text) => {
-            text.setPlaceholder('https://api.openai.com').setValue(this.plugin.settings.ai.customModel.baseUrl).onChange(async (value) => {
+            text.setPlaceholder(isOllamaFormat ? 'http://127.0.0.1:11434' : 'https://api.openai.com').setValue(this.plugin.settings.ai.customModel.baseUrl).onChange(async (value) => {
               this.plugin.settings.ai.customModel.baseUrl = value.trim();
               await this.plugin.saveSettings();
             });
@@ -2004,20 +2068,60 @@ export class editingToolbarSettingTab extends PluginSettingTab {
           .setName(t('Custom Model Name'))
           .setDesc(t('Model identifier used for inline completion and rewrite requests.'))
           .addText((text) => {
-            text.setPlaceholder('gpt-4o-mini').setValue(this.plugin.settings.ai.customModel.model).onChange(async (value) => {
+            text.setPlaceholder(isOllamaFormat ? 'qwen2.5:7b' : 'gpt-4o-mini').setValue(this.plugin.settings.ai.customModel.model).onChange(async (value) => {
               this.plugin.settings.ai.customModel.model = value.trim();
               await this.plugin.saveSettings();
             });
           });
 
+        if (isOllamaFormat) {
+          const detectedModelsDesc = cachedOllamaModelsError
+            ? `${t('Choose a detected Ollama model to fill the model field.')} ${cachedOllamaModelsError}`.trim()
+            : t('Choose a detected Ollama model to fill the model field.');
+
+          new Setting(customBody)
+            .setName(t('Detected Ollama Models'))
+            .setDesc(cachedOllamaModels.length > 0 ? detectedModelsDesc : t('Fetch available models from your Ollama service.'))
+            .addDropdown((dropdown) => {
+              dropdown.addOption('', t('Select a detected model'));
+
+              cachedOllamaModels.forEach((modelName) => {
+                dropdown.addOption(modelName, modelName);
+              });
+
+              const currentModel = this.plugin.settings.ai.customModel.model.trim();
+              if (currentModel && !cachedOllamaModels.includes(currentModel)) {
+                dropdown.addOption(currentModel, currentModel);
+              }
+
+              dropdown.setValue(cachedOllamaModels.includes(currentModel) ? currentModel : '');
+              dropdown.onChange(async (value) => {
+                if (!value) {
+                  return;
+                }
+
+                this.plugin.settings.ai.customModel.model = value;
+                await this.plugin.saveSettings();
+                this.display();
+              });
+            })
+            .addButton((button) => {
+              button.setButtonText(t('Refresh')).onClick(async () => {
+                button.setDisabled(true);
+                button.setButtonText(t('Loading...'));
+                await this.refreshCustomOllamaModels();
+              });
+            });
+        }
+
         new Setting(customBody)
           .setName(t('Custom API Key'))
-          .setDesc(this.plugin.aiManager.hasSecureStorage()
-            ? (this.plugin.aiManager.hasCustomModelApiKey() ? t('Stored securely in Obsidian secret storage.') : t('Will be stored securely in Obsidian secret storage.'))
-            : t('Current Obsidian version does not support secure secret storage.'))
+          .setDesc(apiKeyDesc)
           .addText((text) => {
             text.inputEl.type = 'password';
-            text.setPlaceholder(this.plugin.aiManager.hasCustomModelApiKey() ? t('Stored securely') : t('Enter API key'));
+            text.setPlaceholder(this.plugin.aiManager.hasCustomModelApiKey()
+              ? t('Stored securely')
+              : (isOllamaFormat ? t('Optional') : t('Enter API key')));
             text.setValue('').onChange(async (value) => {
               if (value.trim()) {
                 this.plugin.aiManager.saveCustomModelApiKey(value);

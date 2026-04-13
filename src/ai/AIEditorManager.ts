@@ -260,7 +260,7 @@ export class AIEditorManager {
 
   async testCustomModelConnection(): Promise<boolean> {
     if (!this.hasCustomModelReadyForTest()) {
-      new Notice(t("Please fill in Custom API Base URL, Custom Model Name, and Custom API Key first."));
+      new Notice(t("Please fill in the required custom model settings first."));
       return false;
     }
 
@@ -276,6 +276,10 @@ export class AIEditorManager {
       new Notice(`${t("Custom model connection failed:")} ${message}`);
       return false;
     }
+  }
+
+  async listCustomOllamaModels(): Promise<string[]> {
+    return this.aiService.listCustomOllamaModels();
   }
 
   triggerInlineCompletion(editor?: Editor | null): boolean {

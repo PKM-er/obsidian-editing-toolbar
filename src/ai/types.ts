@@ -86,11 +86,14 @@ export interface PKMerAuthSettings {
 }
 
 export interface CustomModelSettings {
+  apiFormat: CustomModelApiFormat;
   baseUrl: string;
   apiKey: string;
   model: string;
   temperature: number;
 }
+
+export type CustomModelApiFormat = "openai-compatible" | "ollama";
 
 export type PKMerModelRoutingMode = "smart" | "manual";
 export type PKMerModelScene = "completion" | "rewrite" | "reasoning" | "artifact";
@@ -167,6 +170,7 @@ export const DEFAULT_AI_SETTINGS: AIPluginSettings = {
   pkmer: DEFAULT_PKMER_AUTH_SETTINGS,
   enableCustomModel: false,
   customModel: {
+    apiFormat: "openai-compatible",
     baseUrl: "",
     apiKey: "",
     model: "",

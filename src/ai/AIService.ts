@@ -4,10 +4,12 @@ import { t } from "src/translations/helper";
 import { AIUserNoticeError, getAIErrorMessage, getRequestErrorStatus } from "./errorHandling";
 import { resolvePKMerModelForScene } from "./types";
 import type { CompletionParams, IAIService, PKMerModelScene, RewriteArtifactKind, RewriteInstruction, RewriteParams } from "./types";
+import type { CustomModelApiFormat } from "./types";
 import { PKMerAuthService } from "./PKMerAuthService";
 
 interface ResolvedProvider {
   kind: "pkmer" | "custom";
+  apiFormat: CustomModelApiFormat;
   baseUrl: string;
   apiKey: string;
   model: string;
@@ -76,6 +78,44 @@ export class ToolbarAIService implements IAIService {
       },
       validation.provider,
     );
+  }
+
+  async listCustomOllamaModels(): Promise<string[]> {
+    const validation = this.getCustomProviderValidation();
+    const provider = validation.provider;
+    if (!provider || provider.kind !== "custom" || provider.apiFormat !== "ollama") {
+      throw new Error("Ollama custom model settings are not enabled.");
+    }
+
+    const candidateUrls = this.buildOllamaTagsCandidateUrls(provider.baseUrl);
+    let lastError: unknown = null;
+
+    for (let index = 0; index < candidateUrls.length; index += 1) {
+      const requestUrlValue = candidateUrls[index];
+      try {
+        const response = await requestUrl({
+          url: requestUrlValue,
+          method: "GET",
+          headers: this.buildRequestHeaders(provider.apiKey),
+        });
+
+        if (response.status >= 200 && response.status < 300) {
+          return this.extractOllamaModelNames(response.json);
+        }
+
+        throw this.createRequestResponseError(response, requestUrlValue);
+      } catch (error) {
+        lastError = error;
+        const canRetryWithNextUrl = index < candidateUrls.length - 1 && this.isRetryableEndpointError(error);
+        if (canRetryWithNextUrl) {
+          continue;
+        }
+
+        await this.rethrowUserFacingRequestError(error, requestUrlValue);
+      }
+    }
+
+    await this.rethrowUserFacingRequestError(lastError, candidateUrls[0] ?? provider.baseUrl);
   }
 
   private async requestCompletion(params: CompletionParams, signal?: AbortSignal): Promise<string> {
@@ -155,7 +195,7 @@ export class ToolbarAIService implements IAIService {
     const text = this.extractText(payload);
     return {
       text,
-      finishReason: payload?.choices?.[0]?.finish_reason,
+      finishReason: payload?.choices?.[0]?.finish_reason ?? payload?.done_reason ?? (payload?.done ? "stop" : undefined),
     };
   }
 
@@ -173,7 +213,7 @@ export class ToolbarAIService implements IAIService {
       try {
         const response = await this.executeChatCompletionsRequest(requestUrlValue, provider, messages, signal, options);
         if (provider.kind === "custom") {
-          this.rememberCustomChatCompletionsUrl(provider.baseUrl, requestUrlValue);
+          this.rememberCustomChatCompletionsUrl(provider.baseUrl, provider.apiFormat, requestUrlValue);
         }
         return { response, requestUrlValue };
       } catch (error) {
@@ -202,17 +242,8 @@ export class ToolbarAIService implements IAIService {
     const response = await requestUrl({
       url: requestUrlValue,
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${provider.apiKey}`,
-      },
-      body: JSON.stringify({
-        model: provider.model,
-        temperature: provider.temperature,
-        max_tokens: options.maxTokens,
-        stream: false,
-        messages,
-      }),
+      headers: this.buildRequestHeaders(provider.apiKey),
+      body: JSON.stringify(this.buildRequestBody(requestUrlValue, provider, messages, options)),
     });
 
     if (response.status >= 200 && response.status < 300) {
@@ -220,6 +251,67 @@ export class ToolbarAIService implements IAIService {
     }
 
     throw this.createRequestResponseError(response, requestUrlValue);
+  }
+
+  private buildRequestBody(
+    requestUrlValue: string,
+    provider: ResolvedProvider,
+    messages: Array<{ role: string; content: string }>,
+    options: ChatCompletionOptions = {},
+  ): Record<string, unknown> {
+    if (provider.kind === "custom" && provider.apiFormat === "ollama") {
+      return this.buildOllamaRequestBody(requestUrlValue, provider, messages, options);
+    }
+
+    return {
+      model: provider.model,
+      temperature: provider.temperature,
+      max_tokens: options.maxTokens,
+      stream: false,
+      messages,
+    };
+  }
+
+  private buildOllamaRequestBody(
+    requestUrlValue: string,
+    provider: ResolvedProvider,
+    messages: Array<{ role: string; content: string }>,
+    options: ChatCompletionOptions = {},
+  ): Record<string, unknown> {
+    const ollamaOptions: Record<string, unknown> = {};
+
+    if (Number.isFinite(provider.temperature)) {
+      ollamaOptions.temperature = provider.temperature;
+    }
+
+    if (typeof options.maxTokens === "number") {
+      ollamaOptions.num_predict = options.maxTokens;
+    }
+
+    if (/\/api\/generate$/i.test(requestUrlValue)) {
+      return {
+        model: provider.model,
+        prompt: this.buildOllamaGeneratePrompt(messages),
+        stream: false,
+        options: Object.keys(ollamaOptions).length > 0 ? ollamaOptions : undefined,
+      };
+    }
+
+    return {
+      model: provider.model,
+      stream: false,
+      messages,
+      options: Object.keys(ollamaOptions).length > 0 ? ollamaOptions : undefined,
+    };
+  }
+
+  private buildOllamaGeneratePrompt(messages: Array<{ role: string; content: string }>): string {
+    const prompt = messages
+      .filter((message) => typeof message.content === "string" && message.content.trim().length > 0)
+      .map((message) => `${message.role.toUpperCase()}:\n${message.content.trim()}`)
+      .join("\n\n");
+
+    return prompt ? `${prompt}\n\nASSISTANT:\n` : "ASSISTANT:\n";
   }
 
   private async resolveProvider(scene: PKMerModelScene = "rewrite"): Promise<ResolvedProvider> {
@@ -245,6 +337,7 @@ export class ToolbarAIService implements IAIService {
 
     return {
       kind: "pkmer",
+      apiFormat: "openai-compatible",
       baseUrl: settings.pkmerApiBaseUrl,
       apiKey: this.authService.aiToken,
       model: resolvePKMerModelForScene(settings, scene),
@@ -259,6 +352,7 @@ export class ToolbarAIService implements IAIService {
 
     const custom = this.plugin.settings.ai.customModel;
     const customApiKey = this.authService.customModelApiKey.trim();
+    const customApiFormat = custom.apiFormat ?? "openai-compatible";
     const missing: string[] = [];
 
     if (!custom.baseUrl.trim()) {
@@ -267,7 +361,7 @@ export class ToolbarAIService implements IAIService {
     if (!custom.model.trim()) {
       missing.push("model");
     }
-    if (!customApiKey) {
+    if (customApiFormat !== "ollama" && !customApiKey) {
       missing.push("apiKey");
     }
 
@@ -278,6 +372,7 @@ export class ToolbarAIService implements IAIService {
     return {
       provider: {
         kind: "custom",
+        apiFormat: customApiFormat,
         baseUrl: custom.baseUrl.trim(),
         apiKey: customApiKey,
         model: custom.model.trim(),
@@ -296,9 +391,11 @@ export class ToolbarAIService implements IAIService {
       return [this.buildChatCompletionsUrl(provider.baseUrl)];
     }
 
-    const cacheKey = this.normalizeProviderBaseUrl(provider.baseUrl);
+    const cacheKey = this.getCustomProviderCacheKey(provider.baseUrl, provider.apiFormat);
     const cachedUrl = this.customChatCompletionsUrlCache.get(cacheKey);
-    const urls = this.buildChatCompletionsCandidateUrls(provider.baseUrl);
+    const urls = provider.apiFormat === "ollama"
+      ? this.buildOllamaCandidateUrls(provider.baseUrl)
+      : this.buildChatCompletionsCandidateUrls(provider.baseUrl);
     if (!cachedUrl) {
       return urls;
     }
@@ -331,6 +428,56 @@ export class ToolbarAIService implements IAIService {
     return [v1Url, directUrl, v3Url];
   }
 
+  private buildOllamaCandidateUrls(baseUrl: string): string[] {
+    const normalized = this.normalizeProviderBaseUrl(baseUrl);
+    if (!normalized) {
+      return [];
+    }
+
+    if (/\/api\/(chat|generate)$/i.test(normalized)) {
+      return [normalized];
+    }
+
+    if (/\/api$/i.test(normalized)) {
+      return [`${normalized}/chat`, `${normalized}/generate`];
+    }
+
+    return [`${normalized}/api/chat`, `${normalized}/api/generate`];
+  }
+
+  private buildOllamaTagsCandidateUrls(baseUrl: string): string[] {
+    const normalized = this.normalizeProviderBaseUrl(baseUrl);
+    if (!normalized) {
+      return [];
+    }
+
+    if (/\/api\/tags$/i.test(normalized)) {
+      return [normalized];
+    }
+
+    if (/\/api\/(chat|generate)$/i.test(normalized)) {
+      return [normalized.replace(/\/(chat|generate)$/i, "/tags")];
+    }
+
+    if (/\/api$/i.test(normalized)) {
+      return [`${normalized}/tags`];
+    }
+
+    return [`${normalized}/api/tags`];
+  }
+
+  private buildRequestHeaders(apiKey: string): Record<string, string> {
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+    };
+
+    if (apiKey.trim()) {
+      headers.Authorization = `Bearer ${apiKey}`;
+    }
+
+    return headers;
+  }
+
   private normalizeProviderBaseUrl(baseUrl: string): string {
     return baseUrl.trim().replace(/\/+$/, "");
   }
@@ -345,8 +492,12 @@ export class ToolbarAIService implements IAIService {
     }
   }
 
-  private rememberCustomChatCompletionsUrl(baseUrl: string, requestUrlValue: string): void {
-    this.customChatCompletionsUrlCache.set(this.normalizeProviderBaseUrl(baseUrl), requestUrlValue);
+  private getCustomProviderCacheKey(baseUrl: string, apiFormat: CustomModelApiFormat): string {
+    return `${apiFormat}:${this.normalizeProviderBaseUrl(baseUrl)}`;
+  }
+
+  private rememberCustomChatCompletionsUrl(baseUrl: string, apiFormat: CustomModelApiFormat, requestUrlValue: string): void {
+    this.customChatCompletionsUrlCache.set(this.getCustomProviderCacheKey(baseUrl, apiFormat), requestUrlValue);
   }
 
   private isRetryableEndpointError(error: unknown): boolean {
@@ -378,6 +529,23 @@ export class ToolbarAIService implements IAIService {
     error.status = response.status;
     error.response = response;
     return error;
+  }
+
+  private extractOllamaModelNames(payload: any): string[] {
+    const models = Array.isArray(payload?.models) ? payload.models : [];
+    const names: string[] = models
+      .map((item: any): string => {
+        if (typeof item?.name === "string" && item.name.trim()) {
+          return item.name.trim();
+        }
+        if (typeof item?.model === "string" && item.model.trim()) {
+          return item.model.trim();
+        }
+        return "";
+      })
+      .filter((name: string): boolean => !!name);
+
+    return Array.from(new Set(names)).sort((left, right) => left.localeCompare(right));
   }
 
   private async rethrowUserFacingRequestError(error: unknown, requestUrlValue: string): Promise<never> {
@@ -568,7 +736,11 @@ export class ToolbarAIService implements IAIService {
   }
 
   private extractText(payload: any): string {
-    const content = payload?.choices?.[0]?.message?.content ?? payload?.choices?.[0]?.text ?? "";
+    const content = payload?.choices?.[0]?.message?.content
+      ?? payload?.choices?.[0]?.text
+      ?? payload?.message?.content
+      ?? payload?.response
+      ?? "";
     if (typeof content === "string") {
       return content.trim();
     }
