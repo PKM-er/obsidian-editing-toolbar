@@ -208,29 +208,29 @@ export function backcolorpicker(plugin: { settings: { custom_bg1: any; custom_bg
 export function setHeader(_str: string, editor?: Editor) {
   //from https://github.com/obsidian-canzi/Enhanced-editing
 
-    let linetext = editor.getLine(editor.getCursor().line);
-    let newstr, linend = "";
-    const regex = /^(\>*(\[[!\w]+\])?\s*)#+\s/;
-    let matchstr
-    const match = linetext.match(regex);
-    if (match) matchstr = match[0].trim();
-    if (_str == matchstr)   //转换的跟原来的一致就取消标题
-    {
-      newstr = linetext.replace(regex, "$1");
+    const linetext = editor.getLine(editor.getCursor().line);
+    let newstr;
+    let linend = "";
+    const headingRegex = /^(\s*(?:>\s*)*(?:\[[!\w]+\]\s*)?)#{1,6}\s+/;
+    const blockPrefixRegex = /^(?:\s*(?:>\s*)*(?:\[[!\w]+\]\s*)?)?(?:(?:#{1,6}\s+)|(?:[-+*]\s+)|(?:\d+\.\s+)|(?:\[[ xX]\]\s+))+/;
+    const match = linetext.match(headingRegex);
+    const matchstr = match?.[0]?.trim();
+
+    if (_str === matchstr) {
+      newstr = linetext.replace(headingRegex, "$1");
+    } else if (_str === "") {
+      newstr = linetext.replace(headingRegex, "$1");
     } else {
-      if (_str == "") {   //若为标题，转为普通文本
-        newstr = linetext.replace(regex, "$1");
-      } else {  //列表、引用，先转为普通文本，再转为标题
-        newstr = linetext.replace(/^\s*(#*|\>|\-|\d+\.)\s*/m, "");
-        newstr = _str + " " + newstr;
-      }
+      newstr = linetext.replace(blockPrefixRegex, "").trimStart();
+      newstr = `${_str} ${newstr}`;
     }
 
-    if (newstr != "") {
+    if (newstr !== "") {
       linend = editor.getRange(editor.getCursor(), { line: editor.getCursor().line, ch: linetext.length });
     } else {
       linend = editor.getRange(editor.getCursor(), { line: editor.getCursor().line, ch: 0 });
-    };
+    }
+
     editor.setLine(editor.getCursor().line, newstr);
     editor.setCursor({ line: editor.getCursor().line, ch: Number(newstr.length - linend.length) });
 
