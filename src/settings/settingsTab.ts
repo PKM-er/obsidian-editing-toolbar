@@ -6,6 +6,7 @@ import type { ToolbarStyleKey, StyleAppearanceSettings, AppearanceByStyle } from
 import { selfDestruct, editingToolbarPopover, checkHtml } from "src/modals/editingToolbarModal";
 import Sortable from "sortablejs";
 import { debounce } from "obsidian";
+import { Modal } from "obsidian";
 import { GenNonDuplicateID } from "src/util/util";
 import { t } from 'src/translations/helper';
 import { ToolbarCommand } from './ToolbarSettings';
@@ -104,12 +105,10 @@ export function getPickrSettings(opts: {
   };
 }
 export function getComandindex(item: any, arr: any[]): number {
-  let idx;
-  arr.forEach((el, index) => {
-    if (el.id === item) {
-      idx = index;
-    }
-  });
+  if (!arr || !Array.isArray(arr)) {
+    return -1;
+  }
+  const idx = arr.findIndex((el) => el?.id === item);
   return idx;
 }
 export class editingToolbarSettingTab extends PluginSettingTab {
@@ -1484,37 +1483,60 @@ export class editingToolbarSettingTab extends PluginSettingTab {
               }
             } else if (command.to.className === "editingToolbarSettingsTabsContainer") {
               // 从子菜单拖动到父菜单的逻辑
-              // 使用getCurrentCommands获取当前命令配置
               const arrayResult = commandsToEdit;
-              let cmdindex = getComandindex(command.target.parentElement.dataset["id"], arrayResult);
-              const subresult = arrayResult[cmdindex]?.SubmenuCommands;
+              const datasetId = command.target.parentElement?.dataset?.["id"];
 
-              if (subresult) {
-                const [removed] = subresult.splice(command.oldIndex, 1);
-                arrayResult.splice(command.newIndex, 0, removed);
-                // 使用updateCurrentCommands更新当前命令配置
-                this.plugin.updateCurrentCommands(arrayResult, this.currentEditingConfig);
-                this.plugin.saveSettings();
-              } else {
-                console.error('Subresult is undefined.');
+              if (!datasetId) {
+                console.error('Cannot find parent dataset id');
+                return;
               }
+
+              const cmdindex = getComandindex(datasetId, arrayResult);
+
+              if (cmdindex === -1 || !arrayResult[cmdindex]) {
+                console.error('Cannot find parent command:', datasetId);
+                return;
+              }
+
+              const subresult = arrayResult[cmdindex].SubmenuCommands;
+
+              if (!subresult || !Array.isArray(subresult) || command.oldIndex < 0 || command.oldIndex >= subresult.length) {
+                console.error('Invalid drag operation');
+                return;
+              }
+
+              const [removed] = subresult.splice(command.oldIndex, 1);
+              arrayResult.splice(command.newIndex, 0, removed);
+              this.plugin.updateCurrentCommands(arrayResult, this.currentEditingConfig);
+              this.plugin.saveSettings();
             } else if (command.from.className === "editingToolbarSettingsTabsContainer") {
               // 从父菜单拖动到子菜单的逻辑
-              // 使用getCurrentCommands获取当前命令配置
               const arrayResult = commandsToEdit;
-              const fromDatasetId = command.target.parentElement.dataset["id"];
-              const cmdindex = getComandindex(fromDatasetId, arrayResult);
-              const subresult = arrayResult[cmdindex]?.SubmenuCommands;
+              const fromDatasetId = command.target.parentElement?.dataset?.["id"];
 
-              if (subresult) {
-                const [removed] = arrayResult.splice(command.oldIndex, 1);
-                subresult.splice(command.newIndex, 0, removed);
-                // 使用updateCurrentCommands更新当前命令配置
-                this.plugin.updateCurrentCommands(arrayResult, this.currentEditingConfig);
-                this.plugin.saveSettings();
-              } else {
-                console.error('Subresult is undefined.');
+              if (!fromDatasetId) {
+                console.error('Cannot find target dataset id');
+                return;
               }
+
+              const cmdindex = getComandindex(fromDatasetId, arrayResult);
+
+              if (cmdindex === -1 || !arrayResult[cmdindex]) {
+                console.error('Cannot find target command:', fromDatasetId);
+                return;
+              }
+
+              const subresult = arrayResult[cmdindex].SubmenuCommands;
+
+              if (!subresult || !Array.isArray(subresult) || command.oldIndex < 0 || command.oldIndex >= arrayResult.length) {
+                console.error('Invalid drag operation');
+                return;
+              }
+
+              const [removed] = arrayResult.splice(command.oldIndex, 1);
+              subresult.splice(command.newIndex, 0, removed);
+              this.plugin.updateCurrentCommands(arrayResult, this.currentEditingConfig);
+              this.plugin.saveSettings();
             }
             this.triggerRefresh();
           },
@@ -2172,7 +2194,125 @@ export class editingToolbarSettingTab extends PluginSettingTab {
             });
           });
       }
+
+      const templatesBody = createCard({
+        title: t('Custom Prompt Templates'),
+        desc: t('Manage quick-access templates for custom AI prompts'),
+        collapsible: true,
+        open: true,
+      });
+
+      const templates = this.plugin.settings.ai.customPromptTemplates || [];
+      templates.forEach((template, index) => {
+        const setting = new Setting(templatesBody)
+          .setName(template.name)
+          .setDesc(template.prompt.length > 80 ? template.prompt.substring(0, 80) + '...' : template.prompt)
+          .addButton((button) => {
+            button
+              .setButtonText(t('Edit'))
+              .onClick(() => {
+                this.openTemplateEditor(template, index);
+              });
+          })
+          .addButton((button) => {
+            button
+              .setButtonText(t('Delete'))
+              .setWarning()
+              .onClick(async () => {
+                this.plugin.settings.ai.customPromptTemplates.splice(index, 1);
+                await this.plugin.saveSettings();
+                this.display();
+              });
+          });
+      });
+
+      new Setting(templatesBody)
+        .addButton((button) => {
+          button
+            .setButtonText(t('Add Template'))
+            .setCta()
+            .onClick(() => {
+              this.openTemplateEditor(null, -1);
+            });
+        });
     }
+  }
+
+  private openTemplateEditor(template: any | null, index: number): void {
+    const modal = new Modal(this.app);
+    modal.titleEl.setText(template ? t('Edit Template') : t('Add Template'));
+
+    const { contentEl } = modal;
+    let nameValue = template?.name || '';
+    let promptValue = template?.prompt || '';
+
+    new Setting(contentEl)
+      .setName(t('Template Name'))
+      .addText((text) => {
+        text
+          .setPlaceholder(t('Enter template name'))
+          .setValue(nameValue)
+          .onChange((value) => {
+            nameValue = value;
+          });
+        text.inputEl.style.width = '100%';
+      });
+
+    new Setting(contentEl)
+      .setName(t('Prompt Content'))
+      .addTextArea((text) => {
+        text
+          .setPlaceholder(t('Enter prompt content'))
+          .setValue(promptValue)
+          .onChange((value) => {
+            promptValue = value;
+          });
+        text.inputEl.style.width = '100%';
+        text.inputEl.style.minHeight = '120px';
+      });
+
+    new Setting(contentEl)
+      .addButton((button) => {
+        button
+          .setButtonText(t('Cancel'))
+          .onClick(() => {
+            modal.close();
+          });
+      })
+      .addButton((button) => {
+        button
+          .setButtonText(t('Save'))
+          .setCta()
+          .onClick(async () => {
+            if (!nameValue.trim() || !promptValue.trim()) {
+              new Notice(t('Template name and content cannot be empty'));
+              return;
+            }
+        // 新增时检查上限
+            if (index < 0 && this.plugin.settings.ai.customPromptTemplates.length >= 9) {
+              new Notice(t('Maximum 10 templates allowed'));
+              return;
+            }
+            const newTemplate = {
+              id: template?.id || `template-${Date.now()}`,
+              name: nameValue.trim(),
+              prompt: promptValue.trim(),
+              icon: template?.icon || 'lucide-sparkles',
+            };
+
+            if (index >= 0) {
+              this.plugin.settings.ai.customPromptTemplates[index] = newTemplate;
+            } else {
+              this.plugin.settings.ai.customPromptTemplates.push(newTemplate);
+            }
+
+            await this.plugin.saveSettings();
+            modal.close();
+            this.display();
+          });
+      });
+
+    modal.open();
   }
 
   // 添加导入导出设置显示方法
