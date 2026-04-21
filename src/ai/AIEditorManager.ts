@@ -1022,9 +1022,9 @@ export class AIEditorManager {
           .replace(/\[📝 Selected text\]/g, "选中文本")
           .trim();
 
-        // 只保存非空的历史记录
-        if (cleanPrompt) {
-          this.addToHistory(cleanPrompt);
+        // 历史记录保留用户输入原貌，避免丢失双链等语义标记
+        if (prompt) {
+          this.addToHistory(prompt);
         }
 
         const effectiveContextList = contextList.filter((ctx) => {
