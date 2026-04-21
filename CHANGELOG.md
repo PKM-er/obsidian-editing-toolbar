@@ -1,5 +1,16 @@
 # Changelog
 
+## 4.0.6 (2026-04-21)
+### 4.0.6
+### 增加长上下文压缩机制
+### 增加模板变量引入和双链支持
+### 自定义改写框支持模板
+###  #312 fixed
+### #311 fixed
+### Merge branch 'master' of https://github.com/PKM-er/obsidian-editing-toolbar
+### Update manifest.json and CHANGELOG.md for version 4.0.4
+
+
 ## 4.0.4 (2026-04-10)
 ### 4.0.4
 ### Merge branch 'pr/305'
