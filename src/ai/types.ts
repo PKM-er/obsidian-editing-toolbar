@@ -164,6 +164,12 @@ export const DEFAULT_PKMER_AUTH_SETTINGS: PKMerAuthSettings = {
 
 export const DEFAULT_CUSTOM_PROMPT_TEMPLATES: CustomPromptTemplate[] = [
   {
+    id: "template-demo-variables",
+    name: "📝 变量示例",
+    prompt: "分析 {{file:name}} 的内容结构,重点关注:\n{{selection}}\n\n请提供:\n1. 内容概要\n2. 关键要点\n3. 改进建议",
+    icon: "lucide-sparkles"
+  },
+  {
     id: "template-dataview",
     name: "生成 Dataview",
     prompt: "根据我的需求,帮我生成一个 Obsidian Dataview 查询代码块。要求:\n1. 使用 DataviewJS 或 DQL 语法\n2. 包含必要的字段筛选和排序\n3. 添加注释说明每个部分的作用\n4. 如果需要复杂逻辑,使用 DataviewJS\n\n我的需求:",

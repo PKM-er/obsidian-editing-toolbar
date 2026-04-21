@@ -2202,6 +2202,25 @@ export class editingToolbarSettingTab extends PluginSettingTab {
         open: true,
       });
 
+      const variablesInfo = templatesBody.createDiv({ cls: 'setting-item-description' });
+      variablesInfo.style.marginBottom = '12px';
+      variablesInfo.style.padding = '8px 12px';
+      variablesInfo.style.background = 'var(--background-secondary)';
+      variablesInfo.style.borderRadius = '6px';
+      variablesInfo.style.fontSize = '12px';
+      variablesInfo.innerHTML = `
+        <strong>可用变量:</strong><br>
+        <code>{{selection}}</code> - 选中文本 |
+        <code>{{file:name}}</code> - 文件名 |
+        <code>{{file:path}}</code> - 文件路径 |
+        <code>{{file:content}}</code> - 文档全文<br>
+        <code>{{date}}</code> - 日期 |
+        <code>{{time}}</code> - 时间 |
+        <code>{{datetime}}</code> - 日期时间 |
+        <code>{{vault:name}}</code> - 仓库名<br>
+        <strong>双链引用:</strong> 使用 <code>[[文件名]]</code> 引用其他笔记内容
+      `;
+
       const templates = this.plugin.settings.ai.customPromptTemplates || [];
       templates.forEach((template, index) => {
         const setting = new Setting(templatesBody)

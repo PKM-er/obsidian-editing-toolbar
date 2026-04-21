@@ -700,8 +700,9 @@ export class AIEditorManager {
       return false;
     }
 
+    const selectedText = resolvedEditor.getSelection();
     this.inlineCustomPromptEditor = resolvedEditor;
-    this.renderInlineCustomPrompt(resolvedEditor, view);
+    this.renderInlineCustomPrompt(resolvedEditor, view, selectedText);
     return true;
   }
 
@@ -717,22 +718,25 @@ export class AIEditorManager {
     }
   }
 
-  private renderInlineCustomPrompt(editor: Editor, view: EditorView): void {
+  private renderInlineCustomPrompt(editor: Editor, view: EditorView, initialSelection?: string): void {
     const doc = view.dom.ownerDocument;
     if (!this.inlineCustomPromptEl) {
       const promptEl = doc.createElement("div");
       promptEl.className = "editing-toolbar-ai-inline-prompt";
       const header = doc.createElement("div");
       header.className = "editing-toolbar-ai-inline-prompt-header";
-      const title = doc.createElement("div");
-      title.className = "editing-toolbar-ai-inline-prompt-title";
-      title.textContent = t("AI Custom Rewrite");
+      const dragHandle = doc.createElement("div");
+      dragHandle.className = "editing-toolbar-ai-inline-prompt-drag-handle";
+      dragHandle.style.cursor = "grab";
+      const titleEl = doc.createElement("div");
+      titleEl.className = "editing-toolbar-ai-inline-prompt-title";
+      titleEl.textContent = t("AI Custom Rewrite");
       const closeBtn = doc.createElement("button");
       closeBtn.type = "button";
       closeBtn.className = "editing-toolbar-ai-inline-prompt-close";
       closeBtn.title = t("Close" as any);
       closeBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>`;
-      header.append(title, closeBtn);
+      header.append(dragHandle, titleEl, closeBtn);
       const settingsBtn = doc.createElement("button");
       settingsBtn.type = "button";
       settingsBtn.className = "editing-toolbar-ai-inline-prompt-settings";
@@ -758,12 +762,53 @@ export class AIEditorManager {
       historyDropdown.className = "editing-toolbar-ai-inline-prompt-history-dropdown";
       historyDropdown.style.display = "none";
 
-      inputWrapper.append(textarea, historyBtn, historyDropdown);
+      const mentionDropdown = doc.createElement("div");
+      mentionDropdown.className = "editing-toolbar-ai-inline-prompt-mention-dropdown";
+      mentionDropdown.style.display = "none";
+
+      inputWrapper.append(textarea, historyBtn, historyDropdown, mentionDropdown);
 
       const templatesContainer = doc.createElement("div");
       templatesContainer.className = "editing-toolbar-ai-inline-prompt-templates";
 
       const templates = this.plugin.settings.ai.customPromptTemplates || [];
+
+      const replaceTemplateVariables = (template: string): string => {
+        const currentFile = this.plugin.app.workspace.getActiveFile();
+        const now = new Date();
+
+        if (template.includes("{{selection}}") && initialSelection) {
+          if (!contextList.some(c => c.type === "selection")) {
+            contextList.push({
+              type: "selection",
+              content: initialSelection,
+              label: t("Selected text")
+            });
+          }
+        }
+
+        if (template.includes("{{file:content}}")) {
+          const fileContent = editor.getValue();
+          if (!contextList.some(c => c.type === "doc")) {
+            contextList.push({
+              type: "doc",
+              content: fileContent,
+              label: `📋 ${currentFile?.basename || "Current document"}`
+            });
+          }
+        }
+
+        return template
+          .replace(/\{\{selection\}\}/g, initialSelection || "")
+          .replace(/\{\{file:name\}\}/g, currentFile?.basename || "")
+          .replace(/\{\{file:path\}\}/g, currentFile?.path || "")
+          .replace(/\{\{file:content\}\}/g, "")
+          .replace(/\{\{date\}\}/g, now.toLocaleDateString())
+          .replace(/\{\{time\}\}/g, now.toLocaleTimeString())
+          .replace(/\{\{datetime\}\}/g, now.toLocaleString())
+          .replace(/\{\{vault:name\}\}/g, this.plugin.app.vault.getName());
+      };
+
       templates.slice(0, 9).forEach((template) => {
         const templateBtn = doc.createElement("button");
         templateBtn.type = "button";
@@ -771,13 +816,74 @@ export class AIEditorManager {
         templateBtn.textContent = template.name;
         templateBtn.title = template.prompt;
         templateBtn.addEventListener("click", () => {
-          textarea.value = template.prompt;
+          textarea.value = replaceTemplateVariables(template.prompt);
+          renderContextItems();
           resizeTextarea();
           updateSendButtonState();
           textarea.focus();
+          void syncLinkedNotesContext();
         });
         templatesContainer.appendChild(templateBtn);
       });
+
+       
+
+      const contextStats = doc.createElement("div");
+      contextStats.className = "editing-toolbar-ai-inline-prompt-context-stats";
+      contextStats.style.display = "none";
+
+      const contextList: Array<{type: string, content: string, label: string}> = [];
+
+      if (initialSelection) {
+        contextList.push({
+          type: "selection",
+          content: initialSelection,
+          label: t("Selected text")
+        });
+      }
+
+      const estimateTokens = (text: string): number => {
+        return Math.ceil(text.length / 4);
+      };
+
+      const updateContextStats = () => {
+        if (contextList.length === 0) {
+          contextStats.style.display = "none";
+          return;
+        }
+
+        const totalChars = contextList.reduce((sum, ctx) => sum + ctx.content.length, 0);
+        const totalTokens = estimateTokens(contextList.map(ctx => ctx.content).join("\n"));
+
+        contextStats.style.display = "flex";
+        contextStats.innerHTML = `
+          <span class="editing-toolbar-ai-inline-prompt-context-stats-item">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+            ${contextList.length} ${contextList.length === 1 ? 'item' : 'items'}
+          </span>
+          <span class="editing-toolbar-ai-inline-prompt-context-stats-item">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M4 7h16M4 12h16M4 17h10"/>
+            </svg>
+            ${totalChars.toLocaleString()} chars
+          </span>
+          <span class="editing-toolbar-ai-inline-prompt-context-stats-item">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>
+            </svg>
+            ~${totalTokens.toLocaleString()} tokens
+          </span>
+        `;
+      };
+
+      const renderContextItems = () => {
+         
+        updateContextStats();
+      };
+
+      renderContextItems();
 
       const footer = doc.createElement("div");
       footer.className = "editing-toolbar-ai-inline-prompt-footer";
@@ -795,12 +901,74 @@ export class AIEditorManager {
       sendBtn.title = t("Send" as any);
       footer.appendChild(hint);
       footer.appendChild(sendBtn);
-      promptEl.append(header, settingsBtn, inputWrapper, templatesContainer, footer);
+      promptEl.append(header, inputWrapper, templatesContainer, contextStats, footer);
       doc.body.appendChild(promptEl);
 
+      let isDragging = false;
+      let offsetX = 0;
+      let offsetY = 0;
+
+      const onDragStart = (e: MouseEvent | TouchEvent) => {
+        if (e.target !== dragHandle && e.target !== titleEl) return;
+
+        isDragging = true;
+        const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+        const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+
+        const rect = promptEl.getBoundingClientRect();
+        offsetX = clientX - rect.left;
+        offsetY = clientY - rect.top;
+
+        promptEl.style.cursor = 'grabbing';
+        dragHandle.style.cursor = 'grabbing';
+
+        if ('touches' in e) {
+          e.preventDefault();
+        }
+      };
+
+      const onDrag = (e: MouseEvent | TouchEvent) => {
+        if (!isDragging) return;
+
+        e.preventDefault();
+        const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+        const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+
+        const newLeft = clientX - offsetX;
+        const newTop = clientY - offsetY;
+
+        promptEl.style.left = `${newLeft}px`;
+        promptEl.style.top = `${newTop}px`;
+      };
+
+      const onDragEnd = () => {
+        isDragging = false;
+        promptEl.style.cursor = '';
+        dragHandle.style.cursor = 'grab';
+      };
+
+      dragHandle.addEventListener('mousedown', onDragStart as EventListener);
+      titleEl.addEventListener('mousedown', onDragStart as EventListener);
+      dragHandle.addEventListener('touchstart', onDragStart as EventListener, { passive: false });
+      titleEl.addEventListener('touchstart', onDragStart as EventListener, { passive: false });
+
+      doc.addEventListener('mousemove', onDrag as EventListener);
+      doc.addEventListener('touchmove', onDrag as EventListener, { passive: false });
+
+      doc.addEventListener('mouseup', onDragEnd);
+      doc.addEventListener('touchend', onDragEnd);
+
       const resizeTextarea = () => {
-        textarea.style.height = "0px";
-        textarea.style.height = String(Math.min(Math.max(textarea.scrollHeight, 72), 180)) + "px";
+        textarea.style.height = "auto";
+        const newHeight = Math.min(Math.max(textarea.scrollHeight, 56), 240);
+        textarea.style.height = `${newHeight}px`;
+
+        // 如果内容超过最大高度，显示滚动条
+        if (textarea.scrollHeight > 240) {
+          textarea.style.overflowY = "auto";
+        } else {
+          textarea.style.overflowY = "hidden";
+        }
       };
 
       const closePrompt = () => {
@@ -821,7 +989,35 @@ export class AIEditorManager {
 
         this.addToHistory(prompt);
 
-        const result = await this.startRewrite(this.inlineCustomPromptEditor ?? editor, "custom", prompt);
+        const linkMatches = prompt.matchAll(/\[\[([^\]]+)\]\]/g);
+        const linkedContexts: Array<{label: string, content: string}> = [];
+
+        for (const match of linkMatches) {
+          const linkText = match[1];
+          const file = this.plugin.app.metadataCache.getFirstLinkpathDest(linkText, "");
+          if (file) {
+            try {
+              const content = await this.plugin.app.vault.cachedRead(file);
+              linkedContexts.push({
+                label: `📄 ${file.basename}`,
+                content: content
+              });
+            } catch (e) {
+              console.error(`Failed to read linked file: ${linkText}`, e);
+            }
+          }
+        }
+
+        const allContexts = [...contextList, ...linkedContexts];
+        let finalPrompt = prompt;
+        if (allContexts.length > 0) {
+          const contextText = allContexts.map(ctx => {
+            return `\n\n<context source="${ctx.label}">\n${ctx.content}\n</context>`;
+          }).join("");
+          finalPrompt = prompt + contextText;
+        }
+
+        const result = await this.startRewrite(this.inlineCustomPromptEditor ?? editor, "custom", finalPrompt);
         if (result) {
           this.closeInlineCustomPrompt();
         }
@@ -892,15 +1088,163 @@ export class AIEditorManager {
       sendBtn.addEventListener("click", () => {
         void submitPrompt();
       });
+      let linkStartPos = -1;
+      let selectedSuggestionIndex = 0;
+      let suggestionFiles: any[] = [];
+
+      const syncLinkedNotesContext = async () => {
+        const text = textarea.value;
+        const linkMatches = Array.from(text.matchAll(/\[\[([^\]]+)\]\]/g));
+        const linkedFileNames = new Set(linkMatches.map(m => m[1]));
+
+        const existingLinkedNotes = contextList.filter(c => c.type === "note");
+        for (const ctx of existingLinkedNotes) {
+          const fileName = ctx.label.replace("📄 ", "");
+          if (!linkedFileNames.has(fileName)) {
+            const index = contextList.indexOf(ctx);
+            if (index > -1) {
+              contextList.splice(index, 1);
+            }
+          }
+        }
+
+        for (const linkText of linkedFileNames) {
+          if (contextList.some(c => c.type === "note" && c.label.includes(linkText))) {
+            continue;
+          }
+
+          const file = this.plugin.app.metadataCache.getFirstLinkpathDest(linkText, "");
+          if (file) {
+            try {
+              const content = await this.plugin.app.vault.cachedRead(file);
+              contextList.push({
+                type: "note",
+                content: content,
+                label: `📄 ${file.basename}`
+              });
+            } catch (e) {
+              console.error(`Failed to read linked file: ${linkText}`, e);
+            }
+          }
+        }
+
+        renderContextItems();
+      };
+
+      const selectSuggestion = async (file: any) => {
+        const cursorPos = textarea.selectionStart;
+        const beforeLink = textarea.value.substring(0, linkStartPos);
+        const afterCursor = textarea.value.substring(cursorPos);
+        textarea.value = beforeLink + `[[${file.basename}]] ` + afterCursor;
+        mentionDropdown.style.display = "none";
+
+        textarea.focus();
+        const newCursorPos = linkStartPos + file.basename.length + 5;
+        textarea.setSelectionRange(newCursorPos, newCursorPos);
+        resizeTextarea();
+        updateSendButtonState();
+
+        await syncLinkedNotesContext();
+      };
+
+      const updateLinkSuggestions = () => {
+        const cursorPos = textarea.selectionStart;
+        const textBeforeCursor = textarea.value.substring(0, cursorPos);
+        const linkMatch = textBeforeCursor.match(/\[\[([^\]]*?)$/);
+
+        if (linkMatch) {
+          linkStartPos = textBeforeCursor.lastIndexOf("[[");
+          const query = linkMatch[1].toLowerCase();
+
+          const files = this.plugin.app.vault.getMarkdownFiles();
+          const filtered = files.filter(f =>
+            f.basename.toLowerCase().includes(query) ||
+            f.path.toLowerCase().includes(query)
+          ).slice(0, 10);
+
+          suggestionFiles = filtered;
+          selectedSuggestionIndex = 0;
+
+          if (filtered.length > 0) {
+            mentionDropdown.empty();
+            filtered.forEach((file, index) => {
+              const item = doc.createElement("div");
+              item.className = "editing-toolbar-ai-inline-prompt-mention-item";
+              if (index === 0) item.classList.add("selected");
+              item.innerHTML = `<span class="editing-toolbar-ai-inline-prompt-mention-icon">📄</span>${file.basename} <span style="color: var(--text-faint); font-size: 10px;">${file.path}</span>`;
+              item.addEventListener("click", () => {
+                void selectSuggestion(file);
+              });
+              mentionDropdown.appendChild(item);
+            });
+            mentionDropdown.style.display = "block";
+          } else {
+            mentionDropdown.style.display = "none";
+          }
+        } else {
+          mentionDropdown.style.display = "none";
+          linkStartPos = -1;
+          suggestionFiles = [];
+        }
+      };
+
       textarea.addEventListener("input", () => {
         resizeTextarea();
         updateSendButtonState();
         reposition();
+        updateLinkSuggestions();
+        void syncLinkedNotesContext();
       });
       textarea.addEventListener("keydown", (event) => {
+        const isSuggestionVisible = mentionDropdown.style.display !== "none" && suggestionFiles.length > 0;
+
+        if (isSuggestionVisible) {
+          if (event.key === "ArrowDown") {
+            event.preventDefault();
+            selectedSuggestionIndex = (selectedSuggestionIndex + 1) % suggestionFiles.length;
+            const items = mentionDropdown.querySelectorAll(".editing-toolbar-ai-inline-prompt-mention-item");
+            items.forEach((item, index) => {
+              item.classList.toggle("selected", index === selectedSuggestionIndex);
+            });
+            items[selectedSuggestionIndex]?.scrollIntoView({ block: "nearest" });
+            return;
+          }
+
+          if (event.key === "ArrowUp") {
+            event.preventDefault();
+            selectedSuggestionIndex = (selectedSuggestionIndex - 1 + suggestionFiles.length) % suggestionFiles.length;
+            const items = mentionDropdown.querySelectorAll(".editing-toolbar-ai-inline-prompt-mention-item");
+            items.forEach((item, index) => {
+              item.classList.toggle("selected", index === selectedSuggestionIndex);
+            });
+            items[selectedSuggestionIndex]?.scrollIntoView({ block: "nearest" });
+            return;
+          }
+
+          if (event.key === "Tab") {
+            event.preventDefault();
+            if (suggestionFiles[selectedSuggestionIndex]) {
+              void selectSuggestion(suggestionFiles[selectedSuggestionIndex]);
+            }
+            return;
+          }
+
+          if (event.key === "Enter" && !event.shiftKey && !event.metaKey && !event.ctrlKey) {
+            event.preventDefault();
+            if (suggestionFiles[selectedSuggestionIndex]) {
+              void selectSuggestion(suggestionFiles[selectedSuggestionIndex]);
+            }
+            return;
+          }
+        }
+
         if (event.key === "Escape") {
           event.preventDefault();
-          closePrompt();
+          if (isSuggestionVisible) {
+            mentionDropdown.style.display = "none";
+          } else {
+            closePrompt();
+          }
           return;
         }
 
@@ -923,6 +1267,14 @@ export class AIEditorManager {
       this.inlineCustomPromptCleanup = [
         () => win.removeEventListener("resize", reposition),
         () => doc.removeEventListener("scroll", reposition, true),
+        () => dragHandle.removeEventListener('mousedown', onDragStart as EventListener),
+        () => titleEl.removeEventListener('mousedown', onDragStart as EventListener),
+        () => dragHandle.removeEventListener('touchstart', onDragStart as EventListener),
+        () => titleEl.removeEventListener('touchstart', onDragStart as EventListener),
+        () => doc.removeEventListener('mousemove', onDrag as EventListener),
+        () => doc.removeEventListener('touchmove', onDrag as EventListener),
+        () => doc.removeEventListener('mouseup', onDragEnd),
+        () => doc.removeEventListener('touchend', onDragEnd),
       ];
 
       this.inlineCustomPromptEl = promptEl;
