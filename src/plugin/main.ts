@@ -367,12 +367,12 @@ export default class editingToolbarPlugin extends Plugin {
     ];
 
     const rewriteActions: EditorContextMenuAction[] = [
+      { title: t("AI Custom Rewrite"), commandId: "ai-rewrite-custom" },
       { title: t("Improve writing"), commandId: "ai-rewrite-improve" },
       { title: t("Fix spelling & grammar"), commandId: "ai-rewrite-fix-grammar" },
       { title: t("Summarize"), commandId: "ai-rewrite-summarize" },
       { title: t("Explain this"), commandId: "ai-rewrite-explain" },
       { title: t("Continue writing"), commandId: "ai-rewrite-continue" },
-      { title: t("AI Custom Rewrite"), commandId: "ai-rewrite-custom" },
       { title: t("Convert to list"), commandId: "ai-toolbox-list" },
       { title: t("Convert to table"), commandId: "ai-toolbox-table" },
       { title: t("Generate frontmatter"), commandId: "ai-toolbox-frontmatter" },
@@ -385,8 +385,8 @@ export default class editingToolbarPlugin extends Plugin {
 
     return [
       ...primaryActions,
+       { title: t("AI Custom Rewrite"), commandId: "ai-rewrite-custom" },
       { title: t("Continue writing"), commandId: "ai-rewrite-continue" },
-      { title: t("AI Custom Rewrite"), commandId: "ai-rewrite-custom" },
       { title: t("Generate frontmatter"), commandId: "ai-toolbox-frontmatter" },
       { title: t("Convert to canvas"), commandId: "ai-toolbox-canvas" },
     ];

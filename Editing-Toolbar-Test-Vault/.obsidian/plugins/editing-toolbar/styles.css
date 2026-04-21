@@ -691,7 +691,10 @@ body:has(.workspace-leaf.mod-active .cm-ai-loading, .workspace-leaf.mod-active .
   backdrop-filter: blur(8px);
   overflow: hidden;
 }
-
+.editing-toolbar-ai-inline-prompt button
+{
+    box-shadow: none!important;
+}
 @media (max-width: 768px) {
   .editing-toolbar-ai-inline-prompt {
     width: calc(100vw - 16px);
@@ -820,7 +823,7 @@ body:has(.workspace-leaf.mod-active .cm-ai-loading, .workspace-leaf.mod-active .
   min-height: 56px;
   max-height: 240px;
   resize: none;
-  padding: 8px 32px 8px 10px;
+  padding: 8px 42px 8px 10px;
   border: 1px solid var(--background-modifier-border);
   border-radius: 8px;
   background: var(--background-secondary);
@@ -956,25 +959,41 @@ body:has(.workspace-leaf.mod-active .cm-ai-loading, .workspace-leaf.mod-active .
 }
 
 .editing-toolbar-ai-inline-prompt-send-btn {
+  position: absolute;
+  bottom: 6px;
+  right: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 22px;
+  height: 22px;
   padding: 0;
   border: none;
-  border-radius: 8px;
+  border-radius: 6px;
   background: var(--interactive-accent);
   color: var(--text-on-accent);
   cursor: pointer;
   transition: all 0.15s ease;
   flex-shrink: 0;
+  z-index: 1;
 }
 
 @media (max-width: 768px) {
   .editing-toolbar-ai-inline-prompt-send-btn {
-    width: 40px;
-    height: 40px;
+    width: 32px;
+    height: 32px;
+  }
+
+  .editing-toolbar-ai-inline-prompt-send-btn svg {
+    width: 14px;
+    height: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .editing-toolbar-ai-inline-prompt-send-btn {
+    width: 36px;
+    height: 36px;
   }
 
   .editing-toolbar-ai-inline-prompt-send-btn svg {
@@ -983,26 +1002,15 @@ body:has(.workspace-leaf.mod-active .cm-ai-loading, .workspace-leaf.mod-active .
   }
 }
 
-@media (max-width: 480px) {
-  .editing-toolbar-ai-inline-prompt-send-btn {
-    width: 44px;
-    height: 44px;
-  }
-
-  .editing-toolbar-ai-inline-prompt-send-btn svg {
-    width: 18px;
-    height: 18px;
-  }
-}
-
 .editing-toolbar-ai-inline-prompt-send-btn:hover:not(:disabled) {
   background: var(--interactive-accent-hover);
-  transform: scale(1.05);
+  transform: scale(1.08);
 }
 
 .editing-toolbar-ai-inline-prompt-send-btn:disabled {
-  opacity: 0.4;
+  opacity: 0.3;
   cursor: not-allowed;
+  background: var(--background-modifier-border);
 }
 
 .editing-toolbar-ai-inline-prompt-hint {
@@ -1082,6 +1090,8 @@ body:has(.workspace-leaf.mod-active .cm-ai-loading, .workspace-leaf.mod-active .
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  box-shadow: none!important;
+  
 }
 
 .editing-toolbar-ai-inline-prompt-context-remove:hover {

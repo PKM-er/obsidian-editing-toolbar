@@ -400,7 +400,73 @@ export class editingToolbarSettingTab extends PluginSettingTab {
           this.triggerRefresh();
         }));
 
-  
+    // Custom background and font color settings
+    const paintbrushContainer = containerEl.createDiv('custom-paintbrush-container');
+    paintbrushContainer.style.padding = '16px';
+    paintbrushContainer.style.borderRadius = '8px';
+    paintbrushContainer.style.backgroundColor = 'var(--background-secondary)';
+    paintbrushContainer.style.marginBottom = '20px';
+    new Setting(paintbrushContainer)
+      .setName(t('🎨 Set Custom Background'))
+      .setDesc(t('Click on the picker to adjust the color'))
+      .setClass('custom_bg')
+      .then((setting) => {
+        const pickerContainer = setting.controlEl.createDiv({ cls: "pickr-container" });
+
+        for (let i = 0; i < 5; i++) {
+          const pickerEl = pickerContainer.createDiv({ cls: "picker" });
+
+          const pickr = Pickr.create(
+            getPickrSettings({
+              isView: false,
+              el: pickerEl,
+              containerEl: pickerContainer,
+              swatches: [
+                '#FFB78B8C',
+                '#CDF4698C',
+                '#A0CCF68C',
+                '#F0A7D88C',
+                '#ADEFEF8C',
+              ],
+              opacity: true,
+              defaultColor: (this.plugin.settings as any)[`custom_bg${i + 1}`] || '#000000'
+            })
+          );
+          this.setupPickrEvents(pickr, `custom_bg${i + 1}`, 'background-color');
+          this.pickrs.push(pickr);
+        }
+      });
+    new Setting(paintbrushContainer)
+      .setName(t('🖌️ Set Custom Font Color'))
+      .setDesc(t('Click on the picker to adjust the color'))
+      .setClass('custom_font')
+      .then((setting) => {
+        const pickerContainer = setting.controlEl.createDiv({ cls: "pickr-container" });
+
+        for (let i = 0; i < 5; i++) {
+          const pickerEl = pickerContainer.createDiv({ cls: "picker" });
+
+          const pickr = Pickr.create(
+            getPickrSettings({
+              isView: false,
+              el: pickerEl,
+              containerEl: pickerContainer,
+              swatches: [
+                '#D83931',
+                '#DE7802',
+                '#245BDB',
+                '#6425D0',
+                '#646A73',
+              ],
+              opacity: true,
+              defaultColor: (this.plugin.settings as any)[`custom_fc${i + 1}`] || '#000000'
+            })
+          );
+          this.setupPickrEvents(pickr, `custom_fc${i + 1}`, 'color');
+          this.pickrs.push(pickr);
+        }
+      });
+
   }
   private displayAppearanceSettings(containerEl: HTMLElement): void {
 
@@ -911,71 +977,8 @@ export class editingToolbarSettingTab extends PluginSettingTab {
       (this.plugin.settings.positionStyle as ToolbarStyleKey) ||
       "top";
     const appearanceBucket = this.getAppearanceBucket(editingStyle);
-    const paintbrushContainer = containerEl.createDiv('custom-paintbrush-container');
-    paintbrushContainer.style.padding = '16px';
-    paintbrushContainer.style.borderRadius = '8px';
-    paintbrushContainer.style.backgroundColor = 'var(--background-secondary)';
-    paintbrushContainer.style.marginBottom = '20px';
-    new Setting(paintbrushContainer)
-      .setName(t('🎨 Set Custom Background'))
-      .setDesc(t('Click on the picker to adjust the color'))
-      .setClass('custom_bg')
-      .then((setting) => {
-        const pickerContainer = setting.controlEl.createDiv({ cls: "pickr-container" });
-
-        for (let i = 0; i < 5; i++) {
-          const pickerEl = pickerContainer.createDiv({ cls: "picker" });
-
-          const pickr = Pickr.create(
-            getPickrSettings({
-              isView: false,
-              el: pickerEl,
-              containerEl: pickerContainer,
-              swatches: [
-                '#FFB78B8C',
-                '#CDF4698C',
-                '#A0CCF68C',
-                '#F0A7D88C',
-                '#ADEFEF8C',
-              ],
-              opacity: true,
-              defaultColor: (this.plugin.settings as any)[`custom_bg${i + 1}`] || '#000000'
-            })
-          );
-          this.setupPickrEvents(pickr, `custom_bg${i + 1}`, 'background-color');
-          this.pickrs.push(pickr);
-        }
-      });
-    new Setting(paintbrushContainer)
-      .setName(t('🖌️ Set Custom Font Color'))
-      .setDesc(t('Click on the picker to adjust the color'))
-      .setClass('custom_font')
-      .then((setting) => {
-        const pickerContainer = setting.controlEl.createDiv({ cls: "pickr-container" });
-
-        for (let i = 0; i < 5; i++) {
-          const pickerEl = pickerContainer.createDiv({ cls: "picker" });
-
-          const pickr = Pickr.create(
-            getPickrSettings({
-              isView: false,
-              el: pickerEl,
-              containerEl: pickerContainer,
-              swatches: [
-                '#D83931',
-                '#DE7802',
-                '#245BDB',
-                '#6425D0',
-                '#646A73',
-              ],
-              opacity: true,
-              defaultColor: (this.plugin.settings as any)[`custom_fc${i + 1}`] || '#000000'
-            })
-          );
-          this.setupPickrEvents(pickr, `custom_fc${i + 1}`, 'color');
-          this.pickrs.push(pickr);
-        }
-      });
+   
+   
     const toolbarContainer = containerEl.createDiv('custom-toolbar-container');
     toolbarContainer.style.padding = '16px';
     toolbarContainer.style.borderRadius = '8px';
@@ -2211,7 +2214,6 @@ export class editingToolbarSettingTab extends PluginSettingTab {
       variablesInfo.innerHTML = `
         <strong>可用变量:</strong><br>
         <code>{{selection}}</code> - 选中文本 |
-        <code>{{file:name}}</code> - 文件名 |
         <code>{{file:path}}</code> - 文件路径 |
         <code>{{file:content}}</code> - 文档全文<br>
         <code>{{date}}</code> - 日期 |

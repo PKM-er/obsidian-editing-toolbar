@@ -165,8 +165,14 @@ export const DEFAULT_PKMER_AUTH_SETTINGS: PKMerAuthSettings = {
 export const DEFAULT_CUSTOM_PROMPT_TEMPLATES: CustomPromptTemplate[] = [
   {
     id: "template-demo-variables",
-    name: "📝 变量示例",
-    prompt: "分析 {{file:name}} 的内容结构,重点关注:\n{{selection}}\n\n请提供:\n1. 内容概要\n2. 关键要点\n3. 改进建议",
+    name: "📝 总结要点",
+    prompt: "分析 {{file:content}} 的内容结构,重点关注:\n{{selection}}\n\n请提供:\n1. 内容概要\n2. 关键要点\n3. 改进建议",
+    icon: "lucide-sparkles"
+  },
+{
+    id: "template-task-variables",
+    name: "提炼任务",
+    prompt: "当前日期{{date}}，从 {{file:content}} 中提取所有待办事项，重点关注:\n{{selection}}\n\n请严格按 Obsidian Tasks 插件格式输出，每条任务单独一行：\n\n- [ ] 任务描述 ⏫/🔼/🔽/⏬ 优先级\n- [ ] 任务描述 📅 YYYY-MM-DD 截止日期\n- [ ] 任务描述 ⏰ YYYY-MM-DD HH:mm 提醒时间\n- [ ] 任务描述 🛫 YYYY-MM-DD 开始日期\n- [ ] 任务描述 🔁 every day/week/month 重复周期\n- [ ] 任务描述 #标签 #项目名\n\n提取规则：\n1. 如果原文提到\"紧急/马上/立即/今天\"，添加 ⏫（最高优先级）\n2. 如果提到\"明天/本周/尽快\"，添加 🔼（高优先级）\n3. 如果提到具体日期，转换为 📅 YYYY-MM-DD 格式\n4. 如果提到时间，转换为 ⏰ YYYY-MM-DD HH:mm 格式\n5. 如果提到周期性工作，添加 🔁 every week/month\n6. 为每个任务添加合适的标签（如 #工作 #会议 #跟进）\n\n示例输出：\n- [ ] 完成项目报告 ⏫ 📅 2026-04-25 #工作\n- [ ] 每周团队例会 🔁 every week on Monday ⏰ 09:00 #会议\n- [ ] 跟进客户需求 🔼 📅 2026-04-23 #跟进",
     icon: "lucide-sparkles"
   },
   {
@@ -182,27 +188,21 @@ export const DEFAULT_CUSTOM_PROMPT_TEMPLATES: CustomPromptTemplate[] = [
     icon: "lucide-file-code"
   },
   {
-    id: "template-regex",
-    name: "生成正则表达式",
-    prompt: "帮我生成一个正则表达式来处理文本。要求:\n1. 提供完整的正则表达式\n2. 说明匹配规则和捕获组\n3. 给出 JavaScript 使用示例\n4. 提供测试用例\n\n需要匹配的模式:",
-    icon: "lucide-regex"
-  },
-  {
     id: "template-mermaid",
     name: "绘制 Mermaid 图表",
-    prompt: "根据我的描述,生成 Mermaid 图表代码。要求:\n1. 选择合适的图表类型(流程图/时序图/类图/甘特图等)\n2. 使用清晰的节点命名\n3. 添加必要的样式和注释\n4. 确保语法正确可渲染\n\n图表需求:",
+    prompt: "根据我选中的文本内容 {{selection}},生成 Mermaid 图表代码。要求:\n1. 选择合适的图表类型(流程图/时序图/类图/甘特图等)\n2. 使用清晰的节点命名\n3. 添加必要的样式和注释\n4. 确保语法正确可渲染\n",
     icon: "lucide-workflow"
   },
   {
     id: "template-metadata",
-    name: "设计 YAML Frontmatter",
-    prompt: "帮我设计一个适合当前笔记的 YAML Frontmatter 元数据结构。要求:\n1. 根据笔记内容推荐合适的字段\n2. 包含常用字段(tags, aliases, date等)\n3. 添加自定义字段建议\n4. 注释说明每个字段的用途\n\n笔记类型:",
+    name: "设计 YAML",
+    prompt: "根据当前笔记内容 {{file:content}},帮我设计一个适合当前笔记的 YAML Frontmatter 元数据结构。要求:\n1. 根据笔记内容推荐合适的字段\n2. 包含常用字段(tags, aliases, date等)\n3. 添加自定义字段建议\n4. 注释说明每个字段的用途\n\n笔记类型:",
     icon: "lucide-file-json"
   },
   {
     id: "template-callout",
-    name: "创建高级 Callout",
-    prompt: "帮我创建一个 Obsidian Callout 块。要求:\n1. 选择合适的 callout 类型(note/tip/warning/danger等)\n2. 支持嵌套和折叠\n3. 包含标题和内容\n4. 可以包含代码块或列表\n\n内容需求:",
+    name: "使用Callout包装",
+    prompt: "根据我选中的文本内容 {{selection}},帮我使用 Obsidian Callout 块进行包装。要求:\n1. 选择合适的 callout 类型(note/tip/warning/danger等)\n2. 支持嵌套和折叠\n3. 包含标题和内容\n4. 可以包含代码块或列表\n\n内容需求:",
     icon: "lucide-message-square"
   }
 ];

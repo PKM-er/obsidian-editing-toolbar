@@ -640,7 +640,7 @@ export default {
   'Explain this': 'Explain this',
   'Summarize': 'Summarize',
   'Continue writing': 'Continue writing',
-  'Press Enter to send, Shift+Enter for newline, Esc to close.': 'Press Enter to send, Shift+Enter for newline, Esc to close.',
+  'Press Enter to send, Shift+Enter for newline, Esc to close.': 'Press Enter to send, Shift+Enter for newline, Esc to close.Type [[]] to reference document content.',
   'Enter inserts a newline. Tap Send to submit.': 'Enter inserts a newline. Tap Send to submit.',
   'Open AI Settings': 'Open AI Settings',
   'Trigger AI Inline Completion': 'Trigger AI Inline Completion',

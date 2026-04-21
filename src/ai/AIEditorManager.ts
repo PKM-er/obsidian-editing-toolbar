@@ -12,6 +12,7 @@ import { getAIToolboxArtifactKind, getAIToolboxPrompt } from "./toolboxActions";
 import { DEFAULT_REWRITE_ACTIONS, type RewriteArtifactKind, type RewriteArtifactRequest, type RewriteArtifactResult, type RewriteInstruction } from "./types";
 import { createAIEditorExtensions, startRewriteEffect, triggerCompletionEffect } from "./extensions";
 import { shouldShowAIFeatures } from "src/util/locale";
+import { compactContent } from "./contextCompactor";
 
 interface FrontmatterStats {
   keyCounts: Map<string, number>;
@@ -306,7 +307,7 @@ export class AIEditorManager {
     editor?: Editor | null,
     instruction: RewriteInstruction = "improve",
     customPrompt?: string,
-    options?: { artifactKind?: RewriteArtifactKind },
+    options?: { artifactKind?: RewriteArtifactKind; additionalContext?: string; preferBlockWhenCollapsed?: boolean },
   ): Promise<boolean> {
     if (!this.plugin.settings.ai.enabled) {
       new Notice(t("AI features are disabled in settings."));
@@ -332,10 +333,12 @@ export class AIEditorManager {
       return false;
     }
      const rewriteContext = resolveRewriteContext(view, from, to, {
-      preferBlockWhenCollapsed: instruction === "custom",
+      preferBlockWhenCollapsed: options?.preferBlockWhenCollapsed ?? instruction === "custom",
     });
 
-     
+    const finalContext = options?.additionalContext
+      ? `${rewriteContext.context}\n\n${options.additionalContext}`
+      : rewriteContext.context;
 
     view.dispatch({
       effects: startRewriteEffect.of({
@@ -344,7 +347,7 @@ export class AIEditorManager {
         originalText: rewriteContext.selectedText,
         instruction,
         customPrompt,
-        context: rewriteContext.context,
+        context: finalContext,
         artifactKind: options?.artifactKind,
       }),
     });
@@ -749,7 +752,7 @@ export class AIEditorManager {
       const textarea = doc.createElement("textarea");
       textarea.className = "editing-toolbar-ai-inline-prompt-input";
       textarea.placeholder = t("Describe what you want AI to do...");
-      textarea.rows = 2;
+      textarea.rows = 3;
       textarea.wrap = "soft";
 
       const historyBtn = doc.createElement("button");
@@ -765,8 +768,13 @@ export class AIEditorManager {
       const mentionDropdown = doc.createElement("div");
       mentionDropdown.className = "editing-toolbar-ai-inline-prompt-mention-dropdown";
       mentionDropdown.style.display = "none";
+   const sendBtn = doc.createElement("button");
+      sendBtn.type = "button";
+      sendBtn.className = "editing-toolbar-ai-inline-prompt-send-btn";
+      sendBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>`;
+      sendBtn.title = t("Send" as any);
 
-      inputWrapper.append(textarea, historyBtn, historyDropdown, mentionDropdown);
+      inputWrapper.append(textarea, historyBtn, historyDropdown, mentionDropdown,sendBtn);
 
       const templatesContainer = doc.createElement("div");
       templatesContainer.className = "editing-toolbar-ai-inline-prompt-templates";
@@ -775,34 +783,48 @@ export class AIEditorManager {
 
       const replaceTemplateVariables = (template: string): string => {
         const currentFile = this.plugin.app.workspace.getActiveFile();
+        const currentEditor = this.resolveEditor();
         const now = new Date();
 
-        if (template.includes("{{selection}}") && initialSelection) {
+        const currentSelection = currentEditor?.getSelection() || "";
+        const currentContent = currentEditor?.getValue() || "";
+
+        if (template.includes("{{selection}}") && currentSelection) {
           if (!contextList.some(c => c.type === "selection")) {
             contextList.push({
               type: "selection",
-              content: initialSelection,
-              label: t("Selected text")
+              content: currentSelection,
+              label: "📝 Selected text"
             });
+          } else {
+            const selectionCtx = contextList.find(c => c.type === "selection");
+            if (selectionCtx) {
+              selectionCtx.content = currentSelection;
+            }
           }
         }
 
         if (template.includes("{{file:content}}")) {
-          const fileContent = editor.getValue();
+          const compactedContent = compactContent(currentContent);
           if (!contextList.some(c => c.type === "doc")) {
             contextList.push({
               type: "doc",
-              content: fileContent,
+              content: compactedContent,
               label: `📋 ${currentFile?.basename || "Current document"}`
             });
+          } else {
+            const docCtx = contextList.find(c => c.type === "doc");
+            if (docCtx) {
+              docCtx.content = compactedContent;
+              docCtx.label = `📋 ${currentFile?.basename || "Current document"}`;
+            }
           }
         }
 
         return template
-          .replace(/\{\{selection\}\}/g, initialSelection || "")
-          .replace(/\{\{file:name\}\}/g, currentFile?.basename || "")
+          .replace(/\{\{selection\}\}/g, currentSelection ? "[📝 Selected text]" : "")
           .replace(/\{\{file:path\}\}/g, currentFile?.path || "")
-          .replace(/\{\{file:content\}\}/g, "")
+          .replace(/\{\{file:content\}\}/g, currentFile?.basename ? `[[${currentFile.basename}]]` : "")
           .replace(/\{\{date\}\}/g, now.toLocaleDateString())
           .replace(/\{\{time\}\}/g, now.toLocaleTimeString())
           .replace(/\{\{datetime\}\}/g, now.toLocaleString())
@@ -815,22 +837,21 @@ export class AIEditorManager {
         templateBtn.className = "editing-toolbar-ai-inline-prompt-template-btn";
         templateBtn.textContent = template.name;
         templateBtn.title = template.prompt;
-        templateBtn.addEventListener("click", () => {
+        templateBtn.addEventListener("click", async () => {
           textarea.value = replaceTemplateVariables(template.prompt);
           renderContextItems();
           resizeTextarea();
           updateSendButtonState();
           textarea.focus();
-          void syncLinkedNotesContext();
+          // 等待双链内容加载完成
+          await syncLinkedNotesContext();
         });
         templatesContainer.appendChild(templateBtn);
       });
 
-       
-
-      const contextStats = doc.createElement("div");
-      contextStats.className = "editing-toolbar-ai-inline-prompt-context-stats";
-      contextStats.style.display = "none";
+      const contextContainer = doc.createElement("div");
+      contextContainer.className = "editing-toolbar-ai-inline-prompt-context";
+      contextContainer.style.display = "none";
 
       const contextList: Array<{type: string, content: string, label: string}> = [];
 
@@ -838,49 +859,56 @@ export class AIEditorManager {
         contextList.push({
           type: "selection",
           content: initialSelection,
-          label: t("Selected text")
+          label: "📝 Selected text"
         });
       }
 
-      const estimateTokens = (text: string): number => {
-        return Math.ceil(text.length / 4);
-      };
-
-      const updateContextStats = () => {
+      const renderContextItems = () => {
+        contextContainer.empty();
         if (contextList.length === 0) {
-          contextStats.style.display = "none";
+          contextContainer.style.display = "none";
           return;
         }
+        contextContainer.style.display = "block";
+        contextList.forEach((ctx, index) => {
+          const item = doc.createElement("div");
+          item.className = "editing-toolbar-ai-inline-prompt-context-item";
 
-        const totalChars = contextList.reduce((sum, ctx) => sum + ctx.content.length, 0);
-        const totalTokens = estimateTokens(contextList.map(ctx => ctx.content).join("\n"));
+          const label = doc.createElement("span");
+          label.className = "editing-toolbar-ai-inline-prompt-context-label";
+          label.textContent = ctx.label;
 
-        contextStats.style.display = "flex";
-        contextStats.innerHTML = `
-          <span class="editing-toolbar-ai-inline-prompt-context-stats-item">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-            </svg>
-            ${contextList.length} ${contextList.length === 1 ? 'item' : 'items'}
-          </span>
-          <span class="editing-toolbar-ai-inline-prompt-context-stats-item">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M4 7h16M4 12h16M4 17h10"/>
-            </svg>
-            ${totalChars.toLocaleString()} chars
-          </span>
-          <span class="editing-toolbar-ai-inline-prompt-context-stats-item">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>
-            </svg>
-            ~${totalTokens.toLocaleString()} tokens
-          </span>
-        `;
-      };
+          const preview = doc.createElement("span");
+          preview.className = "editing-toolbar-ai-inline-prompt-context-preview";
+          const previewText = ctx.content.substring(0, 50).replace(/\n/g, " ");
+          const suffix = ctx.content.length > 50 ? "..." : "";
+          const charCount = `(${ctx.content.length.toLocaleString()} chars)`;
+          preview.textContent = `${previewText}${suffix} ${charCount}`;
+          preview.title = ctx.content.length > 100 ? ctx.content.substring(0, 100) + "..." : ctx.content;
 
-      const renderContextItems = () => {
-         
-        updateContextStats();
+          const removeBtn = doc.createElement("button");
+          removeBtn.type = "button";
+          removeBtn.className = "editing-toolbar-ai-inline-prompt-context-remove";
+          removeBtn.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>`;
+          removeBtn.addEventListener("click", () => {
+            // 从上下文列表移除
+            contextList.splice(index, 1);
+
+            // 同步删除输入框中的占位符
+            if (ctx.type === "selection") {
+              textarea.value = textarea.value.replace("[📝 Selected text]", "");
+            } else if (ctx.type === "note" || ctx.type === "doc") {
+              // 提取文件名并删除对应的双链
+              const fileName = ctx.label.replace(/^📄 |^📋 /, "");
+              textarea.value = textarea.value.replace(`[[${fileName}]]`, "");
+            }
+
+            renderContextItems();
+          });
+
+          item.append(label, preview, removeBtn);
+          contextContainer.appendChild(item);
+        });
       };
 
       renderContextItems();
@@ -894,14 +922,10 @@ export class AIEditorManager {
         : t("Press Enter to send, Shift+Enter for newline, Esc to close." as any);
       hint.textContent = promptHint  ;
 
-      const sendBtn = doc.createElement("button");
-      sendBtn.type = "button";
-      sendBtn.className = "editing-toolbar-ai-inline-prompt-send-btn";
-      sendBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>`;
-      sendBtn.title = t("Send" as any);
+   
       footer.appendChild(hint);
-      footer.appendChild(sendBtn);
-      promptEl.append(header, inputWrapper, templatesContainer, contextStats, footer);
+     
+      promptEl.append(header, inputWrapper, templatesContainer, contextContainer, footer);
       doc.body.appendChild(promptEl);
 
       let isDragging = false;
@@ -977,7 +1001,7 @@ export class AIEditorManager {
       };
 
       const submitPrompt = async () => {
-        const prompt = textarea.value.trim();
+        let prompt = textarea.value.trim();
         if (!prompt) {
           return;
         }
@@ -987,37 +1011,48 @@ export class AIEditorManager {
           return;
         }
 
-        this.addToHistory(prompt);
+        const activePromptEditor = this.inlineCustomPromptEditor ?? editor;
+        const hasSelectedText = activePromptEditor.getSelection().trim().length > 0;
+        const hasReferencedNotes = /\[\[[^\]]+\]\]/.test(prompt);
+        const shouldPreferBlockFallback = !hasSelectedText && !hasReferencedNotes;
 
-        const linkMatches = prompt.matchAll(/\[\[([^\]]+)\]\]/g);
-        const linkedContexts: Array<{label: string, content: string}> = [];
+        // 移除占位符，保留用户指令语义
+        const cleanPrompt = prompt
+          .replace(/\[\[([^\]]+)\]\]/g, "$1")
+          .replace(/\[📝 Selected text\]/g, "选中文本")
+          .trim();
 
-        for (const match of linkMatches) {
-          const linkText = match[1];
-          const file = this.plugin.app.metadataCache.getFirstLinkpathDest(linkText, "");
-          if (file) {
-            try {
-              const content = await this.plugin.app.vault.cachedRead(file);
-              linkedContexts.push({
-                label: `📄 ${file.basename}`,
-                content: content
-              });
-            } catch (e) {
-              console.error(`Failed to read linked file: ${linkText}`, e);
-            }
+        // 只保存非空的历史记录
+        if (cleanPrompt) {
+          this.addToHistory(cleanPrompt);
+        }
+
+        const effectiveContextList = contextList.filter((ctx) => {
+          if (!ctx.content.trim()) {
+            return false;
           }
-        }
 
-        const allContexts = [...contextList, ...linkedContexts];
-        let finalPrompt = prompt;
-        if (allContexts.length > 0) {
-          const contextText = allContexts.map(ctx => {
-            return `\n\n<context source="${ctx.label}">\n${ctx.content}\n</context>`;
-          }).join("");
-          finalPrompt = prompt + contextText;
-        }
+          if (hasSelectedText && ctx.type === "selection") {
+            return false;
+          }
 
-        const result = await this.startRewrite(this.inlineCustomPromptEditor ?? editor, "custom", finalPrompt);
+          return true;
+        });
+
+        // contextList 已经包含所有上下文（通过 syncLinkedNotesContext 和模板变量添加）
+        const contextText = effectiveContextList.length > 0
+          ? effectiveContextList.map(ctx => `<context source="${ctx.label}">\n${ctx.content}\n</context>`).join("\n\n")
+          : "";
+
+        const result = await this.startRewrite(
+          activePromptEditor,
+          "custom",
+          cleanPrompt,
+          {
+            additionalContext: contextText,
+            preferBlockWhenCollapsed: shouldPreferBlockFallback,
+          }
+        );
         if (result) {
           this.closeInlineCustomPrompt();
         }
@@ -1038,12 +1073,14 @@ export class AIEditorManager {
             historyItem.className = "editing-toolbar-ai-inline-prompt-history-item";
             historyItem.textContent = item.length > 50 ? item.substring(0, 50) + "..." : item;
             historyItem.title = item;
-            historyItem.addEventListener("click", () => {
+            historyItem.addEventListener("click", async () => {
               textarea.value = item;
               historyDropdown.style.display = "none";
               resizeTextarea();
               updateSendButtonState();
               textarea.focus();
+              // 重新加载双链内容
+              await syncLinkedNotesContext();
             });
             historyDropdown.appendChild(historyItem);
           });
@@ -1097,6 +1134,7 @@ export class AIEditorManager {
         const linkMatches = Array.from(text.matchAll(/\[\[([^\]]+)\]\]/g));
         const linkedFileNames = new Set(linkMatches.map(m => m[1]));
 
+        // 移除不再存在的双链对应的上下文
         const existingLinkedNotes = contextList.filter(c => c.type === "note");
         for (const ctx of existingLinkedNotes) {
           const fileName = ctx.label.replace("📄 ", "");
@@ -1108,15 +1146,23 @@ export class AIEditorManager {
           }
         }
 
+        // 添加新的双链对应的上下文
         for (const linkText of linkedFileNames) {
-          if (contextList.some(c => c.type === "note" && c.label.includes(linkText))) {
+          // 检查是否已存在(包括 type="note" 和 type="doc")
+          const alreadyExists = contextList.some(c =>
+            (c.type === "note" || c.type === "doc") &&
+            (c.label.includes(linkText) || c.label.replace(/^📄 |^📋 /, "") === linkText)
+          );
+
+          if (alreadyExists) {
             continue;
           }
 
           const file = this.plugin.app.metadataCache.getFirstLinkpathDest(linkText, "");
           if (file) {
             try {
-              const content = await this.plugin.app.vault.cachedRead(file);
+              const rawContent = await this.plugin.app.vault.cachedRead(file);
+              const content = compactContent(rawContent);
               contextList.push({
                 type: "note",
                 content: content,
@@ -1156,13 +1202,21 @@ export class AIEditorManager {
           linkStartPos = textBeforeCursor.lastIndexOf("[[");
           const query = linkMatch[1].toLowerCase();
 
+          const currentFile = this.plugin.app.workspace.getActiveFile();
           const files = this.plugin.app.vault.getMarkdownFiles();
+
           const filtered = files.filter(f =>
             f.basename.toLowerCase().includes(query) ||
             f.path.toLowerCase().includes(query)
-          ).slice(0, 10);
+          );
 
-          suggestionFiles = filtered;
+          filtered.sort((a, b) => {
+            if (currentFile && a.path === currentFile.path) return -1;
+            if (currentFile && b.path === currentFile.path) return 1;
+            return 0;
+          });
+
+          suggestionFiles = filtered.slice(0, 10);
           selectedSuggestionIndex = 0;
 
           if (filtered.length > 0) {
@@ -1188,12 +1242,61 @@ export class AIEditorManager {
         }
       };
 
-      textarea.addEventListener("input", () => {
+      const syncPlaceholdersWithContext = () => {
+        const text = textarea.value;
+
+        // 检查 [📝 Selected text] 占位符
+        const hasSelectionPlaceholder = text.includes("[📝 Selected text]");
+        const hasSelectionContext = contextList.some(c => c.type === "selection");
+
+        if (!hasSelectionPlaceholder && hasSelectionContext) {
+          // 占位符被删除,移除上下文
+          const index = contextList.findIndex(c => c.type === "selection");
+          if (index > -1) {
+            contextList.splice(index, 1);
+            renderContextItems();
+          }
+        }
+      };
+
+      const normalizeLinkTriggerInput = (value: string, cursorPos: number): { value: string; cursorPos: number } => {
+        let normalizedValue = value;
+        let normalizedCursorPos = cursorPos;
+
+        if (normalizedValue.includes("【【")) {
+          const beforeCursor = normalizedValue.substring(0, normalizedCursorPos);
+          const afterCursor = normalizedValue.substring(normalizedCursorPos);
+          const newBeforeCursor = beforeCursor.replace(/【【/g, "[[");
+          const newAfterCursor = afterCursor.replace(/【【/g, "[[");
+          const lengthDiff = beforeCursor.length - newBeforeCursor.length;
+
+          normalizedValue = newBeforeCursor + newAfterCursor;
+          normalizedCursorPos -= lengthDiff;
+        }
+
+        const openingBracketRun = normalizedValue.substring(0, normalizedCursorPos).match(/(?:\[|【){2,}$/);
+        if (openingBracketRun && openingBracketRun[0].includes("【")) {
+          const runStart = normalizedCursorPos - openingBracketRun[0].length;
+          normalizedValue = `${normalizedValue.substring(0, runStart)}[[${normalizedValue.substring(normalizedCursorPos)}`;
+          normalizedCursorPos = runStart + 2;
+        }
+
+        return { value: normalizedValue, cursorPos: normalizedCursorPos };
+      };
+
+      textarea.addEventListener("input", (e) => {
+        const normalized = normalizeLinkTriggerInput(textarea.value, textarea.selectionStart);
+
+        if (normalized.value !== textarea.value || normalized.cursorPos !== textarea.selectionStart) {
+          textarea.value = normalized.value;
+          textarea.setSelectionRange(normalized.cursorPos, normalized.cursorPos);
+        }
+
         resizeTextarea();
         updateSendButtonState();
-        reposition();
         updateLinkSuggestions();
         void syncLinkedNotesContext();
+        syncPlaceholdersWithContext();
       });
       textarea.addEventListener("keydown", (event) => {
         const isSuggestionVisible = mentionDropdown.style.display !== "none" && suggestionFiles.length > 0;

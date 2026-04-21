@@ -1649,7 +1649,7 @@ export function editingToolbarPopover(
                     const tabsContainer = app.setting.activeTab.containerEl.querySelector(".editing-toolbar-tabs");
                     if (tabsContainer) {
                       // 获取第二个标签页按钮(appearance)并触发点击
-                      const appearanceTab = tabsContainer.children[1] as HTMLElement;
+                      const appearanceTab = tabsContainer.children[0] as HTMLElement;
                       appearanceTab?.click();
 
                       // 等待标签页切换完成后定位到颜色设置
@@ -1732,7 +1732,7 @@ export function editingToolbarPopover(
                     const tabsContainer = app.setting.activeTab.containerEl.querySelector(".editing-toolbar-tabs");
                     if (tabsContainer) {
                       // 获取第二个标签页按钮(appearance)并触发点击
-                      const appearanceTab = tabsContainer.children[1] as HTMLElement;
+                      const appearanceTab = tabsContainer.children[0] as HTMLElement;
                       appearanceTab?.click();
 
                       // 等待标签页切换完成后定位到颜色设置
