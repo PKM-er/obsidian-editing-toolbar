@@ -681,40 +681,36 @@ body:has(.workspace-leaf.mod-active .cm-ai-loading, .workspace-leaf.mod-active .
 .editing-toolbar-ai-inline-prompt {
   position: fixed;
   z-index: 1001;
-  width: min(360px, calc(100vw - 24px));
-  padding: 10px;
-  border: 1px solid var(--background-modifier-border-hover);
-  border-radius: 14px;
+  width: min(420px, calc(100vw - 24px));
+  padding: 8px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 12px;
   background: var(--background-primary);
-  box-shadow: 0 16px 32px rgba(15, 23, 42, 0.16);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  backdrop-filter: blur(8px);
 }
-
 .editing-toolbar-ai-inline-prompt-header {
   display: flex;
-  align-items: center;
   justify-content: space-between;
   gap: 8px;
   margin-bottom: 8px;
 }
-
-.editing-toolbar-ai-inline-prompt-title {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--text-normal);
-}
-
 .editing-toolbar-ai-inline-prompt-close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
   padding: 0;
   border: none;
   border-radius: 6px;
   background: transparent;
   color: var(--text-muted);
   cursor: pointer;
+  z-index: 1;
 }
 
 .editing-toolbar-ai-inline-prompt-close:hover {
@@ -722,27 +718,185 @@ body:has(.workspace-leaf.mod-active .cm-ai-loading, .workspace-leaf.mod-active .
   color: var(--text-normal);
 }
 
+.editing-toolbar-ai-inline-prompt-settings {
+  position: absolute;
+  top: 8px;
+  right: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  z-index: 1;
+}
+
+.editing-toolbar-ai-inline-prompt-settings:hover {
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
+
+.editing-toolbar-ai-inline-prompt-input-wrapper {
+  position: relative;
+  margin-bottom: 6px;
+}
+
 .editing-toolbar-ai-inline-prompt-input {
   width: 100%;
-  min-height: 72px;
+  min-height: 56px;
+  max-height: 120px;
   resize: none;
-  padding: 10px 12px;
+  padding: 8px 32px 8px 10px;
   border: 1px solid var(--background-modifier-border);
-  border-radius: 10px;
+  border-radius: 8px;
   background: var(--background-secondary);
   color: var(--text-normal);
-  line-height: 1.5;
+  font-size: 13px;
+  line-height: 1.4;
 }
 
 .editing-toolbar-ai-inline-prompt-input:focus {
   outline: none;
   border-color: var(--interactive-accent);
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--interactive-accent) 28%, transparent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--interactive-accent) 15%, transparent);
+}
+
+.editing-toolbar-ai-inline-prompt-input::placeholder {
+  color: var(--text-faint);
+}
+
+.editing-toolbar-ai-inline-prompt-history-btn {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: none;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.editing-toolbar-ai-inline-prompt-history-btn:hover {
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
+
+.editing-toolbar-ai-inline-prompt-history-dropdown {
+  position: absolute;
+  top: 32px;
+  right: 0;
+  width: 100%;
+  max-height: 180px;
+  overflow-y: auto;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 6px;
+  background: var(--background-primary);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  z-index: 10;
+}
+
+.editing-toolbar-ai-inline-prompt-history-item {
+  padding: 6px 10px;
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--text-normal);
+  border-bottom: 1px solid var(--background-modifier-border);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: background 0.1s ease;
+}
+
+.editing-toolbar-ai-inline-prompt-history-item:last-child {
+  border-bottom: none;
+}
+
+.editing-toolbar-ai-inline-prompt-history-item:hover {
+  background: var(--background-modifier-hover);
+}
+
+.editing-toolbar-ai-inline-prompt-history-empty {
+  padding: 10px;
+  text-align: center;
+  font-size: 11px;
+  color: var(--text-faint);
+}
+
+.editing-toolbar-ai-inline-prompt-templates {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 6px;
+}
+ 
+.editing-toolbar-ai-inline-prompt-template-btn {
+    box-shadow: none !important;
+    padding: 0px 6px;
+    height: 22px;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 8px;
+    background: var(--background-secondary);
+    color: var(--text-muted);
+    font-size: 10px;
+    cursor: pointer;
+    transition: all 0.12s ease;
+    white-space: nowrap;
+}
+
+.editing-toolbar-ai-inline-prompt-template-btn:hover {
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+  border-color: var(--interactive-accent);
+  transform: translateY(-1px);
+}
+
+.editing-toolbar-ai-inline-prompt-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap:15px;
+}
+
+.editing-toolbar-ai-inline-prompt-send-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.editing-toolbar-ai-inline-prompt-send-btn:hover:not(:disabled) {
+  background: var(--interactive-accent-hover);
+  transform: scale(1.05);
+}
+
+.editing-toolbar-ai-inline-prompt-send-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 .editing-toolbar-ai-inline-prompt-hint {
-  margin-top: 8px;
-  font-size: 11px;
+   
+  font-size: 10px;
   color: var(--text-faint);
 }
 

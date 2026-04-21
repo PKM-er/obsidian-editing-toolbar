@@ -106,6 +106,13 @@ export interface PKMerModelRoutingSettings {
   artifact: string;
 }
 
+export interface CustomPromptTemplate {
+  id: string;
+  name: string;
+  prompt: string;
+  icon?: string;
+}
+
 export interface AIPluginSettings {
   enabled: boolean;
   consentAccepted: boolean;
@@ -123,6 +130,8 @@ export interface AIPluginSettings {
   pkmer: PKMerAuthSettings;
   enableCustomModel: boolean;
   customModel: CustomModelSettings;
+  customPromptHistory: string[];
+  customPromptTemplates: CustomPromptTemplate[];
 }
 
 export const PKMER_MODEL_OPTIONS = [
@@ -153,6 +162,45 @@ export const DEFAULT_PKMER_AUTH_SETTINGS: PKMerAuthSettings = {
   userInfo: null,
 };
 
+export const DEFAULT_CUSTOM_PROMPT_TEMPLATES: CustomPromptTemplate[] = [
+  {
+    id: "template-dataview",
+    name: "生成 Dataview",
+    prompt: "根据我的需求,帮我生成一个 Obsidian Dataview 查询代码块。要求:\n1. 使用 DataviewJS 或 DQL 语法\n2. 包含必要的字段筛选和排序\n3. 添加注释说明每个部分的作用\n4. 如果需要复杂逻辑,使用 DataviewJS\n\n我的需求:",
+    icon: "lucide-database"
+  },
+  {
+    id: "template-templater",
+    name: "设计 Templater 模板",
+    prompt: "帮我设计一个 Obsidian Templater 模板。要求:\n1. 使用 Templater 语法 (<%  %>)\n2. 包含动态日期、时间等变量\n3. 支持用户输入提示\n4. 添加必要的条件判断和循环\n5. 注释说明每个部分的用途\n\n模板用途:",
+    icon: "lucide-file-code"
+  },
+  {
+    id: "template-regex",
+    name: "生成正则表达式",
+    prompt: "帮我生成一个正则表达式来处理文本。要求:\n1. 提供完整的正则表达式\n2. 说明匹配规则和捕获组\n3. 给出 JavaScript 使用示例\n4. 提供测试用例\n\n需要匹配的模式:",
+    icon: "lucide-regex"
+  },
+  {
+    id: "template-mermaid",
+    name: "绘制 Mermaid 图表",
+    prompt: "根据我的描述,生成 Mermaid 图表代码。要求:\n1. 选择合适的图表类型(流程图/时序图/类图/甘特图等)\n2. 使用清晰的节点命名\n3. 添加必要的样式和注释\n4. 确保语法正确可渲染\n\n图表需求:",
+    icon: "lucide-workflow"
+  },
+  {
+    id: "template-metadata",
+    name: "设计 YAML Frontmatter",
+    prompt: "帮我设计一个适合当前笔记的 YAML Frontmatter 元数据结构。要求:\n1. 根据笔记内容推荐合适的字段\n2. 包含常用字段(tags, aliases, date等)\n3. 添加自定义字段建议\n4. 注释说明每个字段的用途\n\n笔记类型:",
+    icon: "lucide-file-json"
+  },
+  {
+    id: "template-callout",
+    name: "创建高级 Callout",
+    prompt: "帮我创建一个 Obsidian Callout 块。要求:\n1. 选择合适的 callout 类型(note/tip/warning/danger等)\n2. 支持嵌套和折叠\n3. 包含标题和内容\n4. 可以包含代码块或列表\n\n内容需求:",
+    icon: "lucide-message-square"
+  }
+];
+
 export const DEFAULT_AI_SETTINGS: AIPluginSettings = {
   enabled: false,
   consentAccepted: false,
@@ -176,6 +224,8 @@ export const DEFAULT_AI_SETTINGS: AIPluginSettings = {
     model: "",
     temperature: 0.2,
   },
+  customPromptHistory: [],
+  customPromptTemplates: DEFAULT_CUSTOM_PROMPT_TEMPLATES,
 };
 
 export const DEFAULT_REWRITE_ACTIONS: RewriteActionMeta[] = [

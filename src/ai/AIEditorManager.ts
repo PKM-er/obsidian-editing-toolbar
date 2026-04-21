@@ -722,50 +722,80 @@ export class AIEditorManager {
     if (!this.inlineCustomPromptEl) {
       const promptEl = doc.createElement("div");
       promptEl.className = "editing-toolbar-ai-inline-prompt";
-
       const header = doc.createElement("div");
       header.className = "editing-toolbar-ai-inline-prompt-header";
-
       const title = doc.createElement("div");
       title.className = "editing-toolbar-ai-inline-prompt-title";
       title.textContent = t("AI Custom Rewrite");
-
       const closeBtn = doc.createElement("button");
       closeBtn.type = "button";
       closeBtn.className = "editing-toolbar-ai-inline-prompt-close";
       closeBtn.title = t("Close" as any);
-      closeBtn.textContent = "×";
-
+      closeBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>`;
       header.append(title, closeBtn);
+      const settingsBtn = doc.createElement("button");
+      settingsBtn.type = "button";
+      settingsBtn.className = "editing-toolbar-ai-inline-prompt-settings";
+      settingsBtn.title = t("Manage Templates" as any);
+      settingsBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v6m0 6v6M4.22 4.22l4.24 4.24m5.08 5.08l4.24 4.24M1 12h6m6 0h6M4.22 19.78l4.24-4.24m5.08-5.08l4.24-4.24"/></svg>`;
+
+      const inputWrapper = doc.createElement("div");
+      inputWrapper.className = "editing-toolbar-ai-inline-prompt-input-wrapper";
 
       const textarea = doc.createElement("textarea");
       textarea.className = "editing-toolbar-ai-inline-prompt-input";
-      textarea.placeholder = t("Please enter your custom AI instruction");
-      textarea.rows = 3;
+      textarea.placeholder = t("Describe what you want AI to do...");
+      textarea.rows = 2;
       textarea.wrap = "soft";
 
+      const historyBtn = doc.createElement("button");
+      historyBtn.type = "button";
+      historyBtn.className = "editing-toolbar-ai-inline-prompt-history-btn";
+      historyBtn.title = t("History" as any);
+      historyBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg>`;
+
+      const historyDropdown = doc.createElement("div");
+      historyDropdown.className = "editing-toolbar-ai-inline-prompt-history-dropdown";
+      historyDropdown.style.display = "none";
+
+      inputWrapper.append(textarea, historyBtn, historyDropdown);
+
+      const templatesContainer = doc.createElement("div");
+      templatesContainer.className = "editing-toolbar-ai-inline-prompt-templates";
+
+      const templates = this.plugin.settings.ai.customPromptTemplates || [];
+      templates.slice(0, 9).forEach((template) => {
+        const templateBtn = doc.createElement("button");
+        templateBtn.type = "button";
+        templateBtn.className = "editing-toolbar-ai-inline-prompt-template-btn";
+        templateBtn.textContent = template.name;
+        templateBtn.title = template.prompt;
+        templateBtn.addEventListener("click", () => {
+          textarea.value = template.prompt;
+          resizeTextarea();
+          updateSendButtonState();
+          textarea.focus();
+        });
+        templatesContainer.appendChild(templateBtn);
+      });
+
+      const footer = doc.createElement("div");
+      footer.className = "editing-toolbar-ai-inline-prompt-footer";
       const hint = doc.createElement("div");
       hint.className = "editing-toolbar-ai-inline-prompt-hint";
       const promptHint = Platform.isMobileApp
         ? t("Enter inserts a newline. Tap Send to submit." as any)
         : t("Press Enter to send, Shift+Enter for newline, Esc to close." as any);
-      hint.textContent = promptHint + " " + t("If nothing is selected, AI will use the current block or cursor context." as any);
-
-      const actions = doc.createElement("div");
-      actions.className = "editing-toolbar-ai-inline-prompt-actions";
-
-      const cancelBtn = doc.createElement("button");
-      cancelBtn.type = "button";
-      cancelBtn.className = "editing-toolbar-ai-inline-prompt-action";
-      cancelBtn.textContent = t("Cancel" as any);
+      hint.textContent = promptHint  ;
 
       const sendBtn = doc.createElement("button");
       sendBtn.type = "button";
-      sendBtn.className = "editing-toolbar-ai-inline-prompt-action mod-cta";
-      sendBtn.textContent = t("Send" as any);
-
-      actions.append(cancelBtn, sendBtn);
-      promptEl.append(header, textarea, hint, actions);
+      sendBtn.className = "editing-toolbar-ai-inline-prompt-send-btn";
+      sendBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>`;
+      sendBtn.title = t("Send" as any);
+      footer.appendChild(hint);
+      footer.appendChild(sendBtn);
+      promptEl.append(header, settingsBtn, inputWrapper, templatesContainer, footer);
       doc.body.appendChild(promptEl);
 
       const resizeTextarea = () => {
@@ -789,11 +819,55 @@ export class AIEditorManager {
           return;
         }
 
+        this.addToHistory(prompt);
+
         const result = await this.startRewrite(this.inlineCustomPromptEditor ?? editor, "custom", prompt);
         if (result) {
           this.closeInlineCustomPrompt();
         }
       };
+
+      const updateHistoryDropdown = () => {
+        const history = this.plugin.settings.ai.customPromptHistory || [];
+        historyDropdown.empty();
+
+        if (history.length === 0) {
+          const emptyItem = doc.createElement("div");
+          emptyItem.className = "editing-toolbar-ai-inline-prompt-history-empty";
+          emptyItem.textContent = t("No history" as any);
+          historyDropdown.appendChild(emptyItem);
+        } else {
+          history.forEach((item, index) => {
+            const historyItem = doc.createElement("div");
+            historyItem.className = "editing-toolbar-ai-inline-prompt-history-item";
+            historyItem.textContent = item.length > 50 ? item.substring(0, 50) + "..." : item;
+            historyItem.title = item;
+            historyItem.addEventListener("click", () => {
+              textarea.value = item;
+              historyDropdown.style.display = "none";
+              resizeTextarea();
+              updateSendButtonState();
+              textarea.focus();
+            });
+            historyDropdown.appendChild(historyItem);
+          });
+        }
+      };
+
+      historyBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const isVisible = historyDropdown.style.display !== "none";
+        historyDropdown.style.display = isVisible ? "none" : "block";
+        if (!isVisible) {
+          updateHistoryDropdown();
+        }
+      });
+
+      doc.addEventListener("click", (e) => {
+        if (!historyDropdown.contains(e.target as Node) && e.target !== historyBtn) {
+          historyDropdown.style.display = "none";
+        }
+      });
 
       const reposition = () => this.positionInlineCustomPrompt(editor, view);
       const updateSendButtonState = () => {
@@ -801,7 +875,20 @@ export class AIEditorManager {
       };
 
       closeBtn.addEventListener("click", closePrompt);
-      cancelBtn.addEventListener("click", closePrompt);
+      settingsBtn.addEventListener("click", () => {
+        this.plugin.app.setting.open();
+        this.plugin.app.setting.openTabById("editing-toolbar");
+        setTimeout(() => {
+          const tabsContainer = this.plugin.app.setting.activeTab?.containerEl?.querySelector(".editing-toolbar-tabs");
+          if (tabsContainer) {
+            const aiTab = Array.from(tabsContainer.children).find((el: HTMLElement) =>
+              el.textContent?.includes("AI") || el.getAttribute("data-tab") === "ai"
+            ) as HTMLElement;
+            aiTab?.click();
+          }
+        }, 100);
+        closePrompt();
+      });
       sendBtn.addEventListener("click", () => {
         void submitPrompt();
       });
@@ -901,5 +988,23 @@ export class AIEditorManager {
   private async isPKMerAvailable(): Promise<boolean> {
     const verified = await this.authService.verify();
     return verified && !!this.authService.aiToken;
+  }
+
+  private addToHistory(prompt: string): void {
+    const history = this.plugin.settings.ai.customPromptHistory || [];
+    const existingIndex = history.indexOf(prompt);
+
+    if (existingIndex !== -1) {
+      history.splice(existingIndex, 1);
+    }
+
+    history.unshift(prompt);
+
+    if (history.length > 10) {
+      history.splice(10);
+    }
+
+    this.plugin.settings.ai.customPromptHistory = history;
+    this.plugin.saveSettings();
   }
 }

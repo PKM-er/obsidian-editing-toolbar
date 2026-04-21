@@ -781,7 +781,6 @@ export default {
   'Convert to canvas': 'Convert to canvas',
   'Generate frontmatter': 'Generate frontmatter',
   'Insert at cursor': 'Insert at cursor',
-  'If nothing is selected, AI will use the current block or cursor context.': 'If nothing is selected, AI will use the current block or cursor context.',
   'Create': 'Create',
   'Create & Embed': 'Create & Embed',
   'AI file suggestion': 'AI file suggestion',
