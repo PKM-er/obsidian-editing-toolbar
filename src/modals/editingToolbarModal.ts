@@ -181,6 +181,65 @@ const getNestedObject = (nestedObj: any, pathArr: any[]) => {
 }
 
 const NO_HOTKEY = "–";
+const HOTKEY_FALLBACK_COMMANDS: Record<string, string> = {
+  "editing-toolbar:toggle-bold": "editor:toggle-bold",
+  "toggle-bold": "editor:toggle-bold",
+  "editing-toolbar:toggle-italics": "editor:toggle-italics",
+  "toggle-italics": "editor:toggle-italics",
+  "editing-toolbar:toggle-strikethrough": "editor:toggle-strikethrough",
+  "toggle-strikethrough": "editor:toggle-strikethrough",
+  "editing-toolbar:toggle-highlight": "editor:toggle-highlight",
+  "toggle-highlight": "editor:toggle-highlight",
+  "editing-toolbar:toggle-inline-math": "editor:toggle-inline-math",
+  "toggle-inline-math": "editor:toggle-inline-math",
+  "editing-toolbar:toggle-numbered-list": "editor:toggle-numbered-list",
+  "toggle-numbered-list": "editor:toggle-numbered-list",
+  "editing-toolbar:toggle-bullet-list": "editor:toggle-bullet-list",
+  "toggle-bullet-list": "editor:toggle-bullet-list",
+  "editing-toolbar:editor-undo": "editor:undo",
+  "editor-undo": "editor:undo",
+  "editing-toolbar:editor-redo": "editor:redo",
+  "editor-redo": "editor:redo",
+  "editing-toolbar:editor-copy": "editor:copy",
+  "editor-copy": "editor:copy",
+  "editing-toolbar:editor-cut": "editor:cut",
+  "editor-cut": "editor:cut",
+  "editing-toolbar:editor-paste": "editor:paste",
+  "editor-paste": "editor:paste",
+  "editing-toolbar:insert-callout": "editor:insert-callout",
+  "insert-callout": "editor:insert-callout",
+  "editing-toolbar:insert-link": "editor:insert-link",
+  "insert-link": "editor:insert-link",
+  "editing-toolbar:header1-text": "editor:set-heading-1",
+  "header1-text": "editor:set-heading-1",
+  "editing-toolbar:header2-text": "editor:set-heading-2",
+  "header2-text": "editor:set-heading-2",
+  "editing-toolbar:header3-text": "editor:set-heading-3",
+  "header3-text": "editor:set-heading-3",
+  "editing-toolbar:header4-text": "editor:set-heading-4",
+  "header4-text": "editor:set-heading-4",
+  "editing-toolbar:header5-text": "editor:set-heading-5",
+  "header5-text": "editor:set-heading-5",
+  "editing-toolbar:header6-text": "editor:set-heading-6",
+  "header6-text": "editor:set-heading-6",
+};
+const STANDARD_HOTKEY_FALLBACKS: Record<string, string> = {
+  "editing-toolbar:editor-undo": Platform.isMacOS ? "Cmd+Z" : "Ctrl+Z",
+  "editor-undo": Platform.isMacOS ? "Cmd+Z" : "Ctrl+Z",
+  "editor:undo": Platform.isMacOS ? "Cmd+Z" : "Ctrl+Z",
+  "editing-toolbar:editor-redo": Platform.isMacOS ? "Cmd+Shift+Z" : "Ctrl+Y",
+  "editor-redo": Platform.isMacOS ? "Cmd+Shift+Z" : "Ctrl+Y",
+  "editor:redo": Platform.isMacOS ? "Cmd+Shift+Z" : "Ctrl+Y",
+  "editing-toolbar:editor-cut": Platform.isMacOS ? "Cmd+X" : "Ctrl+X",
+  "editor-cut": Platform.isMacOS ? "Cmd+X" : "Ctrl+X",
+  "editor:cut": Platform.isMacOS ? "Cmd+X" : "Ctrl+X",
+  "editing-toolbar:editor-copy": Platform.isMacOS ? "Cmd+C" : "Ctrl+C",
+  "editor-copy": Platform.isMacOS ? "Cmd+C" : "Ctrl+C",
+  "editor:copy": Platform.isMacOS ? "Cmd+C" : "Ctrl+C",
+  "editing-toolbar:editor-paste": Platform.isMacOS ? "Cmd+V" : "Ctrl+V",
+  "editor-paste": Platform.isMacOS ? "Cmd+V" : "Ctrl+V",
+  "editor:paste": Platform.isMacOS ? "Cmd+V" : "Ctrl+V",
+};
 
 function formatHotkeyPart(part: string): string {
   switch (part) {
@@ -195,22 +254,58 @@ function formatHotkeyPart(part: string): string {
   }
 }
 
-function getHotkey(app: App, cmdid: string, _highlight = true) {
-  // @ts-ignore
-  let arr = app.commands.findCommand(cmdid)
-  if (arr) {
-    // @ts-ignore
-    const ck = app.hotkeyManager.customKeys[arr.id];
-    const activeHotkey = getNestedObject(ck, [0]) ?? getNestedObject(arr.hotkeys, [0]);
-    const modifiers = getNestedObject(activeHotkey, ["modifiers"]);
-    const key = getNestedObject(activeHotkey, ["key"]);
-    const hotkeyParts = [...(Array.isArray(modifiers) ? modifiers : []), key]
-      .filter((part): part is string => typeof part === "string" && part.length > 0)
-      .map((part) => formatHotkeyPart(part));
+function getHotkeyCandidates(commandId: string): string[] {
+  const strippedId = commandId.startsWith("editing-toolbar:")
+    ? commandId.replace(/^editing-toolbar:/, "")
+    : commandId;
 
-    return hotkeyParts.length > 0 ? hotkeyParts.join("+") : NO_HOTKEY;
-  } else
-    return NO_HOTKEY
+  return Array.from(
+    new Set(
+      [
+        commandId,
+        strippedId,
+        HOTKEY_FALLBACK_COMMANDS[commandId],
+        HOTKEY_FALLBACK_COMMANDS[strippedId],
+      ].filter((candidate): candidate is string => typeof candidate === "string" && candidate.length > 0),
+    ),
+  );
+}
+
+function getHotkeyForCommand(app: App, commandId: string): string {
+  // @ts-ignore
+  const command = app.commands.findCommand(commandId);
+  if (!command) {
+    return NO_HOTKEY;
+  }
+
+  // @ts-ignore
+  const customKeys = app.hotkeyManager.customKeys[command.id];
+  const activeHotkey = getNestedObject(customKeys, [0]) ?? getNestedObject(command.hotkeys, [0]);
+  const modifiers = getNestedObject(activeHotkey, ["modifiers"]);
+  const key = getNestedObject(activeHotkey, ["key"]);
+  const hotkeyParts = [...(Array.isArray(modifiers) ? modifiers : []), key]
+    .filter((part): part is string => typeof part === "string" && part.length > 0)
+    .map((part) => formatHotkeyPart(part));
+
+  return hotkeyParts.length > 0 ? hotkeyParts.join("+") : NO_HOTKEY;
+}
+
+function getHotkey(app: App, cmdid: string, _highlight = true) {
+  for (const candidate of getHotkeyCandidates(cmdid)) {
+    const hotkey = getHotkeyForCommand(app, candidate);
+    if (hotkey !== NO_HOTKEY) {
+      return hotkey;
+    }
+  }
+
+  for (const candidate of getHotkeyCandidates(cmdid)) {
+    const hotkey = STANDARD_HOTKEY_FALLBACKS[candidate];
+    if (hotkey) {
+      return hotkey;
+    }
+  }
+
+  return NO_HOTKEY;
 }
 
 
