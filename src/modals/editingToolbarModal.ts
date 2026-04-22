@@ -180,28 +180,37 @@ const getNestedObject = (nestedObj: any, pathArr: any[]) => {
     (obj && obj[key] !== 'undefined') ? obj[key] : undefined, nestedObj);
 }
 
-function setHilite(keys: any, how: string) {
-  // need to check if existing key combo is overridden by undefining it
-  if (keys && keys[1][0] !== undefined) {
-    return how + keys.flat(2).join('+').replace('Mod', 'Ctrl') + how;
-  } else {
-    return how + '–' + how;
+const NO_HOTKEY = "–";
+
+function formatHotkeyPart(part: string): string {
+  switch (part) {
+    case "Mod":
+      return Platform.isMacOS ? "Cmd" : "Ctrl";
+    case "Meta":
+      return Platform.isMacOS ? "Cmd" : "Win";
+    case "Alt":
+      return Platform.isMacOS ? "Opt" : "Alt";
+    default:
+      return part.length === 1 ? part.toUpperCase() : part;
   }
 }
 
-function getHotkey(app: App, cmdid: string, highlight = true) {
+function getHotkey(app: App, cmdid: string, _highlight = true) {
   // @ts-ignore
   let arr = app.commands.findCommand(cmdid)
-  let hi = highlight ? '*' : '';
   if (arr) {
-    let defkeys = arr.hotkeys ? [[getNestedObject(arr.hotkeys, [0, 'modifiers'])],
-    [getNestedObject(arr.hotkeys, [0, 'key'])]] : undefined;
     // @ts-ignore
-    let ck = app.hotkeyManager.customKeys[arr.id];
-    var hotkeys = ck ? [[getNestedObject(ck, [0, 'modifiers'])], [getNestedObject(ck, [0, 'key'])]] : undefined;
-    return hotkeys ? setHilite(hotkeys, hi) : setHilite(defkeys, '');
+    const ck = app.hotkeyManager.customKeys[arr.id];
+    const activeHotkey = getNestedObject(ck, [0]) ?? getNestedObject(arr.hotkeys, [0]);
+    const modifiers = getNestedObject(activeHotkey, ["modifiers"]);
+    const key = getNestedObject(activeHotkey, ["key"]);
+    const hotkeyParts = [...(Array.isArray(modifiers) ? modifiers : []), key]
+      .filter((part): part is string => typeof part === "string" && part.length > 0)
+      .map((part) => formatHotkeyPart(part));
+
+    return hotkeyParts.length > 0 ? hotkeyParts.join("+") : NO_HOTKEY;
   } else
-    return "–"
+    return NO_HOTKEY
 }
 
 
@@ -1175,9 +1184,15 @@ export function editingToolbarPopover(
       // Use per-style commands based on the toolbar we are rendering
       const currentCommands = plugin.getCurrentCommands(effectiveStyle);
       const getLocalizedLabel = (label: string): string => t(label as any);
-      const getLocalizedTooltip = (label: string, hotkey: string): string => {
+      const getLocalizedTooltip = (label: string, hotkey: string = NO_HOTKEY): string => {
         const localizedLabel = getLocalizedLabel(label);
-        return hotkey === "–" ? localizedLabel : `${localizedLabel}(${hotkey})`;
+        return hotkey === NO_HOTKEY ? localizedLabel : `${localizedLabel} (${hotkey})`;
+      };
+      const setButtonTooltip = (button: ButtonComponent, label: string, commandId?: string): string => {
+        const tooltip = getLocalizedTooltip(label, commandId ? getHotkey(app, commandId, false) : NO_HOTKEY);
+        button.setTooltip(tooltip);
+        button.buttonEl.setAttribute("aria-label", tooltip);
+        return tooltip;
       };
 
       currentCommands.forEach((item, index) => {
@@ -1213,9 +1228,7 @@ export function editingToolbarPopover(
           if (menuType === 'dropdown') {
             // 下拉菜单模式
             _btn.setClass("editingToolbarDropdownButton");
-            let hotkey = getHotkey(app, item.id);
-            tip = getLocalizedTooltip(item.name, hotkey);
-            _btn.setTooltip(tip);
+            tip = setButtonTooltip(_btn, item.name, item.id);
 
             _btn.onClick((evt: MouseEvent) => {
               const menu = new Menu();
@@ -1241,7 +1254,7 @@ export function editingToolbarPopover(
                     const title = t(subitem.name as any);
 
                     // 如果有快捷键，添加到标题后面
-                    const displayTitle = hotkey !== "–" ? `${title}` : title;
+                    const displayTitle = hotkey !== NO_HOTKEY ? `${title}` : title;
 
                     menuItem
                       .setTitle(displayTitle)  // 使用翻译函数进行国际化
@@ -1266,7 +1279,7 @@ export function editingToolbarPopover(
                     applyMenuItemIcon(menuItem, subitem.icon);
 
                     // 如果有快捷键，添加到 DOM 元素
-                    if (hotkey !== "—") {
+                    if (hotkey !== NO_HOTKEY) {
                       const hotkeyEl = menuItem.dom.createSpan({ cls: "menu-item-hotkey" });
                       hotkeyEl.setText(hotkey);
                     }
@@ -1286,10 +1299,7 @@ export function editingToolbarPopover(
             if (submenu) {
               item.SubmenuCommands.forEach(
                 (subitem: { name: string; id: any; icon: string }) => {
-                  let hotkey = getHotkey(app, subitem.id);
-                  tip = getLocalizedTooltip(subitem.name, hotkey);
                   let sub_btn = new ButtonComponent(submenu)
-                    .setTooltip(tip)
                     .setClass("menu-item")
                     .onClick(() => {
 
@@ -1311,6 +1321,7 @@ export function editingToolbarPopover(
                       }
 
                     });
+                  tip = setButtonTooltip(sub_btn, subitem.name, subitem.id);
                   if (index < settings.cMenuNumRows) {
                     if (effectiveStyle !== "top")
                       sub_btn.buttonEl.setAttribute('aria-label-position', 'top')
@@ -1341,8 +1352,17 @@ export function editingToolbarPopover(
             button2
               .setClass("editingToolbarCommandsubItem" + index)
               .setClass("editingToolbarDropdownButton")
-              .setClass("editingToolbarCommandsubItem-ai")
-              .setTooltip(t("AI Tools"));
+              .setClass("editingToolbarCommandsubItem-ai");
+
+            const applyAITooltip = () => {
+              const aiCommandId = plugin.lastExecutedCommand?.startsWith("editing-toolbar:")
+                ? plugin.lastExecutedCommand
+                : "editing-toolbar:ai-inline-completion";
+              const tooltip = getLocalizedTooltip(getAIToolbarButtonLabel(plugin), getHotkey(app, aiCommandId, false));
+              button2.setTooltip(tooltip);
+              button2.buttonEl.setAttribute("aria-label", tooltip);
+            };
+            applyAITooltip();
 
             if (index >= settings.cMenuNumRows) {
               button2.setClass("editingToolbarSecond");
@@ -1411,6 +1431,7 @@ export function editingToolbarPopover(
                   if (options.commandIdForLabel) {
                     setLastAIAction(plugin, options.commandIdForLabel);
                     if (aiLabel) aiLabel.textContent = getAIToolbarButtonLabel(plugin);
+                    applyAITooltip();
                   }
                   syncToolbarVisibilityAfterAction(editingToolbar, settings, effectiveStyle, plugin);
                 };
@@ -1463,6 +1484,7 @@ export function editingToolbarPopover(
                           if (action.commandIdForLabel) {
                             setLastAIAction(plugin, action.commandIdForLabel);
                             if (aiLabel) aiLabel.textContent = getAIToolbarButtonLabel(plugin);
+                            applyAITooltip();
                           }
                           syncToolbarVisibilityAfterAction(editingToolbar, settings, effectiveStyle, plugin);
                         });
@@ -1575,6 +1597,7 @@ export function editingToolbarPopover(
               const result = await executeAIToolbarAction(plugin, actionId, editor);
               if (result !== false) {
                 if (aiLabel) aiLabel.textContent = getAIToolbarButtonLabel(plugin);
+                applyAITooltip();
               }
               syncToolbarVisibilityAfterAction(editingToolbar, settings, effectiveStyle, plugin);
             });
@@ -1582,7 +1605,6 @@ export function editingToolbarPopover(
             let button2 = new ButtonComponent(editingToolbar);
             button2
               .setClass("editingToolbarCommandsubItem-font-color")
-              .setTooltip(t("Font Colors"))
               .onClick(() => {
 
                 app.commands.executeCommandById(item.id);
@@ -1603,6 +1625,7 @@ export function editingToolbarPopover(
                 }
 
               });
+            setButtonTooltip(button2, "Font Colors", item.id);
             checkHtml(item.icon)
               ? (button2.buttonEl.innerHTML = item.icon)
               : button2.setIcon(item.icon);
@@ -1666,7 +1689,6 @@ export function editingToolbarPopover(
             let button2 = new ButtonComponent(editingToolbar);
             button2
               .setClass("editingToolbarCommandsubItem-font-color")
-              .setTooltip(t("Background Color"))
               .onClick(() => {
 
                 app.commands.executeCommandById(item.id);
@@ -1687,6 +1709,7 @@ export function editingToolbarPopover(
                 }
 
               });
+            setButtonTooltip(button2, "Background Color", item.id);
             checkHtml(item.icon)
               ? (button2.buttonEl.innerHTML = item.icon)
               : button2.setIcon(item.icon);
@@ -1754,9 +1777,8 @@ export function editingToolbarPopover(
               //globalpluginIS_MORE_Button = true; //需要添加更多按钮
               button = new ButtonComponent(resolveButtonHost(true));
             } else button = new ButtonComponent(editingToolbar);
-            let hotkey = getHotkey(app, item.id);
-            tip = getLocalizedTooltip(item.name, hotkey);
-            button.setTooltip(tip).onClick(() => {
+            tip = setButtonTooltip(button, item.name, item.id);
+            button.onClick(() => {
               app.commands.executeCommandById(item.id);
 
               // 检查命令执行后是否仍有文本选中
