@@ -97,8 +97,14 @@ class LoadingWidget extends WidgetType {
 
   toDOM(): HTMLElement {
     const wrapper = document.createElement("span");
-    wrapper.className = "cm-ai-loading";
+    wrapper.className = "cm-ai-loading cm-ai-loading-pill";
     wrapper.setAttribute("aria-label", t("AI is generating"));
+
+    const visual = document.createElement("span");
+    visual.className = "cm-ai-loading-visual";
+
+    const glow = document.createElement("span");
+    glow.className = "cm-ai-loading-glow";
 
     const spinner = document.createElement("span");
     spinner.className = "cm-ai-loading-spinner";
@@ -107,8 +113,15 @@ class LoadingWidget extends WidgetType {
     label.className = "cm-ai-loading-label";
     label.textContent = t("AI thinking");
 
-    wrapper.appendChild(spinner);
+    const sheen = document.createElement("span");
+    sheen.className = "cm-ai-loading-sheen";
+    sheen.setAttribute("aria-hidden", "true");
+
+    visual.appendChild(glow);
+    visual.appendChild(spinner);
+    wrapper.appendChild(visual);
     wrapper.appendChild(label);
+    wrapper.appendChild(sheen);
     return wrapper;
   }
 

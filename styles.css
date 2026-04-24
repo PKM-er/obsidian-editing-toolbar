@@ -548,6 +548,7 @@ button[class^=editingToolbarCommandsubItem]::after {
   align-items: center;
   gap: 4px;
   padding-right: 0px !important;
+  isolation: isolate;
 }
 
 
@@ -581,14 +582,19 @@ button[class^=editingToolbarCommandsubItem]::after {
   content: none;
 }
 
-:is(#editingToolbarModalBar, #editingToolbarPopoverBar) button.editingToolbarCommandsubItem-ai > svg {
+:is(#editingToolbarModalBar, #editingToolbarPopoverBar) button.editingToolbarCommandsubItem-ai > svg,
+:is(#editingToolbarModalBar, #editingToolbarPopoverBar) button.editingToolbarCommandsubItem-ai svg.svg-icon {
   flex-shrink: 0;
+  position: relative;
+  z-index: 1;
 }
 
 .editing-toolbar-ai-button-main {
   display: inline-flex;
   align-items: center;
   min-width: 0;
+  position: relative;
+  z-index: 1;
 }
 
 .editing-toolbar-ai-button-label {
@@ -616,6 +622,8 @@ button[class^=editingToolbarCommandsubItem]::after {
   font-size: 9px;
   line-height: 1;
   flex-shrink: 0;
+  position: relative;
+  z-index: 1;
 }
 
 :is(#editingToolbarModalBar, #editingToolbarPopoverBar) button.editingToolbarCommandsubItem-ai.editing-toolbar-ai-button-fixed .editing-toolbar-ai-button-arrow {
@@ -650,28 +658,75 @@ button[class^=editingToolbarCommandsubItem]::after {
 
 .workspace-leaf-content:has(.cm-ai-loading, .cm-ai-result-panel[data-phase="streaming"])
   :is(#editingToolbarModalBar, #editingToolbarPopoverBar) button.editingToolbarCommandsubItem-ai,
+body[data-editing-toolbar-ai-busy="true"]
+  :is(#editingToolbarModalBar, #editingToolbarPopoverBar) button.editingToolbarCommandsubItem-ai,
 body:has(.workspace-leaf.mod-active .cm-ai-loading, .workspace-leaf.mod-active .cm-ai-result-panel[data-phase="streaming"])
   :is(#editingToolbarModalBar[data-toolbar-style="fixed"], #editingToolbarModalBar[data-toolbar-style="mobile"], #editingToolbarPopoverBar[data-toolbar-style="fixed"], #editingToolbarPopoverBar[data-toolbar-style="mobile"]) button.editingToolbarCommandsubItem-ai {
-  opacity: 0.72;
+  opacity: 0.82;
   pointer-events: none;
+  overflow: hidden;
+}
+
+.workspace-leaf-content:has(.cm-ai-loading, .cm-ai-result-panel[data-phase="streaming"])
+  :is(#editingToolbarModalBar, #editingToolbarPopoverBar) button.editingToolbarCommandsubItem-ai::before,
+body[data-editing-toolbar-ai-busy="true"]
+  :is(#editingToolbarModalBar, #editingToolbarPopoverBar) button.editingToolbarCommandsubItem-ai::before,
+body:has(.workspace-leaf.mod-active .cm-ai-loading, .workspace-leaf.mod-active .cm-ai-result-panel[data-phase="streaming"])
+  :is(#editingToolbarModalBar[data-toolbar-style="fixed"], #editingToolbarModalBar[data-toolbar-style="mobile"], #editingToolbarPopoverBar[data-toolbar-style="fixed"], #editingToolbarPopoverBar[data-toolbar-style="mobile"]) button.editingToolbarCommandsubItem-ai::before {
+  opacity: 1;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--interactive-accent) 14%, transparent), color-mix(in srgb, var(--background-secondary) 90%, transparent));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--interactive-accent) 14%, transparent), 0 8px 22px color-mix(in srgb, var(--interactive-accent) 10%, transparent), inset 0 1px 0 color-mix(in srgb, white 16%, transparent);
+  animation: cm-ai-toolbar-glow 2.1s ease-in-out infinite;
+}
+
+.workspace-leaf-content:has(.cm-ai-loading, .cm-ai-result-panel[data-phase="streaming"])
+  :is(#editingToolbarModalBar, #editingToolbarPopoverBar) button.editingToolbarCommandsubItem-ai::after,
+body[data-editing-toolbar-ai-busy="true"]
+  :is(#editingToolbarModalBar, #editingToolbarPopoverBar) button.editingToolbarCommandsubItem-ai::after,
+body:has(.workspace-leaf.mod-active .cm-ai-loading, .workspace-leaf.mod-active .cm-ai-result-panel[data-phase="streaming"])
+  :is(#editingToolbarModalBar[data-toolbar-style="fixed"], #editingToolbarModalBar[data-toolbar-style="mobile"], #editingToolbarPopoverBar[data-toolbar-style="fixed"], #editingToolbarPopoverBar[data-toolbar-style="mobile"]) button.editingToolbarCommandsubItem-ai::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: 12px;
+  background: linear-gradient(115deg, transparent 0%, transparent 34%, color-mix(in srgb, white 68%, transparent) 48%, transparent 62%, transparent 100%);
+  transform: translateX(-150%) skewX(-24deg);
+  opacity: 0;
+  animation: cm-ai-sheen 2.8s ease-in-out infinite;
+  pointer-events: none;
+  mix-blend-mode: screen;
 }
 
 .workspace-leaf-content:has(.cm-ai-loading, .cm-ai-result-panel[data-phase="streaming"])
   :is(#editingToolbarModalBar, #editingToolbarPopoverBar) button.editingToolbarCommandsubItem-ai > svg,
+.workspace-leaf-content:has(.cm-ai-loading, .cm-ai-result-panel[data-phase="streaming"])
+  :is(#editingToolbarModalBar, #editingToolbarPopoverBar) button.editingToolbarCommandsubItem-ai svg.svg-icon,
+body[data-editing-toolbar-ai-busy="true"]
+  :is(#editingToolbarModalBar, #editingToolbarPopoverBar) button.editingToolbarCommandsubItem-ai > svg,
+body[data-editing-toolbar-ai-busy="true"]
+  :is(#editingToolbarModalBar, #editingToolbarPopoverBar) button.editingToolbarCommandsubItem-ai svg.svg-icon,
 body:has(.workspace-leaf.mod-active .cm-ai-loading, .workspace-leaf.mod-active .cm-ai-result-panel[data-phase="streaming"])
-  :is(#editingToolbarModalBar[data-toolbar-style="fixed"], #editingToolbarModalBar[data-toolbar-style="mobile"], #editingToolbarPopoverBar[data-toolbar-style="fixed"], #editingToolbarPopoverBar[data-toolbar-style="mobile"]) button.editingToolbarCommandsubItem-ai > svg {
-  animation: cm-ai-spin 0.8s linear infinite;
+  :is(#editingToolbarModalBar[data-toolbar-style="fixed"], #editingToolbarModalBar[data-toolbar-style="mobile"], #editingToolbarPopoverBar[data-toolbar-style="fixed"], #editingToolbarPopoverBar[data-toolbar-style="mobile"]) button.editingToolbarCommandsubItem-ai > svg,
+body:has(.workspace-leaf.mod-active .cm-ai-loading, .workspace-leaf.mod-active .cm-ai-result-panel[data-phase="streaming"])
+  :is(#editingToolbarModalBar[data-toolbar-style="fixed"], #editingToolbarModalBar[data-toolbar-style="mobile"], #editingToolbarPopoverBar[data-toolbar-style="fixed"], #editingToolbarPopoverBar[data-toolbar-style="mobile"]) button.editingToolbarCommandsubItem-ai svg.svg-icon {
+  animation: cm-ai-toolbar-breathe 1.8s ease-in-out infinite;
+  filter: drop-shadow(0 0 8px color-mix(in srgb, var(--interactive-accent) 26%, transparent));
 }
 
 .workspace-leaf-content:has(.cm-ai-loading, .cm-ai-result-panel[data-phase="streaming"])
   :is(#editingToolbarModalBar, #editingToolbarPopoverBar) button.editingToolbarCommandsubItem-ai .editing-toolbar-ai-button-label,
 .workspace-leaf-content:has(.cm-ai-loading, .cm-ai-result-panel[data-phase="streaming"])
   :is(#editingToolbarModalBar, #editingToolbarPopoverBar) button.editingToolbarCommandsubItem-ai .editing-toolbar-ai-button-arrow,
+body[data-editing-toolbar-ai-busy="true"]
+  :is(#editingToolbarModalBar, #editingToolbarPopoverBar) button.editingToolbarCommandsubItem-ai .editing-toolbar-ai-button-label,
+body[data-editing-toolbar-ai-busy="true"]
+  :is(#editingToolbarModalBar, #editingToolbarPopoverBar) button.editingToolbarCommandsubItem-ai .editing-toolbar-ai-button-arrow,
 body:has(.workspace-leaf.mod-active .cm-ai-loading, .workspace-leaf.mod-active .cm-ai-result-panel[data-phase="streaming"])
   :is(#editingToolbarModalBar[data-toolbar-style="fixed"], #editingToolbarModalBar[data-toolbar-style="mobile"], #editingToolbarPopoverBar[data-toolbar-style="fixed"], #editingToolbarPopoverBar[data-toolbar-style="mobile"]) button.editingToolbarCommandsubItem-ai .editing-toolbar-ai-button-label,
 body:has(.workspace-leaf.mod-active .cm-ai-loading, .workspace-leaf.mod-active .cm-ai-result-panel[data-phase="streaming"])
   :is(#editingToolbarModalBar[data-toolbar-style="fixed"], #editingToolbarModalBar[data-toolbar-style="mobile"], #editingToolbarPopoverBar[data-toolbar-style="fixed"], #editingToolbarPopoverBar[data-toolbar-style="mobile"]) button.editingToolbarCommandsubItem-ai .editing-toolbar-ai-button-arrow {
   color: var(--text-muted);
+  animation: cm-ai-label-breathe 1.8s ease-in-out infinite;
 }
 
 .menu.editing-toolbar-ai-dropdown-menu .menu-item.is-disabled {
@@ -1452,10 +1507,10 @@ body:has(.workspace-leaf.mod-active .cm-ai-loading, .workspace-leaf.mod-active .
 
 /* Some themes animate all workspace SVG icons. Opt toolbar controls out so
    inherited visibility changes hide the whole toolbar in one frame. */
-:is(#editingToolbarModalBar, #editingToolbarPopoverBar) :is(.editingToolbarCommandItem, button[class^=editingToolbarCommandsubItem]):not(.editingToolbar-Divider-Line),
-:is(#editingToolbarModalBar, #editingToolbarPopoverBar) :is(.editingToolbarCommandItem, button[class^=editingToolbarCommandsubItem]):not(.editingToolbar-Divider-Line) *:not(.subitem),
-:is(#editingToolbarModalBar, #editingToolbarPopoverBar) svg.svg-icon,
-:is(#editingToolbarModalBar, #editingToolbarPopoverBar) svg.svg-icon * {
+:is(#editingToolbarModalBar, #editingToolbarPopoverBar) :is(.editingToolbarCommandItem, button[class^=editingToolbarCommandsubItem]):not(.editingToolbar-Divider-Line):not(.editingToolbarCommandsubItem-ai),
+:is(#editingToolbarModalBar, #editingToolbarPopoverBar) :is(.editingToolbarCommandItem, button[class^=editingToolbarCommandsubItem]):not(.editingToolbar-Divider-Line):not(.editingToolbarCommandsubItem-ai) *:not(.subitem),
+:is(#editingToolbarModalBar, #editingToolbarPopoverBar) :is(.editingToolbarCommandItem, button[class^=editingToolbarCommandsubItem]):not(.editingToolbar-Divider-Line):not(.editingToolbarCommandsubItem-ai) svg.svg-icon,
+:is(#editingToolbarModalBar, #editingToolbarPopoverBar) :is(.editingToolbarCommandItem, button[class^=editingToolbarCommandsubItem]):not(.editingToolbar-Divider-Line):not(.editingToolbarCommandsubItem-ai) svg.svg-icon * {
 animation: none;
 transition: none !important;
 -webkit-transition: none !important;
@@ -2380,6 +2435,91 @@ body.auto-hide-header .workspace-tab-header-container + .workspace-tab-container
   }
 }
 
+@keyframes cm-ai-pill-breathe {
+  0%, 100% {
+    transform: translateY(0);
+    box-shadow: 0 6px 20px color-mix(in srgb, var(--interactive-accent) 8%, transparent), inset 0 1px 0 color-mix(in srgb, white 18%, transparent);
+  }
+  50% {
+    transform: translateY(-0.5px);
+    box-shadow: 0 10px 28px color-mix(in srgb, var(--interactive-accent) 14%, transparent), 0 0 0 1px color-mix(in srgb, var(--interactive-accent) 10%, transparent), inset 0 1px 0 color-mix(in srgb, white 26%, transparent);
+  }
+}
+
+@keyframes cm-ai-breathe {
+  0%, 100% {
+    transform: scale(0.88);
+    opacity: 0.72;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 1;
+  }
+}
+
+@keyframes cm-ai-toolbar-breathe {
+  0%, 100% {
+    transform: scale(0.9);
+    opacity: 0.78;
+  }
+  50% {
+    transform: scale(1.06);
+    opacity: 1;
+  }
+}
+
+@keyframes cm-ai-toolbar-glow {
+  0%, 100% {
+    opacity: 0.62;
+    transform: scale(0.985);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.015);
+  }
+}
+
+@keyframes cm-ai-glow {
+  0%, 100% {
+    transform: scale(0.9);
+    opacity: 0.24;
+  }
+  50% {
+    transform: scale(1.28);
+    opacity: 0.56;
+  }
+}
+
+@keyframes cm-ai-label-breathe {
+  0%, 100% {
+    opacity: 0.78;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes cm-ai-sheen {
+  0% {
+    transform: translateX(-140%) skewX(-24deg);
+    opacity: 0;
+  }
+  18% {
+    opacity: 0;
+  }
+  38% {
+    opacity: 0.62;
+  }
+  58% {
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(180%) skewX(-24deg);
+    opacity: 0;
+  }
+}
+
+ 
 .cm-tooltip {
   z-index: 1000;
 }

@@ -38,6 +38,8 @@ interface FrontmatterStatsCacheEntry {
 }
 
 const VAULT_FRONTMATTER_STATS_CACHE_TTL = 10 * 60 * 1000;
+const TOOLBAR_AI_BUSY_ATTR = "data-editing-toolbar-ai-busy";
+const TOOLBAR_AI_BUSY_COUNT_ATTR = "data-editing-toolbar-ai-busy-count";
 
 export class AIEditorManager {
   private plugin: EditingToolbarPlugin;
@@ -488,22 +490,24 @@ export class AIEditorManager {
 
     try {
       const canvasContext = await getActiveCanvasContext(this.plugin);
-      new Notice(t("Canvas AI is expanding the current node..."));
+      return await this.withCanvasToolbarBusyState(canvasContext.view, async () => {
+        new Notice(t("Canvas AI is expanding the current node..."));
 
-      let response = "";
-      for await (const chunk of this.aiService.rewrite({
-        selectedText: canvasContext.anchorNode.text,
-        instruction: "custom",
-        customPrompt: this.buildCanvasExpansionPrompt(instruction),
-        context: canvasContext.contextText,
-      })) {
-        response += chunk;
-      }
+        let response = "";
+        for await (const chunk of this.aiService.rewrite({
+          selectedText: canvasContext.anchorNode.text,
+          instruction: "custom",
+          customPrompt: this.buildCanvasExpansionPrompt(instruction),
+          context: canvasContext.contextText,
+        })) {
+          response += chunk;
+        }
 
-      const draftNodes = parseCanvasExpansionResponse(response);
-      const result = await applyCanvasExpansionDraft(this.plugin, canvasContext, draftNodes);
-      new Notice(`${t("Canvas AI added")} ${result.addedNodeCount} ${t("nodes to the board.")}`);
-      return true;
+        const draftNodes = parseCanvasExpansionResponse(response);
+        const result = await applyCanvasExpansionDraft(this.plugin, canvasContext, draftNodes);
+        new Notice(`${t("Canvas AI added")} ${result.addedNodeCount} ${t("nodes to the board.")}`);
+        return true;
+      });
     } catch (error) {
       const message = getAIErrorMessage(error);
       new Notice(message);
@@ -531,44 +535,46 @@ export class AIEditorManager {
         return false;
       }
 
-      const mode = this.resolveCanvasGlobalInstructionMode(effectiveInstruction);
-      if (mode === "article" || mode === "slides") {
-        return this.generateCanvasDerivedMarkdown(canvasContext, effectiveInstruction, mode);
-      }
-      const isReorganizeMode = mode === "reorganize";
-      const documentSource = isReorganizeMode
-        ? await buildCanvasDocumentSource(this.plugin, canvasContext)
-        : null;
-
-      new Notice(t(isReorganizeMode
-        ? "Canvas AI is reorganizing the board..."
-        : "Canvas AI is processing the board..."));
-
-      let response = "";
-      for await (const chunk of this.aiService.rewrite({
-        selectedText: documentSource?.text || canvasContext.anchorNode?.text || "Canvas board",
-        instruction: "custom",
-        customPrompt: isReorganizeMode
-          ? this.buildCanvasReorganizationPrompt(effectiveInstruction, documentSource?.scope ?? "board")
-          : this.buildCanvasGlobalPrompt(effectiveInstruction, !!canvasContext.anchorNode),
-        context: canvasContext.contextText,
-      })) {
-        response += chunk;
-      }
-
-      const rawPlan = parseCanvasInstructionResponse(response);
-      const plan = isReorganizeMode
-        ? {
-          ...rawPlan,
-          addNodes: [],
-          replaceExistingEdges: rawPlan.replaceExistingEdges || rawPlan.addEdges.length > 0,
+      return await this.withCanvasToolbarBusyState(canvasContext.view, async () => {
+        const mode = this.resolveCanvasGlobalInstructionMode(effectiveInstruction);
+        if (mode === "article" || mode === "slides") {
+          return this.generateCanvasDerivedMarkdown(canvasContext, effectiveInstruction, mode);
         }
-        : rawPlan;
-      const result = await applyCanvasInstructionPlan(this.plugin, canvasContext, plan);
-      new Notice(isReorganizeMode
-        ? `${t("Canvas AI reorganized the board:")} ${result.movedNodeCount} ${t("nodes moved")}, ${result.addedEdgeCount} ${t("links rebuilt")}.`
-        : `${t("Canvas AI updated the board:")} ${result.addedNodeCount} ${t("nodes")}, ${result.addedEdgeCount} ${t("links")}.`);
-      return true;
+        const isReorganizeMode = mode === "reorganize";
+        const documentSource = isReorganizeMode
+          ? await buildCanvasDocumentSource(this.plugin, canvasContext)
+          : null;
+
+        new Notice(t(isReorganizeMode
+          ? "Canvas AI is reorganizing the board..."
+          : "Canvas AI is processing the board..."));
+
+        let response = "";
+        for await (const chunk of this.aiService.rewrite({
+          selectedText: documentSource?.text || canvasContext.anchorNode?.text || "Canvas board",
+          instruction: "custom",
+          customPrompt: isReorganizeMode
+            ? this.buildCanvasReorganizationPrompt(effectiveInstruction, documentSource?.scope ?? "board")
+            : this.buildCanvasGlobalPrompt(effectiveInstruction, !!canvasContext.anchorNode),
+          context: canvasContext.contextText,
+        })) {
+          response += chunk;
+        }
+
+        const rawPlan = parseCanvasInstructionResponse(response);
+        const plan = isReorganizeMode
+          ? {
+            ...rawPlan,
+            addNodes: [],
+            replaceExistingEdges: rawPlan.replaceExistingEdges || rawPlan.addEdges.length > 0,
+          }
+          : rawPlan;
+        const result = await applyCanvasInstructionPlan(this.plugin, canvasContext, plan);
+        new Notice(isReorganizeMode
+          ? `${t("Canvas AI reorganized the board:")} ${result.movedNodeCount} ${t("nodes moved")}, ${result.addedEdgeCount} ${t("links rebuilt")}.`
+          : `${t("Canvas AI updated the board:")} ${result.addedNodeCount} ${t("nodes")}, ${result.addedEdgeCount} ${t("links")}.`);
+        return true;
+      });
     } catch (error) {
       const message = getAIErrorMessage(error);
       new Notice(message);
@@ -913,6 +919,39 @@ export class AIEditorManager {
       new Notice(message);
       console.error("[Canvas AI] Failed to generate derived markdown:", error);
       return false;
+    }
+  }
+
+  private async withCanvasToolbarBusyState<T>(view: ActiveCanvasContext["view"], task: () => Promise<T>): Promise<T> {
+    const container = (view as ActiveCanvasContext["view"] & { containerEl?: HTMLElement }).containerEl;
+    if (!container) {
+      return task();
+    }
+
+    const ownerDocument = container.ownerDocument;
+    const busyScope = ownerDocument?.body ?? ownerDocument?.documentElement ?? null;
+
+    if (busyScope) {
+      const currentToolbarBusyCount = Number.parseInt(busyScope.getAttribute(TOOLBAR_AI_BUSY_COUNT_ATTR) ?? "0", 10);
+      const nextToolbarBusyCount = Number.isFinite(currentToolbarBusyCount) ? currentToolbarBusyCount + 1 : 1;
+      busyScope.setAttribute(TOOLBAR_AI_BUSY_COUNT_ATTR, String(nextToolbarBusyCount));
+      busyScope.setAttribute(TOOLBAR_AI_BUSY_ATTR, "true");
+    }
+
+    try {
+      return await task();
+    } finally {
+      if (busyScope) {
+        const activeToolbarBusyCount = Number.parseInt(busyScope.getAttribute(TOOLBAR_AI_BUSY_COUNT_ATTR) ?? "1", 10);
+        const remainingToolbarBusyCount = Number.isFinite(activeToolbarBusyCount) ? Math.max(activeToolbarBusyCount - 1, 0) : 0;
+
+        if (remainingToolbarBusyCount > 0) {
+          busyScope.setAttribute(TOOLBAR_AI_BUSY_COUNT_ATTR, String(remainingToolbarBusyCount));
+        } else {
+          busyScope.removeAttribute(TOOLBAR_AI_BUSY_COUNT_ATTR);
+          busyScope.removeAttribute(TOOLBAR_AI_BUSY_ATTR);
+        }
+      }
     }
   }
 
