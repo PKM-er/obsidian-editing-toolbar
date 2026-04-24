@@ -58,6 +58,10 @@ declare module "obsidian" {
 		onMarkdownFold(): void;
 	}
 
+	interface Workspace {
+		on(name: 'canvas:node-menu', callback: (menu: Menu, node: unknown) => any, ctx?: any): EventRef;
+	}
+
 	interface MarkdownSubView {
 		applyFoldInfo(foldInfo: FoldInfo): void;
 		getFoldInfo(): FoldInfo | null;

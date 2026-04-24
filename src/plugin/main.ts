@@ -400,6 +400,38 @@ export default class editingToolbarPlugin extends Plugin {
     ];
   }
 
+  private buildCanvasNodeAIContextActions(): EditorContextMenuAction[] {
+    if (!shouldShowAIFeatures()) {
+      return [];
+    }
+
+    if (!this.settings.ai.enabled) {
+      return [
+        {
+          title: t("Enable AI Editor"),
+          callback: () => this.openPluginSettingsTab(),
+        },
+      ];
+    }
+
+    const expansionActions = this.aiManager.getCanvasExpansionPromptSuggestions().map((suggestion) => ({
+      title: suggestion.label,
+      callback: () => {
+        void this.aiManager.expandCurrentCanvasNode(suggestion.value);
+      },
+    }));
+
+    return [
+      { title: t("Expand current canvas node"), commandId: "ai-canvas-expand" },
+      ...expansionActions,
+      { title: t("Canvas global prompt"), commandId: "ai-canvas-global-prompt" },
+    ];
+  }
+
+  private handleCanvasNodeContextMenu = (menu: Menu): void => {
+    this.addEditorContextSubmenu(menu, t("AI Tools"), "sparkles", this.buildCanvasNodeAIContextActions());
+  };
+
   private handleEditorContextMenu = (
     menu: Menu,
     editor: Editor,
@@ -600,6 +632,9 @@ this.app.workspace.onLayoutReady(async () => {
     this.registerEvent(
       this.app.workspace.on("editor-menu", this.handleEditorContextMenu)
           // 判断光标是否在有序列表行（简单匹配数字开头）
+    );
+    this.registerEvent(
+      this.app.workspace.on("canvas:node-menu", this.handleCanvasNodeContextMenu)
     );
     this.registerEvent(
       // @ts-ignore

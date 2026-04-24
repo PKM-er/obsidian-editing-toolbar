@@ -400,8 +400,9 @@ export class AIEditorManager {
       return false;
     }
 
+    let canvasContext: ActiveCanvasContext;
     try {
-      await getActiveCanvasContext(this.plugin);
+      canvasContext = await getActiveCanvasContext(this.plugin);
     } catch (error) {
       new Notice(getAIErrorMessage(error));
       return false;
@@ -422,6 +423,12 @@ export class AIEditorManager {
       ],
       (result) => {
         void this.expandCurrentCanvasNode(result.instruction);
+      },
+      {
+        modalClassName: "editing-toolbar-text-input-modal-wide",
+        contextLabel: canvasContext.selectedNodes.length > 0 ? t("Selected nodes") : undefined,
+        contextItems: this.buildCanvasSelectionContextItems(canvasContext),
+        suggestions: this.getCanvasExpansionPromptSuggestions(),
       },
     ).open();
 
@@ -709,6 +716,27 @@ export class AIEditorManager {
       {
         label: t("Summarize main narrative"),
         value: t("Identify the main narrative of this canvas and improve the section flow."),
+      },
+    ];
+  }
+
+  getCanvasExpansionPromptSuggestions(): ITextInputSuggestion[] {
+    return [
+      {
+        label: t("Generate next steps"),
+        value: t("Generate the next actionable steps from the current canvas node."),
+      },
+      {
+        label: t("Add risks and dependencies"),
+        value: t("Add the risks, dependencies, and constraints related to the current canvas node."),
+      },
+      {
+        label: t("Add missing branches"),
+        value: t("Add the missing branches around the current canvas node."),
+      },
+      {
+        label: t("Clarify structure"),
+        value: t("Clarify the structure around the current canvas node and remove ambiguity."),
       },
     ];
   }

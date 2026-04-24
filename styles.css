@@ -2228,7 +2228,7 @@ body.auto-hide-header .workspace-tab-header-container + .workspace-tab-container
 
 .editing-toolbar-textarea-input {
   width: 100%;
-  min-height: 180px;
+  min-height: 80px;
   resize: vertical;
 }
 
