@@ -2076,6 +2076,107 @@ body.auto-hide-header .workspace-tab-header-container + .workspace-tab-container
   width: min(560px, calc(100vw - 32px));
 }
 
+.modal.editing-toolbar-text-input-modal-wide {
+  width: min(600px, calc(100vw - 40px));
+}
+
+.editing-toolbar-text-input-suggestions {
+  margin-top: 8px;
+}
+
+.editing-toolbar-text-input-suggestions-label {
+  margin-bottom: 10px;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.editing-toolbar-text-input-suggestions-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.editing-toolbar-text-input-suggestion-chip {
+  padding: 7px 12px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 999px;
+  background: var(--background-secondary);
+  color: var(--text-normal);
+  font-size: 12px;
+  line-height: 1.2;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+}
+
+.editing-toolbar-text-input-suggestion-chip:hover {
+  background: color-mix(in srgb, var(--interactive-accent) 12%, var(--background-secondary));
+  border-color: color-mix(in srgb, var(--interactive-accent) 30%, var(--background-modifier-border));
+  transform: translateY(-1px);
+}
+
+.editing-toolbar-text-input-field-full {
+  margin: 12px 0;
+}
+
+.editing-toolbar-text-input-field-full input,
+.editing-toolbar-text-input-field-full textarea {
+  width: 100%;
+  display: block;
+  box-sizing: border-box;
+}
+
+.editing-toolbar-text-input-context {
+  margin: 8px 0 12px;
+  padding: 10px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 12px;
+  background: var(--background-secondary);
+}
+
+.editing-toolbar-text-input-context-label {
+  margin-bottom: 8px;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.editing-toolbar-text-input-context-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px;
+  border-radius: 8px;
+}
+
+.editing-toolbar-text-input-context-item + .editing-toolbar-text-input-context-item {
+  margin-top: 4px;
+}
+
+.editing-toolbar-text-input-context-item:hover {
+  background: var(--background-modifier-hover);
+}
+
+.editing-toolbar-text-input-context-item-label {
+  flex-shrink: 0;
+  color: var(--text-accent);
+  font-weight: 500;
+}
+
+.editing-toolbar-text-input-context-item-preview {
+  min-width: 0;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.editing-toolbar-textarea-input {
+  width: 100%;
+  min-height: 180px;
+  resize: vertical;
+}
+
 .editing-toolbar-ai-consent {
   display: flex;
   flex-direction: column;

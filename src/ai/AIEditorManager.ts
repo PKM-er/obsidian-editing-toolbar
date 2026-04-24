@@ -3,8 +3,18 @@ import type { EditorView } from "@codemirror/view";
 import type EditingToolbarPlugin from "src/plugin/main";
 import { t } from "src/translations/helper";
 import { AIConsentModal } from "src/modals/AIConsentModal";
+import { TextInputModal, type ITextInputSuggestion } from "src/modals/TextInputModal";
 import { ToolbarAIService } from "./AIService";
 import { normalizeGeneratedArtifactContent } from "./artifactNormalizer";
+import {
+  applyCanvasExpansionDraft,
+  applyCanvasInstructionPlan,
+  buildCanvasDocumentSource,
+  getActiveCanvasContext,
+  getActiveCanvasTextFileView,
+  parseCanvasExpansionResponse,
+  parseCanvasInstructionResponse,
+} from "./canvasScene";
 import { resolveRewriteContext } from "./editorContext";
 import { getAIErrorMessage } from "./errorHandling";
 import { PKMerAuthService } from "./PKMerAuthService";
@@ -13,6 +23,7 @@ import { DEFAULT_REWRITE_ACTIONS, type RewriteArtifactKind, type RewriteArtifact
 import { createAIEditorExtensions, startRewriteEffect, triggerCompletionEffect } from "./extensions";
 import { shouldShowAIFeatures } from "src/util/locale";
 import { compactContent } from "./contextCompactor";
+import type { ActiveCanvasContext, CanvasNodeSummary } from "./canvasScene";
 
 interface FrontmatterStats {
   keyCounts: Map<string, number>;
@@ -367,6 +378,568 @@ export class AIEditorManager {
     const artifactKind = getAIToolboxArtifactKind(actionId);
 
     return this.startRewrite(editor, "custom", prompt, { artifactKind });
+  }
+
+  async openCanvasNodeExpansionModal(): Promise<boolean> {
+    if (!this.plugin.settings.ai.enabled) {
+      new Notice(t("AI features are disabled in settings."));
+      return false;
+    }
+
+    if ((await this.getToolbarRouteState()) === "unavailable") {
+      new Notice(await this.getProviderRouteStatusText());
+      return false;
+    }
+
+    if (!getActiveCanvasTextFileView(this.plugin)) {
+      new Notice(t("Canvas AI requires an active Canvas file."));
+      return false;
+    }
+
+    try {
+      await getActiveCanvasContext(this.plugin);
+    } catch (error) {
+      new Notice(getAIErrorMessage(error));
+      return false;
+    }
+
+    new TextInputModal(
+      this.plugin.app,
+      t("Expand current canvas node"),
+      [
+        {
+          key: "instruction",
+          label: t("Instruction"),
+          placeholder: t("e.g. split into next steps, risks, dependencies"),
+          defaultValue: "",
+          multiline: true,
+          hideLabel: true,
+        },
+      ],
+      (result) => {
+        void this.expandCurrentCanvasNode(result.instruction);
+      },
+    ).open();
+
+    return true;
+  }
+
+  async openCanvasGlobalPromptModal(): Promise<boolean> {
+    if (!this.plugin.settings.ai.enabled) {
+      new Notice(t("AI features are disabled in settings."));
+      return false;
+    }
+
+    if ((await this.getToolbarRouteState()) === "unavailable") {
+      new Notice(await this.getProviderRouteStatusText());
+      return false;
+    }
+
+    if (!getActiveCanvasTextFileView(this.plugin)) {
+      new Notice(t("Canvas AI requires an active Canvas file."));
+      return false;
+    }
+
+    let canvasContext: ActiveCanvasContext;
+    try {
+      canvasContext = await getActiveCanvasContext(this.plugin, { requireAnchor: false });
+    } catch (error) {
+      new Notice(getAIErrorMessage(error));
+      return false;
+    }
+
+    new TextInputModal(
+      this.plugin.app,
+      t("Canvas global prompt"),
+      [
+        {
+          key: "instruction",
+          label: t("Instruction"),
+          placeholder: this.getCanvasGlobalPromptPlaceholder(canvasContext),
+          defaultValue: "",
+          multiline: true,
+          hideLabel: true,
+        },
+      ],
+      (result) => {
+        void this.runCanvasGlobalInstruction(result.instruction);
+      },
+      {
+        modalClassName: "editing-toolbar-text-input-modal-wide",
+        contextLabel: canvasContext.selectedNodes.length > 0 ? t("Selected nodes") : undefined,
+        contextItems: this.buildCanvasSelectionContextItems(canvasContext),
+        suggestions: this.getCanvasGlobalPromptSuggestions(canvasContext),
+      },
+    ).open();
+
+    return true;
+  }
+
+  async expandCurrentCanvasNode(instruction?: string): Promise<boolean> {
+    if (!this.plugin.settings.ai.enabled) {
+      new Notice(t("AI features are disabled in settings."));
+      return false;
+    }
+
+    if ((await this.getToolbarRouteState()) === "unavailable") {
+      new Notice(await this.getProviderRouteStatusText());
+      return false;
+    }
+
+    try {
+      const canvasContext = await getActiveCanvasContext(this.plugin);
+      new Notice(t("Canvas AI is expanding the current node..."));
+
+      let response = "";
+      for await (const chunk of this.aiService.rewrite({
+        selectedText: canvasContext.anchorNode.text,
+        instruction: "custom",
+        customPrompt: this.buildCanvasExpansionPrompt(instruction),
+        context: canvasContext.contextText,
+      })) {
+        response += chunk;
+      }
+
+      const draftNodes = parseCanvasExpansionResponse(response);
+      const result = await applyCanvasExpansionDraft(this.plugin, canvasContext, draftNodes);
+      new Notice(`${t("Canvas AI added")} ${result.addedNodeCount} ${t("nodes to the board.")}`);
+      return true;
+    } catch (error) {
+      const message = getAIErrorMessage(error);
+      new Notice(message);
+      console.error("[Canvas AI] Failed to expand current node:", error);
+      return false;
+    }
+  }
+
+  async runCanvasGlobalInstruction(instruction?: string): Promise<boolean> {
+    if (!this.plugin.settings.ai.enabled) {
+      new Notice(t("AI features are disabled in settings."));
+      return false;
+    }
+
+    if ((await this.getToolbarRouteState()) === "unavailable") {
+      new Notice(await this.getProviderRouteStatusText());
+      return false;
+    }
+
+    try {
+      const canvasContext = await getActiveCanvasContext(this.plugin, { requireAnchor: false });
+      const effectiveInstruction = instruction?.trim();
+      if (!effectiveInstruction) {
+        new Notice(t("Please enter your canvas instruction."));
+        return false;
+      }
+
+      const mode = this.resolveCanvasGlobalInstructionMode(effectiveInstruction);
+      if (mode === "article" || mode === "slides") {
+        return this.generateCanvasDerivedMarkdown(canvasContext, effectiveInstruction, mode);
+      }
+      const isReorganizeMode = mode === "reorganize";
+      const documentSource = isReorganizeMode
+        ? await buildCanvasDocumentSource(this.plugin, canvasContext)
+        : null;
+
+      new Notice(t(isReorganizeMode
+        ? "Canvas AI is reorganizing the board..."
+        : "Canvas AI is processing the board..."));
+
+      let response = "";
+      for await (const chunk of this.aiService.rewrite({
+        selectedText: documentSource?.text || canvasContext.anchorNode?.text || "Canvas board",
+        instruction: "custom",
+        customPrompt: isReorganizeMode
+          ? this.buildCanvasReorganizationPrompt(effectiveInstruction, documentSource?.scope ?? "board")
+          : this.buildCanvasGlobalPrompt(effectiveInstruction, !!canvasContext.anchorNode),
+        context: canvasContext.contextText,
+      })) {
+        response += chunk;
+      }
+
+      const rawPlan = parseCanvasInstructionResponse(response);
+      const plan = isReorganizeMode
+        ? {
+          ...rawPlan,
+          addNodes: [],
+          replaceExistingEdges: rawPlan.replaceExistingEdges || rawPlan.addEdges.length > 0,
+        }
+        : rawPlan;
+      const result = await applyCanvasInstructionPlan(this.plugin, canvasContext, plan);
+      new Notice(isReorganizeMode
+        ? `${t("Canvas AI reorganized the board:")} ${result.movedNodeCount} ${t("nodes moved")}, ${result.addedEdgeCount} ${t("links rebuilt")}.`
+        : `${t("Canvas AI updated the board:")} ${result.addedNodeCount} ${t("nodes")}, ${result.addedEdgeCount} ${t("links")}.`);
+      return true;
+    } catch (error) {
+      const message = getAIErrorMessage(error);
+      new Notice(message);
+      console.error("[Canvas AI] Failed to run global instruction:", error);
+      return false;
+    }
+  }
+
+  private buildCanvasExpansionPrompt(instruction?: string): string {
+    const userInstruction = instruction?.trim() || t("Expand the current node into the most useful next neighboring nodes.");
+
+    return [
+      "You are assisting inside an existing Obsidian Canvas.",
+      "Return JSON only. No explanations. No markdown fences.",
+      "Task:",
+      "- Expand the current focus node into useful neighboring text nodes for the same board.",
+      "- Follow the user instruction first.",
+      "- Avoid repeating ideas that already exist in the nearby canvas context.",
+      "- Prefer 2 to 5 concrete nodes unless the instruction clearly needs fewer.",
+      "- Keep every node concise, specific, and ready to place on the board.",
+      "- The app will create ids, coordinates, and edges locally, so do not output them.",
+      "Output schema:",
+      "{",
+      '  "nodes": [',
+      "    {",
+      '      "title": "Short node title",',
+      '      "body": "Short Obsidian-friendly Markdown body",',
+      '      "relation": "optional short edge label",',
+      '      "color": "optional canvas color id"',
+      "    }",
+      "  ]",
+      "}",
+      "Rules:",
+      "- Return exactly one JSON object with a nodes array.",
+      "- Do not return edges, ids, x, y, width, height, or commentary.",
+      "- title should be short and scannable.",
+      "- body should be brief and useful, usually bullets or one short paragraph.",
+      "- relation is optional and should be short if present.",
+      "",
+      `User instruction:\n${userInstruction}`,
+    ].join("\n");
+  }
+
+  private getCanvasGlobalPromptPlaceholder(canvasContext: ActiveCanvasContext): string {
+    if (canvasContext.selectedNodes.length > 0) {
+      return t("e.g. connect selected nodes, add missing branches, clarify structure");
+    }
+
+    return t("e.g. reorganize the board, turn this canvas into an article, turn this canvas into Obsidian Slides");
+  }
+
+  private getCanvasGlobalPromptSuggestions(canvasContext: ActiveCanvasContext): ITextInputSuggestion[] {
+    if (canvasContext.selectedNodes.length > 0) {
+      return [
+        {
+          label: t("Connect selected nodes"),
+          value: t("Connect the selected nodes with the most meaningful relationships."),
+        },
+        {
+          label: t("Add missing branches"),
+          value: t("Add the missing branches around the selected nodes."),
+        },
+        {
+          label: t("Clarify structure"),
+          value: t("Clarify the structure around the selected nodes and remove ambiguity."),
+        },
+        {
+          label: t("Generate next steps"),
+          value: t("Generate the next actionable steps from the selected nodes."),
+        },
+        {
+          label: t("Add risks and dependencies"),
+          value: t("Add the risks, dependencies, and constraints related to the selected nodes."),
+        },
+      ];
+    }
+
+    return [
+      {
+        label: t("Canvas to article"),
+        value: t("Convert this canvas into a polished Markdown article draft."),
+      },
+      {
+        label: t("Canvas to slides"),
+        value: t("Convert this canvas into Obsidian Slides Markdown."),
+      },
+      {
+        label: t("Reorganize board"),
+        value: t("Reorganize the existing canvas nodes into a clearer hierarchy and grouping. Reuse current nodes instead of adding new ones."),
+      },
+      {
+        label: t("Connect board clusters"),
+        value: t("Connect the related clusters across the whole canvas and add missing bridge nodes."),
+      },
+      {
+        label: t("Summarize main narrative"),
+        value: t("Identify the main narrative of this canvas and improve the section flow."),
+      },
+    ];
+  }
+
+  private resolveCanvasGlobalInstructionMode(instruction: string): "board" | "article" | "slides" | "reorganize" {
+    const normalizedInstruction = this.normalizeCanvasInstructionText(instruction);
+    const localizedArticleHints = [
+      t("Canvas to article"),
+      t("Convert this canvas into a polished Markdown article draft."),
+    ].map((item) => this.normalizeCanvasInstructionText(item));
+    const localizedSlidesHints = [
+      t("Canvas to slides"),
+      t("Convert this canvas into Obsidian Slides Markdown."),
+    ].map((item) => this.normalizeCanvasInstructionText(item));
+    const localizedReorganizeHints = [
+      t("Reorganize board"),
+      t("Reorganize the whole canvas into a clearer hierarchy with better grouping."),
+      t("Reorganize the existing canvas nodes into a clearer hierarchy and grouping. Reuse current nodes instead of adding new ones."),
+    ].map((item) => this.normalizeCanvasInstructionText(item));
+
+    if (localizedArticleHints.some((hint) => hint && normalizedInstruction.includes(hint))) {
+      return "article";
+    }
+
+    if (localizedSlidesHints.some((hint) => hint && normalizedInstruction.includes(hint))) {
+      return "slides";
+    }
+
+    if (/(^|\b)(slides?|slide deck|presentation|deck|reveal)(\b|$)|幻灯片|投影片|演示文稿/i.test(normalizedInstruction)) {
+      return "slides";
+    }
+
+    if (/(^|\b)(article|document|essay|blog|post|writeup|manuscript)(\b|$)|文章|文稿|稿子|长文|博文|文档/i.test(normalizedInstruction)) {
+      return "article";
+    }
+
+    if (localizedReorganizeHints.some((hint) => hint && normalizedInstruction.includes(hint))) {
+      return "reorganize";
+    }
+
+    if (/(^|\b)(reorganize|rearrange|restructure|regroup|relayout|layout|tidy up|clean up)(\b|$)|重组|重排|重整|重新布局|整理结构|梳理结构|层级|分组/i.test(normalizedInstruction)) {
+      return "reorganize";
+    }
+
+    return "board";
+  }
+
+  private normalizeCanvasInstructionText(text: string): string {
+    return text
+      .trim()
+      .toLowerCase()
+      .replace(/[^\p{L}\p{N}\s]+/gu, " ")
+      .replace(/\s+/g, " ");
+  }
+
+  private buildCanvasGlobalPrompt(instruction: string, hasAnchorNode: boolean): string {
+    return [
+      "You are assisting inside an existing Obsidian Canvas.",
+      "Return JSON only. No explanations. No markdown fences.",
+      "You may add new nodes and/or connect existing nodes already on the board.",
+      "The local app will validate ids, coordinates, and edges.",
+      "Output schema:",
+      "{",
+      '  "addNodes": [',
+      "    {",
+      '      "title": "Short node title",',
+      '      "body": "Short Obsidian-friendly Markdown body",',
+      hasAnchorNode
+        ? '      "connectTo": "anchor or existing node id",'
+        : '      "connectTo": "existing node id (optional)",',
+      '      "relation": "optional short edge label",',
+      '      "color": "optional canvas color id"',
+      "    }",
+      "  ],",
+      '  "addEdges": [',
+      "    {",
+      hasAnchorNode
+        ? '      "fromNode": "anchor or existing node id",'
+        : '      "fromNode": "existing node id",',
+      hasAnchorNode
+        ? '      "toNode": "anchor or existing node id",'
+        : '      "toNode": "existing node id",',
+      '      "label": "optional short edge label"',
+      "    }",
+      "  ]",
+      "}",
+      "Rules:",
+      "- Use exact existing node ids when creating edges to existing nodes.",
+      "- Prefer concise, high-value updates that fit the current board.",
+      "- Do not output ids, x, y, width, or height for new nodes.",
+      "- If no new nodes are needed, return an empty addNodes array.",
+      "- If no new edges are needed, return an empty addEdges array.",
+      hasAnchorNode
+        ? "- You may use anchor/current to refer to the selected focus node."
+        : "- No node is currently selected. Do not use anchor/current placeholders; use exact existing node ids or leave connectTo empty.",
+      "",
+      `User instruction:\n${instruction}`,
+    ].join("\n");
+  }
+
+  private buildCanvasReorganizationPrompt(instruction: string, scope: "selection" | "board"): string {
+    return [
+      "You are reorganizing an existing Obsidian Canvas.",
+      "Return JSON only. No explanations. No markdown fences.",
+      "Reuse existing canvas nodes only. Do not create new nodes.",
+      "The selectedText contains an ordered traversal of the relevant canvas nodes with exact node ids and current links.",
+      scope === "selection"
+        ? "Reorganize only the selected canvas nodes."
+        : "Reorganize the whole canvas.",
+      "Output schema:",
+      "{",
+      '  "layoutNodes": [',
+      "    {",
+      '      "nodeId": "existing node id",',
+      '      "column": 0,',
+      '      "row": 0',
+      "    }",
+      "  ],",
+      '  "replaceExistingEdges": true,',
+      '  "addEdges": [',
+      "    {",
+      '      "fromNode": "existing node id",',
+      '      "toNode": "existing node id",',
+      '      "label": "optional short edge label"',
+      "    }",
+      "  ]",
+      "}",
+      "Rules:",
+      "- Use only existing node ids from the provided canvas data.",
+      "- Do not return addNodes, titles, bodies, or new ids.",
+      "- Use layoutNodes to place the existing nodes into a clearer hierarchy or grouped structure.",
+      "- When you are rebuilding the relationship structure, set replaceExistingEdges to true.",
+      "- Prefer a simple left-to-right hierarchy with compact grouping unless the user instruction says otherwise.",
+      "- If the current links already fit the new structure, you may keep replaceExistingEdges false and return layoutNodes only.",
+      "",
+      `User instruction:\n${instruction}`,
+    ].join("\n");
+  }
+
+  private buildCanvasArticlePrompt(instruction: string, scope: "selection" | "board"): string {
+    return [
+      "You are converting an Obsidian Canvas into a coherent Markdown article.",
+      "Return Markdown only. No explanations. No markdown fences.",
+      "The selectedText contains an ordered traversal of the canvas nodes.",
+      "The traversal follows canvas structure, starting from root nodes and walking through connected children when possible.",
+      scope === "selection"
+        ? "Focus on the selected canvas nodes as the primary source."
+        : "Focus on the whole canvas as the primary source.",
+      "Requirements:",
+      "- Create a clear title and section hierarchy.",
+      "- Merge overlapping fragments into readable paragraphs or bullets.",
+      "- Preserve concrete facts, steps, and relationships from the canvas.",
+      "- Remove duplication, but do not invent unsupported claims.",
+      "- Keep the result Obsidian-friendly Markdown.",
+      "",
+      `User instruction:\n${instruction}`,
+    ].join("\n");
+  }
+
+  private buildCanvasSlidesPrompt(instruction: string, scope: "selection" | "board"): string {
+    return [
+      "You are converting an Obsidian Canvas into Markdown for Obsidian Slides.",
+      "Return Markdown only. No explanations. No markdown fences.",
+      "The selectedText contains an ordered traversal of the canvas nodes.",
+      "Use `---` as the slide separator so the result works with the core Slides plugin.",
+      scope === "selection"
+        ? "Focus on the selected canvas nodes as the slide source."
+        : "Focus on the whole canvas as the slide source.",
+      "Requirements:",
+      "- Start with a title slide.",
+      "- Create concise, presentation-ready slides with short headings and bullets.",
+      "- Prefer 6 to 12 slides unless the instruction clearly asks for another length.",
+      "- Combine related nodes into the same slide when that improves clarity.",
+      "- End with a summary or next-steps slide when helpful.",
+      "",
+      `User instruction:\n${instruction}`,
+    ].join("\n");
+  }
+
+  private buildCanvasSelectionContextItems(canvasContext: ActiveCanvasContext) {
+    return canvasContext.selectedNodes.map((node, index) => {
+      const previewSource = node.text.trim() || node.id;
+      const previewText = previewSource.replace(/\s+/g, " ").trim();
+      const shortPreview = previewText.length > 80 ? `${previewText.slice(0, 80)}...` : previewText;
+      const title = node.text.length > 140 ? `${node.text.slice(0, 140)}...` : node.text;
+
+      return {
+        label: this.getCanvasContextNodeLabel(node, canvasContext.anchorNode?.id, index),
+        preview: `${shortPreview} (${node.text.length.toLocaleString()} chars)`,
+        title: title || node.id,
+      };
+    });
+  }
+
+  private getCanvasContextNodeLabel(node: CanvasNodeSummary, anchorNodeId?: string | null, index: number = 0): string {
+    const firstMeaningfulLine = node.text
+      .split("\n")
+      .map((line) => line.replace(/^#+\s*/, "").trim())
+      .find(Boolean);
+    const shortTitle = firstMeaningfulLine && firstMeaningfulLine.length > 28
+      ? `${firstMeaningfulLine.slice(0, 28)}...`
+      : firstMeaningfulLine;
+    const role = anchorNodeId && node.id === anchorNodeId ? t("Focused") : `${t("Selected")} ${index + 1}`;
+
+    return shortTitle
+      ? `${role} · ${shortTitle}`
+      : `${role} · ${node.type}`;
+  }
+
+  private async generateCanvasDerivedMarkdown(
+    canvasContext: ActiveCanvasContext,
+    instruction: string,
+    mode: "article" | "slides",
+  ): Promise<boolean> {
+    try {
+      const source = await buildCanvasDocumentSource(this.plugin, canvasContext);
+      new Notice(mode === "article"
+        ? t("Canvas AI is drafting an article...")
+        : t("Canvas AI is drafting slides..."));
+
+      let response = "";
+      for await (const chunk of this.aiService.rewrite({
+        selectedText: source.text,
+        instruction: "custom",
+        customPrompt: mode === "article"
+          ? this.buildCanvasArticlePrompt(instruction, source.scope)
+          : this.buildCanvasSlidesPrompt(instruction, source.scope),
+        context: canvasContext.contextText,
+      })) {
+        response += chunk;
+      }
+
+      const normalizedMarkdown = this.normalizeCanvasGeneratedMarkdown(response);
+      if (!normalizedMarkdown) {
+        throw new Error(t("Canvas AI did not return any usable Markdown."));
+      }
+
+      const createdFile = await this.createCanvasMarkdownFile(canvasContext, mode, normalizedMarkdown);
+      const targetLeaf = this.plugin.app.workspace.getLeaf(true);
+      await targetLeaf.openFile(createdFile);
+      new Notice(`${t("Created AI file:")} ${createdFile.path}`);
+      return true;
+    } catch (error) {
+      const message = getAIErrorMessage(error);
+      new Notice(message);
+      console.error("[Canvas AI] Failed to generate derived markdown:", error);
+      return false;
+    }
+  }
+
+  private normalizeCanvasGeneratedMarkdown(content: string): string {
+    const trimmed = content.trim();
+    if (!trimmed) {
+      return "";
+    }
+
+    return trimmed
+      .replace(/^```(?:markdown|md)?\s*/i, "")
+      .replace(/\s*```$/i, "")
+      .trim()
+      .concat("\n");
+  }
+
+  private async createCanvasMarkdownFile(
+    canvasContext: ActiveCanvasContext,
+    mode: "article" | "slides",
+    content: string,
+  ) {
+    const parentPath = canvasContext.file.parent?.path && canvasContext.file.parent.path !== "/"
+      ? canvasContext.file.parent.path
+      : "";
+    const suffix = mode === "article" ? t("AI Article Draft") : t("AI Slides");
+    const filePath = await this.getAvailableArtifactPath(parentPath, `${canvasContext.file.basename} ${suffix}`, "md");
+    return this.plugin.app.vault.create(filePath, content);
   }
 
   private async startFrontmatterGeneration(editor: Editor | null | undefined, prompt: string): Promise<boolean> {

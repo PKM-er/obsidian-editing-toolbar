@@ -361,6 +361,7 @@ export default class editingToolbarPlugin extends Plugin {
 
     const hasSelection = editor.somethingSelected();
     const canUseImplicitBlockRewrite = Platform.isMobileApp;
+    const isCanvasScene = this.app.workspace.activeLeaf?.view?.getViewType?.() === "canvas";
 
     const primaryActions: EditorContextMenuAction[] = [
       { title: t("Trigger AI Inline Completion"), commandId: "ai-inline-completion" },
@@ -378,9 +379,15 @@ export default class editingToolbarPlugin extends Plugin {
       { title: t("Generate frontmatter"), commandId: "ai-toolbox-frontmatter" },
       { title: t("Convert to canvas"), commandId: "ai-toolbox-canvas" },
     ];
+    const canvasActions: EditorContextMenuAction[] = isCanvasScene
+      ? [
+        { title: t("Canvas global prompt"), commandId: "ai-canvas-global-prompt" },
+        { title: t("Expand current canvas node"), commandId: "ai-canvas-expand" },
+      ]
+      : [];
 
     if (hasSelection || canUseImplicitBlockRewrite) {
-      return [...primaryActions, ...rewriteActions];
+      return [...primaryActions, ...rewriteActions, ...canvasActions];
     }
 
     return [
@@ -389,6 +396,7 @@ export default class editingToolbarPlugin extends Plugin {
       { title: t("Continue writing"), commandId: "ai-rewrite-continue" },
       { title: t("Generate frontmatter"), commandId: "ai-toolbox-frontmatter" },
       { title: t("Convert to canvas"), commandId: "ai-toolbox-canvas" },
+      ...canvasActions,
     ];
   }
 
