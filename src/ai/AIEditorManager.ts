@@ -8,10 +8,12 @@ import { ToolbarAIService } from "./AIService";
 import { normalizeGeneratedArtifactContent } from "./artifactNormalizer";
 import {
   applyCanvasExpansionDraft,
+  buildDeterministicCanvasReorganizationPlan,
   applyCanvasInstructionPlan,
   buildCanvasDocumentSource,
   getActiveCanvasContext,
   getActiveCanvasTextFileView,
+  mergeCanvasReorganizationPlans,
   parseCanvasExpansionResponse,
   parseCanvasInstructionResponse,
 } from "./canvasScene";
@@ -23,7 +25,7 @@ import { DEFAULT_REWRITE_ACTIONS, type RewriteArtifactKind, type RewriteArtifact
 import { createAIEditorExtensions, startRewriteEffect, triggerCompletionEffect } from "./extensions";
 import { shouldShowAIFeatures } from "src/util/locale";
 import { compactContent } from "./contextCompactor";
-import type { ActiveCanvasContext, CanvasNodeSummary } from "./canvasScene";
+import type { ActiveCanvasContext, CanvasInstructionPlan, CanvasNodeSummary } from "./canvasScene";
 
 interface FrontmatterStats {
   keyCounts: Map<string, number>;
@@ -544,31 +546,54 @@ export class AIEditorManager {
         const documentSource = isReorganizeMode
           ? await buildCanvasDocumentSource(this.plugin, canvasContext)
           : null;
+        const deterministicReorganizationPlan = isReorganizeMode
+          ? buildDeterministicCanvasReorganizationPlan(canvasContext)
+          : null;
 
         new Notice(t(isReorganizeMode
           ? "Canvas AI is reorganizing the board..."
           : "Canvas AI is processing the board..."));
 
-        let response = "";
-        for await (const chunk of this.aiService.rewrite({
-          selectedText: documentSource?.text || canvasContext.anchorNode?.text || "Canvas board",
-          instruction: "custom",
-          customPrompt: isReorganizeMode
-            ? this.buildCanvasReorganizationPrompt(effectiveInstruction, documentSource?.scope ?? "board")
-            : this.buildCanvasGlobalPrompt(effectiveInstruction, !!canvasContext.anchorNode),
-          context: canvasContext.contextText,
-        })) {
-          response += chunk;
+        let plan: CanvasInstructionPlan;
+        if (isReorganizeMode && deterministicReorganizationPlan) {
+          try {
+            let response = "";
+            for await (const chunk of this.aiService.rewrite({
+              selectedText: documentSource?.text || canvasContext.anchorNode?.text || "Canvas board",
+              instruction: "custom",
+              customPrompt: this.buildCanvasReorganizationPrompt(
+                effectiveInstruction,
+                documentSource?.scope ?? "board",
+                deterministicReorganizationPlan,
+              ),
+              context: canvasContext.contextText,
+            })) {
+              response += chunk;
+            }
+
+            const rawPlan = parseCanvasInstructionResponse(response);
+            plan = mergeCanvasReorganizationPlans({
+              ...rawPlan,
+              addNodes: [],
+            }, deterministicReorganizationPlan);
+          } catch (error) {
+            console.warn("[Canvas AI] Falling back to deterministic reorganization plan:", error);
+            plan = deterministicReorganizationPlan;
+          }
+        } else {
+          let response = "";
+          for await (const chunk of this.aiService.rewrite({
+            selectedText: documentSource?.text || canvasContext.anchorNode?.text || "Canvas board",
+            instruction: "custom",
+            customPrompt: this.buildCanvasGlobalPrompt(effectiveInstruction, !!canvasContext.anchorNode),
+            context: canvasContext.contextText,
+          })) {
+            response += chunk;
+          }
+
+          plan = parseCanvasInstructionResponse(response);
         }
 
-        const rawPlan = parseCanvasInstructionResponse(response);
-        const plan = isReorganizeMode
-          ? {
-            ...rawPlan,
-            addNodes: [],
-            replaceExistingEdges: rawPlan.replaceExistingEdges || rawPlan.addEdges.length > 0,
-          }
-          : rawPlan;
         const result = await applyCanvasInstructionPlan(this.plugin, canvasContext, plan);
         new Notice(isReorganizeMode
           ? `${t("Canvas AI reorganized the board:")} ${result.movedNodeCount} ${t("nodes moved")}, ${result.addedEdgeCount} ${t("links rebuilt")}.`
@@ -620,7 +645,7 @@ export class AIEditorManager {
 
   private getCanvasGlobalPromptPlaceholder(canvasContext: ActiveCanvasContext): string {
     if (canvasContext.selectedNodes.length > 0) {
-      return t("e.g. connect selected nodes, add missing branches, clarify structure");
+      return t("e.g. tidy selected layout, connect selected nodes, add missing branches");
     }
 
     return t("e.g. reorganize the board, turn this canvas into an article, turn this canvas into Obsidian Slides");
@@ -629,6 +654,10 @@ export class AIEditorManager {
   private getCanvasGlobalPromptSuggestions(canvasContext: ActiveCanvasContext): ITextInputSuggestion[] {
     if (canvasContext.selectedNodes.length > 0) {
       return [
+        {
+          label: t("Tidy selected layout"),
+          value: t("Reorganize the selected nodes into a clearer local hierarchy with tidy spacing and fewer edge crossings. Reuse current nodes instead of adding new ones."),
+        },
         {
           label: t("Connect selected nodes"),
           value: t("Connect the selected nodes with the most meaningful relationships."),
@@ -653,6 +682,14 @@ export class AIEditorManager {
     }
 
     return [
+      {
+        label: t("Organize canvas layout"),
+        value: t("Reorganize this canvas into a clean hierarchy with tidy spacing, aligned sibling nodes, and fewer edge crossings. Reuse current nodes instead of adding new ones."),
+      },
+      {
+        label: t("Reduce edge crossings"),
+        value: t("Reorganize the canvas to reduce edge crossings, keep related nodes close, and make the reading path clearer. Reuse current nodes instead of adding new ones."),
+      },
       {
         label: t("Canvas to article"),
         value: t("Convert this canvas into a polished Markdown article draft."),
@@ -687,6 +724,12 @@ export class AIEditorManager {
       t("Convert this canvas into Obsidian Slides Markdown."),
     ].map((item) => this.normalizeCanvasInstructionText(item));
     const localizedReorganizeHints = [
+      t("Organize canvas layout"),
+      t("Reorganize this canvas into a clean hierarchy with tidy spacing, aligned sibling nodes, and fewer edge crossings. Reuse current nodes instead of adding new ones."),
+      t("Reduce edge crossings"),
+      t("Reorganize the canvas to reduce edge crossings, keep related nodes close, and make the reading path clearer. Reuse current nodes instead of adding new ones."),
+      t("Tidy selected layout"),
+      t("Reorganize the selected nodes into a clearer local hierarchy with tidy spacing and fewer edge crossings. Reuse current nodes instead of adding new ones."),
       t("Reorganize board"),
       t("Reorganize the whole canvas into a clearer hierarchy with better grouping."),
       t("Reorganize the existing canvas nodes into a clearer hierarchy and grouping. Reuse current nodes instead of adding new ones."),
@@ -712,7 +755,7 @@ export class AIEditorManager {
       return "reorganize";
     }
 
-    if (/(^|\b)(reorganize|rearrange|restructure|regroup|relayout|layout|tidy up|clean up)(\b|$)|重组|重排|重整|重新布局|整理结构|梳理结构|层级|分组/i.test(normalizedInstruction)) {
+    if (/(^|\b)(organize|reorganize|rearrange|restructure|regroup|relayout|layout|tidy|tidy up|clean up|reduce crossings?|edge crossings?)(\b|$)|重组|重排|重整|重新布局|整理布局|整理画布|整理结构|梳理结构|减少交叉|避免交叉|连线交叉|层级|分组/i.test(normalizedInstruction)) {
       return "reorganize";
     }
 
@@ -772,7 +815,19 @@ export class AIEditorManager {
     ].join("\n");
   }
 
-  private buildCanvasReorganizationPrompt(instruction: string, scope: "selection" | "board"): string {
+  private buildCanvasReorganizationPrompt(
+    instruction: string,
+    scope: "selection" | "board",
+    deterministicPlan?: CanvasInstructionPlan,
+  ): string {
+    const deterministicPlanText = deterministicPlan
+      ? JSON.stringify({
+        layoutNodes: deterministicPlan.layoutNodes,
+        replaceExistingEdges: deterministicPlan.replaceExistingEdges,
+        addEdges: deterministicPlan.addEdges,
+      }, null, 2)
+      : "";
+
     return [
       "You are reorganizing an existing Obsidian Canvas.",
       "Return JSON only. No explanations. No markdown fences.",
@@ -805,7 +860,18 @@ export class AIEditorManager {
       "- Use layoutNodes to place the existing nodes into a clearer hierarchy or grouped structure.",
       "- When you are rebuilding the relationship structure, set replaceExistingEdges to true.",
       "- Prefer a simple left-to-right hierarchy with compact grouping unless the user instruction says otherwise.",
+      "- Prefer reducing obvious line crossings, aligning siblings, and keeping related nodes in readable clusters.",
       "- If the current links already fit the new structure, you may keep replaceExistingEdges false and return layoutNodes only.",
+      deterministicPlanText
+        ? [
+          "",
+          "A deterministic local draft is provided below.",
+          "Use it as the baseline layout when it is already reasonable, and only override parts that clearly improve readability or reduce edge crossings.",
+          "If you rebuild edges, return only the improved edge set for the nodes in scope.",
+          "deterministic_local_draft:",
+          deterministicPlanText,
+        ].join("\n")
+        : "",
       "",
       `User instruction:\n${instruction}`,
     ].join("\n");

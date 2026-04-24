@@ -102,6 +102,11 @@ export interface CanvasDocumentSource {
   text: string;
 }
 
+const DETERMINISTIC_LAYOUT_LEAF_SPAN = 2;
+const DETERMINISTIC_LAYOUT_SIBLING_GAP = 1;
+const DETERMINISTIC_LAYOUT_ROOT_GAP = 2;
+const DETERMINISTIC_LAYOUT_COMPONENT_GAP = 3;
+
 export function getActiveCanvasTextFileView(plugin: EditingToolbarPlugin): TextFileView | null {
   const view = plugin.app.workspace.activeLeaf?.view;
   if (!isCanvasTextFileView(view)) {
@@ -209,6 +214,118 @@ export async function buildCanvasDocumentSource(
     scope: useSelection ? "selection" : "board",
     nodeCount: orderedNodes.length,
     text: textParts.join("\n\n"),
+  };
+}
+
+export function buildDeterministicCanvasReorganizationPlan(
+  context: ActiveCanvasContext,
+): CanvasInstructionPlan {
+  const regularNodes = context.document.nodes.filter((node) => node.type !== "group");
+  const scopeNodeIds = resolveCanvasScopeNodeIds(context, regularNodes);
+
+  if (scopeNodeIds.length === 0) {
+    return {
+      addNodes: [],
+      addEdges: [],
+      layoutNodes: [],
+      replaceExistingEdges: false,
+    };
+  }
+
+  const nodeMap = new Map(
+    regularNodes
+      .filter((node) => scopeNodeIds.includes(node.id))
+      .map((node) => [node.id, node]),
+  );
+  const scopeNodeIdSet = new Set(scopeNodeIds);
+  const scopeEdges = context.document.edges.filter((edge) =>
+    scopeNodeIdSet.has(edge.fromNode) && scopeNodeIdSet.has(edge.toNode) && edge.fromNode !== edge.toNode,
+  );
+  const outgoingMap = new Map<string, string[]>();
+  const incomingMap = new Map<string, string[]>();
+
+  scopeNodeIds.forEach((nodeId) => {
+    outgoingMap.set(nodeId, []);
+    incomingMap.set(nodeId, []);
+  });
+
+  scopeEdges.forEach((edge) => {
+    const outgoing = outgoingMap.get(edge.fromNode);
+    if (outgoing && !outgoing.includes(edge.toNode)) {
+      outgoing.push(edge.toNode);
+    }
+
+    const incoming = incomingMap.get(edge.toNode);
+    if (incoming && !incoming.includes(edge.fromNode)) {
+      incoming.push(edge.fromNode);
+    }
+  });
+
+  outgoingMap.forEach((targets, nodeId) => {
+    outgoingMap.set(
+      nodeId,
+      targets.sort((leftId, rightId) => compareCanvasNodes(nodeMap.get(leftId), nodeMap.get(rightId))),
+    );
+  });
+
+  incomingMap.forEach((sources, nodeId) => {
+    incomingMap.set(
+      nodeId,
+      sources.sort((leftId, rightId) => compareCanvasNodes(nodeMap.get(leftId), nodeMap.get(rightId))),
+    );
+  });
+
+  const components = buildCanvasScopeComponents(scopeNodeIds, scopeEdges, nodeMap);
+  const layoutNodes: CanvasInstructionLayoutDraft[] = [];
+  let rowOffset = 0;
+
+  components.forEach((componentNodeIds, componentIndex) => {
+    const componentLayoutNodes = buildDeterministicComponentLayout(
+      componentNodeIds,
+      nodeMap,
+      outgoingMap,
+      incomingMap,
+      context.anchorNode?.id ?? null,
+    );
+    const componentMaxRow = componentLayoutNodes.reduce((maxRow, layoutNode) => Math.max(maxRow, layoutNode.row), 0);
+
+    componentLayoutNodes.forEach((layoutNode) => {
+      layoutNodes.push({
+        ...layoutNode,
+        row: layoutNode.row + rowOffset,
+      });
+    });
+
+    if (componentIndex < components.length - 1) {
+      rowOffset += componentMaxRow + DETERMINISTIC_LAYOUT_COMPONENT_GAP + 1;
+    }
+  });
+
+  return {
+    addNodes: [],
+    addEdges: [],
+    layoutNodes: sortCanvasLayoutNodes(layoutNodes),
+    replaceExistingEdges: false,
+  };
+}
+
+export function mergeCanvasReorganizationPlans(
+  reviewedPlan: CanvasInstructionPlan,
+  fallbackPlan: CanvasInstructionPlan,
+): CanvasInstructionPlan {
+  const layoutByNodeId = new Map<string, CanvasInstructionLayoutDraft>();
+  fallbackPlan.layoutNodes.forEach((layoutNode) => {
+    layoutByNodeId.set(layoutNode.nodeId, layoutNode);
+  });
+  reviewedPlan.layoutNodes.forEach((layoutNode) => {
+    layoutByNodeId.set(layoutNode.nodeId, layoutNode);
+  });
+
+  return {
+    addNodes: [],
+    addEdges: reviewedPlan.addEdges,
+    layoutNodes: sortCanvasLayoutNodes([...layoutByNodeId.values()]),
+    replaceExistingEdges: reviewedPlan.addEdges.length > 0 && reviewedPlan.replaceExistingEdges,
   };
 }
 
@@ -904,6 +1021,208 @@ function formatEdgeSummary(edge: CanvasEdgeRecord, anchorNodeId?: string): strin
   return `- ${edge.fromNode} -> ${edge.toNode}${edge.label ? ` [${edge.label}]` : ""}`;
 }
 
+function resolveCanvasScopeNodeIds(
+  context: ActiveCanvasContext,
+  regularNodes: CanvasNodeRecord[],
+): string[] {
+  const regularNodeIds = new Set(regularNodes.map((node) => node.id));
+  const selectedScopeNodeIds = context.selectedNodeIds.filter((nodeId) => regularNodeIds.has(nodeId));
+
+  return selectedScopeNodeIds.length > 0
+    ? selectedScopeNodeIds
+    : regularNodes.map((node) => node.id);
+}
+
+function buildCanvasScopeComponents(
+  scopeNodeIds: string[],
+  scopeEdges: CanvasEdgeRecord[],
+  nodeMap: Map<string, CanvasNodeRecord>,
+): string[][] {
+  const adjacency = new Map<string, Set<string>>();
+  scopeNodeIds.forEach((nodeId) => {
+    adjacency.set(nodeId, new Set<string>());
+  });
+
+  scopeEdges.forEach((edge) => {
+    adjacency.get(edge.fromNode)?.add(edge.toNode);
+    adjacency.get(edge.toNode)?.add(edge.fromNode);
+  });
+
+  const sortedNodeIds = scopeNodeIds
+    .slice()
+    .sort((leftId, rightId) => compareCanvasNodes(nodeMap.get(leftId), nodeMap.get(rightId)));
+  const visited = new Set<string>();
+  const components: string[][] = [];
+
+  sortedNodeIds.forEach((nodeId) => {
+    if (visited.has(nodeId)) {
+      return;
+    }
+
+    const queue = [nodeId];
+    const componentNodeIds: string[] = [];
+    visited.add(nodeId);
+
+    while (queue.length > 0) {
+      const currentNodeId = queue.shift();
+      if (!currentNodeId) {
+        continue;
+      }
+
+      componentNodeIds.push(currentNodeId);
+      adjacency.get(currentNodeId)?.forEach((neighborId) => {
+        if (visited.has(neighborId)) {
+          return;
+        }
+
+        visited.add(neighborId);
+        queue.push(neighborId);
+      });
+    }
+
+    componentNodeIds.sort((leftId, rightId) => compareCanvasNodes(nodeMap.get(leftId), nodeMap.get(rightId)));
+    components.push(componentNodeIds);
+  });
+
+  return components.sort((left, right) =>
+    compareCanvasNodes(nodeMap.get(left[0]), nodeMap.get(right[0])),
+  );
+}
+
+function buildDeterministicComponentLayout(
+  componentNodeIds: string[],
+  nodeMap: Map<string, CanvasNodeRecord>,
+  outgoingMap: Map<string, string[]>,
+  incomingMap: Map<string, string[]>,
+  anchorNodeId?: string | null,
+): CanvasInstructionLayoutDraft[] {
+  const componentNodeIdSet = new Set(componentNodeIds);
+  const orderedNodeIds = componentNodeIds
+    .slice()
+    .sort((leftId, rightId) => compareCanvasNodes(nodeMap.get(leftId), nodeMap.get(rightId)));
+  const rootCandidates = orderedNodeIds.filter((nodeId) =>
+    (incomingMap.get(nodeId) ?? []).every((sourceNodeId) => !componentNodeIdSet.has(sourceNodeId)),
+  );
+  const rootNodeIds = (rootCandidates.length > 0 ? rootCandidates : orderedNodeIds.slice(0, 1)).slice();
+
+  if (anchorNodeId && componentNodeIdSet.has(anchorNodeId)) {
+    const anchorIndex = rootNodeIds.indexOf(anchorNodeId);
+    if (anchorIndex >= 0) {
+      rootNodeIds.splice(anchorIndex, 1);
+      rootNodeIds.unshift(anchorNodeId);
+    } else if (rootCandidates.length === 0) {
+      rootNodeIds.unshift(anchorNodeId);
+    }
+  }
+
+  const childrenMap = new Map<string, string[]>();
+  componentNodeIds.forEach((nodeId) => {
+    childrenMap.set(nodeId, []);
+  });
+
+  const depthMap = new Map<string, number>();
+  const visited = new Set<string>();
+  const orderedRoots: string[] = [];
+
+  const visitNode = (nodeId: string, depth: number) => {
+    visited.add(nodeId);
+    depthMap.set(nodeId, depth);
+
+    const nextChildren = (outgoingMap.get(nodeId) ?? [])
+      .filter((targetNodeId) => componentNodeIdSet.has(targetNodeId) && !visited.has(targetNodeId))
+      .sort((leftId, rightId) => compareCanvasNodes(nodeMap.get(leftId), nodeMap.get(rightId)));
+
+    childrenMap.set(nodeId, nextChildren);
+    nextChildren.forEach((targetNodeId) => visitNode(targetNodeId, depth + 1));
+  };
+
+  rootNodeIds.forEach((rootNodeId) => {
+    if (visited.has(rootNodeId)) {
+      return;
+    }
+
+    orderedRoots.push(rootNodeId);
+    visitNode(rootNodeId, 0);
+  });
+
+  orderedNodeIds.forEach((nodeId) => {
+    if (visited.has(nodeId)) {
+      return;
+    }
+
+    orderedRoots.push(nodeId);
+    visitNode(nodeId, 0);
+  });
+
+  const spanCache = new Map<string, number>();
+  const computeSpan = (nodeId: string): number => {
+    const cached = spanCache.get(nodeId);
+    if (cached !== undefined) {
+      return cached;
+    }
+
+    const children = childrenMap.get(nodeId) ?? [];
+    if (children.length === 0) {
+      spanCache.set(nodeId, DETERMINISTIC_LAYOUT_LEAF_SPAN);
+      return DETERMINISTIC_LAYOUT_LEAF_SPAN;
+    }
+
+    const childrenSpan = children.reduce((total, childNodeId) => total + computeSpan(childNodeId), 0);
+    const totalSpan = Math.max(
+      DETERMINISTIC_LAYOUT_LEAF_SPAN,
+      childrenSpan + Math.max(0, children.length - 1) * DETERMINISTIC_LAYOUT_SIBLING_GAP,
+    );
+    spanCache.set(nodeId, totalSpan);
+    return totalSpan;
+  };
+
+  const layoutNodes: CanvasInstructionLayoutDraft[] = [];
+  const assignRows = (nodeId: string, startRow: number) => {
+    const span = computeSpan(nodeId);
+    const row = startRow + Math.floor((span - 1) / 2);
+    const column = depthMap.get(nodeId) ?? 0;
+
+    layoutNodes.push({
+      nodeId,
+      column,
+      row,
+    });
+
+    let childRow = startRow;
+    (childrenMap.get(nodeId) ?? []).forEach((childNodeId) => {
+      assignRows(childNodeId, childRow);
+      childRow += computeSpan(childNodeId) + DETERMINISTIC_LAYOUT_SIBLING_GAP;
+    });
+  };
+
+  let startRow = 0;
+  orderedRoots.forEach((rootNodeId, index) => {
+    assignRows(rootNodeId, startRow);
+    startRow += computeSpan(rootNodeId);
+    if (index < orderedRoots.length - 1) {
+      startRow += DETERMINISTIC_LAYOUT_ROOT_GAP;
+    }
+  });
+
+  return sortCanvasLayoutNodes(layoutNodes);
+}
+
+function sortCanvasLayoutNodes(layoutNodes: CanvasInstructionLayoutDraft[]): CanvasInstructionLayoutDraft[] {
+  return layoutNodes
+    .slice()
+    .sort((left, right) => {
+      if (left.column !== right.column) {
+        return left.column - right.column;
+      }
+
+      if (left.row !== right.row) {
+        return left.row - right.row;
+      }
+
+      return left.nodeId.localeCompare(right.nodeId);
+    });
+}
+
 function formatNodeSummary(node: CanvasNodeSummary): string {
   const position = `(${Math.round(node.node.x)}, ${Math.round(node.node.y)})`;
   const size = `${Math.round(node.node.width)}x${Math.round(node.node.height)}`;
@@ -1251,27 +1570,53 @@ function applyInstructionLayout(
   const rows = [...new Set(entries.map((entry) => entry.layoutNode.row))].sort((left, right) => left - right);
   const columnOffsets = new Map<number, number>();
   const rowOffsets = new Map<number, number>();
+  const columnWidthMap = new Map<number, number>();
+  const rowHeightMap = new Map<number, number>();
+
+  columns.forEach((column) => {
+    columnWidthMap.set(
+      column,
+      Math.max(
+        ...entries
+          .filter((entry) => entry.layoutNode.column === column)
+          .map((entry) => entry.node.width),
+      ),
+    );
+  });
+
+  rows.forEach((row) => {
+    rowHeightMap.set(
+      row,
+      Math.max(
+        ...entries
+          .filter((entry) => entry.layoutNode.row === row)
+          .map((entry) => entry.node.height),
+      ),
+    );
+  });
 
   let currentX = baseX;
-  columns.forEach((column) => {
-    const columnWidth = Math.max(
-      ...entries
-        .filter((entry) => entry.layoutNode.column === column)
-        .map((entry) => entry.node.width),
-    );
+  columns.forEach((column, index) => {
+    if (index === 0) {
+      columnOffsets.set(column, Math.round(currentX));
+      return;
+    }
+
+    const previousColumn = columns[index - 1];
+    currentX += (columnWidthMap.get(previousColumn) ?? 0) + columnGap * Math.max(column - previousColumn, 1);
     columnOffsets.set(column, Math.round(currentX));
-    currentX += columnWidth + columnGap;
   });
 
   let currentY = baseY;
-  rows.forEach((row) => {
-    const rowHeight = Math.max(
-      ...entries
-        .filter((entry) => entry.layoutNode.row === row)
-        .map((entry) => entry.node.height),
-    );
+  rows.forEach((row, index) => {
+    if (index === 0) {
+      rowOffsets.set(row, Math.round(currentY));
+      return;
+    }
+
+    const previousRow = rows[index - 1];
+    currentY += (rowHeightMap.get(previousRow) ?? 0) + rowGap * Math.max(row - previousRow, 1);
     rowOffsets.set(row, Math.round(currentY));
-    currentY += rowHeight + rowGap;
   });
 
   let movedNodeCount = 0;
