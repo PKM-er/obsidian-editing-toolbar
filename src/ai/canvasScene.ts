@@ -4,6 +4,8 @@ import { t } from "src/translations/helper";
 import { compactContent } from "./contextCompactor";
 
 export type CanvasNodeType = "text" | "file" | "link" | "group";
+type CanvasEdgeSide = "top" | "right" | "bottom" | "left";
+type CanvasLayoutStyle = "tree" | "dag" | "mindmap";
 
 export interface CanvasNodeRecord {
   id: string;
@@ -106,6 +108,8 @@ const DETERMINISTIC_LAYOUT_LEAF_SPAN = 2;
 const DETERMINISTIC_LAYOUT_SIBLING_GAP = 1;
 const DETERMINISTIC_LAYOUT_ROOT_GAP = 2;
 const DETERMINISTIC_LAYOUT_COMPONENT_GAP = 3;
+const DETERMINISTIC_LAYOUT_COLUMN_GAP = 320;
+const DETERMINISTIC_LAYOUT_ROW_GAP = 96;
 
 export function getActiveCanvasTextFileView(plugin: EditingToolbarPlugin): TextFileView | null {
   const view = plugin.app.workspace.activeLeaf?.view;
@@ -219,6 +223,7 @@ export async function buildCanvasDocumentSource(
 
 export function buildDeterministicCanvasReorganizationPlan(
   context: ActiveCanvasContext,
+  instruction?: string,
 ): CanvasInstructionPlan {
   const regularNodes = context.document.nodes.filter((node) => node.type !== "group");
   const scopeNodeIds = resolveCanvasScopeNodeIds(context, regularNodes);
@@ -241,6 +246,7 @@ export function buildDeterministicCanvasReorganizationPlan(
   const scopeEdges = context.document.edges.filter((edge) =>
     scopeNodeIdSet.has(edge.fromNode) && scopeNodeIdSet.has(edge.toNode) && edge.fromNode !== edge.toNode,
   );
+  const layoutStyle = resolveCanvasLayoutStyle(instruction || context.contextText, scopeNodeIds, scopeEdges);
   const outgoingMap = new Map<string, string[]>();
   const incomingMap = new Map<string, string[]>();
 
@@ -285,6 +291,7 @@ export function buildDeterministicCanvasReorganizationPlan(
       nodeMap,
       outgoingMap,
       incomingMap,
+      layoutStyle,
       context.anchorNode?.id ?? null,
     );
     const componentMaxRow = componentLayoutNodes.reduce((maxRow, layoutNode) => Math.max(maxRow, layoutNode.row), 0);
@@ -539,11 +546,10 @@ export async function applyCanvasInstructionPlan(
         id: generateHexId(usedIds),
         fromNode: targetNode.id,
         toNode: node.id,
-        fromSide: "right",
-        toSide: "left",
         toEnd: "arrow",
         label: relation || undefined,
       };
+      applyCanvasEdgeAnchors(edge, nodeMap);
       addedEdges.push(edge);
       document.edges.push(edge);
     });
@@ -568,9 +574,15 @@ export async function applyCanvasInstructionPlan(
       toEnd: "arrow",
       label: draft.label?.trim() || undefined,
     };
+    applyCanvasEdgeAnchors(edge, nodeMap);
     addedEdges.push(edge);
     document.edges.push(edge);
   });
+
+  normalizeCanvasEdgeAnchors(document, new Set([
+    ...scopeNodeIds,
+    ...addedNodes.map((node) => node.id),
+  ]));
 
   const serialized = `${JSON.stringify(document, null, 2)}\n`;
 
@@ -1094,6 +1106,7 @@ function buildDeterministicComponentLayout(
   nodeMap: Map<string, CanvasNodeRecord>,
   outgoingMap: Map<string, string[]>,
   incomingMap: Map<string, string[]>,
+  layoutStyle: CanvasLayoutStyle,
   anchorNodeId?: string | null,
 ): CanvasInstructionLayoutDraft[] {
   const componentNodeIdSet = new Set(componentNodeIds);
@@ -1204,7 +1217,10 @@ function buildDeterministicComponentLayout(
     }
   });
 
-  return sortCanvasLayoutNodes(layoutNodes);
+  const sortedLayoutNodes = sortCanvasLayoutNodes(layoutNodes);
+  return layoutStyle === "mindmap"
+    ? applyMindmapLayoutBalance(sortedLayoutNodes, rootNodeIds[0])
+    : sortedLayoutNodes;
 }
 
 function sortCanvasLayoutNodes(layoutNodes: CanvasInstructionLayoutDraft[]): CanvasInstructionLayoutDraft[] {
@@ -1221,6 +1237,88 @@ function sortCanvasLayoutNodes(layoutNodes: CanvasInstructionLayoutDraft[]): Can
 
       return left.nodeId.localeCompare(right.nodeId);
     });
+}
+
+function resolveCanvasLayoutStyle(
+  instructionText: string,
+  scopeNodeIds: string[],
+  scopeEdges: CanvasEdgeRecord[],
+): CanvasLayoutStyle {
+  const normalizedText = instructionText.toLowerCase();
+  if (/(mind\s*map|radial|中心主题|脑图|思维导图|发散)/i.test(normalizedText)) {
+    return "mindmap";
+  }
+
+  if (/(^|\b)(tree|hierarchy|org\s*chart)(\b|$)|树形|树状|层级|父子|组织结构/i.test(normalizedText)) {
+    return "tree";
+  }
+
+  if (/(dag|directed\s+acyclic|flow\s*chart|pipeline|dependency|依赖图|流程图|有向无环|拓扑)/i.test(normalizedText)) {
+    return "dag";
+  }
+
+  const nodeCount = Math.max(scopeNodeIds.length, 1);
+  const averageDegree = scopeEdges.length / nodeCount;
+  const hasMultiParentNode = scopeNodeIds.some((nodeId) =>
+    scopeEdges.filter((edge) => edge.toNode === nodeId).length > 1,
+  );
+
+  if (hasMultiParentNode || averageDegree > 1.15) {
+    return "dag";
+  }
+
+  return "tree";
+}
+
+function applyMindmapLayoutBalance(
+  layoutNodes: CanvasInstructionLayoutDraft[],
+  rootNodeId?: string,
+): CanvasInstructionLayoutDraft[] {
+  if (!rootNodeId || layoutNodes.length < 4) {
+    return layoutNodes;
+  }
+
+  const rootLayout = layoutNodes.find((layoutNode) => layoutNode.nodeId === rootNodeId);
+  if (!rootLayout) {
+    return layoutNodes;
+  }
+
+  const branchRoots = layoutNodes
+    .filter((layoutNode) => layoutNode.column === rootLayout.column + 1)
+    .sort((left, right) => left.row - right.row || left.nodeId.localeCompare(right.nodeId));
+  if (branchRoots.length < 3) {
+    return layoutNodes;
+  }
+
+  const leftBranchIds = new Set(branchRoots
+    .filter((_, index) => index % 2 === 1)
+    .map((layoutNode) => layoutNode.nodeId));
+  if (leftBranchIds.size === 0) {
+    return layoutNodes;
+  }
+
+  const branchSideByRow = new Map<number, "left" | "right">();
+  branchRoots.forEach((branchRoot) => {
+    branchSideByRow.set(branchRoot.row, leftBranchIds.has(branchRoot.nodeId) ? "left" : "right");
+  });
+
+  return sortCanvasLayoutNodes(layoutNodes.map((layoutNode) => {
+    if (layoutNode.nodeId === rootNodeId || layoutNode.column <= rootLayout.column) {
+      return layoutNode;
+    }
+
+    const nearestBranchRow = [...branchSideByRow.keys()]
+      .sort((leftRow, rightRow) => Math.abs(leftRow - layoutNode.row) - Math.abs(rightRow - layoutNode.row))[0];
+    const side = branchSideByRow.get(nearestBranchRow) ?? "right";
+    if (side === "right") {
+      return layoutNode;
+    }
+
+    return {
+      ...layoutNode,
+      column: rootLayout.column - (layoutNode.column - rootLayout.column),
+    };
+  }));
 }
 
 function formatNodeSummary(node: CanvasNodeSummary): string {
@@ -1562,8 +1660,8 @@ function applyInstructionLayout(
     return 0;
   }
 
-  const columnGap = 260;
-  const rowGap = 72;
+  const columnGap = DETERMINISTIC_LAYOUT_COLUMN_GAP;
+  const rowGap = DETERMINISTIC_LAYOUT_ROW_GAP;
   const baseX = Math.min(...entries.map((entry) => entry.node.x));
   const baseY = Math.min(...entries.map((entry) => entry.node.y));
   const columns = [...new Set(entries.map((entry) => entry.layoutNode.column))].sort((left, right) => left - right);
@@ -1635,6 +1733,62 @@ function applyInstructionLayout(
   });
 
   return movedNodeCount;
+}
+
+function normalizeCanvasEdgeAnchors(
+  document: CanvasDocumentRecord,
+  affectedNodeIds: Set<string>,
+): void {
+  const nodeMap = new Map(document.nodes.map((node) => [node.id, node]));
+  document.edges.forEach((edge) => {
+    if (affectedNodeIds.has(edge.fromNode) || affectedNodeIds.has(edge.toNode)) {
+      applyCanvasEdgeAnchors(edge, nodeMap);
+    }
+  });
+}
+
+function applyCanvasEdgeAnchors(
+  edge: CanvasEdgeRecord,
+  nodeMap: Map<string, CanvasNodeRecord>,
+): void {
+  const fromNode = nodeMap.get(edge.fromNode);
+  const toNode = nodeMap.get(edge.toNode);
+  if (!fromNode || !toNode) {
+    return;
+  }
+
+  const sides = resolveCanvasEdgeSides(fromNode, toNode);
+  edge.fromSide = sides.fromSide;
+  edge.toSide = sides.toSide;
+}
+
+function resolveCanvasEdgeSides(
+  fromNode: CanvasNodeRecord,
+  toNode: CanvasNodeRecord,
+): { fromSide: CanvasEdgeSide; toSide: CanvasEdgeSide } {
+  const fromCenter = getCanvasNodeCenter(fromNode);
+  const toCenter = getCanvasNodeCenter(toNode);
+  const deltaX = toCenter.x - fromCenter.x;
+  const deltaY = toCenter.y - fromCenter.y;
+  const horizontalClearance = Math.abs(deltaX) - (fromNode.width + toNode.width) / 2;
+  const verticalClearance = Math.abs(deltaY) - (fromNode.height + toNode.height) / 2;
+
+  if (horizontalClearance >= verticalClearance) {
+    return deltaX >= 0
+      ? { fromSide: "right", toSide: "left" }
+      : { fromSide: "left", toSide: "right" };
+  }
+
+  return deltaY >= 0
+    ? { fromSide: "bottom", toSide: "top" }
+    : { fromSide: "top", toSide: "bottom" };
+}
+
+function getCanvasNodeCenter(node: CanvasNodeRecord): { x: number; y: number } {
+  return {
+    x: node.x + node.width / 2,
+    y: node.y + node.height / 2,
+  };
 }
 
 function buildDraftNodeMarkdown(draft: CanvasExpansionDraftNode): string {

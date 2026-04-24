@@ -554,7 +554,7 @@ export class AIEditorManager {
           ? await buildCanvasDocumentSource(this.plugin, canvasContext)
           : null;
         const deterministicReorganizationPlan = isReorganizeMode
-          ? buildDeterministicCanvasReorganizationPlan(canvasContext)
+          ? buildDeterministicCanvasReorganizationPlan(canvasContext, effectiveInstruction)
           : null;
 
         new Notice(t(isReorganizeMode
@@ -887,8 +887,11 @@ export class AIEditorManager {
       "- Do not return addNodes, titles, bodies, or new ids.",
       "- Use layoutNodes to place the existing nodes into a clearer hierarchy or grouped structure.",
       "- When you are rebuilding the relationship structure, set replaceExistingEdges to true.",
-      "- Prefer a simple left-to-right hierarchy with compact grouping unless the user instruction says otherwise.",
-      "- Prefer reducing obvious line crossings, aligning siblings, and keeping related nodes in readable clusters.",
+      "- Choose a layout style that matches the instruction: mind map = central topic with balanced left/right branches; DAG/flow = left-to-right topological layers; tree = parent left, children right.",
+      "- Put parents before children in smaller columns and keep siblings vertically aligned by row.",
+      "- Reduce edge crossings and avoid routes that visually pass through node rectangles.",
+      "- Prefer edges that connect from right-to-left in left-to-right layouts, left-to-right for left branches of mind maps, and top-to-bottom only for vertical stacks.",
+      "- Keep related nodes close, but leave enough whitespace between rows and columns for readable connectors.",
       "- If the current links already fit the new structure, you may keep replaceExistingEdges false and return layoutNodes only.",
       deterministicPlanText
         ? [
