@@ -117,7 +117,32 @@ export const aiTheme = EditorView.baseTheme({
   },
   ".cm-ai-result-header": {
     fontWeight: "600",
+    color: "var(--text-normal)",
+  },
+  ".cm-ai-result-header-row": {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: "12px",
     marginBottom: "8px",
+  },
+  ".cm-ai-result-close": {
+    border: "none",
+    background: "transparent",
+    color: "var(--text-muted)",
+    width: "28px",
+    height: "28px",
+    borderRadius: "999px",
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    cursor: "pointer",
+    fontSize: "18px",
+    lineHeight: "1",
+    flexShrink: "0",
+  },
+  ".cm-ai-result-close:hover": {
+    background: "var(--background-modifier-hover)",
     color: "var(--text-normal)",
   },
   ".cm-ai-result-content": {
@@ -142,6 +167,20 @@ export const aiTheme = EditorView.baseTheme({
     padding: "6px 10px",
     cursor: "pointer",
     fontSize: "12px",
+    display: "inline-flex",
+    alignItems: "center",
+    gap: "8px",
+  },
+  ".cm-ai-btn-label": {
+    lineHeight: "1.2",
+  },
+  ".cm-ai-btn-shortcut": {
+    fontSize: "11px",
+    lineHeight: "1",
+    opacity: "0.72",
+    padding: "2px 6px",
+    borderRadius: "999px",
+    background: "color-mix(in srgb, var(--background-primary) 55%, transparent)",
   },
   ".cm-ai-btn-primary": {
     background: "var(--interactive-accent)",
