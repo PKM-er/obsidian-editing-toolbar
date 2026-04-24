@@ -28,14 +28,16 @@ const completionField = StateField.define<CompletionState | null>({
 
 class GhostTextWidget extends WidgetType {
   text: string;
+  showHint: boolean;
 
-  constructor(text: string) {
+  constructor(text: string, showHint: boolean) {
     super();
     this.text = text;
+    this.showHint = showHint;
   }
 
   eq(other: GhostTextWidget): boolean {
-    return this.text === other.text;
+    return this.text === other.text && this.showHint === other.showHint;
   }
 
   toDOM(): HTMLElement {
@@ -48,6 +50,13 @@ class GhostTextWidget extends WidgetType {
     firstLine.className = "cm-ai-ghost-first-line";
     firstLine.textContent = lines[0];
     wrapper.appendChild(firstLine);
+
+    if (this.showHint) {
+      const hint = document.createElement("span");
+      hint.className = "cm-ai-ghost-hint";
+      hint.textContent = t("Press Tab to accept");
+      wrapper.appendChild(hint);
+    }
 
     if (lines.length > 1) {
       const rest = document.createElement("div");
@@ -62,10 +71,29 @@ class GhostTextWidget extends WidgetType {
   updateDOM(dom: HTMLElement): boolean {
     const lines = this.text.split("\n");
     const firstLine = dom.querySelector(".cm-ai-ghost-first-line");
+    const hint = dom.querySelector(".cm-ai-ghost-hint") as HTMLElement | null;
     const rest = dom.querySelector(".cm-ai-ghost-rest") as HTMLElement | null;
 
     if (firstLine) {
       firstLine.textContent = lines[0];
+    }
+
+    if (this.showHint) {
+      if (hint) {
+        hint.textContent = t("Press Tab to accept");
+        hint.style.display = "inline-flex";
+      } else {
+        const newHint = document.createElement("span");
+        newHint.className = "cm-ai-ghost-hint";
+        newHint.textContent = t("Press Tab to accept");
+        if (firstLine?.nextSibling) {
+          dom.insertBefore(newHint, firstLine.nextSibling);
+        } else {
+          dom.appendChild(newHint);
+        }
+      }
+    } else if (hint) {
+      hint.style.display = "none";
     }
 
     if (lines.length > 1) {
@@ -130,34 +158,36 @@ class LoadingWidget extends WidgetType {
   }
 }
 
-const completionDecorations = EditorView.decorations.compute([completionField], (state) => {
-  const completion = state.field(completionField);
-  if (!completion) {
-    return Decoration.none;
-  }
+function createCompletionDecorations(shouldShowHint?: () => boolean) {
+  return EditorView.decorations.compute([completionField], (state) => {
+    const completion = state.field(completionField);
+    if (!completion) {
+      return Decoration.none;
+    }
 
-  if (completion.status === "loading") {
+    if (completion.status === "loading") {
+      return Decoration.set([
+        Decoration.widget({
+          widget: new LoadingWidget(),
+          side: 1,
+        }).range(completion.pos),
+      ]);
+    }
+
+    if (!completion.text) {
+      return Decoration.none;
+    }
+
     return Decoration.set([
       Decoration.widget({
-        widget: new LoadingWidget(),
+        widget: new GhostTextWidget(completion.text, shouldShowHint?.() ?? false),
         side: 1,
       }).range(completion.pos),
     ]);
-  }
+  });
+}
 
-  if (!completion.text) {
-    return Decoration.none;
-  }
-
-  return Decoration.set([
-    Decoration.widget({
-      widget: new GhostTextWidget(completion.text),
-      side: 1,
-    }).range(completion.pos),
-  ]);
-});
-
-const acceptCompletion: Command = (view) => {
+function acceptCompletionInternal(view: EditorView, onAccepted?: () => void): boolean {
   const completion = view.state.field(completionField);
   if (!completion?.text) {
     return false;
@@ -168,8 +198,9 @@ const acceptCompletion: Command = (view) => {
     selection: { anchor: completion.pos + completion.text.length },
     effects: setCompletionEffect.of(null),
   });
+  onAccepted?.();
   return true;
-};
+}
 
 const dismissCompletion: Command = (view) => {
   if (!view.state.field(completionField)) {
@@ -184,12 +215,6 @@ const requestCompletion: Command = (view) => {
   return true;
 };
 
-const tabKeymap = Prec.highest(
-  keymap.of([
-    { key: "Tab", run: acceptCompletion },
-  ]),
-);
-
 const completionKeymap = keymap.of([
   { key: "Escape", run: dismissCompletion },
 ]);
@@ -197,15 +222,60 @@ const completionKeymap = keymap.of([
 export function inlineCompletion(
   getService: () => IAIService | null,
   getConfig?: () => CompletionConfig,
+  shouldShowHint?: () => boolean,
+  markHintLearned?: () => void,
 ): Extension {
+  const completionDecorations = createCompletionDecorations(shouldShowHint);
+  const tabKeymap = Prec.highest(
+    keymap.of([
+      { key: "Tab", run: (view) => acceptCompletionInternal(view, markHintLearned) },
+    ]),
+  );
   const plugin = ViewPlugin.fromClass(
     class {
       private abortController: AbortController | null = null;
       private autoTriggerTimer: ReturnType<typeof setTimeout> | null = null;
       private view: EditorView;
+      private ownerDocument: Document;
 
       constructor(view: EditorView) {
         this.view = view;
+        this.ownerDocument = view.dom.ownerDocument;
+        this.ownerDocument.addEventListener("keydown", this.handleDocumentKeydown, true);
+      }
+
+      private handleDocumentKeydown = (event: KeyboardEvent): void => {
+        if (
+          event.defaultPrevented ||
+          event.key !== "Tab" ||
+          event.shiftKey ||
+          event.altKey ||
+          event.ctrlKey ||
+          event.metaKey ||
+          this.view.hasFocus ||
+          !this.view.dom.isConnected
+        ) {
+          return;
+        }
+
+        const completion = this.view.state.field(completionField);
+        if (!completion?.text || completion.status !== "ready") {
+          return;
+        }
+
+        const activeElement = this.ownerDocument.activeElement;
+        if (activeElement && !this.view.dom.contains(activeElement) && this.isTextInputElement(activeElement)) {
+          return;
+        }
+
+        event.preventDefault();
+        event.stopPropagation();
+        acceptCompletionInternal(this.view, markHintLearned);
+        this.view.focus();
+      };
+
+      private isTextInputElement(element: Element): boolean {
+        return !!element.closest("input, textarea, select, [contenteditable='true'], [contenteditable='']");
       }
 
       update(update: ViewUpdate): void {
@@ -293,6 +363,7 @@ export function inlineCompletion(
       }
 
       destroy(): void {
+        this.ownerDocument.removeEventListener("keydown", this.handleDocumentKeydown, true);
         this.abortController?.abort();
         if (this.autoTriggerTimer) {
           clearTimeout(this.autoTriggerTimer);

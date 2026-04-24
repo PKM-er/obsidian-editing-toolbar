@@ -765,6 +765,7 @@ export default {
   'AI is writing...': 'AI is writing...',
   'AI is generating': 'AI is generating',
   'AI suggestion': 'AI suggestion',
+  'Press Tab to accept': 'Press Tab to accept',
   'Replace': 'Replace',
   'Insert below': 'Insert below',
   'Try again': 'Try again',

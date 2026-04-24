@@ -8,11 +8,18 @@ export interface DynamicAIEditorConfig {
   getService: () => IAIService | null;
   getCompletionConfig?: () => CompletionConfig;
   getRewriteConfig?: () => RewriteConfig;
+  shouldShowInlineCompletionHint?: () => boolean;
+  markInlineCompletionHintLearned?: () => void;
 }
 
 export function createAIEditorExtensions(config: DynamicAIEditorConfig): Extension {
   return [
-    inlineCompletion(config.getService, config.getCompletionConfig),
+    inlineCompletion(
+      config.getService,
+      config.getCompletionConfig,
+      config.shouldShowInlineCompletionHint,
+      config.markInlineCompletionHintLearned,
+    ),
     selectionRewrite(config.getService, config.getRewriteConfig),
     aiTheme,
   ];

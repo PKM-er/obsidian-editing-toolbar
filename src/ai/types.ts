@@ -119,6 +119,7 @@ export interface AIPluginSettings {
   onboardingShown: boolean;
   providerMode: "pkmer-first" | "custom-only";
   enableInlineCompletion: boolean;
+  inlineCompletionHintLearned: boolean;
   completionTrigger: "manual" | "auto";
   completionDelay: number;
   enableRewrite: boolean;
@@ -213,6 +214,7 @@ export const DEFAULT_AI_SETTINGS: AIPluginSettings = {
   onboardingShown: false,
   providerMode: "pkmer-first",
   enableInlineCompletion: true,
+  inlineCompletionHintLearned: false,
   completionTrigger: "manual",
   completionDelay: 500,
   enableRewrite: true,

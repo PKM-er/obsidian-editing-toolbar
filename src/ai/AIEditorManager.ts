@@ -172,6 +172,14 @@ export class AIEditorManager {
         trigger: this.plugin.settings.ai.enableInlineCompletion ? this.plugin.settings.ai.completionTrigger : "manual",
         delay: this.plugin.settings.ai.completionDelay,
       }),
+      shouldShowInlineCompletionHint: () => !this.plugin.settings.ai.inlineCompletionHintLearned,
+      markInlineCompletionHintLearned: () => {
+        if (this.plugin.settings.ai.inlineCompletionHintLearned) {
+          return;
+        }
+        this.plugin.settings.ai.inlineCompletionHintLearned = true;
+        void this.plugin.saveSettings();
+      },
       getRewriteConfig: () => ({
         actions: DEFAULT_REWRITE_ACTIONS,
         minSelectionLength: this.plugin.settings.ai.rewriteMinSelectionLength,
