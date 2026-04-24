@@ -82,6 +82,81 @@ export class CommandsManager {
     }
   };
 
+  private executeHistoryAction = (action: "undo" | "redo") => {
+    if (this.executeCanvasHistoryAction(action)) {
+      return;
+    }
+
+    const editor = this.getActiveEditor();
+    if (editor) {
+      void this.executeCommandWithoutBlur(editor, () => action === "undo" ? editor?.undo() : editor?.redo());
+      return;
+    }
+
+    const fallbackCommandIds = action === "undo"
+      ? ["canvas:undo", "editor:undo"]
+      : ["canvas:redo", "editor:redo"];
+
+    for (const commandId of fallbackCommandIds) {
+      try {
+        if (this.plugin.app.commands.executeCommandById(commandId)) {
+          return;
+        }
+      } catch {
+        continue;
+      }
+    }
+  };
+
+  private executeCanvasHistoryAction(action: "undo" | "redo"): boolean {
+    const activeView = this.getActiveCanvasView();
+    if (activeView?.getViewType?.() !== "canvas") {
+      return false;
+    }
+
+    try {
+      activeView.canvas?.wrapperEl?.focus?.({ preventScroll: true });
+    } catch {
+      // noop
+    }
+
+    const invocationCandidates: Array<{ owner: any; method: string; label: string }> = [
+      { owner: activeView.canvas, method: action, label: `canvas.${action}()` },
+      {
+        owner: activeView.canvas?.history,
+        method: action === "undo" ? "back" : "forward",
+        label: `canvas.history.${action === "undo" ? "back" : "forward"}()`,
+      },
+    ];
+
+    for (const candidate of invocationCandidates) {
+      const fn = candidate.owner?.[candidate.method];
+      if (typeof fn === "function") {
+        fn.call(candidate.owner);
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  private getActiveCanvasView(): any | null {
+    const activeLeafView = this.plugin.app.workspace.activeLeaf?.view as any;
+    if (activeLeafView?.getViewType?.() === "canvas") {
+      return activeLeafView;
+    }
+
+    const canvasLeaves = this.plugin.app.workspace.getLeavesOfType?.("canvas") ?? [];
+    for (const leaf of canvasLeaves) {
+      const view = (leaf as any)?.view;
+      if (view?.getViewType?.() === "canvas") {
+        return view;
+      }
+    }
+
+    return null;
+  }
+
   // 命令配置类型定义
   private _commandsMap: Record<string, CommandPlot> = {
     hrline: {
@@ -658,6 +733,24 @@ export class CommandsManager {
       },
     });
 
+    this.plugin.addCommand({
+      id: "ai-canvas-expand",
+      name: this.formatAICommandName("Canvas", "Expand Current Node"),
+      icon: "lucide-waypoints",
+      callback: () => {
+        void this.plugin.aiManager.openCanvasNodeExpansionModal();
+      },
+    });
+
+    this.plugin.addCommand({
+      id: "ai-canvas-global-prompt",
+      name: this.formatAICommandName("Canvas", "Global Prompt"),
+      icon: "lucide-sparkles",
+      callback: () => {
+        void this.plugin.aiManager.openCanvasGlobalPromptModal();
+      },
+    });
+
     AI_TOOLBOX_ACTIONS.forEach((action) => {
       this.plugin.addCommand({
         id: `ai-toolbox-${action.id}`,
@@ -1034,8 +1127,7 @@ export class CommandsManager {
       id: "editor-undo",
       name: "Undo Edit",
       callback: () => {
-        const editor = this.getActiveEditor();
-        editor && this.executeCommandWithoutBlur(editor, () => editor?.undo());
+        this.executeHistoryAction("undo");
       },
       icon: "undo-glyph",
     });
@@ -1043,8 +1135,7 @@ export class CommandsManager {
       id: "editor-redo",
       name: "Redo Edit",
       callback: () => {
-        const editor = this.getActiveEditor();
-        editor && this.executeCommandWithoutBlur(editor, () => editor?.redo());
+        this.executeHistoryAction("redo");
       },
       icon: "redo-glyph",
     });
