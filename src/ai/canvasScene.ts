@@ -70,6 +70,33 @@ export interface CanvasInstructionPlan {
   replaceExistingEdges: boolean;
 }
 
+export interface CanvasKnowledgeMapNodeDraft {
+  id: string;
+  type: "concept" | "detail";
+  title: string;
+  content: string;
+  level: number;
+  group?: string;
+}
+
+export interface CanvasKnowledgeMapEdgeDraft {
+  from: string;
+  to: string;
+  relation?: string;
+}
+
+export interface CanvasKnowledgeMapBoardConnectionDraft {
+  nodeId: string;
+  existingNodeId: string;
+  relation?: string;
+}
+
+export interface CanvasKnowledgeMapBlueprint {
+  nodes: CanvasKnowledgeMapNodeDraft[];
+  edges: CanvasKnowledgeMapEdgeDraft[];
+  boardConnections: CanvasKnowledgeMapBoardConnectionDraft[];
+}
+
 export interface CanvasNodeSummary {
   id: string;
   type: CanvasNodeType;
@@ -104,12 +131,38 @@ export interface CanvasDocumentSource {
   text: string;
 }
 
+export interface BuildCanvasDocumentSourceOptions {
+  scopeMode?: "auto" | "selection" | "board";
+}
+
+interface CanvasLayoutSpacingOptions {
+  columnGap?: number;
+  rowGap?: number;
+  baseX?: number;
+  baseY?: number;
+}
+
+interface CanvasKnowledgeMapGroupDraft {
+  label: string;
+  nodeIds: string[];
+  color?: string;
+}
+
 const DETERMINISTIC_LAYOUT_LEAF_SPAN = 2;
 const DETERMINISTIC_LAYOUT_SIBLING_GAP = 1;
 const DETERMINISTIC_LAYOUT_ROOT_GAP = 2;
 const DETERMINISTIC_LAYOUT_COMPONENT_GAP = 3;
 const DETERMINISTIC_LAYOUT_COLUMN_GAP = 320;
 const DETERMINISTIC_LAYOUT_ROW_GAP = 96;
+const KNOWLEDGE_MAP_LAYOUT_COLUMN_GAP = 96;
+const KNOWLEDGE_MAP_LAYOUT_ROW_GAP = 64;
+const KNOWLEDGE_MAP_ROOT_OFFSET_X = 260;
+const KNOWLEDGE_MAP_BRANCH_GAP_X = 180;
+const KNOWLEDGE_MAP_EMPTY_BOARD_START_X = 220;
+const KNOWLEDGE_MAP_EMPTY_BOARD_START_Y = 120;
+const KNOWLEDGE_MAP_LEAF_SPAN = 1;
+const KNOWLEDGE_MAP_SIBLING_GAP = 1;
+const KNOWLEDGE_MAP_ROOT_GAP = 1;
 
 export function getActiveCanvasTextFileView(plugin: EditingToolbarPlugin): TextFileView | null {
   const view = plugin.app.workspace.activeLeaf?.view;
@@ -167,12 +220,18 @@ export async function getActiveCanvasContext(
 export async function buildCanvasDocumentSource(
   plugin: EditingToolbarPlugin,
   context: ActiveCanvasContext,
+  options: BuildCanvasDocumentSourceOptions = {},
 ): Promise<CanvasDocumentSource> {
   const regularNodes = context.document.nodes.filter((node) => node.type !== "group");
   const selectedIds = context.selectedNodeIds.filter((nodeId) =>
     regularNodes.some((node) => node.id === nodeId),
   );
-  const useSelection = selectedIds.length > 0;
+  const scopeMode = options.scopeMode ?? "auto";
+  const useSelection = scopeMode === "selection"
+    ? selectedIds.length > 0
+    : scopeMode === "board"
+      ? false
+      : selectedIds.length > 0;
   const includedIds = useSelection ? selectedIds : regularNodes.map((node) => node.id);
   const orderedNodeIds = orderCanvasNodeIds(context.document, includedIds);
   const orderedNodes = orderedNodeIds
@@ -425,6 +484,51 @@ export function parseCanvasInstructionResponse(content: string): CanvasInstructi
   };
 }
 
+export function parseCanvasKnowledgeMapResponse(
+  content: string,
+  options: { existingNodeIds?: string[] } = {},
+): CanvasKnowledgeMapBlueprint {
+  const stripped = stripCodeFence(content);
+  let parsed: unknown;
+
+  try {
+    parsed = JSON.parse(stripped);
+  } catch {
+    throw new Error(t("Canvas AI returned invalid JSON."));
+  }
+
+  const record = parsed && typeof parsed === "object"
+    ? parsed as Record<string, unknown>
+    : null;
+  const rawNodes = record && Array.isArray(record.nodes) ? record.nodes : [];
+  const usedBlueprintIds = new Set<string>();
+  const nodes = rawNodes
+    .map((item, index) => normalizeKnowledgeMapNode(item, index, usedBlueprintIds))
+    .filter((item): item is CanvasKnowledgeMapNodeDraft => item !== null)
+    .slice(0, 24);
+
+  if (nodes.length === 0) {
+    throw new Error(t("Canvas AI did not return any usable nodes."));
+  }
+
+  const nodeIdSet = new Set(nodes.map((node) => node.id));
+  const existingNodeIdSet = new Set(options.existingNodeIds ?? []);
+  const edges = (record && Array.isArray(record.edges) ? record.edges : [])
+    .map((item) => normalizeKnowledgeMapEdge(item, nodeIdSet))
+    .filter((item): item is CanvasKnowledgeMapEdgeDraft => item !== null)
+    .slice(0, 48);
+  const boardConnections = (record && Array.isArray(record.boardConnections) ? record.boardConnections : [])
+    .map((item) => normalizeKnowledgeMapBoardConnection(item, nodeIdSet, existingNodeIdSet))
+    .filter((item): item is CanvasKnowledgeMapBoardConnectionDraft => item !== null)
+    .slice(0, 12);
+
+  return {
+    nodes,
+    edges,
+    boardConnections,
+  };
+}
+
 export async function applyCanvasExpansionDraft(
   plugin: EditingToolbarPlugin,
   context: ActiveCanvasContext,
@@ -597,6 +701,193 @@ export async function applyCanvasInstructionPlan(
     addedNodeCount: addedNodes.length,
     addedEdgeCount: addedEdges.length,
     movedNodeCount,
+  };
+}
+
+export async function applyCanvasKnowledgeMapBlueprint(
+  plugin: EditingToolbarPlugin,
+  context: ActiveCanvasContext,
+  blueprint: CanvasKnowledgeMapBlueprint,
+): Promise<ApplyCanvasExpansionResult> {
+  const document: CanvasDocumentRecord = {
+    nodes: context.document.nodes.map((node) => ({ ...node })),
+    edges: context.document.edges.map((edge) => ({ ...edge })),
+  };
+  const usedIds = new Set<string>([
+    ...document.nodes.map((node) => node.id),
+    ...document.edges.map((edge) => edge.id),
+  ]);
+  const boardPlacementAnchor = createBoardPlacementAnchor(document);
+  const regularNodes = document.nodes.filter((node) => node.type !== "group");
+  const existingNodeMap = new Map(regularNodes.map((node) => [node.id, node]));
+  const rootBlueprintId = resolveKnowledgeMapRootId(blueprint.nodes, blueprint.edges);
+  const parentByNodeId = buildKnowledgeMapParentLookup(blueprint.nodes, blueprint.edges, rootBlueprintId);
+  const childrenByNodeId = buildKnowledgeMapChildrenLookup(blueprint.nodes, parentByNodeId);
+  const canvasNodeByBlueprintId = new Map<string, CanvasNodeRecord>();
+  const addedNodeIds = new Set<string>();
+
+  blueprint.nodes.forEach((node) => {
+    const text = buildDraftNodeMarkdown({
+      title: node.title,
+      body: node.content,
+      color: resolveKnowledgeMapNodeColor(node),
+    });
+    const size = estimateKnowledgeMapNodeSize(text);
+    const canvasNode: CanvasNodeRecord = {
+      id: generateHexId(usedIds),
+      type: "text",
+      x: 0,
+      y: 0,
+      width: size.width,
+      height: size.height,
+      text,
+      color: resolveKnowledgeMapNodeColor(node),
+    };
+    canvasNodeByBlueprintId.set(node.id, canvasNode);
+    addedNodeIds.add(canvasNode.id);
+  });
+
+  const rootCanvasNode = canvasNodeByBlueprintId.get(rootBlueprintId);
+  if (!rootCanvasNode) {
+    throw new Error(t("Canvas AI did not return any usable nodes."));
+  }
+
+  const internalBlueprintEdges = buildKnowledgeMapPrimaryEdges(
+    blueprint.nodes,
+    blueprint.edges,
+    parentByNodeId,
+  );
+  const layoutNodes = buildKnowledgeMapTreeLayout(
+    rootBlueprintId,
+    blueprint.nodes,
+    parentByNodeId,
+    childrenByNodeId,
+  );
+  const translatedLayoutNodes = layoutNodes
+    .map((layoutNode) => {
+      const canvasNode = canvasNodeByBlueprintId.get(layoutNode.nodeId);
+      if (!canvasNode) {
+        return null;
+      }
+
+      return {
+        ...layoutNode,
+        nodeId: canvasNode.id,
+      };
+    })
+    .filter((layoutNode): layoutNode is CanvasInstructionLayoutDraft => layoutNode !== null);
+  const generatedNodesDocument: CanvasDocumentRecord = {
+    nodes: [...canvasNodeByBlueprintId.values()],
+    edges: [],
+  };
+  applyInstructionLayout(generatedNodesDocument, translatedLayoutNodes, {
+    columnGap: KNOWLEDGE_MAP_LAYOUT_COLUMN_GAP,
+    rowGap: KNOWLEDGE_MAP_LAYOUT_ROW_GAP,
+    baseX: 0,
+    baseY: 0,
+  });
+
+  const placementAnchor = resolveKnowledgeMapPlacementAnchor(blueprint.boardConnections, existingNodeMap, boardPlacementAnchor);
+  const anchorCenter = getCanvasNodeCenter(placementAnchor);
+  const anchorIsExistingNode = placementAnchor.id !== "__canvas_board__";
+  const hasExistingNodes = regularNodes.length > 0;
+  const rootCenterX = anchorIsExistingNode
+    ? Math.round(placementAnchor.x + placementAnchor.width + KNOWLEDGE_MAP_BRANCH_GAP_X + rootCanvasNode.width / 2)
+    : hasExistingNodes
+      ? Math.round(boardPlacementAnchor.x + KNOWLEDGE_MAP_ROOT_OFFSET_X)
+      : Math.round(KNOWLEDGE_MAP_EMPTY_BOARD_START_X + rootCanvasNode.width / 2);
+  const rootCenterY = anchorIsExistingNode
+    ? Math.round(anchorCenter.y)
+    : hasExistingNodes
+      ? Math.round(boardPlacementAnchor.y)
+      : Math.round(KNOWLEDGE_MAP_EMPTY_BOARD_START_Y + rootCanvasNode.height / 2);
+  const generatedRootCenter = getCanvasNodeCenter(rootCanvasNode);
+  const shiftX = rootCenterX - generatedRootCenter.x;
+  const shiftY = rootCenterY - generatedRootCenter.y;
+  canvasNodeByBlueprintId.forEach((node) => {
+    node.x = Math.round(node.x + shiftX);
+    node.y = Math.round(node.y + shiftY);
+  });
+  shiftKnowledgeMapClusterAwayFromExisting(canvasNodeByBlueprintId, regularNodes);
+
+  const generatedGroupNodes = buildKnowledgeMapGroupNodes(
+    blueprint.nodes,
+    rootBlueprintId,
+    childrenByNodeId,
+    canvasNodeByBlueprintId,
+    usedIds,
+  );
+
+  generatedGroupNodes.forEach((node) => {
+    document.nodes.push(node);
+  });
+  canvasNodeByBlueprintId.forEach((node) => {
+    document.nodes.push(node);
+  });
+
+  const addedEdges: CanvasEdgeRecord[] = [];
+  internalBlueprintEdges.forEach((edgeDraft) => {
+    const fromNode = canvasNodeByBlueprintId.get(edgeDraft.from);
+    const toNode = canvasNodeByBlueprintId.get(edgeDraft.to);
+    if (!fromNode || !toNode || fromNode.id === toNode.id) {
+      return;
+    }
+
+    if (edgeExists(document.edges, fromNode.id, toNode.id, edgeDraft.relation)) {
+      return;
+    }
+
+    const edge: CanvasEdgeRecord = {
+      id: generateHexId(usedIds),
+      fromNode: fromNode.id,
+      toNode: toNode.id,
+      toEnd: "arrow",
+      label: edgeDraft.relation?.trim() || undefined,
+    };
+    addedEdges.push(edge);
+    document.edges.push(edge);
+  });
+
+  blueprint.boardConnections.forEach((connectionDraft) => {
+    const fromNode = canvasNodeByBlueprintId.get(connectionDraft.nodeId);
+    const toNode = existingNodeMap.get(connectionDraft.existingNodeId);
+    if (!fromNode || !toNode || fromNode.id === toNode.id) {
+      return;
+    }
+
+    const relationLabel = normalizeKnowledgeMapRelationLabel(connectionDraft.relation);
+
+    if (edgeExists(document.edges, fromNode.id, toNode.id, relationLabel)
+      || edgeExists(document.edges, toNode.id, fromNode.id, relationLabel)) {
+      return;
+    }
+
+    const edge: CanvasEdgeRecord = {
+      id: generateHexId(usedIds),
+      fromNode: toNode.id,
+      toNode: fromNode.id,
+      toEnd: "arrow",
+      label: relationLabel,
+    };
+    addedEdges.push(edge);
+    document.edges.push(edge);
+  });
+
+  normalizeCanvasEdgeAnchors(document, addedNodeIds);
+
+  const serialized = `${JSON.stringify(document, null, 2)}\n`;
+
+  try {
+    context.view.setViewData(serialized, false);
+    await context.view.save(false);
+  } catch {
+    await plugin.app.vault.modify(context.file, serialized);
+  }
+
+  return {
+    addedNodeCount: canvasNodeByBlueprintId.size + generatedGroupNodes.length,
+    addedEdgeCount: addedEdges.length,
+    movedNodeCount: 0,
   };
 }
 
@@ -1530,6 +1821,125 @@ function stripCodeFence(content: string): string {
     .trim();
 }
 
+function normalizeKnowledgeMapNode(
+  input: unknown,
+  index: number,
+  usedIds: Set<string>,
+): CanvasKnowledgeMapNodeDraft | null {
+  if (!input || typeof input !== "object") {
+    return null;
+  }
+
+  const record = input as Record<string, unknown>;
+  const fallbackId = `n_${index + 1}`;
+  const requestedId = pickString(record.id, record.nodeId, record.key) || fallbackId;
+  const nodeId = usedIds.has(requestedId) ? fallbackId : requestedId;
+  if (usedIds.has(nodeId)) {
+    return null;
+  }
+  usedIds.add(nodeId);
+
+  const title = truncateKnowledgeMapText(
+    pickString(record.title, record.name, record.label),
+    40,
+  );
+  const content = truncateKnowledgeMapText(
+    pickString(record.content, record.summary, record.body, record.text),
+    90,
+  );
+  const level = pickInteger(record.level, record.depth, record.layer) ?? 0;
+  const rawType = pickString(record.type, record.kind).toLowerCase();
+  const type = rawType === "detail"
+    ? "detail"
+    : rawType === "concept"
+      ? "concept"
+      : level <= 1
+        ? "concept"
+        : "detail";
+
+  if (!title) {
+    return null;
+  }
+
+  return {
+    id: nodeId,
+    type,
+    title,
+    content,
+    level,
+    group: truncateKnowledgeMapText(
+      pickString(record.group, record.category, record.cluster, record.section),
+      24,
+    ) || undefined,
+  };
+}
+
+function normalizeKnowledgeMapEdge(
+  input: unknown,
+  allowedNodeIds: Set<string>,
+): CanvasKnowledgeMapEdgeDraft | null {
+  if (!input || typeof input !== "object") {
+    return null;
+  }
+
+  const record = input as Record<string, unknown>;
+  const from = pickString(record.from, record.source, record.parent, record.fromNode);
+  const to = pickString(record.to, record.target, record.child, record.toNode);
+  const relation = truncateKnowledgeMapText(
+    pickString(record.relation, record.label, record.type),
+    24,
+  );
+
+  if (!from || !to || from === to || !allowedNodeIds.has(from) || !allowedNodeIds.has(to)) {
+    return null;
+  }
+
+  return {
+    from,
+    to,
+    relation: relation || undefined,
+  };
+}
+
+function normalizeKnowledgeMapBoardConnection(
+  input: unknown,
+  generatedNodeIds: Set<string>,
+  existingNodeIds: Set<string>,
+): CanvasKnowledgeMapBoardConnectionDraft | null {
+  if (!input || typeof input !== "object") {
+    return null;
+  }
+
+  const record = input as Record<string, unknown>;
+  const nodeId = pickString(record.nodeId, record.from, record.node, record.generatedNodeId);
+  const existingNodeId = pickString(record.existingNodeId, record.toExisting, record.targetNodeId, record.existingId);
+  const relation = truncateKnowledgeMapText(
+    pickString(record.relation, record.label, record.type),
+    24,
+  );
+
+  if (!nodeId || !existingNodeId || !generatedNodeIds.has(nodeId) || !existingNodeIds.has(existingNodeId)) {
+    return null;
+  }
+
+  return {
+    nodeId,
+    existingNodeId,
+    relation: relation || undefined,
+  };
+}
+
+function truncateKnowledgeMapText(text: string, maxLength: number): string {
+  const normalized = text.replace(/\s+/g, " ").trim();
+  if (!normalized) {
+    return "";
+  }
+
+  return normalized.length > maxLength
+    ? `${normalized.slice(0, Math.max(maxLength - 3, 1)).trim()}...`
+    : normalized;
+}
+
 function pickString(...values: unknown[]): string {
   for (const value of values) {
     if (typeof value === "string" && value.trim()) {
@@ -1632,6 +2042,7 @@ function layoutDraftNodes(
 function applyInstructionLayout(
   document: CanvasDocumentRecord,
   layoutNodes: CanvasInstructionLayoutDraft[],
+  options: CanvasLayoutSpacingOptions = {},
 ): number {
   if (layoutNodes.length === 0) {
     return 0;
@@ -1660,10 +2071,10 @@ function applyInstructionLayout(
     return 0;
   }
 
-  const columnGap = DETERMINISTIC_LAYOUT_COLUMN_GAP;
-  const rowGap = DETERMINISTIC_LAYOUT_ROW_GAP;
-  const baseX = Math.min(...entries.map((entry) => entry.node.x));
-  const baseY = Math.min(...entries.map((entry) => entry.node.y));
+  const columnGap = options.columnGap ?? DETERMINISTIC_LAYOUT_COLUMN_GAP;
+  const rowGap = options.rowGap ?? DETERMINISTIC_LAYOUT_ROW_GAP;
+  const baseX = options.baseX ?? Math.min(...entries.map((entry) => entry.node.x));
+  const baseY = options.baseY ?? Math.min(...entries.map((entry) => entry.node.y));
   const columns = [...new Set(entries.map((entry) => entry.layoutNode.column))].sort((left, right) => left - right);
   const rows = [...new Set(entries.map((entry) => entry.layoutNode.row))].sort((left, right) => left - right);
   const columnOffsets = new Map<number, number>();
@@ -1810,6 +2221,14 @@ function estimateTextNodeSize(text: string): { width: number; height: number } {
   return { width, height };
 }
 
+function estimateKnowledgeMapNodeSize(text: string): { width: number; height: number } {
+  const lines = text.split("\n");
+  const maxLineLength = lines.reduce((max, line) => Math.max(max, line.length), 0);
+  const width = Math.min(460, Math.max(220, 150 + maxLineLength * 5));
+  const height = Math.min(280, Math.max(104, 64 + lines.length * 24));
+  return { width, height };
+}
+
 function intersectsExisting(
   node: Pick<CanvasNodeRecord, "x" | "y" | "width" | "height">,
   existingRects: Array<{ x: number; y: number; width: number; height: number }>,
@@ -1869,6 +2288,543 @@ function createBoardPlacementAnchor(document: CanvasDocumentRecord): CanvasNodeR
     width: 0,
     height: 0,
   };
+}
+
+function resolveKnowledgeMapPlacementAnchor(
+  boardConnections: CanvasKnowledgeMapBoardConnectionDraft[],
+  existingNodeMap: Map<string, CanvasNodeRecord>,
+  boardPlacementAnchor: CanvasNodeRecord,
+): CanvasNodeRecord {
+  if (boardConnections.length === 0) {
+    return boardPlacementAnchor;
+  }
+
+  const scores = new Map<string, number>();
+  boardConnections.forEach((connection) => {
+    scores.set(connection.existingNodeId, (scores.get(connection.existingNodeId) ?? 0) + 1);
+  });
+
+  const primaryExistingNodeId = [...scores.entries()]
+    .sort((left, right) => {
+      if (right[1] !== left[1]) {
+        return right[1] - left[1];
+      }
+      return left[0].localeCompare(right[0]);
+    })[0]?.[0];
+
+  if (!primaryExistingNodeId) {
+    return boardPlacementAnchor;
+  }
+
+  return existingNodeMap.get(primaryExistingNodeId) ?? boardPlacementAnchor;
+}
+
+function resolveKnowledgeMapRootId(
+  nodes: CanvasKnowledgeMapNodeDraft[],
+  edges: CanvasKnowledgeMapEdgeDraft[],
+): string {
+  const orderMap = new Map(nodes.map((node, index) => [node.id, index]));
+  const minLevel = Math.min(...nodes.map((node) => node.level));
+  const rootCandidates = nodes.filter((node) => node.level === minLevel);
+
+  if (rootCandidates.length === 1) {
+    return rootCandidates[0].id;
+  }
+
+  return rootCandidates
+    .slice()
+    .sort((left, right) => {
+      const leftScore = scoreKnowledgeMapRootCandidate(left.id, edges);
+      const rightScore = scoreKnowledgeMapRootCandidate(right.id, edges);
+      if (rightScore !== leftScore) {
+        return rightScore - leftScore;
+      }
+      return (orderMap.get(left.id) ?? 0) - (orderMap.get(right.id) ?? 0);
+    })[0]?.id ?? nodes[0].id;
+}
+
+function scoreKnowledgeMapRootCandidate(
+  nodeId: string,
+  edges: CanvasKnowledgeMapEdgeDraft[],
+): number {
+  return edges.reduce((score, edge) => {
+    if (edge.from === nodeId) {
+      return score + 2;
+    }
+    if (edge.to === nodeId) {
+      return score + 1;
+    }
+    return score;
+  }, 0);
+}
+
+function buildKnowledgeMapParentLookup(
+  nodes: CanvasKnowledgeMapNodeDraft[],
+  edges: CanvasKnowledgeMapEdgeDraft[],
+  rootNodeId: string,
+): Map<string, string | null> {
+  const nodeMap = new Map(nodes.map((node) => [node.id, node]));
+  const orderMap = new Map(nodes.map((node, index) => [node.id, index]));
+  const parentByNodeId = new Map<string, string | null>();
+  parentByNodeId.set(rootNodeId, null);
+
+  nodes.forEach((node) => {
+    if (node.id === rootNodeId) {
+      return;
+    }
+
+    const nodeOrder = orderMap.get(node.id) ?? 0;
+    const candidates = new Set<string>();
+    edges.forEach((edge) => {
+      if (edge.to === node.id) {
+        const parentNode = nodeMap.get(edge.from);
+        if (parentNode && parentNode.level < node.level) {
+          candidates.add(parentNode.id);
+        }
+      }
+
+      if (edge.from === node.id) {
+        const parentNode = nodeMap.get(edge.to);
+        if (parentNode && parentNode.level < node.level) {
+          candidates.add(parentNode.id);
+        }
+      }
+    });
+
+    const parentId = [...candidates]
+      .sort((leftId, rightId) => {
+        const leftNode = nodeMap.get(leftId);
+        const rightNode = nodeMap.get(rightId);
+        if (!leftNode || !rightNode) {
+          return 0;
+        }
+
+        if (rightNode.level !== leftNode.level) {
+          return rightNode.level - leftNode.level;
+        }
+
+        const leftDistance = Math.abs((orderMap.get(leftId) ?? 0) - nodeOrder);
+        const rightDistance = Math.abs((orderMap.get(rightId) ?? 0) - nodeOrder);
+        if (leftDistance !== rightDistance) {
+          return leftDistance - rightDistance;
+        }
+
+        return (orderMap.get(rightId) ?? 0) - (orderMap.get(leftId) ?? 0);
+      })[0];
+
+    if (parentId) {
+      parentByNodeId.set(node.id, parentId);
+      return;
+    }
+
+    const inferredParentId = nodes
+      .slice(0, nodeOrder)
+      .filter((candidateNode) => candidateNode.level < node.level)
+      .sort((leftNode, rightNode) => {
+        if (rightNode.level !== leftNode.level) {
+          return rightNode.level - leftNode.level;
+        }
+
+        return (orderMap.get(rightNode.id) ?? 0) - (orderMap.get(leftNode.id) ?? 0);
+      })[0]?.id ?? rootNodeId;
+
+    parentByNodeId.set(node.id, inferredParentId);
+  });
+
+  return parentByNodeId;
+}
+
+function buildKnowledgeMapChildrenLookup(
+  nodes: CanvasKnowledgeMapNodeDraft[],
+  parentByNodeId: Map<string, string | null>,
+): Map<string, string[]> {
+  const childrenByNodeId = new Map<string, string[]>();
+  const nodeMap = new Map(nodes.map((node) => [node.id, node]));
+  const orderMap = new Map(nodes.map((node, index) => [node.id, index]));
+
+  nodes.forEach((node) => {
+    childrenByNodeId.set(node.id, []);
+  });
+
+  parentByNodeId.forEach((parentId, nodeId) => {
+    if (!parentId) {
+      return;
+    }
+
+    const children = childrenByNodeId.get(parentId) ?? [];
+    children.push(nodeId);
+    childrenByNodeId.set(parentId, children);
+  });
+
+  childrenByNodeId.forEach((children, nodeId) => {
+    children.sort((leftId, rightId) => {
+      const leftNode = nodeMap.get(leftId);
+      const rightNode = nodeMap.get(rightId);
+      if (!leftNode || !rightNode) {
+        return (orderMap.get(leftId) ?? 0) - (orderMap.get(rightId) ?? 0);
+      }
+
+      if (leftNode.level !== rightNode.level) {
+        return leftNode.level - rightNode.level;
+      }
+
+      if (leftNode.type !== rightNode.type) {
+        return leftNode.type === "concept" ? -1 : 1;
+      }
+
+      return (orderMap.get(leftId) ?? 0) - (orderMap.get(rightId) ?? 0);
+    });
+    childrenByNodeId.set(nodeId, children);
+  });
+
+  return childrenByNodeId;
+}
+
+function buildKnowledgeMapTreeLayout(
+  rootNodeId: string,
+  nodes: CanvasKnowledgeMapNodeDraft[],
+  parentByNodeId: Map<string, string | null>,
+  childrenByNodeId: Map<string, string[]>,
+): CanvasInstructionLayoutDraft[] {
+  const columnCache = new Map<string, number>();
+  const spanCache = new Map<string, number>();
+  const layoutNodes: CanvasInstructionLayoutDraft[] = [];
+
+  const computeColumn = (nodeId: string): number => {
+    const cached = columnCache.get(nodeId);
+    if (cached !== undefined) {
+      return cached;
+    }
+
+    const parentId = parentByNodeId.get(nodeId);
+    if (!parentId) {
+      columnCache.set(nodeId, 0);
+      return 0;
+    }
+
+    const column = computeColumn(parentId) + 1;
+    columnCache.set(nodeId, column);
+    return column;
+  };
+
+  const computeSpan = (nodeId: string): number => {
+    const cached = spanCache.get(nodeId);
+    if (cached !== undefined) {
+      return cached;
+    }
+
+    const children = childrenByNodeId.get(nodeId) ?? [];
+    if (children.length === 0) {
+      spanCache.set(nodeId, KNOWLEDGE_MAP_LEAF_SPAN);
+      return KNOWLEDGE_MAP_LEAF_SPAN;
+    }
+
+    const span = Math.max(
+      KNOWLEDGE_MAP_LEAF_SPAN,
+      children.reduce((total, childId) => total + computeSpan(childId), 0)
+        + Math.max(children.length - 1, 0) * KNOWLEDGE_MAP_SIBLING_GAP,
+    );
+    spanCache.set(nodeId, span);
+    return span;
+  };
+
+  const assignRows = (nodeId: string, startRow: number) => {
+    const span = computeSpan(nodeId);
+    layoutNodes.push({
+      nodeId,
+      column: computeColumn(nodeId),
+      row: startRow + Math.floor((span - 1) / 2),
+    });
+
+    let childRow = startRow;
+    (childrenByNodeId.get(nodeId) ?? []).forEach((childId) => {
+      assignRows(childId, childRow);
+      childRow += computeSpan(childId) + KNOWLEDGE_MAP_SIBLING_GAP;
+    });
+  };
+
+  assignRows(rootNodeId, 0);
+
+  const placedNodeIds = new Set(layoutNodes.map((layoutNode) => layoutNode.nodeId));
+  let nextRootRow = computeSpan(rootNodeId) + KNOWLEDGE_MAP_ROOT_GAP;
+  nodes.forEach((node) => {
+    if (placedNodeIds.has(node.id)) {
+      return;
+    }
+
+    assignRows(node.id, nextRootRow);
+    layoutNodes.forEach((layoutNode) => {
+      placedNodeIds.add(layoutNode.nodeId);
+    });
+    nextRootRow += computeSpan(node.id) + KNOWLEDGE_MAP_ROOT_GAP;
+  });
+
+  return sortCanvasLayoutNodes(layoutNodes);
+}
+
+function resolveKnowledgeMapNodeColor(
+  node: CanvasKnowledgeMapNodeDraft,
+): string | undefined {
+  if (node.level === 0) {
+    return "2";
+  }
+
+  if (node.type === "concept") {
+    return "4";
+  }
+
+  if (node.type === "detail") {
+    return "5";
+  }
+
+  return undefined;
+}
+
+function buildKnowledgeMapPrimaryEdges(
+  nodes: CanvasKnowledgeMapNodeDraft[],
+  edges: CanvasKnowledgeMapEdgeDraft[],
+  parentByNodeId: Map<string, string | null>,
+): CanvasKnowledgeMapEdgeDraft[] {
+  const explicitRelationByPair = new Map<string, string | undefined>();
+  edges.forEach((edge) => {
+    explicitRelationByPair.set(`${edge.from}__${edge.to}`, edge.relation);
+  });
+
+  const primaryEdges: CanvasKnowledgeMapEdgeDraft[] = [];
+
+  nodes.forEach((node) => {
+    const parentId = parentByNodeId.get(node.id);
+    if (!parentId) {
+      return;
+    }
+
+    const relation = explicitRelationByPair.get(`${parentId}__${node.id}`)
+      ?? explicitRelationByPair.get(`${node.id}__${parentId}`)
+      ?? undefined;
+
+    primaryEdges.push({
+      from: parentId,
+      to: node.id,
+      relation: normalizeKnowledgeMapRelationLabel(relation),
+    });
+  });
+
+  return primaryEdges;
+}
+
+function normalizeKnowledgeMapRelationLabel(
+  relation: string | undefined,
+): string | undefined {
+  const normalized = relation?.replace(/\s+/g, " ").trim();
+  if (!normalized) {
+    return undefined;
+  }
+
+  const lower = normalized.toLowerCase();
+  if (["contains", "include", "includes", "including", "belongs to", "relates to", "related to"].includes(lower)) {
+    return undefined;
+  }
+
+  if (["supports", "support"].includes(lower)) {
+    return "支撑";
+  }
+
+  if (["follows", "follow", "next", "next step"].includes(lower)) {
+    return "后续";
+  }
+
+  if (["causes", "cause", "leads to"].includes(lower)) {
+    return "导致";
+  }
+
+  if (["contrasts", "contrast", "compares", "compare"].includes(lower)) {
+    return "对比";
+  }
+
+  return normalized;
+}
+
+function buildKnowledgeMapGroupNodes(
+  nodes: CanvasKnowledgeMapNodeDraft[],
+  rootNodeId: string,
+  childrenByNodeId: Map<string, string[]>,
+  canvasNodeByBlueprintId: Map<string, CanvasNodeRecord>,
+  usedIds: Set<string>,
+): CanvasNodeRecord[] {
+  const groupDrafts = buildKnowledgeMapGroupDrafts(
+    nodes,
+    rootNodeId,
+    childrenByNodeId,
+    canvasNodeByBlueprintId,
+  );
+
+  return groupDrafts.map((groupDraft) => {
+    const bounds = getCanvasNodeBounds(
+      groupDraft.nodeIds
+        .map((nodeId) => canvasNodeByBlueprintId.get(nodeId))
+        .filter((node): node is CanvasNodeRecord => !!node),
+    );
+
+    return {
+      id: generateHexId(usedIds),
+      type: "group",
+      x: Math.round(bounds.x - 48),
+      y: Math.round(bounds.y - 64),
+      width: Math.max(260, Math.round(bounds.width + 96)),
+      height: Math.max(180, Math.round(bounds.height + 112)),
+      label: groupDraft.label,
+      color: groupDraft.color,
+    };
+  });
+}
+
+function getCanvasNodeBounds(
+  nodes: CanvasNodeRecord[],
+): { x: number; y: number; width: number; height: number } {
+  const minX = Math.min(...nodes.map((node) => node.x));
+  const minY = Math.min(...nodes.map((node) => node.y));
+  const maxX = Math.max(...nodes.map((node) => node.x + node.width));
+  const maxY = Math.max(...nodes.map((node) => node.y + node.height));
+
+  return {
+    x: minX,
+    y: minY,
+    width: maxX - minX,
+    height: maxY - minY,
+  };
+}
+
+function buildKnowledgeMapGroupDrafts(
+  nodes: CanvasKnowledgeMapNodeDraft[],
+  rootNodeId: string,
+  childrenByNodeId: Map<string, string[]>,
+  canvasNodeByBlueprintId: Map<string, CanvasNodeRecord>,
+): CanvasKnowledgeMapGroupDraft[] {
+  const nodeMap = new Map(nodes.map((node) => [node.id, node]));
+  const groupNodeIdsByLabel = new Map<string, string[]>();
+  const groupColorByLabel = new Map<string, string | undefined>();
+  const rootChildren = childrenByNodeId.get(rootNodeId) ?? [];
+
+  rootChildren.forEach((branchRootId) => {
+    const branchRootNode = nodeMap.get(branchRootId);
+    if (!branchRootNode) {
+      return;
+    }
+
+    const descendants = collectKnowledgeMapSubtreeNodeIds(branchRootId, childrenByNodeId)
+      .filter((nodeId) => canvasNodeByBlueprintId.has(nodeId));
+    if (descendants.length < 2) {
+      return;
+    }
+
+    const label = branchRootNode.group?.trim() || branchRootNode.title.trim();
+    if (!label) {
+      return;
+    }
+
+    const existingNodeIds = groupNodeIdsByLabel.get(label) ?? [];
+    groupNodeIdsByLabel.set(label, Array.from(new Set([...existingNodeIds, ...descendants])));
+    groupColorByLabel.set(label, resolveKnowledgeMapGroupColor(branchRootNode));
+  });
+
+  const groupDrafts = [...groupNodeIdsByLabel.entries()]
+    .map(([label, nodeIds]) => ({
+      label,
+      nodeIds,
+      color: groupColorByLabel.get(label),
+    }))
+    .filter((groupDraft) => groupDraft.nodeIds.length > 1);
+
+  if (groupDrafts.length > 0) {
+    return groupDrafts;
+  }
+
+  const explicitGroupMap = new Map<string, string[]>();
+  nodes.forEach((node) => {
+    if (node.id === rootNodeId || !node.group?.trim()) {
+      return;
+    }
+
+    const targetNode = canvasNodeByBlueprintId.get(node.id);
+    if (!targetNode) {
+      return;
+    }
+
+    const groupLabel = node.group.trim();
+    const existingNodeIds = explicitGroupMap.get(groupLabel) ?? [];
+    existingNodeIds.push(node.id);
+    explicitGroupMap.set(groupLabel, existingNodeIds);
+  });
+
+  return [...explicitGroupMap.entries()]
+    .map(([label, nodeIds]) => ({
+      label,
+      nodeIds,
+      color: resolveKnowledgeMapGroupColor(nodeMap.get(nodeIds[0]) ?? null),
+    }))
+    .filter((groupDraft) => groupDraft.nodeIds.length > 1);
+}
+
+function collectKnowledgeMapSubtreeNodeIds(
+  rootNodeId: string,
+  childrenByNodeId: Map<string, string[]>,
+): string[] {
+  const result: string[] = [];
+  const stack = [rootNodeId];
+
+  while (stack.length > 0) {
+    const currentNodeId = stack.pop();
+    if (!currentNodeId) {
+      continue;
+    }
+
+    result.push(currentNodeId);
+    const children = childrenByNodeId.get(currentNodeId) ?? [];
+    for (let index = children.length - 1; index >= 0; index -= 1) {
+      stack.push(children[index]);
+    }
+  }
+
+  return result;
+}
+
+function resolveKnowledgeMapGroupColor(
+  node: CanvasKnowledgeMapNodeDraft | null,
+): string | undefined {
+  if (!node) {
+    return "6";
+  }
+
+  if (node.level <= 1) {
+    return "6";
+  }
+
+  return resolveKnowledgeMapNodeColor(node) ?? "6";
+}
+
+function shiftKnowledgeMapClusterAwayFromExisting(
+  canvasNodeByBlueprintId: Map<string, CanvasNodeRecord>,
+  existingNodes: CanvasNodeRecord[],
+): void {
+  if (existingNodes.length === 0 || canvasNodeByBlueprintId.size === 0) {
+    return;
+  }
+
+  const generatedNodes = [...canvasNodeByBlueprintId.values()];
+  const existingRects = existingNodes.map((node) => ({
+    x: node.x,
+    y: node.y,
+    width: node.width,
+    height: node.height,
+  }));
+
+  let guard = 0;
+  while (generatedNodes.some((node) => intersectsExisting(node, existingRects)) && guard < 16) {
+    generatedNodes.forEach((node) => {
+      node.x += 180;
+    });
+    guard += 1;
+  }
 }
 
 function resolveInstructionTargetId(

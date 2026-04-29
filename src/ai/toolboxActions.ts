@@ -54,7 +54,7 @@ const BASE_SKILL_GUIDE = [
   "      - property_name",
 ].join("\n");
 
-const CANVAS_SKILL_GUIDE = [
+export const CANVAS_SKILL_GUIDE = [
   "Obsidian JSON Canvas skill requirements:",
   "- Output valid JSON only. No explanations. No code fences.",
   "- The top-level object must contain arrays named nodes and edges.",

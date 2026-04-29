@@ -3,24 +3,26 @@ import type { EditorView } from "@codemirror/view";
 import type EditingToolbarPlugin from "src/plugin/main";
 import { t } from "src/translations/helper";
 import { AIConsentModal } from "src/modals/AIConsentModal";
-import { TextInputModal, type ITextInputSuggestion } from "src/modals/TextInputModal";
+import { TextInputModal, type ITextInputSubmitMeta, type ITextInputSuggestion } from "src/modals/TextInputModal";
 import { ToolbarAIService } from "./AIService";
 import { normalizeGeneratedArtifactContent } from "./artifactNormalizer";
 import {
   applyCanvasExpansionDraft,
   buildDeterministicCanvasReorganizationPlan,
   applyCanvasInstructionPlan,
+  applyCanvasKnowledgeMapBlueprint,
   buildCanvasDocumentSource,
   getActiveCanvasContext,
   getActiveCanvasTextFileView,
   mergeCanvasReorganizationPlans,
+  parseCanvasKnowledgeMapResponse,
   parseCanvasExpansionResponse,
   parseCanvasInstructionResponse,
 } from "./canvasScene";
 import { resolveRewriteContext } from "./editorContext";
 import { getAIErrorMessage } from "./errorHandling";
 import { PKMerAuthService } from "./PKMerAuthService";
-import { getAIToolboxArtifactKind, getAIToolboxPrompt } from "./toolboxActions";
+import { CANVAS_SKILL_GUIDE, getAIToolboxArtifactKind, getAIToolboxPrompt } from "./toolboxActions";
 import { DEFAULT_REWRITE_ACTIONS, type RewriteArtifactKind, type RewriteArtifactRequest, type RewriteArtifactResult, type RewriteInstruction } from "./types";
 import { createAIEditorExtensions, startRewriteEffect, triggerCompletionEffect } from "./extensions";
 import { shouldShowAIFeatures } from "src/util/locale";
@@ -429,14 +431,21 @@ export class AIEditorManager {
           hideLabel: true,
         },
       ],
-      (result) => {
-        void this.expandCurrentCanvasNode(result.instruction);
+      (result, meta) => {
+        const instruction = this.resolveTextInputInstruction(result.instruction, meta, "instruction");
+        const additionalContext = this.buildLinkedNotesAdditionalContext(meta, "instruction");
+        void this.expandCurrentCanvasNode(instruction, additionalContext);
       },
       {
         modalClassName: "editing-toolbar-text-input-modal-wide",
         contextLabel: canvasContext.selectedNodes.length > 0 ? t("Selected nodes") : undefined,
         contextItems: this.buildCanvasSelectionContextItems(canvasContext),
         suggestions: this.getCanvasExpansionPromptSuggestions(),
+        linkedNotes: {
+          enabled: true,
+          fieldKeys: ["instruction"],
+          hint: t("Type [[]] to reference document content."),
+        },
       },
     ).open();
 
@@ -480,21 +489,29 @@ export class AIEditorManager {
           hideLabel: true,
         },
       ],
-      (result) => {
-        void this.runCanvasGlobalInstruction(result.instruction);
+      (result, meta) => {
+        const instruction = this.resolveTextInputInstruction(result.instruction, meta, "instruction");
+        const additionalContext = this.buildLinkedNotesAdditionalContext(meta, "instruction");
+        const linkedSourceText = this.buildLinkedNotesPrimarySource(meta, "instruction");
+        void this.runCanvasGlobalInstruction(instruction, additionalContext, linkedSourceText);
       },
       {
         modalClassName: "editing-toolbar-text-input-modal-wide",
         contextLabel: canvasContext.selectedNodes.length > 0 ? t("Selected nodes") : undefined,
         contextItems: this.buildCanvasSelectionContextItems(canvasContext),
         suggestions: this.getCanvasGlobalPromptSuggestions(canvasContext),
+        linkedNotes: {
+          enabled: true,
+          fieldKeys: ["instruction"],
+          hint: t("Type [[]] to reference document content."),
+        },
       },
     ).open();
 
     return true;
   }
 
-  async expandCurrentCanvasNode(instruction?: string): Promise<boolean> {
+  async expandCurrentCanvasNode(instruction?: string, additionalContext?: string): Promise<boolean> {
     if (!this.plugin.settings.ai.enabled) {
       new Notice(t("AI features are disabled in settings."));
       return false;
@@ -515,7 +532,7 @@ export class AIEditorManager {
           selectedText: canvasContext.anchorNode.text,
           instruction: "custom",
           customPrompt: this.buildCanvasExpansionPrompt(instruction),
-          context: canvasContext.contextText,
+          context: this.mergeAIContext(canvasContext.contextText, additionalContext),
         })) {
           response += chunk;
         }
@@ -533,7 +550,11 @@ export class AIEditorManager {
     }
   }
 
-  async runCanvasGlobalInstruction(instruction?: string): Promise<boolean> {
+  async runCanvasGlobalInstruction(
+    instruction?: string,
+    additionalContext?: string,
+    linkedSourceText?: string,
+  ): Promise<boolean> {
     if (!this.plugin.settings.ai.enabled) {
       new Notice(t("AI features are disabled in settings."));
       return false;
@@ -553,9 +574,38 @@ export class AIEditorManager {
       }
 
       return await this.withCanvasToolbarBusyState(canvasContext.view, async () => {
-        const mode = this.resolveCanvasGlobalInstructionMode(effectiveInstruction);
+        const mode = this.shouldTreatAsReferencedCanvasInstruction(effectiveInstruction)
+          ? "reference-canvas"
+          : this.resolveCanvasGlobalInstructionMode(effectiveInstruction);
+        if (mode === "reference-canvas") {
+          if (!linkedSourceText?.trim()) {
+            new Notice(t("Please reference at least one note with [[...]] before converting to canvas."));
+            return false;
+          }
+
+          const boardDocumentSource = await buildCanvasDocumentSource(this.plugin, canvasContext, { scopeMode: "board" });
+          new Notice(t("Canvas AI is structuring the referenced content..."));
+          let response = "";
+          for await (const chunk of this.aiService.rewrite({
+            selectedText: linkedSourceText,
+            instruction: "custom",
+            customPrompt: this.buildReferencedContentCanvasPrompt(effectiveInstruction),
+            context: boardDocumentSource.text,
+          })) {
+            response += chunk;
+          }
+
+          const existingNodeIds = canvasContext.document.nodes
+            .filter((node) => node.type !== "group")
+            .map((node) => node.id);
+          const blueprint = parseCanvasKnowledgeMapResponse(response, { existingNodeIds });
+          const result = await applyCanvasKnowledgeMapBlueprint(this.plugin, canvasContext, blueprint);
+          new Notice(`${t("Canvas AI updated the board:")} ${result.addedNodeCount} ${t("nodes")}, ${result.addedEdgeCount} ${t("links")}.`);
+          return true;
+        }
+
         if (mode === "article" || mode === "slides") {
-          return this.generateCanvasDerivedMarkdown(canvasContext, effectiveInstruction, mode);
+          return this.generateCanvasDerivedMarkdown(canvasContext, effectiveInstruction, mode, additionalContext);
         }
         const isReorganizeMode = mode === "reorganize";
         const documentSource = isReorganizeMode
@@ -581,7 +631,7 @@ export class AIEditorManager {
                 documentSource?.scope ?? "board",
                 deterministicReorganizationPlan,
               ),
-              context: canvasContext.contextText,
+              context: this.mergeAIContext(canvasContext.contextText, additionalContext),
             })) {
               response += chunk;
             }
@@ -601,7 +651,7 @@ export class AIEditorManager {
             selectedText: documentSource?.text || canvasContext.anchorNode?.text || "Canvas board",
             instruction: "custom",
             customPrompt: this.buildCanvasGlobalPrompt(effectiveInstruction, !!canvasContext.anchorNode),
-            context: canvasContext.contextText,
+            context: this.mergeAIContext(canvasContext.contextText, additionalContext),
           })) {
             response += chunk;
           }
@@ -660,15 +710,20 @@ export class AIEditorManager {
 
   private getCanvasGlobalPromptPlaceholder(canvasContext: ActiveCanvasContext): string {
     if (canvasContext.selectedNodes.length > 0) {
-      return t("e.g. tidy selected layout, connect selected nodes, add missing branches");
+      return t("e.g. tidy selected layout, connect selected nodes, add missing branches, convert [[a note]] to canvas");
     }
 
-    return t("e.g. reorganize the board, turn this canvas into an article, turn this canvas into Obsidian Slides");
+    return t("e.g. reorganize the board, turn this canvas into an article, turn [[a note]] into canvas");
   }
 
   private getCanvasGlobalPromptSuggestions(canvasContext: ActiveCanvasContext): ITextInputSuggestion[] {
     if (canvasContext.selectedNodes.length > 0) {
       return [
+        {
+          label: t("Convert to canvas"),
+          value: t("Convert the referenced content into a structured canvas with one central topic, main branches, supporting details, and explicit relations."),
+          replace: false,
+        },
         {
           label: t("Tidy selected layout"),
           value: t("Reorganize the selected nodes into a clearer local hierarchy with tidy spacing and fewer edge crossings. Reuse current nodes instead of adding new ones."),
@@ -697,6 +752,11 @@ export class AIEditorManager {
     }
 
     return [
+      {
+        label: t("Convert to canvas"),
+        value: t("Convert the referenced content into a structured canvas with one central topic, main branches, supporting details, and explicit relations."),
+        replace: false,
+      },
       {
         label: t("Organize canvas layout"),
         value: t("Reorganize this canvas into a clean hierarchy with tidy spacing, aligned sibling nodes, and fewer edge crossings. Reuse current nodes instead of adding new ones."),
@@ -749,8 +809,12 @@ export class AIEditorManager {
     ];
   }
 
-  private resolveCanvasGlobalInstructionMode(instruction: string): "board" | "article" | "slides" | "reorganize" {
+  private resolveCanvasGlobalInstructionMode(instruction: string): "board" | "article" | "slides" | "reorganize" | "reference-canvas" {
     const normalizedInstruction = this.normalizeCanvasInstructionText(instruction);
+    const localizedCanvasHints = [
+      t("Convert to canvas"),
+      t("Convert the referenced content into a structured canvas with one central topic, main branches, supporting details, and explicit relations."),
+    ].map((item) => this.normalizeCanvasInstructionText(item));
     const localizedArticleHints = [
       t("Canvas to article"),
       t("Convert this canvas into a polished Markdown article draft."),
@@ -770,6 +834,14 @@ export class AIEditorManager {
       t("Reorganize the whole canvas into a clearer hierarchy with better grouping."),
       t("Reorganize the existing canvas nodes into a clearer hierarchy and grouping. Reuse current nodes instead of adding new ones."),
     ].map((item) => this.normalizeCanvasInstructionText(item));
+
+    if (localizedCanvasHints.some((hint) => hint && normalizedInstruction.includes(hint))) {
+      return "reference-canvas";
+    }
+
+    if (/(?:turn|convert|transform|make|create|generate)\s+(?:the\s+)?(?:referenced\s+|linked\s+|source\s+)?(?:content|note|notes|document)?\s*(?:into|to)?\s*(?:a\s+)?(?:structured\s+)?(?:canvas|mindmap|mind map|concept map|knowledge map)|转为画板|转成画板|转成\s*canvas|转为\s*canvas|解构为画板|拆成画板|生成画板|知识图谱|概念图/i.test(normalizedInstruction)) {
+      return "reference-canvas";
+    }
 
     if (localizedArticleHints.some((hint) => hint && normalizedInstruction.includes(hint))) {
       return "article";
@@ -804,6 +876,15 @@ export class AIEditorManager {
       .toLowerCase()
       .replace(/[^\p{L}\p{N}\s]+/gu, " ")
       .replace(/\s+/g, " ");
+  }
+
+  private shouldTreatAsReferencedCanvasInstruction(instruction: string): boolean {
+    const normalizedInstruction = this.normalizeCanvasInstructionText(instruction);
+    const hasReferenceCue = /\[\[|\]\]|引用|双链|参考文档|参考笔记|linked note|linked notes|referenced content|reference note|reference notes|source note|source notes/i.test(instruction);
+    const hasCanvasCue = /canvas|mindmap|mind map|concept map|knowledge map|画板|知识图谱|概念图/i.test(normalizedInstruction);
+    const hasConvertCue = /convert|turn|transform|make|create|generate|structured|structure|转为|转成|生成|解构|拆成|结构化/i.test(instruction);
+
+    return hasReferenceCue && hasCanvasCue && hasConvertCue;
   }
 
   private buildCanvasGlobalPrompt(instruction: string, hasAnchorNode: boolean): string {
@@ -849,6 +930,83 @@ export class AIEditorManager {
       "",
       `User instruction:\n${instruction}`,
     ].join("\n");
+  }
+
+  private buildReferencedContentCanvasPrompt(instruction: string): string {
+    const canvasSkillReference = CANVAS_SKILL_GUIDE
+      .split("\n")
+      .filter((line) => [
+        "Prefer text nodes unless a file node or link node is clearly required by the source.",
+        "Text nodes should contain concise, structured Markdown-friendly text.",
+        "Layout should be readable: align to a loose grid, leave about 50-100px spacing between nodes, and avoid overlaps.",
+        "Coordinates can be negative, but prefer a clean left-to-right or center-out layout.",
+        "A good canvas usually has a clear central node and connected supporting nodes rather than isolated fragments.",
+        "Unless the source is tiny, create a meaningful structure with several nodes instead of only one or two.",
+        "Use edge labels only when they add real meaning.",
+      ].some((fragment) => line.includes(fragment)))
+      .join("\n");
+
+    return [
+      "Canvas quality reference:",
+      canvasSkillReference,
+      "Role:",
+      "You are a knowledge structure analyst working for an Obsidian Canvas workflow.",
+      "Input understanding:",
+      "- The selectedText contains the referenced note content that should be converted into new canvas nodes.",
+      "- The context contains the existing canvas nodes with exact node ids, summaries, and current links.",
+      "Task:",
+      "0. Read the existing canvas context first, so you understand what is already on the board.",
+      "1. Read the full source carefully and identify the core theme, major sections or arguments, supporting details, and conclusion when useful.",
+      "2. Compare the referenced source with the existing canvas nodes. If some generated nodes clearly belong to an existing node or extend it naturally, prepare explicit connections to those existing node ids.",
+      "3. Analyze the logical relationships between generated nodes, such as contains, supports, causes, contrasts, and follows.",
+      "4. Return one structured JSON object with nodes, edges, and boardConnections only.",
+      "Output schema:",
+      "{",
+      '  "nodes": [',
+      "    {",
+      '      "id": "n_1",',
+      '      "type": "concept",',
+      '      "title": "Short title",',
+      '      "content": "Key sentence summary within 30 Chinese characters when possible",',
+      '      "level": 0,',
+      '      "group": "optional thematic group label for branch clustering"',
+      "    }",
+      "  ],",
+      '  "edges": [',
+      "    {",
+      '      "from": "n_1",',
+      '      "to": "n_2",',
+      '      "relation": "optional short natural-language relation such as 前提 / 方法 / 结果 / 风险 / 示例"',
+      "    }",
+      "  ],",
+      '  "boardConnections": [',
+      "    {",
+      '      "nodeId": "n_2",',
+      '      "existingNodeId": "exact existing canvas node id from context",',
+      '      "relation": "optional short natural-language relation"',
+      "    }",
+      "  ]",
+      "}",
+      "Rules:",
+      "- Return valid JSON only. No explanations. No markdown fences.",
+      "- Create one clear central theme node at level 0 unless the source is too fragmentary.",
+      "- Use level 1 for main branches and level 2 for supporting details. Add deeper levels only when truly necessary.",
+      "- Keep titles short and scannable.",
+      "- Keep content concise and summary-like rather than copying long paragraphs.",
+      "- Prefer 5 to 14 nodes when the source has enough substance.",
+      "- Avoid duplicate nodes and isolated fragments.",
+      "- Prefer one clear parent-child backbone so the structure can be laid out cleanly as a hierarchy.",
+      "- Use explicit edges so the logical structure is recoverable, but avoid unnecessary cross-links.",
+      "- relation should be a short phrase that matches the topic content and the source language. Avoid generic fixed English labels like contains / supports / follows unless the source itself is English and that wording is genuinely natural.",
+      "- If an edge is only an obvious parent-child inclusion, relation may be omitted or left empty.",
+      "- Use group for thematic clustering when helpful. Nodes in the same branch or topic category can share the same group label so the app can create canvas groups automatically.",
+      "- Read the existing canvas nodes first. If a generated branch clearly belongs with an existing node, add a boardConnections item using that exact existing node id from the context.",
+      "- If there is no meaningful relation to the existing canvas, return an empty boardConnections array. The app will place the new cluster separately on one side.",
+      "- Only use exact existing canvas node ids that appear in the context. Never invent or guess ids.",
+      "- The local app will handle final canvas coordinates and apply a compact hierarchical layout. Focus on accurate levels, sibling grouping, and primary parent-child relations rather than coordinates.",
+      "",
+      `User instruction:\n${instruction}`,
+    ].join("\n\n");
   }
 
   private buildCanvasReorganizationPrompt(
@@ -990,6 +1148,7 @@ export class AIEditorManager {
     canvasContext: ActiveCanvasContext,
     instruction: string,
     mode: "article" | "slides",
+    additionalContext?: string,
   ): Promise<boolean> {
     try {
       const source = await buildCanvasDocumentSource(this.plugin, canvasContext);
@@ -1004,7 +1163,7 @@ export class AIEditorManager {
         customPrompt: mode === "article"
           ? this.buildCanvasArticlePrompt(instruction, source.scope)
           : this.buildCanvasSlidesPrompt(instruction, source.scope),
-        context: canvasContext.contextText,
+        context: this.mergeAIContext(canvasContext.contextText, additionalContext),
       })) {
         response += chunk;
       }
@@ -1084,6 +1243,75 @@ export class AIEditorManager {
     const suffix = mode === "article" ? t("AI Article Draft") : t("AI Slides");
     const filePath = await this.getAvailableArtifactPath(parentPath, `${canvasContext.file.basename} ${suffix}`, "md");
     return this.plugin.app.vault.create(filePath, content);
+  }
+
+  private resolveTextInputInstruction(
+    rawInstruction: string | undefined,
+    meta?: ITextInputSubmitMeta,
+    fieldKey: string = "instruction",
+  ): string {
+    const rawValue = rawInstruction?.trim() || "";
+    const cleanedValue = meta?.cleanedResult?.[fieldKey]?.trim() || "";
+    const referencedItems = meta?.linkedContextByField?.[fieldKey] ?? [];
+
+    if (referencedItems.length === 0) {
+      return rawValue;
+    }
+
+    const nonReferenceText = rawValue.replace(/\[\[[^\]]+\]\]/g, "").trim();
+    if (!nonReferenceText) {
+      return cleanedValue || rawValue;
+    }
+
+    return nonReferenceText;
+  }
+
+  private buildLinkedNotesAdditionalContext(
+    meta?: ITextInputSubmitMeta,
+    fieldKey: string = "instruction",
+  ): string | undefined {
+    const referencedItems = meta?.linkedContextByField?.[fieldKey] ?? [];
+    if (referencedItems.length === 0) {
+      return undefined;
+    }
+
+    return referencedItems
+      .map((item) => `<context source="Referenced note ${item.reference}">\n${item.content}\n</context>`)
+      .join("\n\n");
+  }
+
+  private buildLinkedNotesPrimarySource(
+    meta?: ITextInputSubmitMeta,
+    fieldKey: string = "instruction",
+  ): string | undefined {
+    const referencedItems = meta?.linkedContextByField?.[fieldKey] ?? [];
+    if (referencedItems.length === 0) {
+      return undefined;
+    }
+
+    return referencedItems
+      .map((item, index) => [
+        `source_index: ${index + 1}`,
+        `source_reference: ${item.reference}`,
+        `source_path: ${item.filePath}`,
+        "source_content:",
+        item.content,
+      ].join("\n"))
+      .join("\n\n");
+  }
+
+  private mergeAIContext(baseContext: string, additionalContext?: string): string {
+    const extraContext = additionalContext?.trim();
+    if (!extraContext) {
+      return baseContext;
+    }
+
+    const normalizedBaseContext = baseContext.trim();
+    if (!normalizedBaseContext) {
+      return extraContext;
+    }
+
+    return `${normalizedBaseContext}\n\n${extraContext}`;
   }
 
   private async startFrontmatterGeneration(editor: Editor | null | undefined, prompt: string): Promise<boolean> {
