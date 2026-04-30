@@ -309,8 +309,15 @@ export class PKMerAuthService {
             resolve(code);
           } else {
             const error = url.searchParams.get("error") || "unknown error";
+            const escapedError = error.replace(/[&<>"']/g, (ch: string) => ({
+              "&": "&amp;",
+              "<": "&lt;",
+              ">": "&gt;",
+              "\"": "&quot;",
+              "'": "&#39;",
+            }[ch] as string));
             res.writeHead(400, { "Content-Type": "text/html; charset=utf-8" });
-            res.end(`<html><body><h2>Login failed: ${error}</h2></body></html>`);
+            res.end(`<html><body><h2>Login failed: ${escapedError}</h2></body></html>`);
             resolve(null);
           }
 
