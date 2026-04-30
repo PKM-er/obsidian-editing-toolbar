@@ -19,13 +19,13 @@ jobs:
     build:
         runs-on: ubuntu-latest
         steps:
-            - uses: actions/checkout@v3
+            - uses: actions/checkout@v4
               with:
                 fetch-depth: 0  # 获取完整的提交历史，用于生成 changelog
             - name: Use Node.js
-              uses: actions/setup-node@v3
+              uses: actions/setup-node@v4
               with:
-                  node-version: 16
+                  node-version: 20
             - name: Get tag version
               id: get_version
               # 提取纯标签名称，去掉 refs/tags/ 前缀
