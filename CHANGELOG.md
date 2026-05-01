@@ -1,5 +1,12 @@
 # Changelog
 
+## 4.0.8 (2026-05-01)
+### 4.0.8 国际化部分字段，ai能力全面放开
+### canvas输入面板支持双链
+### Merge branch 'master' of https://github.com/PKM-er/obsidian-editing-toolbar
+### Update manifest.json and CHANGELOG.md for version 4.0.6
+
+
 ## 4.0.6 (2026-04-21)
 ### 4.0.6
 ### 增加长上下文压缩机制
