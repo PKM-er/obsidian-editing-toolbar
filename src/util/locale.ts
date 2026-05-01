@@ -9,6 +9,6 @@ export function isChineseLocale(locale: string = getCurrentLocale()): boolean {
   return normalizedLocale === "zh" || normalizedLocale.startsWith("zh-");
 }
 
-export function shouldShowAIFeatures(locale: string = getCurrentLocale()): boolean {
-  return isChineseLocale(locale);
+export function shouldShowAIFeatures(_locale: string = getCurrentLocale()): boolean {
+  return true;
 }

@@ -22,7 +22,7 @@ import { ConfirmModal } from "src/modals/ConfirmModal";
 import { PKMER_MODEL_OPTIONS, resolvePKMerModelForScene } from "src/ai/types";
 import type { CustomModelApiFormat } from "src/ai/types";
 import { getAIErrorMessage } from "src/ai/errorHandling";
-import { shouldShowAIFeatures } from "src/util/locale";
+import { getPKMerAIEntryUrl, getPKMerAIQuotaUrl } from "src/ai/pkmerWeb";
 // 添加类型定义
 interface SubmenuCommand {
   id: string;
@@ -173,10 +173,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     });
 
     // 创建标签页按钮
-    const visibleTabs = SETTING_TABS.filter((tab) => tab.id !== 'ai' || shouldShowAIFeatures());
-    if (this.activeTab === 'ai' && !shouldShowAIFeatures()) {
-      this.activeTab = 'general';
-    }
+    const visibleTabs = SETTING_TABS;
 
     visibleTabs.forEach(tab => {
       const tabButton = tabContainer.createEl('div', {
@@ -1725,14 +1722,6 @@ export class editingToolbarSettingTab extends PluginSettingTab {
   }
 
   private displayAISettings(containerEl: HTMLElement): void {
-    if (!shouldShowAIFeatures()) {
-      containerEl.createDiv({
-        cls: 'editing-toolbar-ai-note',
-        text: t('AI settings are currently available only in Simplified and Traditional Chinese.'),
-      });
-      return;
-    }
-
     const grid = containerEl.createDiv('editing-toolbar-ai-grid');
     const aiEnabled = this.plugin.settings.ai.enabled;
     const inlineCompletionEnabled = aiEnabled && this.plugin.settings.ai.enableInlineCompletion;
@@ -1839,7 +1828,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
         pkmerAccountDesc.append(' ');
         const quotaLink = document.createElement('a');
         quotaLink.textContent = t('More Quota');
-        quotaLink.href = 'https://pkmer.cn/products/UserProfile/#tab-ai-token';
+        quotaLink.href = getPKMerAIQuotaUrl();
         quotaLink.target = '_blank';
         quotaLink.rel = 'noopener noreferrer';
         pkmerAccountDesc.appendChild(quotaLink);
@@ -1879,7 +1868,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
         const accountLinkNote = accountBody.createDiv({ cls: 'editing-toolbar-ai-note' });
         accountLinkNote.appendText(`${t('Need a PKMer AI account?')} `);
         const accountLink = accountLinkNote.createEl('a', { text: t('Open PKMer AI') });
-        accountLink.href = 'https://pkmer.cn/products/UserProfile/';
+        accountLink.href = getPKMerAIEntryUrl();
         accountLink.target = '_blank';
         accountLink.rel = 'noopener noreferrer';
       }
@@ -2212,15 +2201,15 @@ export class editingToolbarSettingTab extends PluginSettingTab {
       variablesInfo.style.borderRadius = '6px';
       variablesInfo.style.fontSize = '12px';
       variablesInfo.innerHTML = `
-        <strong>可用变量:</strong><br>
-        <code>{{selection}}</code> - 选中文本 |
-        <code>{{file:path}}</code> - 文件路径 |
-        <code>{{file:content}}</code> - 文档全文<br>
-        <code>{{date}}</code> - 日期 |
-        <code>{{time}}</code> - 时间 |
-        <code>{{datetime}}</code> - 日期时间 |
-        <code>{{vault:name}}</code> - 仓库名<br>
-        <strong>双链引用:</strong> 使用 <code>[[文件名]]</code> 引用其他笔记内容
+        <strong>${t('Available Variables')}:</strong><br>
+        <code>{{selection}}</code> - ${t('Selected text')} |
+        <code>{{file:path}}</code> - ${t('Document path')} |
+        <code>{{file:content}}</code> - ${t('Full document content')}<br>
+        <code>{{date}}</code> - ${t('Date')} |
+        <code>{{time}}</code> - ${t('Time')} |
+        <code>{{datetime}}</code> - ${t('Date and time')} |
+        <code>{{vault:name}}</code> - ${t('Vault name')}<br>
+        <strong>${t('Linked note references')}:</strong> ${t('Use [[note name]] to reference the content of other notes.')}
       `;
 
       const templates = this.plugin.settings.ai.customPromptTemplates || [];

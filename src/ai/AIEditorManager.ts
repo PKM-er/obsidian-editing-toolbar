@@ -25,7 +25,6 @@ import { PKMerAuthService } from "./PKMerAuthService";
 import { CANVAS_SKILL_GUIDE, getAIToolboxArtifactKind, getAIToolboxPrompt } from "./toolboxActions";
 import { DEFAULT_REWRITE_ACTIONS, type RewriteArtifactKind, type RewriteArtifactRequest, type RewriteArtifactResult, type RewriteInstruction } from "./types";
 import { createAIEditorExtensions, startRewriteEffect, triggerCompletionEffect } from "./extensions";
-import { shouldShowAIFeatures } from "src/util/locale";
 import { compactContent } from "./contextCompactor";
 import type { ActiveCanvasContext, CanvasInstructionPlan, CanvasNodeSummary } from "./canvasScene";
 
@@ -101,10 +100,6 @@ export class AIEditorManager {
     this.authService.onunload();
   }
   async maybeShowAIOnboarding(): Promise<void> {
-    if (!shouldShowAIFeatures()) {
-      return;
-    }
-
     if (this.plugin.settings.ai.enabled || this.plugin.settings.ai.onboardingShown) {
       return;
     }
@@ -124,11 +119,6 @@ export class AIEditorManager {
   }
 
   async requestEnableAIWithConsent(source: "startup" | "settings"): Promise<boolean> {
-    if (!shouldShowAIFeatures()) {
-      new Notice(t('AI settings are currently available only in Simplified and Traditional Chinese.'));
-      return false;
-    }
-
     if (this.plugin.settings.ai.enabled) {
       return true;
     }
@@ -809,6 +799,30 @@ export class AIEditorManager {
     ];
   }
 
+  private getSelectedTextContextLabel(): string {
+    return `📝 ${t("Selected text")}`;
+  }
+
+  private getSelectedTextPlaceholder(): string {
+    return `[${this.getSelectedTextContextLabel()}]`;
+  }
+
+  private getSelectedTextPlaceholderVariants(): string[] {
+    return Array.from(new Set([
+      this.getSelectedTextPlaceholder(),
+      "[📝 Selected text]",
+      "[📝 选中文本]",
+    ]));
+  }
+
+  private getCurrentDocumentContextLabel(fileName?: string): string {
+    return `📋 ${fileName || t("Current document")}`;
+  }
+
+  private escapeRegExp(value: string): string {
+    return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  }
+
   private resolveCanvasGlobalInstructionMode(instruction: string): "board" | "article" | "slides" | "reorganize" | "reference-canvas" {
     const normalizedInstruction = this.normalizeCanvasInstructionText(instruction);
     const localizedCanvasHints = [
@@ -1123,7 +1137,7 @@ export class AIEditorManager {
 
       return {
         label: this.getCanvasContextNodeLabel(node, canvasContext.anchorNode?.id, index),
-        preview: `${shortPreview} (${node.text.length.toLocaleString()} chars)`,
+        preview: `${shortPreview} (${node.text.length.toLocaleString()} ${t("characters")})`,
         title: title || node.id,
       };
     });
@@ -1739,7 +1753,7 @@ export class AIEditorManager {
             contextList.push({
               type: "selection",
               content: currentSelection,
-              label: "📝 Selected text"
+              label: this.getSelectedTextContextLabel(),
             });
           } else {
             const selectionCtx = contextList.find(c => c.type === "selection");
@@ -1755,19 +1769,19 @@ export class AIEditorManager {
             contextList.push({
               type: "doc",
               content: compactedContent,
-              label: `📋 ${currentFile?.basename || "Current document"}`
+              label: this.getCurrentDocumentContextLabel(currentFile?.basename),
             });
           } else {
             const docCtx = contextList.find(c => c.type === "doc");
             if (docCtx) {
               docCtx.content = compactedContent;
-              docCtx.label = `📋 ${currentFile?.basename || "Current document"}`;
+              docCtx.label = this.getCurrentDocumentContextLabel(currentFile?.basename);
             }
           }
         }
 
         return template
-          .replace(/\{\{selection\}\}/g, currentSelection ? "[📝 Selected text]" : "")
+          .replace(/\{\{selection\}\}/g, currentSelection ? this.getSelectedTextPlaceholder() : "")
           .replace(/\{\{file:path\}\}/g, currentFile?.path || "")
           .replace(/\{\{file:content\}\}/g, currentFile?.basename ? `[[${currentFile.basename}]]` : "")
           .replace(/\{\{date\}\}/g, now.toLocaleDateString())
@@ -1804,7 +1818,7 @@ export class AIEditorManager {
         contextList.push({
           type: "selection",
           content: initialSelection,
-          label: "📝 Selected text"
+          label: this.getSelectedTextContextLabel(),
         });
       }
 
@@ -1827,7 +1841,7 @@ export class AIEditorManager {
           preview.className = "editing-toolbar-ai-inline-prompt-context-preview";
           const previewText = ctx.content.substring(0, 50).replace(/\n/g, " ");
           const suffix = ctx.content.length > 50 ? "..." : "";
-          const charCount = `(${ctx.content.length.toLocaleString()} chars)`;
+          const charCount = `(${ctx.content.length.toLocaleString()} ${t("characters")})`;
           preview.textContent = `${previewText}${suffix} ${charCount}`;
           preview.title = ctx.content.length > 100 ? ctx.content.substring(0, 100) + "..." : ctx.content;
 
@@ -1841,7 +1855,9 @@ export class AIEditorManager {
 
             // 同步删除输入框中的占位符
             if (ctx.type === "selection") {
-              textarea.value = textarea.value.replace("[📝 Selected text]", "");
+              this.getSelectedTextPlaceholderVariants().forEach((placeholder) => {
+                textarea.value = textarea.value.replace(placeholder, "");
+              });
             } else if (ctx.type === "note" || ctx.type === "doc") {
               // 提取文件名并删除对应的双链
               const fileName = ctx.label.replace(/^📄 |^📋 /, "");
@@ -1962,10 +1978,12 @@ export class AIEditorManager {
         const shouldPreferBlockFallback = !hasSelectedText && !hasReferencedNotes;
 
         // 移除占位符，保留用户指令语义
-        const cleanPrompt = prompt
-          .replace(/\[\[([^\]]+)\]\]/g, "$1")
-          .replace(/\[📝 Selected text\]/g, "选中文本")
-          .trim();
+        let cleanPrompt = prompt.replace(/\[\[([^\]]+)\]\]/g, "$1");
+        this.getSelectedTextPlaceholderVariants().forEach((placeholder) => {
+          const selectedTextPlaceholderPattern = new RegExp(this.escapeRegExp(placeholder), "g");
+          cleanPrompt = cleanPrompt.replace(selectedTextPlaceholderPattern, t("Selected text"));
+        });
+        cleanPrompt = cleanPrompt.trim();
 
         // 历史记录保留用户输入原貌，避免丢失双链等语义标记
         if (prompt) {
@@ -2190,8 +2208,8 @@ export class AIEditorManager {
       const syncPlaceholdersWithContext = () => {
         const text = textarea.value;
 
-        // 检查 [📝 Selected text] 占位符
-        const hasSelectionPlaceholder = text.includes("[📝 Selected text]");
+        // 检查选中文本占位符
+        const hasSelectionPlaceholder = this.getSelectedTextPlaceholderVariants().some((placeholder) => text.includes(placeholder));
         const hasSelectionContext = contextList.some(c => c.type === "selection");
 
         if (!hasSelectionPlaceholder && hasSelectionContext) {

@@ -12,6 +12,7 @@ import type editingToolbarPlugin from "src/plugin/main";
 import { DEFAULT_SETTINGS } from "src/settings/settingsData";
 import { t } from "src/translations/helper";
 import { ConfirmModal } from "src/modals/ConfirmModal";
+import { getDefaultCustomPromptTemplates } from "src/ai/types";
 
 interface Command {
   id: string;
@@ -294,6 +295,11 @@ export class UpdateNoticeModal extends Modal {
       // 使用默认设置替换当前设置，但保留版本号和自定义命令
       this.plugin.settings = {
         ...DEFAULT_SETTINGS,
+        ai: {
+          ...DEFAULT_SETTINGS.ai,
+          customPromptHistory: [],
+          customPromptTemplates: getDefaultCustomPromptTemplates(),
+        },
         lastVersion: currentVersion,
         customCommands: customCommands,
       };

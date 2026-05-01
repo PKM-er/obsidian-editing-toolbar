@@ -33,6 +33,7 @@ import { InsertCalloutModal } from "src/modals/insertCalloutModal";
 import { AIEditorManager } from "src/ai/AIEditorManager";
 import { AI_TOOLBAR_COMMAND_ID, createAIToolbarCommand } from "src/ai/toolbarCommand";
 import { shouldShowAIFeatures } from "src/util/locale";
+import { getDefaultCustomPromptTemplates, type CustomPromptTemplate } from "src/ai/types";
 
 let activeDocument: Document;
 
@@ -913,32 +914,40 @@ this.app.workspace.onLayoutReady(async () => {
 
   async loadSettings() {
     const loadedData = await this.loadData();
+    const loadedAI = loadedData?.ai;
     const legacyCustomModelConfigured = !!(
-      loadedData?.ai?.customModel?.baseUrl?.trim?.() ||
-      loadedData?.ai?.customModel?.model?.trim?.() ||
-      loadedData?.ai?.customModel?.apiKey?.trim?.()
+      loadedAI?.customModel?.baseUrl?.trim?.() ||
+      loadedAI?.customModel?.model?.trim?.() ||
+      loadedAI?.customModel?.apiKey?.trim?.()
     );
+    const resolvedCustomPromptTemplates = Array.isArray(loadedAI?.customPromptTemplates)
+      ? loadedAI.customPromptTemplates.map((template: CustomPromptTemplate) => ({ ...template }))
+      : getDefaultCustomPromptTemplates();
+    const resolvedCustomPromptHistory = Array.isArray(loadedAI?.customPromptHistory)
+      ? [...loadedAI.customPromptHistory]
+      : [];
 
     this.settings = Object.assign({}, DEFAULT_SETTINGS, loadedData);
     this.settings.ai = {
       ...DEFAULT_SETTINGS.ai,
-      ...(loadedData?.ai || {}),
-      enableCustomModel: loadedData?.ai?.enableCustomModel ?? legacyCustomModelConfigured,
+      ...(loadedAI || {}),
+      enableCustomModel: loadedAI?.enableCustomModel ?? legacyCustomModelConfigured,
       pkmerModelRouting: {
         ...DEFAULT_SETTINGS.ai.pkmerModelRouting,
-        ...(loadedData?.ai?.pkmerModelRouting || {}),
+        ...(loadedAI?.pkmerModelRouting || {}),
       },
       pkmer: {
         ...DEFAULT_SETTINGS.ai.pkmer,
-        ...(loadedData?.ai?.pkmer || {}),
+        ...(loadedAI?.pkmer || {}),
       },
       customModel: {
         ...DEFAULT_SETTINGS.ai.customModel,
-        ...(loadedData?.ai?.customModel || {}),
+        ...(loadedAI?.customModel || {}),
       },
+      customPromptHistory: resolvedCustomPromptHistory,
+      customPromptTemplates: resolvedCustomPromptTemplates,
     };
 
-    const loadedAI = loadedData?.ai;
     if (loadedAI?.consentAccepted === undefined && loadedAI?.enabled === true) {
       this.settings.ai.consentAccepted = true;
     }

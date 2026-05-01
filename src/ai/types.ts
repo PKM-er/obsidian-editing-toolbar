@@ -1,3 +1,5 @@
+import { getCurrentLocale, isChineseLocale } from "src/util/locale";
+
 export interface CompletionParams {
   prefix: string;
   suffix: string;
@@ -163,7 +165,7 @@ export const DEFAULT_PKMER_AUTH_SETTINGS: PKMerAuthSettings = {
   userInfo: null,
 };
 
-export const DEFAULT_CUSTOM_PROMPT_TEMPLATES: CustomPromptTemplate[] = [
+const DEFAULT_CUSTOM_PROMPT_TEMPLATES_ZH: CustomPromptTemplate[] = [
   {
     id: "template-demo-variables",
     name: "📝 总结要点",
@@ -208,6 +210,59 @@ export const DEFAULT_CUSTOM_PROMPT_TEMPLATES: CustomPromptTemplate[] = [
   }
 ];
 
+const DEFAULT_CUSTOM_PROMPT_TEMPLATES_EN: CustomPromptTemplate[] = [
+  {
+    id: "template-demo-variables",
+    name: "📝 Summarize Key Points",
+    prompt: "Analyze the structure of {{file:content}} and focus on:\n{{selection}}\n\nPlease provide:\n1. A concise overview\n2. The key points\n3. Suggestions for improvement",
+    icon: "lucide-sparkles"
+  },
+  {
+    id: "template-task-variables",
+    name: "Extract Tasks",
+    prompt: "Today's date is {{date}}. Extract all actionable tasks from {{file:content}}, with special attention to:\n{{selection}}\n\nPlease output strictly in Obsidian Tasks plugin format, one task per line:\n\n- [ ] Task description ⏫/🔼/🔽/⏬ priority\n- [ ] Task description 📅 YYYY-MM-DD due date\n- [ ] Task description ⏰ YYYY-MM-DD HH:mm reminder\n- [ ] Task description 🛫 YYYY-MM-DD start date\n- [ ] Task description 🔁 every day/week/month recurrence\n- [ ] Task description #tag #project\n\nExtraction rules:\n1. If the text implies urgency such as urgent, ASAP, immediately, or today, add ⏫.\n2. If it implies near-term timing such as tomorrow, this week, or soon, add 🔼.\n3. Convert explicit dates to 📅 YYYY-MM-DD.\n4. Convert explicit times to ⏰ YYYY-MM-DD HH:mm when possible.\n5. Add recurrence for repeated work such as 🔁 every week/month.\n6. Add practical tags for each task.\n\nExample output:\n- [ ] Finish project report ⏫ 📅 2026-04-25 #work\n- [ ] Weekly team sync 🔁 every week on Monday ⏰ 09:00 #meeting\n- [ ] Follow up on client request 🔼 📅 2026-04-23 #follow-up",
+    icon: "lucide-sparkles"
+  },
+  {
+    id: "template-dataview",
+    name: "Generate Dataview",
+    prompt: "Help me generate an Obsidian Dataview query block based on my requirement. Requirements:\n1. Use DataviewJS or DQL syntax.\n2. Include the necessary filters and sorting.\n3. Add short comments explaining each part.\n4. Use DataviewJS if the logic is complex.\n\nMy requirement:",
+    icon: "lucide-database"
+  },
+  {
+    id: "template-templater",
+    name: "Design Templater Template",
+    prompt: "Help me design an Obsidian Templater template. Requirements:\n1. Use Templater syntax (<%  %>).\n2. Include dynamic date, time, and similar variables.\n3. Support user input prompts.\n4. Add necessary conditionals and loops.\n5. Comment the purpose of each section.\n\nTemplate purpose:",
+    icon: "lucide-file-code"
+  },
+  {
+    id: "template-mermaid",
+    name: "Create Mermaid Diagram",
+    prompt: "Based on my selected text {{selection}}, generate Mermaid diagram code. Requirements:\n1. Choose an appropriate diagram type such as flowchart, sequence, class, or gantt.\n2. Use clear node names.\n3. Add useful styling and comments when needed.\n4. Ensure the syntax is valid and renderable.\n",
+    icon: "lucide-workflow"
+  },
+  {
+    id: "template-metadata",
+    name: "Design YAML",
+    prompt: "Based on the current note content {{file:content}}, help me design a suitable YAML Frontmatter structure for this note. Requirements:\n1. Recommend fields that fit the note content.\n2. Include common fields such as tags, aliases, and date.\n3. Suggest useful custom fields.\n4. Briefly explain the purpose of each field.\n\nNote type:",
+    icon: "lucide-file-json"
+  },
+  {
+    id: "template-callout",
+    name: "Wrap with Callout",
+    prompt: "Based on my selected text {{selection}}, wrap it using an Obsidian Callout block. Requirements:\n1. Choose an appropriate callout type such as note, tip, warning, or danger.\n2. Support nesting and folding when helpful.\n3. Include a title and content.\n4. Allow code blocks or lists when needed.\n\nContent requirement:",
+    icon: "lucide-message-square"
+  }
+];
+
+export function getDefaultCustomPromptTemplates(locale: string = getCurrentLocale()): CustomPromptTemplate[] {
+  const source = isChineseLocale(locale)
+    ? DEFAULT_CUSTOM_PROMPT_TEMPLATES_ZH
+    : DEFAULT_CUSTOM_PROMPT_TEMPLATES_EN;
+
+  return source.map((template) => ({ ...template }));
+}
+
 export const DEFAULT_AI_SETTINGS: AIPluginSettings = {
   enabled: false,
   consentAccepted: false,
@@ -233,7 +288,7 @@ export const DEFAULT_AI_SETTINGS: AIPluginSettings = {
     temperature: 0.2,
   },
   customPromptHistory: [],
-  customPromptTemplates: DEFAULT_CUSTOM_PROMPT_TEMPLATES,
+  customPromptTemplates: getDefaultCustomPromptTemplates("zh-cn"),
 };
 
 export const DEFAULT_REWRITE_ACTIONS: RewriteActionMeta[] = [
