@@ -1,6 +1,6 @@
 {
   "name": "Editing Toolbar",
-  "version": "3.2.2",
+  "version": "4.0.8",
   "description": "The Editing Toolbar is modified from cmenu, which provides more powerful customization settings and has many built-in editing commands to be a MS Word-like toolbar editing experience.",
   "main": "main.js",
   "repository": "https://github.com/cumany/obsidian-editing-toolbar",
