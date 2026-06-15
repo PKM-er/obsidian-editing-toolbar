@@ -490,28 +490,30 @@ export default class editingToolbarPlugin extends Plugin {
     });
     this.init_evt(activeDocument, editor);
     if (requireApiVersion("0.15.0")) {
-      this.app.workspace.on("window-open", (leaf) => {
-        this.init_evt(leaf.doc, editor);
-        setTimeout(() => {
-          if (!this.settings.cMenuVisibility) {
-            return;
-          }
+      this.registerEvent(
+        this.app.workspace.on("window-open", (leaf) => {
+          this.init_evt(leaf.doc, editor);
+          setTimeout(() => {
+            if (!this.settings.cMenuVisibility) {
+              return;
+            }
 
-          if (this.isFollowingToolbarActive()) {
-            editingToolbarPopover(this.app, this, "following", leaf.doc);
-          }
+            if (this.isFollowingToolbarActive()) {
+              editingToolbarPopover(this.app, this, "following", leaf.doc);
+            }
 
-          const fixedEnabled =
-            this.settings.enableFixedToolbar ||
-            (!this.settings.enableTopToolbar &&
-              !this.settings.enableFollowingToolbar &&
-              this.positionStyle === "fixed");
+            const fixedEnabled =
+              this.settings.enableFixedToolbar ||
+              (!this.settings.enableTopToolbar &&
+                !this.settings.enableFollowingToolbar &&
+                this.positionStyle === "fixed");
 
-          if (fixedEnabled) {
-            editingToolbarPopover(this.app, this, "fixed", leaf.doc);
-          }
-        }, 50);
-      });
+            if (fixedEnabled) {
+              editingToolbarPopover(this.app, this, "fixed", leaf.doc);
+            }
+          }, 50);
+        })
+      );
     }
     const lastVersion = this.settings?.lastVersion || "0.0.0";
 
