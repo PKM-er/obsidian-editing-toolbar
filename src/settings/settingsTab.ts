@@ -131,11 +131,13 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     // 初始化 currentEditingConfig
     this.currentEditingConfig = this.plugin.settings.positionStyle;
 
-    addEventListener("editingToolbar-NewCommand", () => {
+    const handleNewCommand = () => {
       selfDestruct(this.plugin);
       editingToolbarPopover(app, this.plugin);
       this.display();
-    });
+    };
+    window.addEventListener("editingToolbar-NewCommand", handleNewCommand);
+    this.plugin.register(() => window.removeEventListener("editingToolbar-NewCommand", handleNewCommand));
   }
 
   private async refreshCustomOllamaModels(): Promise<void> {

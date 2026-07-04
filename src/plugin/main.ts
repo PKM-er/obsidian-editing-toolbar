@@ -490,7 +490,7 @@ export default class editingToolbarPlugin extends Plugin {
     });
     this.init_evt(activeDocument, editor);
     if (requireApiVersion("0.15.0")) {
-      this.app.workspace.on("window-open", (leaf) => {
+      this.registerEvent(this.app.workspace.on("window-open", (leaf) => {
         this.init_evt(leaf.doc, editor);
         setTimeout(() => {
           if (!this.settings.cMenuVisibility) {
@@ -511,7 +511,7 @@ export default class editingToolbarPlugin extends Plugin {
             editingToolbarPopover(this.app, this, "fixed", leaf.doc);
           }
         }, 50);
-      });
+      }));
     }
     const lastVersion = this.settings?.lastVersion || "0.0.0";
 
