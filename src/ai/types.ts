@@ -255,10 +255,58 @@ const DEFAULT_CUSTOM_PROMPT_TEMPLATES_EN: CustomPromptTemplate[] = [
   }
 ];
 
+const DEFAULT_CUSTOM_PROMPT_TEMPLATES_RU: CustomPromptTemplate[] = [
+  {
+    id: "template-demo-variables",
+    name: "📝 Краткое содержание",
+    prompt: "Проанализируй структуру {{file:content}}, уделив особое внимание:\n{{selection}}\n\nПредоставь:\n1. Краткое содержание\n2. Ключевые моменты\n3. Рекомендации по улучшению",
+    icon: "lucide-sparkles"
+  },
+  {
+    id: "template-task-variables",
+    name: "Извлечь задачи",
+    prompt: "Текущая дата {{date}}. Извлеки из {{file:content}} все задачи, уделив особое внимание:\n{{selection}}\n\nВыведи результат строго в формате плагина Obsidian Tasks, каждая задача — с новой строки:\n\n- [ ] Описание задачи ⏫/🔼/🔽/⏬ Приоритет\n- [ ] Описание задачи 📅 YYYY-MM-DD Срок выполнения\n- [ ] Описание задачи ⏰ YYYY-MM-DD HH:mm Время напоминания\n- [ ] Описание задачи 🛫 YYYY-MM-DD Дата начала\n- [ ] Описание задачи 🔁 every day/week/month Периодичность\n- [ ] Описание задачи #тег #проект\n\nПравила извлечения:\n1. Если в тексте встречаются слова \"срочно/немедленно/сейчас/сегодня\", добавь ⏫ (наивысший приоритет).\n2. Если встречаются слова \"завтра/на этой неделе/как можно скорее\", добавь 🔼 (высокий приоритет).\n3. Если указана конкретная дата, преобразуй её в формат 📅 YYYY-MM-DD.\n4. Если указано время, преобразуй его в формат ⏰ YYYY-MM-DD HH:mm.\n5. Если задача повторяется, добавь 🔁 every week/month.\n6. Для каждой задачи подбери подходящие теги (например: #работа #встреча #контроль).\n\nПример вывода:\n- [ ] Завершить отчёт по проекту ⏫ 📅 2026-04-25 #работа\n- [ ] Еженедельное собрание команды 🔁 every week on Monday ⏰ 09:00 #встреча\n- [ ] Уточнить требования клиента 🔼 📅 2026-04-23 #контроль",
+    icon: "lucide-sparkles"
+  },
+  {
+    id: "template-dataview",
+    name: "Создать Dataview",
+    prompt: "На основе моего запроса создай блок кода Obsidian Dataview. Требования:\n1. Используй синтаксис DataviewJS или DQL.\n2. Добавь необходимые фильтры и сортировку.\n3. Снабди код комментариями с пояснением каждой части.\n4. Если требуется сложная логика, используй DataviewJS.\n\nМой запрос:",
+    icon: "lucide-database"
+  },
+  {
+    id: "template-templater",
+    name: "Создать шаблон Templater",
+    prompt: "Помоги создать шаблон Obsidian Templater. Требования:\n1. Используй синтаксис Templater (<% %>).\n2. Добавь динамические переменные даты и времени.\n3. Поддержи пользовательский ввод.\n4. При необходимости используй условия и циклы.\n5. Добавь комментарии с пояснением каждой части шаблона.\n\nНазначение шаблона:",
+    icon: "lucide-file-code"
+  },
+  {
+    id: "template-mermaid",
+    name: "Создать диаграмму Mermaid",
+    prompt: "На основе выбранного текста {{selection}} создай код диаграммы Mermaid. Требования:\n1. Выбери наиболее подходящий тип диаграммы (блок-схема, диаграмма последовательности, диаграмма классов, диаграмма Ганта и т.д.).\n2. Используй понятные названия узлов.\n3. Добавь необходимые стили и комментарии.\n4. Убедись, что диаграмма корректна и может быть отрисована.\n",
+    icon: "lucide-workflow"
+  },
+  {
+    id: "template-metadata",
+    name: "Создать YAML",
+    prompt: "На основе содержимого текущей заметки {{file:content}} создай подходящую структуру YAML Frontmatter. Требования:\n1. Предложи поля на основе содержимого заметки.\n2. Включи распространённые поля (tags, aliases, date и т.д.).\n3. Предложи дополнительные пользовательские поля.\n4. Добавь комментарии с пояснением назначения каждого поля.\n\nТип заметки:",
+    icon: "lucide-file-json"
+  },
+  {
+    id: "template-callout",
+    name: "Оформить в Callout",
+    prompt: "На основе выбранного текста {{selection}} оформи его в виде блока Obsidian Callout. Требования:\n1. Выбери подходящий тип callout (note/tip/warning/danger и т.д.).\n2. Поддерживай вложенные и сворачиваемые блоки.\n3. Добавь заголовок и содержимое.\n4. При необходимости используй блоки кода или списки.\n\nТребования к содержимому:",
+    icon: "lucide-message-square"
+  },
+];
+
 export function getDefaultCustomPromptTemplates(locale: string = getCurrentLocale()): CustomPromptTemplate[] {
+  const normalizedLocale = locale.toLowerCase();
   const source = isChineseLocale(locale)
     ? DEFAULT_CUSTOM_PROMPT_TEMPLATES_ZH
-    : DEFAULT_CUSTOM_PROMPT_TEMPLATES_EN;
+    : normalizedLocale === "ru" || normalizedLocale.startsWith("ru-")
+      ? DEFAULT_CUSTOM_PROMPT_TEMPLATES_RU
+      : DEFAULT_CUSTOM_PROMPT_TEMPLATES_EN;
 
   return source.map((template) => ({ ...template }));
 }

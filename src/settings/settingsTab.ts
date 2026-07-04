@@ -268,7 +268,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
       .setDesc(t('Choose where Editing Toolbar will append upon regeneration.'))
       .addDropdown((dropdown) => {
         let methods: Record<string, string> = {};
-        APPEND_METHODS.map((method) => (methods[method] = method));
+        APPEND_METHODS.map((method) => (methods[method] = t(method)));
         dropdown.addOptions(methods);
         dropdown
           .setValue(this.plugin.settings.appendMethod)
@@ -487,7 +487,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
       .setDesc(t("Choose which toolbar style's appearance you want to edit."))
       .addDropdown((dropdown) => {
         const positions: Record<string, string> = {};
-        POSITION_STYLES.map((position) => (positions[position] = position));
+        POSITION_STYLES.map((position) => (positions[position] = t(position)));
         dropdown
           .addOptions(positions)
           .setValue(editingStyle)
@@ -988,15 +988,15 @@ export class editingToolbarSettingTab extends PluginSettingTab {
         const aesthetics: Record<string, string> = {};
         AESTHETIC_STYLES.forEach((aesthetic) => {
           aesthetics[aesthetic] =
-            aesthetic === "custom" ? t("Custom Theme") : aesthetic;
+            aesthetic === "custom" ? t("Custom Theme") : t(aesthetic);
         });
         dropdown.addOptions(aesthetics);
         dropdown.selectEl.options[3].disabled = true; // disable the raw "custom" option
-        dropdown.addOption("light", "┌ Light");
-        dropdown.addOption("dark", "├ Dark");
-        dropdown.addOption("vibrant", "├ Vibrant");
-        dropdown.addOption("minimal", "├ Minimal");
-        dropdown.addOption("elegant", "└ Elegant");
+        dropdown.addOption("light", t("┌ Light"));
+        dropdown.addOption("dark", t("├ Dark"));
+        dropdown.addOption("vibrant", t("├ Vibrant"));
+        dropdown.addOption("minimal", t("├ Minimal"));
+        dropdown.addOption("elegant", t("└ Elegant"));
         // Use the bucket for the currently edited style
         dropdown.setValue(
           (appearanceBucket.aestheticStyle as string) ??
