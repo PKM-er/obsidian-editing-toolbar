@@ -1,5 +1,50 @@
 # Changelog
 
+## 4.0.9 (2026-07-05)
+### 4.0.9
+### #329 背景色不生效修复
+### #333   支持自定义frontmatter提示词
+### Squashed commit of the following:
+commit 1c1232267c8665409a2620a555e597f14e75a45c
+Author: Davidzdh <30859354+Guanchishan@users.noreply.github.com>
+Date:   Wed Jun 17 09:54:07 2026 +0900
+    Remove version metadata changes from PR
+commit cfd9d6a11274ca4ef9824e9e5512a3df45ae9364
+Author: Davidzdh <30859354+Guanchishan@users.noreply.github.com>
+Date:   Wed Jun 17 00:46:17 2026 +0900
+    Clean up editing toolbar command event
+commit 51bbbc88ef7c788fd1e4f8142faf6935481b9725
+Author: Davidzdh <30859354+Guanchishan@users.noreply.github.com>
+Date:   Mon Jun 15 14:56:12 2026 +0900
+    chore: bump editing toolbar to 4.0.9
+commit e9c40839ed4a7f1a60f5b3a6237f95986ac59a94
+Author: Davidzdh <30859354+Guanchishan@users.noreply.github.com>
+Date:   Mon Jun 15 14:44:18 2026 +0900
+    Minimize window-open event diff
+commit 8378bf0dc2e02f9287e1c9936a2221004606e040
+Author: Davidzdh <30859354+Guanchishan@users.noreply.github.com>
+Date:   Mon Jun 15 14:40:33 2026 +0900
+    Normalize PR line endings
+commit 37021b6185ef59e8b8264a5a5700c0c5819b45c1
+Author: 山月 <30859354+Guanchishan@users.noreply.github.com>
+Date:   Mon Jun 15 14:35:44 2026 +0900
+    CRLF/LF
+commit e2873f08f3112083e001dbc52054d73cd96b3423
+Author: 山月 <30859354+Guanchishan@users.noreply.github.com>
+Date:   Mon Jun 15 14:27:21 2026 +0900
+    Add version 4.0.8 to versions.json
+commit 50d5eb76174871fe1a106d7546efae8c24fd957b
+Author: 山月 <30859354+Guanchishan@users.noreply.github.com>
+Date:   Mon Jun 15 14:26:36 2026 +0900
+    Fix workspace window-open event cleanup
+commit d3afbafd6f3ec69b546df2fdf073c92aaa55cc9c
+Author: 山月 <30859354+Guanchishan@users.noreply.github.com>
+Date:   Mon Jun 15 14:24:03 2026 +0900
+    fix version from 3.2.2 to 4.0.8
+### #340 增加俄语翻译
+### Update manifest.json and CHANGELOG.md for version 4.0.8
+
+
 ## 4.0.8 (2026-05-01)
 ### 4.0.8 国际化部分字段，ai能力全面放开
 ### canvas输入面板支持双链
