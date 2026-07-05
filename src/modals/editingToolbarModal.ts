@@ -465,11 +465,10 @@ export function createDiv(selector: string) {
 }
 
 
-export function createTablecell(app: App, plugin: editingToolbarPlugin, el: string) {
+export function createTablecell(app: App, plugin: editingToolbarPlugin, el: string, root?: ParentNode) {
   requireApiVersion("0.15.0") ? activeDocument = activeWindow.document : activeDocument = window.document;
 
-  const editor = plugin.commandsManager.getActiveEditor();
-  let container = isExistoolbar(app, plugin) as HTMLElement;
+  const container = root || (isExistoolbar(app, plugin) as HTMLElement | null);
   let tab = container?.querySelector('#' + el);
   if (tab) {
     // @ts-ignore
@@ -480,8 +479,11 @@ export function createTablecell(app: App, plugin: editingToolbarPlugin, el: stri
       let cells = rows[i].cells; //得到这一行的所有单元格
       for (let j = 0; j < cells.length; j++) {
         //给每一个单元格添加click事件
-        cells[j].onclick = function () {
-          let backcolor = this.style.backgroundColor;
+        cells[j].onclick = function (event: MouseEvent) {
+          event.preventDefault();
+          event.stopPropagation();
+          const editor = plugin.commandsManager.getActiveEditor();
+          let backcolor = (event.currentTarget as HTMLElement).style.backgroundColor;
           if (backcolor != "") {
             backcolor = setcolorHex(backcolor);
             if (el == "x-color-picker-table") {
@@ -1642,7 +1644,11 @@ export function editingToolbarPopover(
             button2
               .setClass("editingToolbarCommandsubItem-font-color")
               .setTooltip(t("Font Colors"))
-              .onClick(() => {
+              .onClick((event: MouseEvent) => {
+                const target = event.target as HTMLElement | null;
+                if (target?.closest(".x-color-picker-wrapper") || target?.closest(".subitem")) {
+                  return;
+                }
 
                 app.commands.executeCommandById(item.id);
 
@@ -1677,7 +1683,7 @@ export function editingToolbarPopover(
               button2.buttonEl.insertAdjacentElement("afterbegin", submenu2);
               //    if (settings.cMenuFontColor)
               //     activeDocument.getElementById("change-font-color-icon").style.fill = settings.cMenuFontColor;
-              createTablecell(app, plugin, "x-color-picker-table");
+              createTablecell(app, plugin, "x-color-picker-table", submenu2);
               let el = submenu2.querySelector(
                 ".x-color-picker-wrapper"
               ) as HTMLElement;
@@ -1726,7 +1732,11 @@ export function editingToolbarPopover(
             button2
               .setClass("editingToolbarCommandsubItem-font-color")
               .setTooltip(t("Background Color"))
-              .onClick(() => {
+              .onClick((event: MouseEvent) => {
+                const target = event.target as HTMLElement | null;
+                if (target?.closest(".x-color-picker-wrapper") || target?.closest(".subitem")) {
+                  return;
+                }
 
                 app.commands.executeCommandById(item.id);
 
@@ -1760,7 +1770,7 @@ export function editingToolbarPopover(
               button2.buttonEl.insertAdjacentElement("afterbegin", submenu2);
               // if (plugin.settings.cMenuBackgroundColor)
               //  activeDocument.getElementById("change-background-color-icon").style.fill = plugin.settings.cMenuBackgroundColor;
-              createTablecell(app, plugin, "x-backgroundcolor-picker-table");
+              createTablecell(app, plugin, "x-backgroundcolor-picker-table", submenu2);
               let el = submenu2.querySelector(
                 ".x-color-picker-wrapper"
               ) as HTMLElement;
