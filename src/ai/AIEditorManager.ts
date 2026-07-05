@@ -1362,19 +1362,58 @@ export class AIEditorManager {
       contextParts.push(frontmatterStyleSummary.context);
     }
 
+    const frontmatterPrompt = this.buildFrontmatterGenerationPrompt(prompt, noteBody);
+    if (frontmatterPrompt.usesCustomSettings) {
+      contextParts.push("requested_frontmatter_properties:", frontmatterPrompt.properties);
+      contextParts.push(`frontmatter_output_language: ${frontmatterPrompt.language}`);
+    }
+
     view.dispatch({
       effects: startRewriteEffect.of({
         from: frontmatterRange?.from ?? 0,
         to: frontmatterRange?.to ?? 0,
-        originalText: noteBody,
+        originalText: frontmatterPrompt.includeNoteAsTarget ? noteBody : "",
         instruction: "custom",
-        customPrompt: prompt,
+        customPrompt: frontmatterPrompt.prompt,
         context: contextParts.join("\n\n"),
         artifactKind: "frontmatter",
         preferredFrontmatterKeys: frontmatterStyleSummary.preferredAliases,
       }),
     });
     return true;
+  }
+
+  private buildFrontmatterGenerationPrompt(
+    fallbackPrompt: string,
+    noteBody: string,
+  ): { prompt: string; includeNoteAsTarget: boolean; properties: string; language: string; usesCustomSettings: boolean } {
+    const settings = this.plugin.settings.ai.frontmatterPrompt;
+    if (settings?.mode !== "custom") {
+      return {
+        prompt: fallbackPrompt,
+        includeNoteAsTarget: true,
+        properties: "",
+        language: "auto",
+        usesCustomSettings: false,
+      };
+    }
+
+    const properties = settings.properties?.trim() || "Infer the most useful YAML properties from the note.";
+    const language = settings.language?.trim() || "auto";
+    const template = settings.prompt?.trim() || fallbackPrompt;
+    const includesNotePlaceholder = /\{note\}/.test(template);
+    const prompt = template
+      .replace(/\{note\}/g, noteBody)
+      .replace(/\{properties\}/g, properties)
+      .replace(/\{language\}/g, language);
+
+    return {
+      prompt,
+      includeNoteAsTarget: !includesNotePlaceholder,
+      properties,
+      language,
+      usesCustomSettings: true,
+    };
   }
 
   private findFrontmatterRange(text: string): { from: number; to: number } | null {

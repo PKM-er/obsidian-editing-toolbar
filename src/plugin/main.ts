@@ -33,7 +33,7 @@ import { InsertCalloutModal } from "src/modals/insertCalloutModal";
 import { AIEditorManager } from "src/ai/AIEditorManager";
 import { AI_TOOLBAR_COMMAND_ID, createAIToolbarCommand } from "src/ai/toolbarCommand";
 import { shouldShowAIFeatures } from "src/util/locale";
-import { getDefaultCustomPromptTemplates, type CustomPromptTemplate } from "src/ai/types";
+import { createDefaultFrontmatterPromptSettings, getDefaultCustomPromptTemplates, type CustomPromptTemplate } from "src/ai/types";
 
 let activeDocument: Document;
 
@@ -926,6 +926,10 @@ this.app.workspace.onLayoutReady(async () => {
     const resolvedCustomPromptHistory = Array.isArray(loadedAI?.customPromptHistory)
       ? [...loadedAI.customPromptHistory]
       : [];
+    const resolvedFrontmatterPrompt = {
+      ...createDefaultFrontmatterPromptSettings(),
+      ...(loadedAI?.frontmatterPrompt || {}),
+    };
 
     this.settings = Object.assign({}, DEFAULT_SETTINGS, loadedData);
     this.settings.ai = {
@@ -944,6 +948,7 @@ this.app.workspace.onLayoutReady(async () => {
         ...DEFAULT_SETTINGS.ai.customModel,
         ...(loadedAI?.customModel || {}),
       },
+      frontmatterPrompt: resolvedFrontmatterPrompt,
       customPromptHistory: resolvedCustomPromptHistory,
       customPromptTemplates: resolvedCustomPromptTemplates,
     };

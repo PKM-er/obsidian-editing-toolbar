@@ -19,7 +19,7 @@ import { ImportExportModal } from "src/modals/ImportExportModal";
 import { RegexCommandModal } from "src/modals/RegexCommandModal";
 import { ButtonComponent } from "obsidian";
 import { ConfirmModal } from "src/modals/ConfirmModal";
-import { PKMER_MODEL_OPTIONS, resolvePKMerModelForScene } from "src/ai/types";
+import { createDefaultFrontmatterPromptSettings, PKMER_MODEL_OPTIONS, resolvePKMerModelForScene } from "src/ai/types";
 import type { CustomModelApiFormat } from "src/ai/types";
 import { getAIErrorMessage } from "src/ai/errorHandling";
 import { getPKMerAIEntryUrl, getPKMerAIQuotaUrl } from "src/ai/pkmerWeb";
@@ -1798,6 +1798,30 @@ export class editingToolbarSettingTab extends PluginSettingTab {
         header.createDiv({ cls: 'editing-toolbar-ai-card-badge', text: options.badge });
       }
 
+      if (options.collapsible) {
+        const chevronEl = header.createDiv({ cls: 'editing-toolbar-ai-card-chevron', text: '▾' });
+        chevronEl.setAttr('aria-hidden', 'true');
+        chevronEl.style.flexShrink = '0';
+        chevronEl.style.width = '24px';
+        chevronEl.style.height = '24px';
+        chevronEl.style.borderRadius = '999px';
+        chevronEl.style.display = 'flex';
+        chevronEl.style.alignItems = 'center';
+        chevronEl.style.justifyContent = 'center';
+        chevronEl.style.color = 'var(--text-muted)';
+        chevronEl.style.background = 'var(--background-modifier-hover)';
+        chevronEl.style.fontSize = '18px';
+        chevronEl.style.fontWeight = '700';
+        chevronEl.style.lineHeight = '1';
+        chevronEl.style.transition = 'transform 0.16s ease, background-color 0.16s ease, color 0.16s ease';
+
+        const updateChevron = () => {
+          chevronEl.style.transform = (root as HTMLDetailsElement).open ? 'rotate(180deg)' : 'rotate(0deg)';
+        };
+        updateChevron();
+        root.addEventListener('toggle', updateChevron);
+      }
+
       return root.createDiv('editing-toolbar-ai-card-body');
     };
 
@@ -2189,6 +2213,102 @@ export class editingToolbarSettingTab extends PluginSettingTab {
           });
       }
 
+      const frontmatterPrompt = this.plugin.settings.ai.frontmatterPrompt || createDefaultFrontmatterPromptSettings();
+      this.plugin.settings.ai.frontmatterPrompt = frontmatterPrompt;
+      const frontmatterBody = createCard({
+        title: t('Frontmatter Generation'),
+        desc: t('Choose whether frontmatter is generated automatically from folder patterns or with a custom prompt.'),
+        collapsible: true,
+        open: frontmatterPrompt.mode === 'custom',
+      });
+
+      new Setting(frontmatterBody)
+        .setName(t('Frontmatter Mode'))
+        .setDesc(t('Auto mode detects sibling-note frontmatter conventions. Custom mode applies your property list and prompt template.'))
+        .addDropdown((dropdown) => {
+          dropdown
+            .addOption('auto', t('Auto detect from folder'))
+            .addOption('custom', t('Custom prompt'))
+            .setValue(frontmatterPrompt.mode || 'auto')
+            .onChange(async (value) => {
+              this.plugin.settings.ai.frontmatterPrompt.mode = value === 'custom' ? 'custom' : 'auto';
+              await this.plugin.saveSettings();
+              this.display();
+            });
+        });
+
+      if (frontmatterPrompt.mode !== 'custom') {
+        frontmatterBody.createDiv({
+          cls: 'editing-toolbar-ai-note',
+          text: t('Auto mode will follow frontmatter keys and examples from sibling notes in the same folder.'),
+        });
+      } else {
+        const frontmatterVariablesInfo = frontmatterBody.createDiv({ cls: 'setting-item-description' });
+        frontmatterVariablesInfo.style.marginBottom = '12px';
+        frontmatterVariablesInfo.style.padding = '8px 12px';
+        frontmatterVariablesInfo.style.background = 'var(--background-secondary)';
+        frontmatterVariablesInfo.style.borderRadius = '6px';
+        frontmatterVariablesInfo.style.fontSize = '12px';
+        frontmatterVariablesInfo.innerHTML = [
+          '<strong>' + t('Available Variables') + ':</strong><br>',
+          '<code>{note}</code> - ' + t('Full document content') + ' | ',
+          '<code>{properties}</code> - ' + t('Property List') + ' | ',
+          '<code>{language}</code> - ' + t('Output Language'),
+        ].join('');
+
+        new Setting(frontmatterBody)
+          .setName(t('Property List'))
+          .setDesc(t('One YAML property per line. Add a short instruction after a colon.'))
+          .addTextArea((text) => {
+            text
+              .setValue(frontmatterPrompt.properties)
+              .onChange(async (value) => {
+                this.plugin.settings.ai.frontmatterPrompt.properties = value;
+                await this.plugin.saveSettings();
+              });
+            text.inputEl.style.width = '100%';
+            text.inputEl.style.minHeight = '100px';
+          });
+
+        new Setting(frontmatterBody)
+          .setName(t('Output Language'))
+          .setDesc(t('Use \"auto\" to follow the current note language, or enter a specific language.'))
+          .addText((text) => {
+            text
+              .setPlaceholder('auto')
+              .setValue(frontmatterPrompt.language)
+              .onChange(async (value) => {
+                this.plugin.settings.ai.frontmatterPrompt.language = value.trim() || 'auto';
+                await this.plugin.saveSettings();
+              });
+          });
+
+        new Setting(frontmatterBody)
+          .setName(t('Prompt Template'))
+          .setDesc(t('Available placeholders: {note}, {properties}, {language}.'))
+          .addTextArea((text) => {
+            text
+              .setValue(frontmatterPrompt.prompt)
+              .onChange(async (value) => {
+                this.plugin.settings.ai.frontmatterPrompt.prompt = value;
+                await this.plugin.saveSettings();
+              });
+            text.inputEl.style.width = '100%';
+            text.inputEl.style.minHeight = '180px';
+          });
+
+        new Setting(frontmatterBody)
+          .addButton((button) => {
+            button
+              .setButtonText(t('Reset Frontmatter Prompt'))
+              .onClick(async () => {
+                this.plugin.settings.ai.frontmatterPrompt = createDefaultFrontmatterPromptSettings();
+                await this.plugin.saveSettings();
+                new Notice(t('Frontmatter prompt reset to default'));
+                this.display();
+              });
+          });
+      }
       const templatesBody = createCard({
         title: t('Custom Prompt Templates'),
         desc: t('Manage quick-access templates for custom AI prompts'),

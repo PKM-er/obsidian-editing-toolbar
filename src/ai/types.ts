@@ -115,6 +115,15 @@ export interface CustomPromptTemplate {
   icon?: string;
 }
 
+export type FrontmatterPromptMode = "auto" | "custom";
+
+export interface FrontmatterPromptSettings {
+  mode: FrontmatterPromptMode;
+  properties: string;
+  language: string;
+  prompt: string;
+}
+
 export interface AIPluginSettings {
   enabled: boolean;
   consentAccepted: boolean;
@@ -133,6 +142,7 @@ export interface AIPluginSettings {
   pkmer: PKMerAuthSettings;
   enableCustomModel: boolean;
   customModel: CustomModelSettings;
+  frontmatterPrompt: FrontmatterPromptSettings;
   customPromptHistory: string[];
   customPromptTemplates: CustomPromptTemplate[];
 }
@@ -164,6 +174,39 @@ export const DEFAULT_PKMER_AUTH_SETTINGS: PKMerAuthSettings = {
   tokenExpiresAt: 0,
   userInfo: null,
 };
+
+export const DEFAULT_FRONTMATTER_PROPERTIES = [
+  "title: concise, one-line note title",
+  "summary: 1-3 sentence note summary",
+  "tags: YAML list of relevant keywords",
+  "created: YYYY-MM-DD date when appropriate",
+  "category: broad content category",
+].join("\n");
+
+export const DEFAULT_FRONTMATTER_PROMPT = [
+  "Generate YAML frontmatter for the current Obsidian note using the requested properties below.",
+  "",
+  "Requested properties:",
+  "{properties}",
+  "",
+  "Output language for generated values: {language}",
+  "",
+  "Rules:",
+  "- Return only one complete YAML frontmatter block wrapped in --- delimiters.",
+  "- Use the target text as the note content.",
+  "- Follow current and sibling-note frontmatter conventions from context when provided.",
+  "- Keep values concise, practical, and useful for filtering or browsing.",
+  "- Do not add explanations or markdown fences outside the YAML block.",
+].join("\n");
+
+export function createDefaultFrontmatterPromptSettings(): FrontmatterPromptSettings {
+  return {
+    mode: "auto",
+    properties: DEFAULT_FRONTMATTER_PROPERTIES,
+    language: "auto",
+    prompt: DEFAULT_FRONTMATTER_PROMPT,
+  };
+}
 
 const DEFAULT_CUSTOM_PROMPT_TEMPLATES_ZH: CustomPromptTemplate[] = [
   {
@@ -335,6 +378,7 @@ export const DEFAULT_AI_SETTINGS: AIPluginSettings = {
     model: "",
     temperature: 0.2,
   },
+  frontmatterPrompt: createDefaultFrontmatterPromptSettings(),
   customPromptHistory: [],
   customPromptTemplates: getDefaultCustomPromptTemplates("zh-cn"),
 };

@@ -2648,6 +2648,31 @@ body.auto-hide-header .workspace-tab-header-container + .workspace-tab-container
   font-weight: 600;
 }
 
+.editing-toolbar-ai-card-chevron {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  background: var(--background-modifier-hover);
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1;
+  transition: transform 0.16s ease, background-color 0.16s ease, color 0.16s ease;
+}
+
+.editing-toolbar-ai-disclosure[open] .editing-toolbar-ai-card-chevron {
+  transform: rotate(180deg);
+}
+
+.editing-toolbar-ai-card-summary:hover .editing-toolbar-ai-card-chevron {
+  color: var(--text-normal);
+  background: var(--background-modifier-border-hover);
+}
+
 .editing-toolbar-ai-card-toggle {
   flex-shrink: 0;
 }
