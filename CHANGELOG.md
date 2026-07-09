@@ -1,5 +1,22 @@
 # Changelog
 
+## 4.0.10 (2026-07-09)
+### Update manifest.json
+### #333 修复生成内容包含<think> 标签
+### Merge pull request #337 from Guanchishan/fix/Register-window-open-event-cleanup
+Fix workspace window-open event cleanup
+### Update manifest.json and CHANGELOG.md for version 4.0.9
+### Remove version metadata changes from PR
+### Clean up editing toolbar command event
+### chore: bump editing toolbar to 4.0.9
+### Minimize window-open event diff
+### Normalize PR line endings
+### CRLF/LF
+### Add version 4.0.8 to versions.json
+### Fix workspace window-open event cleanup
+### fix version from 3.2.2 to 4.0.8
+
+
 ## 4.0.9 (2026-07-05)
 ### 4.0.9
 ### #329 背景色不生效修复
