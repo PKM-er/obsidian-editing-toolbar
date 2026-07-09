@@ -47,7 +47,7 @@ const CANVAS_SIDES = new Set(["top", "right", "bottom", "left"]);
 const CANVAS_ENDS = new Set(["none", "arrow"]);
 
 export function normalizeGeneratedArtifactContent(request: NormalizeArtifactRequest): string {
-  const stripped = stripCodeFence(request.content);
+  const stripped = stripCodeFence(stripAIReasoningBlocks(request.content));
   if (!stripped) {
     throw new Error(t("AI generated content is empty."));
   }
@@ -60,7 +60,10 @@ export function normalizeGeneratedArtifactContent(request: NormalizeArtifactRequ
 }
 
 export function normalizeGeneratedFrontmatter(content: string, preferredKeyMap: Record<string, string> = {}): string {
-  const stripped = stripCodeFence(content);
+  const cleaned = stripAIReasoningBlocks(content);
+  const frontmatterBlock = extractFrontmatterBlock(cleaned);
+  const yamlCodeBlock = frontmatterBlock ? null : extractYamlCodeBlock(cleaned);
+  const stripped = stripCodeFence(frontmatterBlock ?? yamlCodeBlock ?? cleaned);
   if (!stripped) {
     throw new Error(t("AI generated content is empty."));
   }
@@ -78,6 +81,33 @@ export function normalizeGeneratedFrontmatter(content: string, preferredKeyMap: 
   return `---\n${normalizedInner}\n---\n\n`;
 }
 
+function stripAIReasoningBlocks(content: string): string {
+  let cleaned = content.replace(/\r\n?/g, "\n");
+  const reasoningTag = "(?:think|thinking|reasoning)";
+
+  cleaned = cleaned.replace(new RegExp(`<${reasoningTag}\\b[^>]*>[\\s\\S]*?<\\/${reasoningTag}>`, "gi"), "");
+  cleaned = cleaned.replace(new RegExp(`^\\s*<${reasoningTag}\\b[^>]*>[\\s\\S]*?(?=(?:\\n)?---[ \\t]*(?:\\n|$))`, "i"), "");
+
+  if (new RegExp(`^\\s*<${reasoningTag}\\b[^>]*>`, "i").test(cleaned)) {
+    const yamlStart = cleaned.search(/\n[A-Za-z0-9_-]+:(?:\s|$)/);
+    cleaned = yamlStart >= 0 ? cleaned.slice(yamlStart + 1) : "";
+  }
+
+  cleaned = cleaned.replace(new RegExp(`<\\/?${reasoningTag}\\b[^>]*>`, "gi"), "");
+
+  return cleaned.trim();
+}
+
+function extractYamlCodeBlock(content: string): string | null {
+  const normalized = content.replace(/\r\n?/g, "\n").trim();
+  const match = normalized.match(/```(?:yaml|yml)?[ \t]*\n([\s\S]*?)\n```/i);
+  return match ? match[1].trim() : null;
+}
+function extractFrontmatterBlock(content: string): string | null {
+  const normalized = content.replace(/\r\n?/g, "\n").trim();
+  const match = normalized.match(/(?:^|\n)---[ \t]*\n[\s\S]*?\n---[ \t]*(?=\n|$)/);
+  return match ? match[0].replace(/^\n/, "").trim() : null;
+}
 function applyPreferredFrontmatterKeys(content: string, preferredKeyMap: Record<string, string>): string {
   if (!preferredKeyMap || Object.keys(preferredKeyMap).length === 0) {
     return content;

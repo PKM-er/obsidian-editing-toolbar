@@ -132,6 +132,31 @@ function isFrontmatterOperation(operation: RewriteOperation | null): boolean {
   return operation?.params.artifactKind === "frontmatter";
 }
 
+function normalizeFrontmatterOperationResult(operation: RewriteOperation): string {
+  return normalizeGeneratedFrontmatter(
+    operation.result,
+    operation.params.preferredFrontmatterKeys,
+  );
+}
+
+function getRewritePreviewText(operation: RewriteOperation): string {
+  if (!isFrontmatterOperation(operation) || !operation.result.trim()) {
+    return operation.result || "";
+  }
+
+  try {
+    return normalizeFrontmatterOperationResult(operation);
+  } catch {
+    return operation.result || "";
+  }
+}
+
+function getRewriteCopyText(operation: RewriteOperation): string {
+  return isFrontmatterOperation(operation)
+    ? normalizeFrontmatterOperationResult(operation)
+    : operation.result;
+}
+
 function dismissRewritePanel(view: EditorView, rewriteField: StateField<RewriteFieldValue>): boolean {
   if (!getRewriteOperation(view, rewriteField)) {
     return false;
@@ -147,7 +172,11 @@ async function copyRewriteResultToClipboard(
   rewriteField: StateField<RewriteFieldValue>,
 ): Promise<boolean> {
   const operation = getRewriteOperation(view, rewriteField, true);
-  const result = operation?.result;
+  if (!operation) {
+    return false;
+  }
+
+  const result = getRewriteCopyText(operation);
   if (!result) {
     return false;
   }
@@ -222,10 +251,7 @@ function applyFrontmatterResult(
   }
 
   try {
-    const normalized = normalizeGeneratedFrontmatter(
-      operation.result,
-      operation.params.preferredFrontmatterKeys,
-    );
+    const normalized = normalizeFrontmatterOperationResult(operation);
     view.dispatch({ effects: cancelRewriteEffect.of(undefined) });
     view.dispatch({
       changes: { from: operation.params.from, to: operation.params.to, insert: normalized },
@@ -427,7 +453,7 @@ function createResultPanelTooltipView(
 
       dom.style.display = "";
       dom.dataset.phase = state.operation.phase;
-      content.textContent = state.operation.result || "";
+      content.textContent = getRewritePreviewText(state.operation);
       if (isFileArtifactOperation(state.operation)) {
         header.textContent = t("AI file suggestion");
         setActionButtonLabel(replaceBtn, t("Create"), REWRITE_PANEL_SHORTCUTS.replace.display);
