@@ -21,6 +21,7 @@ import { ButtonComponent } from "obsidian";
 import { ConfirmModal } from "src/modals/ConfirmModal";
 import { createDefaultFrontmatterPromptSettings, PKMER_MODEL_OPTIONS, resolvePKMerModelForScene } from "src/ai/types";
 import type { CustomModelApiFormat } from "src/ai/types";
+import { AIUrlHelper } from "src/ai/urlValidation";
 import { getAIErrorMessage } from "src/ai/errorHandling";
 import { getPKMerAIEntryUrl, getPKMerAIQuotaUrl } from "src/ai/pkmerWeb";
 // 添加类型定义
@@ -119,6 +120,9 @@ export class editingToolbarSettingTab extends PluginSettingTab {
   private cachedCustomOllamaModels: string[] = [];
   private cachedCustomOllamaModelsBaseUrl = '';
   private cachedCustomOllamaModelsError = '';
+  private cachedCustomOpenAIModels: string[] = [];
+  private cachedCustomOpenAIModelsBaseUrl = '';
+  private cachedCustomOpenAIModelsError = '';
   // 添加一个属性来跟踪当前正在编辑的配置
   private currentEditingConfig: string;
 
@@ -160,6 +164,48 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     }
 
     this.display();
+  }
+
+  private async refreshCustomOpenAIModels(): Promise<void> {
+    const baseUrl = this.plugin.settings.ai.customModel.baseUrl.trim();
+
+    try {
+      const models = await this.plugin.aiManager.listCustomOpenAIModels();
+      this.cachedCustomOpenAIModels = models;
+      this.cachedCustomOpenAIModelsBaseUrl = baseUrl;
+      this.cachedCustomOpenAIModelsError = '';
+
+      if (models.length === 0) {
+        new Notice(t('No models found at this endpoint.'));
+      }
+    } catch (error) {
+      this.cachedCustomOpenAIModels = [];
+      this.cachedCustomOpenAIModelsBaseUrl = baseUrl;
+      this.cachedCustomOpenAIModelsError = getAIErrorMessage(error);
+      new Notice(`${t('Failed to load models:')} ${this.cachedCustomOpenAIModelsError}`);
+    }
+
+    this.display();
+  }
+
+  private updateUrlValidationNote(container: HTMLElement, baseUrl: string, apiFormat: string): void {
+    // Remove previous validation note
+    const existingNote = container.querySelector('.editing-toolbar-url-warning');
+    if (existingNote) existingNote.remove();
+
+    const apiFormatToCheck = apiFormat || this.plugin.settings.ai.customModel.apiFormat || 'openai-compatible';
+    const warnings = AIUrlHelper.getBaseUrlWarnings(baseUrl, apiFormatToCheck);
+    if (warnings.length === 0) return;
+
+    warnings.forEach(({ message }) => {
+      const noteEl = container.createDiv({ cls: 'editing-toolbar-url-warning editing-toolbar-ai-note' });
+      noteEl.style.color = 'var(--text-warning)';
+      noteEl.style.borderLeft = '3px solid var(--color-orange)';
+      noteEl.style.paddingLeft = '8px';
+      noteEl.style.marginTop = '6px';
+      noteEl.style.fontSize = '12px';
+      noteEl.setText(message);
+    });
   }
 
   display(): void {
@@ -2073,9 +2119,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
             ? t('Stored securely in Obsidian secret storage.')
             : t('Will be stored securely in Obsidian secret storage.'))
           : t('Current Obsidian version does not support secure secret storage.');
-        const apiKeyDesc = isOllamaFormat
-          ? `${t('Optional for Ollama. Leave empty unless your gateway requires authentication.')} ${secureStorageDesc}`.trim()
-          : secureStorageDesc;
+        const apiKeyDesc = `${t('Optional. Leave empty unless your server requires authentication.')} ${secureStorageDesc}`.trim();
 
         new Setting(customBody)
           .setName(t('Custom API Format'))
@@ -2096,13 +2140,66 @@ export class editingToolbarSettingTab extends PluginSettingTab {
           .setName(t('Custom API Base URL'))
           .setDesc(isOllamaFormat
             ? t('Native Ollama endpoint. The root URL, /api, /api/chat, or /api/generate are all supported.')
-            : t('OpenAI-compatible endpoint for your own provider.'))
+            : t('OpenAI-compatible endpoint for your own provider.') + ' ' + t('Example: http://127.0.0.1:1234/v1'))
           .addText((text) => {
-            text.setPlaceholder(isOllamaFormat ? 'http://127.0.0.1:11434' : 'https://api.openai.com').setValue(this.plugin.settings.ai.customModel.baseUrl).onChange(async (value) => {
+            text.setPlaceholder(isOllamaFormat ? 'http://127.0.0.1:11434' : 'http://127.0.0.1:1234/v1').setValue(this.plugin.settings.ai.customModel.baseUrl).onChange(async (value) => {
               this.plugin.settings.ai.customModel.baseUrl = value.trim();
               await this.plugin.saveSettings();
+              this.updateUrlValidationNote(customBody, value.trim(), customApiFormat);
             });
+            setTimeout(() => this.updateUrlValidationNote(customBody, customModelBaseUrl, customApiFormat), 50);
           });
+
+        if (!isOllamaFormat) {
+          const cachedModels = this.cachedCustomOpenAIModels;
+          const cachedModelsBaseUrl = this.cachedCustomOpenAIModelsBaseUrl;
+          const cachedModelsError = this.cachedCustomOpenAIModelsError;
+          const modelsAreFresh = cachedModelsBaseUrl === customModelBaseUrl;
+
+          const detectedModelsDesc = cachedModelsError
+            ? `${t('Choose a detected model to fill the model field.')} ${cachedModelsError}`.trim()
+            : t('Choose a detected model to fill the model field.');
+
+          const baseUrlDesc = customModelBaseUrl
+            ? `${t('Fetch available models from your server.')}`
+            : `${t('Enter a valid API base URL first, then fetch available models.')}`;
+
+          new Setting(customBody)
+            .setName(`Detected Models (${modelsAreFresh ? cachedModels.length : '?'})`)
+            .setDesc(modelsAreFresh && cachedModels.length > 0 ? detectedModelsDesc : baseUrlDesc)
+            .addDropdown((dropdown) => {
+              dropdown.addOption('', t('Select a detected model'));
+
+              if (modelsAreFresh) {
+                cachedModels.forEach((modelName) => {
+                  dropdown.addOption(modelName, modelName);
+                });
+              }
+
+              const currentModel = this.plugin.settings.ai.customModel.model.trim();
+              if (currentModel && !(modelsAreFresh && cachedModels.includes(currentModel))) {
+                dropdown.addOption(currentModel, currentModel);
+              }
+
+              dropdown.setValue(modelsAreFresh && cachedModels.includes(currentModel) ? currentModel : '');
+              dropdown.onChange(async (value) => {
+                if (!value) {
+                  return;
+                }
+
+                this.plugin.settings.ai.customModel.model = value;
+                await this.plugin.saveSettings();
+                this.display();
+              });
+            })
+            .addButton((button) => {
+              button.setButtonText(t('Get Models')).onClick(async () => {
+                button.setDisabled(true);
+                button.setButtonText(t('Loading...'));
+                await this.refreshCustomOpenAIModels();
+              });
+            });
+        }
 
         new Setting(customBody)
           .setName(t('Custom Model Name'))
@@ -2161,7 +2258,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
             text.inputEl.type = 'password';
             text.setPlaceholder(this.plugin.aiManager.hasCustomModelApiKey()
               ? t('Stored securely')
-              : (isOllamaFormat ? t('Optional') : t('Enter API key')));
+              : t('Optional'))
             text.setValue('').onChange(async (value) => {
               if (value.trim()) {
                 this.plugin.aiManager.saveCustomModelApiKey(value);

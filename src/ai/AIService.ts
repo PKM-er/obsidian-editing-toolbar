@@ -6,6 +6,7 @@ import { resolvePKMerModelForScene } from "./types";
 import type { CompletionParams, IAIService, PKMerModelScene, RewriteArtifactKind, RewriteInstruction, RewriteParams } from "./types";
 import type { CustomModelApiFormat } from "./types";
 import { PKMerAuthService } from "./PKMerAuthService";
+import { AIUrlHelper } from "./urlValidation";
 
 interface ResolvedProvider {
   kind: "pkmer" | "custom";
@@ -61,7 +62,9 @@ export class ToolbarAIService implements IAIService {
       throw new Error(`Missing custom model settings: ${validation.missing.join(", ")}`);
     }
 
-    await this.requestChatCompletionResult(
+    AIUrlHelper.validateBaseUrl(validation.provider.baseUrl, validation.provider.apiFormat);
+
+    const result = await this.requestChatCompletionResult(
       [
         {
           role: "system",
@@ -78,6 +81,12 @@ export class ToolbarAIService implements IAIService {
       },
       validation.provider,
     );
+
+    if (!result.text || !result.text.trim()) {
+      throw new Error(
+        t("Custom model connection test returned an empty response. Check that your API base URL and model name are correct."),
+      );
+    }
   }
 
   async listCustomOllamaModels(): Promise<string[]> {
@@ -116,6 +125,32 @@ export class ToolbarAIService implements IAIService {
     }
 
     await this.rethrowUserFacingRequestError(lastError, candidateUrls[0] ?? provider.baseUrl);
+  }
+
+  async listCustomOpenAIModels(): Promise<string[]> {
+    const validation = this.getCustomProviderValidation();
+    const provider = validation.provider;
+    if (!provider || provider.kind !== "custom" || provider.apiFormat !== "openai-compatible") {
+      throw new Error("OpenAI-compatible custom model settings are not enabled.");
+    }
+
+    const modelsUrl = this.buildModelsUrl(provider.baseUrl);
+
+    try {
+      const response = await requestUrl({
+        url: modelsUrl,
+        method: "GET",
+        headers: this.buildRequestHeaders(provider.apiKey),
+      });
+
+      if (response.status >= 200 && response.status < 300) {
+        return this.extractOpenAIModelNames(response.json);
+      }
+
+      throw this.createRequestResponseError(response, modelsUrl);
+    } catch (error) {
+      await this.rethrowUserFacingRequestError(error, modelsUrl);
+    }
   }
 
   private async requestCompletion(params: CompletionParams, signal?: AbortSignal): Promise<string> {
@@ -361,9 +396,7 @@ export class ToolbarAIService implements IAIService {
     if (!custom.model.trim()) {
       missing.push("model");
     }
-    if (customApiFormat !== "ollama" && !customApiKey) {
-      missing.push("apiKey");
-    }
+    // API key is optional — the request simply won't include an Authorization header when empty
 
     if (missing.length > 0) {
       return { provider: null, missing };
@@ -466,6 +499,25 @@ export class ToolbarAIService implements IAIService {
     return [`${normalized}/api/tags`];
   }
 
+  private buildModelsUrl(baseUrl: string): string {
+    const normalized = this.normalizeProviderBaseUrl(baseUrl);
+    if (!normalized) return "";
+
+    if (/\/models$/i.test(normalized)) {
+      return normalized;
+    }
+
+    if (/\/chat\/completions$/i.test(normalized)) {
+      return normalized.replace(/\/chat\/completions$/i, "/models");
+    }
+
+    if (/\/v\d+$/i.test(normalized)) {
+      return `${normalized}/models`;
+    }
+
+    return `${normalized}/v1/models`;
+  }
+
   private buildRequestHeaders(apiKey: string): Record<string, string> {
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
@@ -540,6 +592,20 @@ export class ToolbarAIService implements IAIService {
         }
         if (typeof item?.model === "string" && item.model.trim()) {
           return item.model.trim();
+        }
+        return "";
+      })
+      .filter((name: string): boolean => !!name);
+
+    return Array.from(new Set(names)).sort((left, right) => left.localeCompare(right));
+  }
+
+  private extractOpenAIModelNames(payload: any): string[] {
+    const models = Array.isArray(payload?.data) ? payload.data : [];
+    const names: string[] = models
+      .map((item: any): string => {
+        if (typeof item?.id === "string" && item.id.trim()) {
+          return item.id.trim();
         }
         return "";
       })

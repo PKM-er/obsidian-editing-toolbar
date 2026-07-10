@@ -932,4 +932,34 @@ export default {
   "Auto detect from folder": "Автоопределение по папке",
   "Custom prompt": "Пользовательский запрос",
   "Auto mode will follow frontmatter keys and examples from sibling notes in the same folder.": "Авто-режим будет учитывать ключи и примеры Frontmatter из соседних заметок той же папки.",
+
+  "The URL should point to the server root (e.g. http://127.0.0.1:1234/v1), not to the full /chat/completions endpoint. The plugin appends the path automatically.": "URL должен указывать на корень сервера (например http://127.0.0.1:1234/v1), а не на полный путь /chat/completions. Плагин добавляет его автоматически.",
+
+  "The URL seems to include a /chat segment. For OpenAI-compatible endpoints, use the base API path (e.g. http://127.0.0.1:1234/v1). The plugin adds /chat/completions automatically.": "URL содержит сегмент /chat. Для OpenAI-совместимых серверов используйте базовый путь (напр. http://127.0.0.1:1234/v1). Плагин добавит /chat/completions автоматически.",
+
+  "Custom API Base URL is empty.": "Адрес пользовательского API пуст.",
+
+  "Custom API Base URL is not a valid URL.": "Адрес пользовательского API не является допустимым URL.",
+
+  "The URL includes the full /chat/completions path. Use the server root (e.g. http://127.0.0.1:1234/v1) instead — the plugin appends it automatically.": "URL содержит полный путь /chat/completions. Используйте корень сервера (напр. http://127.0.0.1:1234/v1) — плагин добавит его автоматически.",
+
+  "The URL ends with /chat. For OpenAI-compatible servers, use e.g. http://127.0.0.1:1234/v1 — the plugin adds /chat/completions for you.": "URL заканчивается на /chat. Для OpenAI-совместимых серверов укажите http://127.0.0.1:1234/v1 — плагин сам добавит /chat/completions.",
+
+  "Example: http://127.0.0.1:1234/v1": "Пример: http://127.0.0.1:1234/v1",
+
+  "Custom model connection test returned an empty response. Check that your API base URL and model name are correct.": "Тест подключения вернул пустой ответ. Проверьте правильность адреса API и названия модели.",
+
+  "Optional. Leave empty unless your server requires authentication.": "Необязательно. Оставьте пустым, если ваш сервер не требует авторизации.",
+
+  "Get Models": "Получить список",
+
+  "No models found at this endpoint.": "Не найдено моделей на данном адресе.",
+
+  "Failed to load models:": "Ошибка загрузки списка моделей:",
+
+  "Choose a detected model to fill the model field.": "Выберите модель из списка, чтобы заполнить поле названия модели.",
+
+  "Fetch available models from your server.": "Загрузить список доступных моделей с вашего сервера.",
+
+  "Enter a valid API base URL first, then fetch available models.": "Сначала введите корректный адрес API, затем загрузите список моделей."
 };

@@ -298,6 +298,10 @@ export class AIEditorManager {
     return this.aiService.listCustomOllamaModels();
   }
 
+  async listCustomOpenAIModels(): Promise<string[]> {
+    return this.aiService.listCustomOpenAIModels();
+  }
+
   triggerInlineCompletion(editor?: Editor | null): boolean {
     if (!this.plugin.settings.ai.enabled) {
       new Notice(t("AI features are disabled in settings."));
