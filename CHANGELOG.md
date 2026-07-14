@@ -1,5 +1,22 @@
 # Changelog
 
+## 4.0.11 (2026-07-14)
+### #330 fixed
+### 增加ai自定义模型提示和日文翻译
+### Merge branch 'pr/343'
+### Add Japanese toolbar translations
+### Add model detection and URL validation for custom AI
+Adds support for detecting and listing available models from OpenAI-compatible custom AI endpoints. Introduces URL validation to catch common configuration mistakes and improve user guidance. Makes API key optional across all custom model formats, and adds caching for model lists to improve UX.
+Key changes:
+- New AIUrlHelper class for base URL validation and warnings
+- listCustomOpenAIModels() method to fetch models from compatible endpoints
+- UI dropdown to select detected models
+- URL validation warnings in settings panel
+- Improved error handling for empty model connection test responses
+- Translated strings for new validation messages and model detection
+### Update manifest.json and CHANGELOG.md for version 4.0.10
+
+
 ## 4.0.10 (2026-07-09)
 ### Update manifest.json
 ### #333 修复生成内容包含<think> 标签
