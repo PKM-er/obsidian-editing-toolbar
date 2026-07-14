@@ -2165,7 +2165,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
             : `${t('Enter a valid API base URL first, then fetch available models.')}`;
 
           new Setting(customBody)
-            .setName(`Detected Models (${modelsAreFresh ? cachedModels.length : '?'})`)
+            .setName(`${t('Detected Models')} (${modelsAreFresh ? cachedModels.length : '?'})`)
             .setDesc(modelsAreFresh && cachedModels.length > 0 ? detectedModelsDesc : baseUrlDesc)
             .addDropdown((dropdown) => {
               dropdown.addOption('', t('Select a detected model'));

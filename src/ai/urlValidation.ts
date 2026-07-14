@@ -27,12 +27,6 @@ export class AIUrlHelper {
       // Common mistakes for OpenAI-compatible endpoints
       const lower = trimmed.toLowerCase().replace(/\/+$/, "");
 
-      if (lower.endsWith("/chat/completions")) {
-        throw new Error(
-          t("The URL should point to the server root (e.g. http://127.0.0.1:1234/v1), not to the full /chat/completions endpoint. The plugin appends the path automatically."),
-        );
-      }
-
       if (lower.endsWith("/chat")) {
         throw new Error(
           t("The URL seems to include a /chat segment. For OpenAI-compatible endpoints, use the base API path (e.g. http://127.0.0.1:1234/v1). The plugin adds /chat/completions automatically."),
@@ -52,13 +46,6 @@ export class AIUrlHelper {
 
     if (apiFormat === "openai-compatible") {
       const lower = trimmed.toLowerCase().replace(/\/+$/, "");
-
-      if (lower.endsWith("/chat/completions")) {
-        warnings.push({
-          message: t("The URL includes the full /chat/completions path. Use the server root (e.g. http://127.0.0.1:1234/v1) instead — the plugin appends it automatically."),
-          severity: "warning",
-        });
-      }
 
       if (lower.endsWith("/chat")) {
         warnings.push({

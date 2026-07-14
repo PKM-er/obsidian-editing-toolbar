@@ -907,19 +907,17 @@ export default {
   'Custom prompt': 'Custom prompt',
   'Auto mode will follow frontmatter keys and examples from sibling notes in the same folder.': 'Auto mode will follow frontmatter keys and examples from sibling notes in the same folder.',
 
-  'The URL should point to the server root (e.g. http://127.0.0.1:1234/v1), not to the full /chat/completions endpoint. The plugin appends the path automatically.': 'The URL should point to the server root (e.g. http://127.0.0.1:1234/v1), not to the full /chat/completions endpoint. The plugin appends the path automatically.',
-
   'The URL seems to include a /chat segment. For OpenAI-compatible endpoints, use the base API path (e.g. http://127.0.0.1:1234/v1). The plugin adds /chat/completions automatically.': 'The URL seems to include a /chat segment. For OpenAI-compatible endpoints, use the base API path (e.g. http://127.0.0.1:1234/v1). The plugin adds /chat/completions automatically.',
 
   'Custom API Base URL is empty.': 'Custom API Base URL is empty.',
 
   'Custom API Base URL is not a valid URL.': 'Custom API Base URL is not a valid URL.',
 
-  'The URL includes the full /chat/completions path. Use the server root (e.g. http://127.0.0.1:1234/v1) instead — the plugin appends it automatically.': 'The URL includes the full /chat/completions path. Use the server root (e.g. http://127.0.0.1:1234/v1) instead — the plugin appends it automatically.',
-
   'The URL ends with /chat. For OpenAI-compatible servers, use e.g. http://127.0.0.1:1234/v1 — the plugin adds /chat/completions for you.': 'The URL ends with /chat. For OpenAI-compatible servers, use e.g. http://127.0.0.1:1234/v1 — the plugin adds /chat/completions for you.',
 
   'Example: http://127.0.0.1:1234/v1': 'Example: http://127.0.0.1:1234/v1',
 
   'Custom model connection test returned an empty response. Check that your API base URL and model name are correct.': 'Custom model connection test returned an empty response. Check that your API base URL and model name are correct.',
+
+  'Detected Models': 'Detected Models',
 }
