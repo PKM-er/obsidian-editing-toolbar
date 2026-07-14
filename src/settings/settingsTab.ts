@@ -19,7 +19,7 @@ import { ImportExportModal } from "src/modals/ImportExportModal";
 import { RegexCommandModal } from "src/modals/RegexCommandModal";
 import { ButtonComponent } from "obsidian";
 import { ConfirmModal } from "src/modals/ConfirmModal";
-import { createDefaultFrontmatterPromptSettings, PKMER_MODEL_OPTIONS, resolvePKMerModelForScene } from "src/ai/types";
+import { createDefaultFrontmatterPromptSettings, getDefaultCustomPromptTemplates, PKMER_MODEL_OPTIONS, resolvePKMerModelForScene } from "src/ai/types";
 import type { CustomModelApiFormat } from "src/ai/types";
 import { AIUrlHelper } from "src/ai/urlValidation";
 import { getAIErrorMessage } from "src/ai/errorHandling";
@@ -2456,6 +2456,24 @@ export class editingToolbarSettingTab extends PluginSettingTab {
       });
 
       new Setting(templatesBody)
+        .addButton((button) => {
+          button
+            .setButtonText(t('Reset Default Templates'))
+            .setWarning()
+            .onClick(() => {
+              ConfirmModal.show(this.app, {
+                title: t('Reset Default Templates'),
+                message: t('Replace all custom prompt templates with the defaults for the current language? This cannot be undone.'),
+                confirmText: t('Reset Default Templates'),
+                onConfirm: async () => {
+                  this.plugin.settings.ai.customPromptTemplates = getDefaultCustomPromptTemplates();
+                  await this.plugin.saveSettings();
+                  new Notice(t('Custom prompt templates reset to current language defaults.'));
+                  this.display();
+                },
+              });
+            });
+        })
         .addButton((button) => {
           button
             .setButtonText(t('Add Template'))

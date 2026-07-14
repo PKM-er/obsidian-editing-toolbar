@@ -959,5 +959,9 @@ export default {
 
   "Enter a valid API base URL first, then fetch available models.": "Сначала введите корректный адрес API, затем загрузите список моделей.",
 
-  "Detected Models": "Обнаруженные модели"
+  "Detected Models": "Обнаруженные модели",
+
+  "Reset Default Templates": "Сбросить шаблоны по умолчанию",
+  "Replace all custom prompt templates with the defaults for the current language? This cannot be undone.": "Заменить все пользовательские шаблоны подсказок шаблонами по умолчанию для текущего языка? Это действие нельзя отменить.",
+  "Custom prompt templates reset to current language defaults.": "Шаблоны пользовательских подсказок сброшены к значениям по умолчанию для текущего языка."
 };

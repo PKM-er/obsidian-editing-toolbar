@@ -920,4 +920,8 @@ export default {
   'Custom model connection test returned an empty response. Check that your API base URL and model name are correct.': 'Custom model connection test returned an empty response. Check that your API base URL and model name are correct.',
 
   'Detected Models': 'Detected Models',
+
+  'Reset Default Templates': 'Reset Default Templates',
+  'Replace all custom prompt templates with the defaults for the current language? This cannot be undone.': 'Replace all custom prompt templates with the defaults for the current language? This cannot be undone.',
+  'Custom prompt templates reset to current language defaults.': 'Custom prompt templates reset to current language defaults.',
 }

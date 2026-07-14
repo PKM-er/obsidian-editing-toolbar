@@ -132,4 +132,7 @@ export default {
   'Fetch available models from your server.': 'サーバーから利用可能なモデルを取得します。',
   'Enter a valid API base URL first, then fetch available models.': '先に有効な API ベース URL を入力してから、モデルを取得してください。',
   'Detected Models': '検出されたモデル',
+  'Reset Default Templates': 'デフォルトテンプレートにリセット',
+  'Replace all custom prompt templates with the defaults for the current language? This cannot be undone.': 'すべてのカスタムプロンプトテンプレートを、現在の言語のデフォルトに置き換えますか？この操作は元に戻せません。',
+  'Custom prompt templates reset to current language defaults.': 'カスタムプロンプトテンプレートを現在の言語のデフォルトにリセットしました。',
 } as const;

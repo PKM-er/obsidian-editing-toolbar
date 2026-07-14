@@ -939,4 +939,7 @@ export default {
   'Fetch available models from your server.': '从服务器获取可用模型。',
   'Enter a valid API base URL first, then fetch available models.': '请先输入有效的 API 基础地址，再获取模型。',
   'Detected Models': '检测到的模型',
+  'Reset Default Templates': '重置默认模板',
+  'Replace all custom prompt templates with the defaults for the current language? This cannot be undone.': '是否用当前语言的默认模板替换所有自定义提示词模板？此操作无法撤销。',
+  'Custom prompt templates reset to current language defaults.': '已将自定义提示词模板重置为当前语言的默认模板。',
 };

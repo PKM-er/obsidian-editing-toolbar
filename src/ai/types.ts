@@ -298,6 +298,51 @@ const DEFAULT_CUSTOM_PROMPT_TEMPLATES_EN: CustomPromptTemplate[] = [
   }
 ];
 
+const DEFAULT_CUSTOM_PROMPT_TEMPLATES_JA: CustomPromptTemplate[] = [
+  {
+    id: "template-demo-variables",
+    name: "📝 要点を要約",
+    prompt: "{{file:content}} の構成を分析し、次に重点を置いてください:\n{{selection}}\n\n次を提示してください:\n1. 簡潔な概要\n2. 重要な要点\n3. 改善の提案",
+    icon: "lucide-sparkles"
+  },
+  {
+    id: "template-task-variables",
+    name: "タスクを抽出",
+    prompt: "今日は {{date}} です。{{file:content}} から実行可能なタスクをすべて抽出し、特に次に注意してください:\n{{selection}}\n\nObsidian Tasks プラグインの形式で、各タスクを 1 行ずつ厳密に出力してください:\n\n- [ ] タスク内容 ⏫/🔼/🔽/⏬ 優先度\n- [ ] タスク内容 📅 YYYY-MM-DD 期限\n- [ ] タスク内容 ⏰ YYYY-MM-DD HH:mm リマインダー\n- [ ] タスク内容 🛫 YYYY-MM-DD 開始日\n- [ ] タスク内容 🔁 every day/week/month 繰り返し\n- [ ] タスク内容 #タグ #プロジェクト\n\n抽出ルール:\n1. 本文に「至急」「できるだけ早く」「直ちに」「今日」のような緊急性があれば、⏫ を追加します。\n2. 「明日」「今週」「近日中」のような近い期限を示す表現があれば、🔼 を追加します。\n3. 明示された日付は 📅 YYYY-MM-DD 形式に変換します。\n4. 明示された時刻は可能な限り ⏰ YYYY-MM-DD HH:mm 形式に変換します。\n5. 繰り返し作業には 🔁 every week/month を追加します。\n6. 各タスクに実用的なタグを追加します。\n\n出力例:\n- [ ] プロジェクト報告書を完成する ⏫ 📅 2026-04-25 #仕事\n- [ ] 毎週のチームミーティング 🔁 every week on Monday ⏰ 09:00 #会議\n- [ ] 顧客要望をフォローアップする 🔼 📅 2026-04-23 #フォローアップ",
+    icon: "lucide-sparkles"
+  },
+  {
+    id: "template-dataview",
+    name: "Dataview を生成",
+    prompt: "要件に基づいて Obsidian Dataview のクエリコードブロックを生成してください。要件:\n1. DataviewJS または DQL 構文を使用します。\n2. 必要なフィルターと並べ替えを含めます。\n3. 各部分を説明する短いコメントを追加します。\n4. ロジックが複雑な場合は DataviewJS を使用します。\n\n要件:",
+    icon: "lucide-database"
+  },
+  {
+    id: "template-templater",
+    name: "Templater テンプレートを設計",
+    prompt: "Obsidian Templater のテンプレートを設計してください。要件:\n1. Templater 構文（<%  %>）を使用します。\n2. 日付や時刻などの動的変数を含めます。\n3. ユーザー入力プロンプトに対応します。\n4. 必要な条件分岐とループを追加します。\n5. 各セクションの目的をコメントで説明します。\n\nテンプレートの用途:",
+    icon: "lucide-file-code"
+  },
+  {
+    id: "template-mermaid",
+    name: "Mermaid 図を作成",
+    prompt: "選択したテキスト {{selection}} に基づいて Mermaid 図のコードを生成してください。要件:\n1. フローチャート、シーケンス図、クラス図、ガントチャートなど、適切な図の種類を選びます。\n2. 分かりやすいノード名を使用します。\n3. 必要に応じて有用なスタイルとコメントを追加します。\n4. 構文が有効でレンダリング可能であることを確認します。\n",
+    icon: "lucide-workflow"
+  },
+  {
+    id: "template-metadata",
+    name: "YAML を設計",
+    prompt: "現在のノート内容 {{file:content}} に基づいて、このノートに適した YAML Frontmatter 構造を設計してください。要件:\n1. ノート内容に合うフィールドを提案します。\n2. tags、aliases、date などの一般的なフィールドを含めます。\n3. 役立つカスタムフィールドを提案します。\n4. 各フィールドの目的を簡潔に説明します。\n\nノートの種類:",
+    icon: "lucide-file-json"
+  },
+  {
+    id: "template-callout",
+    name: "Callout で囲む",
+    prompt: "選択したテキスト {{selection}} に基づいて、Obsidian Callout ブロックで囲んでください。要件:\n1. note、tip、warning、danger など、適切な callout タイプを選びます。\n2. 必要に応じて入れ子と折りたたみに対応します。\n3. タイトルと内容を含めます。\n4. 必要に応じてコードブロックまたはリストを使用します。\n\n内容の要件:",
+    icon: "lucide-message-square"
+  }
+];
+
 const DEFAULT_CUSTOM_PROMPT_TEMPLATES_RU: CustomPromptTemplate[] = [
   {
     id: "template-demo-variables",
@@ -347,6 +392,8 @@ export function getDefaultCustomPromptTemplates(locale: string = getCurrentLocal
   const normalizedLocale = locale.toLowerCase();
   const source = isChineseLocale(locale)
     ? DEFAULT_CUSTOM_PROMPT_TEMPLATES_ZH
+    : normalizedLocale === "ja" || normalizedLocale.startsWith("ja-")
+      ? DEFAULT_CUSTOM_PROMPT_TEMPLATES_JA
     : normalizedLocale === "ru" || normalizedLocale.startsWith("ru-")
       ? DEFAULT_CUSTOM_PROMPT_TEMPLATES_RU
       : DEFAULT_CUSTOM_PROMPT_TEMPLATES_EN;

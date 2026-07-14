@@ -746,8 +746,8 @@ body:has(.workspace-leaf.mod-active .cm-ai-loading, .workspace-leaf.mod-active .
   backdrop-filter: blur(8px);
   overflow: hidden;
 }
-.editing-toolbar-ai-inline-prompt button
-{
+.editing-toolbar-ai-inline-prompt button {
+    padding: unset!important;
     box-shadow: none!important;
 }
 @media (max-width: 768px) {
