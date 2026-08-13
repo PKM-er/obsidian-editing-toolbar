@@ -159,12 +159,32 @@ export class editingToolbarSettingTab extends PluginSettingTab {
   private selectedImportSourceStyle = 'Main menu';
   private commandDragControllers = new WeakMap<HTMLElement, AbortController>();
   private commandDropControllers = new WeakMap<HTMLElement, AbortController>();
+  private declarativeCommandCleanups = new WeakMap<HTMLElement, () => void>();
+  private declarativeSubmenuCleanups = new WeakMap<HTMLElement, () => void>();
+  private declarativeSubmenuContainers = new WeakMap<object, HTMLElement>();
   private commandEventControllers = new Set<AbortController>();
   // 添加一个属性来跟踪当前正在编辑的配置
   private currentEditingConfig: string;
 
   private getLocalizedCommandName(name: string): string {
     return t(name as any);
+  }
+
+  private setDeclarativeCommandName(
+    setting: Setting,
+    displayName: string,
+    keySuffix: string,
+  ): void {
+    // Obsidian derives a setting key from the name supplied to setName().
+    // Keep that key unique while preserving the compact command label shown
+    // to users (multiple submenus commonly share the name "submenu").
+    setting.setName(`Editing Toolbar Command ${keySuffix}`);
+    setting.nameEl.setText(displayName);
+  }
+
+  private getCommandSettingKey(command: Command, index: number, parentId?: string): string {
+    const prefix = parentId ? `${parentId}-${command.id}` : command.id;
+    return command.id === 'editingToolbar-Divider-Line' ? `${prefix}-${index}` : prefix;
   }
   constructor(app: App, plugin: editingToolbarPlugin) {
     super(app, plugin);
@@ -1835,7 +1855,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
       items: commands.map((command, index) => ({
         name: this.getCommandDefinitionName(command, index, commands),
         aliases: this.getCommandSearchAliases(command),
-        render: (setting: Setting) => this.renderDeclarativeCommand(setting, command),
+        render: (setting: Setting) => this.renderDeclarativeCommand(setting, command, index),
       })),
     };
   }
@@ -1850,7 +1870,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
       candidateIndex !== index
       && this.getLocalizedCommandName(candidate.name) === localizedName
     ));
-    return hasDuplicateName ? `${localizedName} (${index + 1})` : localizedName;
+    return hasDuplicateName ? `${localizedName} (${command.id})` : localizedName;
   }
 
   private getCommandSearchAliases(command: Command): string[] {
@@ -1997,10 +2017,23 @@ export class editingToolbarSettingTab extends PluginSettingTab {
       }));
   }
 
-  private renderDeclarativeCommand(setting: Setting, command: Command): () => void {
+  private renderDeclarativeCommand(
+    setting: Setting,
+    command: Command,
+    commandIndex: number,
+  ): () => void {
+    const previousCleanup = this.declarativeCommandCleanups.get(setting.settingEl);
+    previousCleanup?.();
+    this.removeStaleDeclarativeSubmenus(setting.settingEl);
+
     const commands = this.getCommandsToEdit();
+    this.removeTrackedSubmenuContainer(command);
     setting.setClass('editingToolbarCommandItem');
-    setting.setName(this.getLocalizedCommandName(command.name));
+    this.setDeclarativeCommandName(
+      setting,
+      this.getLocalizedCommandName(command.name),
+      this.getCommandSettingKey(command, commandIndex),
+    );
 
     const listEl = setting.settingEl.parentElement;
     const cleanupListDrop = listEl
@@ -2013,6 +2046,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
       false
     );
     let cleanupSubmenu: () => void = () => undefined;
+    let submenuContainer: HTMLElement | null = null;
 
     setting.addButton((iconButton) => {
       iconButton
@@ -2050,9 +2084,10 @@ export class editingToolbarSettingTab extends PluginSettingTab {
         dropdown.selectEl.addClass('editingToolbarMenuTypeDropdown');
       });
 
-      const submenuContainer = setting.settingEl.createDiv({
-        cls: 'editingToolbarSettingsTabsContainer_sub',
+      submenuContainer = setting.settingEl.createDiv({
+        cls: 'editingToolbarSettingsTabsContainer_sub editing-toolbar-declarative-submenu',
       });
+      this.declarativeSubmenuContainers.set(command, submenuContainer);
       cleanupSubmenu = this.renderDeclarativeSubmenu(submenuContainer, command);
     } else {
       if (command.id === 'editingToolbar-Divider-Line') {
@@ -2110,24 +2145,35 @@ export class editingToolbarSettingTab extends PluginSettingTab {
       this.refreshSettings();
     }));
 
-    return () => {
+    const cleanup = () => {
       cleanupSubmenu();
       cleanupDragRow();
       cleanupListDrop();
+      submenuContainer?.remove();
+      if (submenuContainer && this.declarativeSubmenuContainers.get(command) === submenuContainer) {
+        this.declarativeSubmenuContainers.delete(command);
+      }
+      if (this.declarativeCommandCleanups.get(setting.settingEl) === cleanup) {
+        this.declarativeCommandCleanups.delete(setting.settingEl);
+      }
     };
+    this.declarativeCommandCleanups.set(setting.settingEl, cleanup);
+    return cleanup;
   }
 
   private renderDeclarativeSubmenu(containerEl: HTMLElement, submenu: Command): () => void {
+    this.declarativeSubmenuCleanups.get(containerEl)?.();
+
     const submenuCommands = submenu.SubmenuCommands
       ?? (submenu.SubmenuCommands = []);
     const cleanups = [
       this.setupCommandDropContainer(containerEl, submenuCommands, true),
     ];
+    const createdRows: HTMLElement[] = [];
 
-    submenuCommands.forEach((subCommand: Command) => {
+    submenuCommands.forEach((subCommand: Command, subCommandIndex: number) => {
       const subSetting = new Setting(containerEl)
         .setClass('editingToolbarCommandItem')
-        .setName(this.getLocalizedCommandName(subCommand.name))
         .addButton((iconButton) => {
           iconButton
             .setClass('editingToolbarSettingsIcon')
@@ -2153,6 +2199,12 @@ export class editingToolbarSettingTab extends PluginSettingTab {
           this.triggerRefresh();
           this.refreshSettings();
         }));
+      this.setDeclarativeCommandName(
+        subSetting,
+        this.getLocalizedCommandName(subCommand.name),
+        this.getCommandSettingKey(subCommand, subCommandIndex, submenu.id),
+      );
+      createdRows.push(subSetting.settingEl);
       cleanups.push(this.setupCommandDragRow(
         subSetting.settingEl,
         subCommand,
@@ -2161,7 +2213,68 @@ export class editingToolbarSettingTab extends PluginSettingTab {
       ));
     });
 
-    return () => cleanups.forEach((cleanup) => cleanup());
+    const cleanup = () => {
+      cleanups.forEach((itemCleanup) => itemCleanup());
+      createdRows.forEach((rowEl) => {
+        if (rowEl.parentElement === containerEl) {
+          rowEl.remove();
+        }
+        const dragController = this.commandDragControllers.get(rowEl);
+        if (dragController) {
+          this.abortCommandEventController(
+            rowEl,
+            dragController,
+            this.commandDragControllers,
+          );
+        }
+      });
+      if (this.declarativeSubmenuCleanups.get(containerEl) === cleanup) {
+        this.declarativeSubmenuCleanups.delete(containerEl);
+      }
+    };
+    this.declarativeSubmenuCleanups.set(containerEl, cleanup);
+    return cleanup;
+  }
+
+  private removeStaleDeclarativeSubmenus(settingEl: HTMLElement): void {
+    settingEl
+      .querySelectorAll<HTMLElement>('.editingToolbarSettingsTabsContainer_sub')
+      .forEach((containerEl) => {
+        this.declarativeSubmenuCleanups.get(containerEl)?.();
+        const dropController = this.commandDropControllers.get(containerEl);
+        if (dropController) {
+          this.abortCommandEventController(
+            containerEl,
+            dropController,
+            this.commandDropControllers,
+          );
+        }
+
+        containerEl
+          .querySelectorAll<HTMLElement>('.editingToolbarCommandItem')
+          .forEach((rowEl) => {
+            const dragController = this.commandDragControllers.get(rowEl);
+            if (dragController) {
+              this.abortCommandEventController(
+                rowEl,
+                dragController,
+                this.commandDragControllers,
+              );
+            }
+          });
+        containerEl.remove();
+      });
+  }
+
+  private removeTrackedSubmenuContainer(command: Command): void {
+    const containerEl = this.declarativeSubmenuContainers.get(command);
+    if (!containerEl) return;
+
+    this.declarativeSubmenuCleanups.get(containerEl)?.();
+    containerEl.remove();
+    if (this.declarativeSubmenuContainers.get(command) === containerEl) {
+      this.declarativeSubmenuContainers.delete(command);
+    }
   }
 
   private setupCommandDragRow(
@@ -2336,20 +2449,95 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     const dragState = this.commandDragState;
     if (!dragState) return;
 
-    const moved = moveItemBetweenLists(
-      dragState.source,
-      target,
-      dragState.command,
-      targetIndex
-    );
+    const commands = this.getCommandsToEdit();
+    const isSameList = dragState.source === target;
+    let moved = false;
+
+    if (isSameList) {
+      moved = moveItemBetweenLists(dragState.source, target, dragState.command, targetIndex);
+      if (moved && dragState.command.id !== 'editingToolbar-Divider-Line') {
+        this.removeCommandReferences(commands, dragState.command.id, dragState.command);
+      }
+    } else {
+      // Remove the exact dragged object first. This also supports dividers,
+      // whose shared ID is intentionally allowed to occur more than once.
+      const sourceIndex = dragState.source.indexOf(dragState.command);
+      if (sourceIndex >= 0) {
+        dragState.source.splice(sourceIndex, 1);
+        moved = true;
+      }
+
+      if (moved && dragState.command.id !== 'editingToolbar-Divider-Line') {
+        // Ordinary commands must be unique across the complete command tree.
+        // Remove stale copies left by an earlier render before inserting the
+        // current object into its new list.
+        this.removeCommandReferences(commands, dragState.command.id);
+      }
+
+      if (moved) {
+        const insertIndex = Math.max(0, Math.min(targetIndex, target.length));
+        target.splice(insertIndex, 0, dragState.command);
+      }
+    }
+
     this.clearCommandDragState(ownerDocument);
     if (!moved) return;
 
-    const commands = this.getCommandsToEdit();
+    this.normalizeCommandTree(commands);
     this.plugin.updateCurrentCommands(commands, this.currentEditingConfig);
     await this.plugin.saveSettings();
+    // The settings event refreshes both the declarative page and the live
+    // toolbar. Avoid a second immediate render of the same list.
     this.triggerRefresh();
-    this.refreshSettings();
+  }
+
+  private removeCommandReferences(
+    commands: Command[],
+    commandId: string,
+    keepCommand?: Command,
+  ): number {
+    if (!commandId || commandId === 'editingToolbar-Divider-Line') return 0;
+
+    let removed = 0;
+    for (let index = commands.length - 1; index >= 0; index -= 1) {
+      const command = commands[index] as Command & { SubmenuCommands?: Command[] };
+      if (command === keepCommand) continue;
+      if (command.id === commandId) {
+        commands.splice(index, 1);
+        removed += 1;
+        continue;
+      }
+
+      if (Array.isArray(command.SubmenuCommands)) {
+        removed += this.removeCommandReferences(command.SubmenuCommands, commandId, keepCommand);
+      }
+    }
+    return removed;
+  }
+
+  private normalizeCommandTree(commands: Command[]): void {
+    const seen = new Set<string>();
+    const normalizeList = (list: Command[]): void => {
+      for (let index = 0; index < list.length;) {
+        const command = list[index] as Command & { SubmenuCommands?: Command[] };
+        // Divider entries are intentionally repeatable; all other command IDs
+        // must occur exactly once in the current toolbar configuration.
+        const isDivider = command.id === 'editingToolbar-Divider-Line';
+        const isDuplicate = !isDivider && seen.has(command.id);
+        if (isDuplicate) {
+          list.splice(index, 1);
+          continue;
+        }
+
+        if (!isDivider) seen.add(command.id);
+        if (Array.isArray(command.SubmenuCommands)) {
+          normalizeList(command.SubmenuCommands);
+        }
+        index += 1;
+      }
+    };
+
+    normalizeList(commands);
   }
 
   private async refreshCustomGeminiModels(): Promise<void> {
