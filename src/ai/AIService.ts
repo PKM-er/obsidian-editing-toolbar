@@ -76,9 +76,7 @@ export class ToolbarAIService implements IAIService {
         },
       ],
       undefined,
-      {
-        maxTokens: 1,
-      },
+      {},
       validation.provider,
     );
 
@@ -90,9 +88,8 @@ export class ToolbarAIService implements IAIService {
   }
 
   async listCustomOllamaModels(): Promise<string[]> {
-    const validation = this.getCustomProviderValidation();
-    const provider = validation.provider;
-    if (!provider || provider.kind !== "custom" || provider.apiFormat !== "ollama") {
+    const provider = this.getCustomProviderForModelListing("ollama");
+    if (!provider) {
       throw new Error("Ollama custom model settings are not enabled.");
     }
 
@@ -128,9 +125,8 @@ export class ToolbarAIService implements IAIService {
   }
 
   async listCustomOpenAIModels(): Promise<string[]> {
-    const validation = this.getCustomProviderValidation();
-    const provider = validation.provider;
-    if (!provider || provider.kind !== "custom" || provider.apiFormat !== "openai-compatible") {
+    const provider = this.getCustomProviderForModelListing("openai-compatible");
+    if (!provider) {
       throw new Error("OpenAI-compatible custom model settings are not enabled.");
     }
 
@@ -145,6 +141,30 @@ export class ToolbarAIService implements IAIService {
 
       if (response.status >= 200 && response.status < 300) {
         return this.extractOpenAIModelNames(response.json);
+      }
+
+      throw this.createRequestResponseError(response, modelsUrl);
+    } catch (error) {
+      await this.rethrowUserFacingRequestError(error, modelsUrl);
+    }
+  }
+
+  async listCustomGeminiModels(): Promise<string[]> {
+    const provider = this.getCustomProviderForModelListing("gemini");
+    if (!provider) {
+      throw new Error("Gemini custom model settings are not enabled.");
+    }
+
+    const modelsUrl = this.buildGeminiModelsUrl(provider.baseUrl);
+    try {
+      const response = await requestUrl({
+        url: modelsUrl,
+        method: "GET",
+        headers: this.buildRequestHeaders(provider.apiKey, provider.apiFormat),
+      });
+
+      if (response.status >= 200 && response.status < 300) {
+        return this.extractGeminiModelNames(response.json);
       }
 
       throw this.createRequestResponseError(response, modelsUrl);
@@ -230,7 +250,12 @@ export class ToolbarAIService implements IAIService {
     const text = this.extractText(payload);
     return {
       text,
-      finishReason: payload?.choices?.[0]?.finish_reason ?? payload?.done_reason ?? (payload?.done ? "stop" : undefined),
+      finishReason: this.normalizeFinishReason(
+        payload?.choices?.[0]?.finish_reason
+          ?? payload?.candidates?.[0]?.finishReason
+          ?? payload?.done_reason
+          ?? (payload?.done ? "stop" : undefined),
+      ),
     };
   }
 
@@ -277,7 +302,7 @@ export class ToolbarAIService implements IAIService {
     const response = await requestUrl({
       url: requestUrlValue,
       method: "POST",
-      headers: this.buildRequestHeaders(provider.apiKey),
+      headers: this.buildRequestHeaders(provider.apiKey, provider.apiFormat),
       body: JSON.stringify(this.buildRequestBody(requestUrlValue, provider, messages, options)),
     });
 
@@ -296,6 +321,10 @@ export class ToolbarAIService implements IAIService {
   ): Record<string, unknown> {
     if (provider.kind === "custom" && provider.apiFormat === "ollama") {
       return this.buildOllamaRequestBody(requestUrlValue, provider, messages, options);
+    }
+
+    if (provider.kind === "custom" && provider.apiFormat === "gemini") {
+      return this.buildGeminiRequestBody(provider, messages, options);
     }
 
     return {
@@ -349,6 +378,33 @@ export class ToolbarAIService implements IAIService {
     return prompt ? `${prompt}\n\nASSISTANT:\n` : "ASSISTANT:\n";
   }
 
+  private buildGeminiRequestBody(
+    provider: ResolvedProvider,
+    messages: Array<{ role: string; content: string }>,
+    options: ChatCompletionOptions = {},
+  ): Record<string, unknown> {
+    const systemText = messages
+      .filter((message) => message.role === "system")
+      .map((message) => message.content.trim())
+      .filter(Boolean)
+      .join("\n\n");
+    const contents = messages
+      .filter((message) => message.role !== "system" && message.content.trim())
+      .map((message) => ({
+        role: message.role === "assistant" ? "model" : "user",
+        parts: [{ text: message.content }],
+      }));
+    const generationConfig: Record<string, unknown> = {};
+    if (Number.isFinite(provider.temperature)) generationConfig.temperature = provider.temperature;
+    if (typeof options.maxTokens === "number") generationConfig.maxOutputTokens = options.maxTokens;
+
+    return {
+      systemInstruction: systemText ? { parts: [{ text: systemText }] } : undefined,
+      contents,
+      generationConfig: Object.keys(generationConfig).length > 0 ? generationConfig : undefined,
+    };
+  }
+
   private async resolveProvider(scene: PKMerModelScene = "rewrite"): Promise<ResolvedProvider> {
     const pkmerProvider = await this.getPKMerProvider(scene);
     if (pkmerProvider) {
@@ -396,7 +452,9 @@ export class ToolbarAIService implements IAIService {
     if (!custom.model.trim()) {
       missing.push("model");
     }
-    // API key is optional — the request simply won't include an Authorization header when empty
+    if (customApiFormat === "gemini" && !customApiKey) {
+      missing.push("apiKey");
+    }
 
     if (missing.length > 0) {
       return { provider: null, missing };
@@ -415,6 +473,26 @@ export class ToolbarAIService implements IAIService {
     };
   }
 
+  private getCustomProviderForModelListing(apiFormat: CustomModelApiFormat): ResolvedProvider | null {
+    if (!this.plugin.settings.ai.enableCustomModel) return null;
+    const custom = this.plugin.settings.ai.customModel;
+    const configuredFormat = custom.apiFormat ?? "openai-compatible";
+    const apiKey = this.authService.customModelApiKey.trim();
+    if (configuredFormat !== apiFormat || !custom.baseUrl.trim()) return null;
+    if (apiFormat === "gemini" && !apiKey) {
+      throw new Error(t("Gemini API key is required."));
+    }
+
+    return {
+      kind: "custom",
+      apiFormat,
+      baseUrl: custom.baseUrl.trim(),
+      apiKey,
+      model: custom.model.trim(),
+      temperature: custom.temperature,
+    };
+  }
+
   private buildChatCompletionsUrl(baseUrl: string): string {
     return this.buildChatCompletionsCandidateUrls(baseUrl)[0] ?? baseUrl.trim().replace(/\/+$/, "");
   }
@@ -428,7 +506,9 @@ export class ToolbarAIService implements IAIService {
     const cachedUrl = this.customChatCompletionsUrlCache.get(cacheKey);
     const urls = provider.apiFormat === "ollama"
       ? this.buildOllamaCandidateUrls(provider.baseUrl)
-      : this.buildChatCompletionsCandidateUrls(provider.baseUrl);
+      : provider.apiFormat === "gemini"
+        ? this.buildGeminiCandidateUrls(provider.baseUrl, provider.model)
+        : this.buildChatCompletionsCandidateUrls(provider.baseUrl);
     if (!cachedUrl) {
       return urls;
     }
@@ -499,6 +579,34 @@ export class ToolbarAIService implements IAIService {
     return [`${normalized}/api/tags`];
   }
 
+  private buildGeminiCandidateUrls(baseUrl: string, model: string): string[] {
+    const normalized = this.normalizeGeminiBaseUrl(baseUrl);
+    if (!normalized) return [];
+    if (/\/models\/[^/]+:generateContent$/i.test(normalized)) return [normalized];
+
+    const normalizedModel = model.trim().replace(/^models\//i, "");
+    const modelsBaseUrl = /\/models$/i.test(normalized) ? normalized : `${normalized}/models`;
+    return [`${modelsBaseUrl}/${encodeURIComponent(normalizedModel)}:generateContent`];
+  }
+
+  private buildGeminiModelsUrl(baseUrl: string): string {
+    const normalized = this.normalizeGeminiBaseUrl(baseUrl);
+    if (!normalized) return "";
+    if (/\/models$/i.test(normalized)) return normalized;
+    if (/\/models\/[^/]+:generateContent$/i.test(normalized)) {
+      return normalized.replace(/\/models\/[^/]+:generateContent$/i, "/models");
+    }
+    return `${normalized}/models`;
+  }
+
+  private normalizeGeminiBaseUrl(baseUrl: string): string {
+    const normalized = this.normalizeProviderBaseUrl(baseUrl);
+    if (!normalized) return "";
+    if (/\/models(?:\/[^/]+:generateContent)?$/i.test(normalized)) return normalized;
+    if (/\/v1(?:beta)?$/i.test(normalized)) return normalized;
+    return `${normalized}/v1beta`;
+  }
+
   private buildModelsUrl(baseUrl: string): string {
     const normalized = this.normalizeProviderBaseUrl(baseUrl);
     if (!normalized) return "";
@@ -518,13 +626,17 @@ export class ToolbarAIService implements IAIService {
     return `${normalized}/v1/models`;
   }
 
-  private buildRequestHeaders(apiKey: string): Record<string, string> {
+  private buildRequestHeaders(apiKey: string, apiFormat: CustomModelApiFormat = "openai-compatible"): Record<string, string> {
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
     };
 
     if (apiKey.trim()) {
-      headers.Authorization = `Bearer ${apiKey}`;
+      if (apiFormat === "gemini") {
+        headers["x-goog-api-key"] = apiKey.trim();
+      } else {
+        headers.Authorization = `Bearer ${apiKey}`;
+      }
     }
 
     return headers;
@@ -611,6 +723,16 @@ export class ToolbarAIService implements IAIService {
       })
       .filter((name: string): boolean => !!name);
 
+    return Array.from(new Set(names)).sort((left, right) => left.localeCompare(right));
+  }
+
+  private extractGeminiModelNames(payload: any): string[] {
+    const models = Array.isArray(payload?.models) ? payload.models : [];
+    const names: string[] = models
+      .filter((item: any) => !Array.isArray(item?.supportedGenerationMethods)
+        || item.supportedGenerationMethods.includes("generateContent"))
+      .map((item: any) => typeof item?.name === "string" ? item.name.replace(/^models\//, "").trim() : "")
+      .filter((name: string): boolean => !!name);
     return Array.from(new Set(names)).sort((left, right) => left.localeCompare(right));
   }
 
@@ -804,6 +926,7 @@ export class ToolbarAIService implements IAIService {
   private extractText(payload: any): string {
     const content = payload?.choices?.[0]?.message?.content
       ?? payload?.choices?.[0]?.text
+      ?? payload?.candidates?.[0]?.content?.parts
       ?? payload?.message?.content
       ?? payload?.response
       ?? "";
@@ -814,12 +937,19 @@ export class ToolbarAIService implements IAIService {
       return content
         .map((item) => {
           if (typeof item === "string") return item;
+          if (item?.thought === true) return "";
           return item?.text || item?.content || "";
         })
         .join("")
         .trim();
     }
     return "";
+  }
+
+  private normalizeFinishReason(finishReason: unknown): string | undefined {
+    if (typeof finishReason !== "string" || !finishReason.trim()) return undefined;
+    const normalized = finishReason.trim().toLowerCase();
+    return normalized === "max_tokens" ? "length" : normalized;
   }
 
   private trimCompletionToBoundary(text: string): string {

@@ -151,6 +151,9 @@ export class editingToolbarSettingTab extends PluginSettingTab {
   private cachedCustomOpenAIModels: string[] = [];
   private cachedCustomOpenAIModelsBaseUrl = '';
   private cachedCustomOpenAIModelsError = '';
+  private cachedCustomGeminiModels: string[] = [];
+  private cachedCustomGeminiModelsBaseUrl = '';
+  private cachedCustomGeminiModelsError = '';
   private commandDragState: CommandDragState | null = null;
   private commandSettingsPageDefinition: any = null;
   private selectedImportSourceStyle = 'Main menu';
@@ -2349,6 +2352,25 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     this.refreshSettings();
   }
 
+  private async refreshCustomGeminiModels(): Promise<void> {
+    const baseUrl = this.plugin.settings.ai.customModel.baseUrl.trim();
+
+    try {
+      const models = await this.plugin.aiManager.listCustomGeminiModels();
+      this.cachedCustomGeminiModels = models;
+      this.cachedCustomGeminiModelsBaseUrl = baseUrl;
+      this.cachedCustomGeminiModelsError = '';
+      if (models.length === 0) new Notice(t('No models found at this endpoint.'));
+    } catch (error) {
+      this.cachedCustomGeminiModels = [];
+      this.cachedCustomGeminiModelsBaseUrl = baseUrl;
+      this.cachedCustomGeminiModelsError = getAIErrorMessage(error);
+      new Notice(`${t('Failed to load models:')} ${this.cachedCustomGeminiModelsError}`);
+    }
+
+    this.refreshSettings();
+  }
+
   private clearCommandDropFeedback(ownerDocument: Document): void {
     ownerDocument
       .querySelectorAll<HTMLElement>(
@@ -2909,6 +2931,18 @@ export class editingToolbarSettingTab extends PluginSettingTab {
       },
     });
 
+    new Setting(basicBody)
+      .setName(t('Show AI Tools in Context Menu'))
+      .setDesc(t('Show the AI Tools submenu in the editor right-click menu. Re-enabling AI Editor turns this on again.'))
+      .addToggle((toggle) => toggle
+        .setValue(this.plugin.settings.ai.showAIContextMenu !== false)
+        .onChange(async (value) => {
+          this.plugin.settings.ai.showAIContextMenu = value;
+          await this.plugin.saveSettings();
+          this.plugin.refreshAIAvailability();
+          this.display();
+        }));
+
     if (aiEnabled) {
       const accountBody = createCard({
         title: t('PKMer AI'),
@@ -3129,6 +3163,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
       if (customModelEnabled) {
         const customApiFormat = (this.plugin.settings.ai.customModel.apiFormat ?? 'openai-compatible') as CustomModelApiFormat;
         const isOllamaFormat = customApiFormat === 'ollama';
+        const isGeminiFormat = customApiFormat === 'gemini';
         const customModelBaseUrl = this.plugin.settings.ai.customModel.baseUrl.trim();
         const cachedOllamaModels = isOllamaFormat && this.cachedCustomOllamaModelsBaseUrl === customModelBaseUrl
           ? this.cachedCustomOllamaModels
@@ -3141,14 +3176,17 @@ export class editingToolbarSettingTab extends PluginSettingTab {
             ? t('Stored securely in Obsidian secret storage.')
             : t('Will be stored securely in Obsidian secret storage.'))
           : t('Current Obsidian version does not support secure secret storage.');
-        const apiKeyDesc = `${t('Optional. Leave empty unless your server requires authentication.')} ${secureStorageDesc}`.trim();
+        const apiKeyDesc = `${isGeminiFormat
+          ? t('Required for the native Gemini API.')
+          : t('Optional. Leave empty unless your server requires authentication.')} ${secureStorageDesc}`.trim();
 
         new Setting(customBody)
           .setName(t('Custom API Format'))
-          .setDesc(t('Choose whether the custom model uses an OpenAI-compatible endpoint or the native Ollama API.'))
+          .setDesc(t('Choose whether the custom model uses an OpenAI-compatible endpoint, the native Gemini API, or the native Ollama API.'))
           .addDropdown((dropdown) => {
             dropdown
               .addOption('openai-compatible', t('OpenAI-compatible'))
+              .addOption('gemini', t('Gemini'))
               .addOption('ollama', t('Ollama'))
               .setValue(customApiFormat)
               .onChange(async (value) => {
@@ -3162,9 +3200,16 @@ export class editingToolbarSettingTab extends PluginSettingTab {
           .setName(t('Custom API Base URL'))
           .setDesc(isOllamaFormat
             ? t('Native Ollama endpoint. The root URL, /api, /api/chat, or /api/generate are all supported.')
-            : t('OpenAI-compatible endpoint for your own provider.') + ' ' + t('Example: http://127.0.0.1:1234/v1'))
+            : isGeminiFormat
+              ? t('Gemini API base URL. Example: https://generativelanguage.googleapis.com/v1beta')
+              : `${t('OpenAI-compatible endpoint for your own provider.')} ${t('DeepSeek example: https://api.deepseek.com')} ${t('For DeepSeek, do not append /anthropic in OpenAI-compatible mode.')}`)
           .addText((text) => {
-            text.setPlaceholder(isOllamaFormat ? 'http://127.0.0.1:11434' : 'http://127.0.0.1:1234/v1').setValue(this.plugin.settings.ai.customModel.baseUrl).onChange(async (value) => {
+            const placeholder = isOllamaFormat
+              ? 'http://127.0.0.1:11434'
+              : isGeminiFormat
+                ? 'https://generativelanguage.googleapis.com/v1beta'
+                : 'https://api.deepseek.com';
+            text.setPlaceholder(placeholder).setValue(this.plugin.settings.ai.customModel.baseUrl).onChange(async (value) => {
               this.plugin.settings.ai.customModel.baseUrl = value.trim();
               await this.plugin.saveSettings();
               this.updateUrlValidationNote(customBody, value.trim(), customApiFormat);
@@ -3173,9 +3218,15 @@ export class editingToolbarSettingTab extends PluginSettingTab {
           });
 
         if (!isOllamaFormat) {
-          const cachedModels = this.cachedCustomOpenAIModels;
-          const cachedModelsBaseUrl = this.cachedCustomOpenAIModelsBaseUrl;
-          const cachedModelsError = this.cachedCustomOpenAIModelsError;
+          const cachedModels = isGeminiFormat
+            ? this.cachedCustomGeminiModels
+            : this.cachedCustomOpenAIModels;
+          const cachedModelsBaseUrl = isGeminiFormat
+            ? this.cachedCustomGeminiModelsBaseUrl
+            : this.cachedCustomOpenAIModelsBaseUrl;
+          const cachedModelsError = isGeminiFormat
+            ? this.cachedCustomGeminiModelsError
+            : this.cachedCustomOpenAIModelsError;
           const modelsAreFresh = cachedModelsBaseUrl === customModelBaseUrl;
 
           const detectedModelsDesc = cachedModelsError
@@ -3218,16 +3269,29 @@ export class editingToolbarSettingTab extends PluginSettingTab {
               button.setButtonText(t('Get Models')).onClick(async () => {
                 button.setDisabled(true);
                 button.setButtonText(t('Loading...'));
-                await this.refreshCustomOpenAIModels();
+                if (isGeminiFormat) {
+                  await this.refreshCustomGeminiModels();
+                } else {
+                  await this.refreshCustomOpenAIModels();
+                }
               });
             });
         }
 
         new Setting(customBody)
           .setName(t('Custom Model Name'))
-          .setDesc(t('Model identifier used for inline completion and rewrite requests.'))
+          .setDesc(isGeminiFormat
+            ? t('Gemini model example: gemini-2.5-flash')
+            : isOllamaFormat
+              ? t('Model identifier used for inline completion and rewrite requests.')
+              : t('DeepSeek models: deepseek-v4-flash or deepseek-v4-pro'))
           .addText((text) => {
-            text.setPlaceholder(isOllamaFormat ? 'qwen2.5:7b' : 'gpt-4o-mini').setValue(this.plugin.settings.ai.customModel.model).onChange(async (value) => {
+            const placeholder = isOllamaFormat
+              ? 'qwen2.5:7b'
+              : isGeminiFormat
+                ? 'gemini-2.5-flash'
+                : 'deepseek-v4-flash';
+            text.setPlaceholder(placeholder).setValue(this.plugin.settings.ai.customModel.model).onChange(async (value) => {
               this.plugin.settings.ai.customModel.model = value.trim();
               await this.plugin.saveSettings();
             });
@@ -3274,13 +3338,13 @@ export class editingToolbarSettingTab extends PluginSettingTab {
         }
 
         new Setting(customBody)
-          .setName(t('Custom API Key'))
+          .setName(isGeminiFormat ? t('Gemini API Key') : t('Custom API Key'))
           .setDesc(apiKeyDesc)
           .addText((text) => {
             text.inputEl.type = 'password';
             text.setPlaceholder(this.plugin.aiManager.hasCustomModelApiKey()
               ? t('Stored securely')
-              : t('Optional'))
+              : isGeminiFormat ? t('Required') : t('Optional'))
             text.setValue('').onChange(async (value) => {
               if (value.trim()) {
                 this.plugin.aiManager.saveCustomModelApiKey(value);

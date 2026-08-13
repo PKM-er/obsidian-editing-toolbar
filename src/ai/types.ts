@@ -95,7 +95,7 @@ export interface CustomModelSettings {
   temperature: number;
 }
 
-export type CustomModelApiFormat = "openai-compatible" | "ollama";
+export type CustomModelApiFormat = "openai-compatible" | "ollama" | "gemini";
 
 export type PKMerModelRoutingMode = "smart" | "manual";
 export type PKMerModelScene = "completion" | "rewrite" | "reasoning" | "artifact";
@@ -126,6 +126,7 @@ export interface FrontmatterPromptSettings {
 
 export interface AIPluginSettings {
   enabled: boolean;
+  showAIContextMenu: boolean;
   consentAccepted: boolean;
   onboardingShown: boolean;
   providerMode: "pkmer-first" | "custom-only";
@@ -403,6 +404,7 @@ export function getDefaultCustomPromptTemplates(locale: string = getCurrentLocal
 
 export const DEFAULT_AI_SETTINGS: AIPluginSettings = {
   enabled: false,
+  showAIContextMenu: true,
   consentAccepted: false,
   onboardingShown: false,
   providerMode: "pkmer-first",

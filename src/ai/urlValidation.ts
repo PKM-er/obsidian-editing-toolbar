@@ -33,6 +33,15 @@ export class AIUrlHelper {
         );
       }
     }
+
+    if (apiFormat === "gemini") {
+      const lower = trimmed.toLowerCase().replace(/\/+$/, "");
+      if (lower.includes(":generatecontent")) {
+        throw new Error(
+          t("For Gemini, use the API base URL (for example https://generativelanguage.googleapis.com/v1beta). The plugin adds the model and generateContent path automatically."),
+        );
+      }
+    }
   }
 
   /**
@@ -50,6 +59,15 @@ export class AIUrlHelper {
       if (lower.endsWith("/chat")) {
         warnings.push({
           message: t("The URL ends with /chat. For OpenAI-compatible servers, use e.g. http://127.0.0.1:1234/v1 — the plugin adds /chat/completions for you."),
+          severity: "warning",
+        });
+      }
+    }
+    if (apiFormat === "gemini") {
+      const lower = trimmed.toLowerCase().replace(/\/+$/, "");
+      if (lower.includes(":generatecontent")) {
+        warnings.push({
+          message: t("The Gemini URL includes generateContent. Use https://generativelanguage.googleapis.com/v1beta as the base URL."),
           severity: "warning",
         });
       }

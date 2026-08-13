@@ -430,7 +430,9 @@ export default class editingToolbarPlugin extends Plugin {
   }
 
   private handleCanvasNodeContextMenu = (menu: Menu): void => {
-    this.addEditorContextSubmenu(menu, t("AI Tools"), "sparkles", this.buildCanvasNodeAIContextActions());
+    if (shouldShowAIFeatures() && this.settings.ai.showAIContextMenu !== false) {
+      this.addEditorContextSubmenu(menu, t("AI Tools"), "sparkles", this.buildCanvasNodeAIContextActions());
+    }
   };
 
   private handleEditorContextMenu = (
@@ -439,7 +441,7 @@ export default class editingToolbarPlugin extends Plugin {
     _view: MarkdownView,
   ): void => {
     this.addEditorContextSubmenu(menu, t("Text Tools"), "whole-word", this.buildTextContextActions(editor));
-    if (shouldShowAIFeatures()) {
+    if (shouldShowAIFeatures() && this.settings.ai.showAIContextMenu !== false) {
       this.addEditorContextSubmenu(menu, t("AI Tools"), "sparkles", this.buildAIContextActions(editor));
     }
   };

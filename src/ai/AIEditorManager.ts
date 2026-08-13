@@ -114,6 +114,7 @@ export class AIEditorManager {
 
     this.plugin.settings.ai.consentAccepted = true;
     this.plugin.settings.ai.enabled = true;
+    this.plugin.settings.ai.showAIContextMenu = true;
     await this.persistAIAvailabilityChange();
     new Notice(t("AI editing is now enabled. The plugin does not intentionally store your note content, and requests follow your chosen provider policies."), 6000);
   }
@@ -133,6 +134,7 @@ export class AIEditorManager {
 
     this.plugin.settings.ai.onboardingShown = true;
     this.plugin.settings.ai.enabled = true;
+    this.plugin.settings.ai.showAIContextMenu = true;
     await this.persistAIAvailabilityChange();
     new Notice(t("AI editing is now enabled. The plugin does not intentionally store your note content, and requests follow your chosen provider policies."), 6000);
     return true;
@@ -300,6 +302,10 @@ export class AIEditorManager {
 
   async listCustomOpenAIModels(): Promise<string[]> {
     return this.aiService.listCustomOpenAIModels();
+  }
+
+  async listCustomGeminiModels(): Promise<string[]> {
+    return this.aiService.listCustomGeminiModels();
   }
 
   triggerInlineCompletion(editor?: Editor | null): boolean {
