@@ -1,5 +1,12 @@
 # Changelog
 
+## 4.1.0 (2026-08-13)
+### 4.1.0 适配 最新的 Obsidian 1.13.4 以上版本
+### #347 #345 增加deepseek示例，增加genmini 支持，支持单独关闭ai右键菜单
+### #350 #352  修复Obsidian1.13版本 设置页兼容性，支持官方设置搜索和拖动排序
+### Update manifest.json and CHANGELOG.md for version 4.0.11
+
+
 ## 4.0.11 (2026-07-14)
 ### #330 fixed
 ### 增加ai自定义模型提示和日文翻译
