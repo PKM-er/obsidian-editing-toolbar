@@ -747,6 +747,8 @@ export default {
   'Current Obsidian version does not support secure secret storage.': '当前 Obsidian 版本不支持安全秘密存储。',
   'Stored securely': '已安全存储',
   'Enter API key': '输入 API Key',
+  'Thinking Mode': '推理模式',
+  'Auto leaves provider behavior unchanged. Explicit modes are intended for compatible providers such as DeepSeek.': '自动模式保持服务方的默认行为；显式模式适用于 DeepSeek 等兼容服务。',
   'Temperature': '温度',
   'Lower values are more stable; higher values are more creative.': '更低的值更稳定，更高的值更具创造性。',
   'Test Connection': '测试连接',

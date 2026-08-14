@@ -728,6 +728,8 @@ export default {
   'Current Obsidian version does not support secure secret storage.': 'Current Obsidian version does not support secure secret storage.',
   'Stored securely': 'Stored securely',
   'Enter API key': 'Enter API key',
+  'Thinking Mode': 'Thinking Mode',
+  'Auto leaves provider behavior unchanged. Explicit modes are intended for compatible providers such as DeepSeek.': 'Auto leaves provider behavior unchanged. Explicit modes are intended for compatible providers such as DeepSeek.',
   'Temperature': 'Temperature',
   'Lower values are more stable; higher values are more creative.': 'Lower values are more stable; higher values are more creative.',
   'Test Connection': 'Test Connection',

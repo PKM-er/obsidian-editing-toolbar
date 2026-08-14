@@ -87,12 +87,15 @@ export interface PKMerAuthSettings {
   userInfo: PKMerUserInfo | null;
 }
 
+export type CustomModelThinkingMode = "auto" | "disabled" | "enabled";
+
 export interface CustomModelSettings {
   apiFormat: CustomModelApiFormat;
   baseUrl: string;
   apiKey: string;
   model: string;
   temperature: number;
+  thinkingMode: CustomModelThinkingMode;
 }
 
 export type CustomModelApiFormat = "openai-compatible" | "ollama" | "gemini";
@@ -426,6 +429,7 @@ export const DEFAULT_AI_SETTINGS: AIPluginSettings = {
     apiKey: "",
     model: "",
     temperature: 0.2,
+    thinkingMode: "auto",
   },
   frontmatterPrompt: createDefaultFrontmatterPromptSettings(),
   customPromptHistory: [],

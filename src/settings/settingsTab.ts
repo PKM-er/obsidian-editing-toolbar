@@ -20,7 +20,7 @@ import { RegexCommandModal } from "src/modals/RegexCommandModal";
 import { ButtonComponent } from "obsidian";
 import { ConfirmModal } from "src/modals/ConfirmModal";
 import { createDefaultFrontmatterPromptSettings, getDefaultCustomPromptTemplates, PKMER_MODEL_OPTIONS, resolvePKMerModelForScene } from "src/ai/types";
-import type { CustomModelApiFormat } from "src/ai/types";
+import type { CustomModelApiFormat, CustomModelThinkingMode } from "src/ai/types";
 import { AIUrlHelper } from "src/ai/urlValidation";
 import { getAIErrorMessage } from "src/ai/errorHandling";
 import { getPKMerAIEntryUrl, getPKMerAIQuotaUrl } from "src/ai/pkmerWeb";
@@ -3569,6 +3569,23 @@ export class editingToolbarSettingTab extends PluginSettingTab {
         const moreOptions = customBody.createEl('details', { cls: 'editing-toolbar-ai-inline-disclosure' });
         moreOptions.createEl('summary', { cls: 'editing-toolbar-ai-inline-summary', text: t('More Options') });
         const moreOptionsBody = moreOptions.createDiv('editing-toolbar-ai-inline-body');
+
+        if (customApiFormat === 'openai-compatible') {
+          new Setting(moreOptionsBody)
+            .setName(t('Thinking Mode'))
+            .setDesc(t('Auto leaves provider behavior unchanged. Explicit modes are intended for compatible providers such as DeepSeek.'))
+            .addDropdown((dropdown) => {
+              dropdown
+                .addOption('auto', t('Auto'))
+                .addOption('disabled', t('Disabled'))
+                .addOption('enabled', t('Enabled'))
+                .setValue(this.plugin.settings.ai.customModel.thinkingMode ?? 'auto')
+                .onChange(async (value) => {
+                  this.plugin.settings.ai.customModel.thinkingMode = value as CustomModelThinkingMode;
+                  await this.plugin.saveSettings();
+                });
+            });
+        }
 
         new Setting(moreOptionsBody)
           .setName(t('Temperature'))
