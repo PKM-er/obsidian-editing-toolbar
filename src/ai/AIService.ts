@@ -4,7 +4,7 @@ import { t } from "src/translations/helper";
 import { AIUserNoticeError, getAIErrorMessage, getRequestErrorStatus } from "./errorHandling";
 import { resolvePKMerModelForScene } from "./types";
 import type { CompletionParams, IAIService, PKMerModelScene, RewriteArtifactKind, RewriteInstruction, RewriteParams } from "./types";
-import type { CustomModelApiFormat } from "./types";
+import type { CustomModelApiFormat, CustomModelThinkingMode } from "./types";
 import { PKMerAuthService } from "./PKMerAuthService";
 import { AIUrlHelper } from "./urlValidation";
 
@@ -15,6 +15,7 @@ interface ResolvedProvider {
   apiKey: string;
   model: string;
   temperature: number;
+  thinkingMode: CustomModelThinkingMode;
 }
 
 interface CustomProviderValidationResult {
@@ -327,13 +328,23 @@ export class ToolbarAIService implements IAIService {
       return this.buildGeminiRequestBody(provider, messages, options);
     }
 
-    return {
+    const body: Record<string, unknown> = {
       model: provider.model,
       temperature: provider.temperature,
       max_tokens: options.maxTokens,
       stream: false,
       messages,
     };
+
+    if (
+      provider.kind === "custom"
+      && provider.apiFormat === "openai-compatible"
+      && provider.thinkingMode !== "auto"
+    ) {
+      body.thinking = { type: provider.thinkingMode };
+    }
+
+    return body;
   }
 
   private buildOllamaRequestBody(
@@ -433,6 +444,7 @@ export class ToolbarAIService implements IAIService {
       apiKey: this.authService.aiToken,
       model: resolvePKMerModelForScene(settings, scene),
       temperature: settings.customModel.temperature,
+      thinkingMode: "auto",
     };
   }
 
@@ -468,6 +480,7 @@ export class ToolbarAIService implements IAIService {
         apiKey: customApiKey,
         model: custom.model.trim(),
         temperature: custom.temperature,
+        thinkingMode: custom.thinkingMode ?? "auto",
       },
       missing: [],
     };
@@ -490,6 +503,7 @@ export class ToolbarAIService implements IAIService {
       apiKey,
       model: custom.model.trim(),
       temperature: custom.temperature,
+      thinkingMode: custom.thinkingMode ?? "auto",
     };
   }
 
