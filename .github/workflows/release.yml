@@ -117,8 +117,8 @@ jobs:
                   npm run build
                   # 为发布准备文件
                   mkdir ${{ env.PLUGIN_NAME }}
-                  # 从实际构建输出目录复制文件
-                  cp ${{ env.OUTPUT_DIR }}/main.js ${{ env.OUTPUT_DIR }}/styles.css ./manifest.json ${{ env.PLUGIN_NAME }}/
+                  # main.js 来自构建输出目录，styles.css 和 manifest.json 来自仓库根目录
+                  cp ${{ env.OUTPUT_DIR }}/main.js ./styles.css ./manifest.json ${{ env.PLUGIN_NAME }}/
                   zip -r ${{ env.PLUGIN_NAME }}.zip ${{ env.PLUGIN_NAME }}
                   ls
             
