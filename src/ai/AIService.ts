@@ -703,8 +703,19 @@ export class ToolbarAIService implements IAIService {
     status: number;
     response: RequestUrlResponse;
   } {
-    const errorMessage = response.json?.error?.message
-      || response.json?.message
+    // response.json is a getter that calls JSON.parse(this.text); when the
+    // body is not valid JSON (e.g. a 401 "Authentication required" plain-text
+    // response), accessing it throws SyntaxError. Parse defensively so the
+    // error path itself never crashes.
+    let parsedJson: any;
+    try {
+      parsedJson = response.json;
+    } catch {
+      parsedJson = null;
+    }
+
+    const errorMessage = parsedJson?.error?.message
+      || parsedJson?.message
       || response.text
       || `Request failed with status ${response.status} (${requestUrlValue})`;
     const error = new Error(typeof errorMessage === "string" ? errorMessage.trim() : String(errorMessage)) as Error & {
