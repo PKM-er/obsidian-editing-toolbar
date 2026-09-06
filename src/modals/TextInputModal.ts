@@ -160,7 +160,7 @@ export class TextInputModal extends Modal {
                         : setting.controlEl);
 
                     if (field === this.fields[0]) {
-                        setTimeout(() => textarea.inputEl.focus(), 10);
+                        window.setTimeout(() => textarea.inputEl.focus(), 10);
                     }
 
                     textarea.inputEl.addEventListener("keydown", (e) => {
@@ -192,7 +192,7 @@ export class TextInputModal extends Modal {
 
                 // 第一个输入框自动聚焦
                 if (field === this.fields[0]) {
-                    setTimeout(() => text.inputEl.focus(), 10);
+                    window.setTimeout(() => text.inputEl.focus(), 10);
                 }
 
                 // 支持回车提交
@@ -315,7 +315,7 @@ export class TextInputModal extends Modal {
             this.attachLinkedNoteSupport(field, textareaEl, wrapper);
 
             if (field === this.fields[0]) {
-                setTimeout(() => textareaEl.focus(), 10);
+                window.setTimeout(() => textareaEl.focus(), 10);
             }
 
             textareaEl.addEventListener("input", () => {
@@ -348,7 +348,7 @@ export class TextInputModal extends Modal {
         this.attachLinkedNoteSupport(field, inputEl, wrapper);
 
         if (field === this.fields[0]) {
-            setTimeout(() => inputEl.focus(), 10);
+            window.setTimeout(() => inputEl.focus(), 10);
         }
 
         inputEl.addEventListener("input", () => {

@@ -206,7 +206,7 @@ function addSpecialCharButtons(setting: Setting, input: HTMLInputElement) {
           tooltip.textContent = '已复制!';
           
           // 2秒后移除提示
-          setTimeout(() => {
+          window.setTimeout(() => {
             tooltip.remove();
           }, 2000);
         })
@@ -422,7 +422,7 @@ addSpecialCharButtons(suffixSetting, suffixSetting.controlEl.querySelector('inpu
           // 保存设置并关闭模态框
           this.plugin.saveSettings().then(() => {
             this.close();
-            setTimeout(() => {
+            window.setTimeout(() => {
               dispatchEvent(new Event("editingToolbar-NewCommand"));
               this.plugin.reloadCustomCommands();
             }, 100);
@@ -435,7 +435,7 @@ addSpecialCharButtons(suffixSetting, suffixSetting.controlEl.querySelector('inpu
       );
 
     // 设置光标聚焦逻辑
-    setTimeout(() => {
+    window.setTimeout(() => {
       if (this.commandIndex)
         this.commandIdInput.inputEl.focus();
       else

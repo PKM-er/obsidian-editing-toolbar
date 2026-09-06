@@ -3,6 +3,7 @@ import {
   Command,
   Notice,
   MarkdownView,
+  ItemView,
   htmlToMarkdown,
 } from "obsidian";
 
@@ -141,7 +142,7 @@ export class CommandsManager {
   }
 
   private getActiveCanvasView(): any | null {
-    const activeLeafView = this.plugin.app.workspace.activeLeaf?.view as any;
+    const activeLeafView = this.plugin.app.workspace.getActiveViewOfType(ItemView) as any;
     if (activeLeafView?.getViewType?.() === "canvas") {
       return activeLeafView;
     }
@@ -523,7 +524,7 @@ export class CommandsManager {
   }
 
   public getActiveEditor(): any {
-    // @ts-ignore
+    // @ts-expect-error - Obsidian API type mismatch
     const activeEditor = this.plugin.app.workspace?.activeEditor;
     if (activeEditor && activeEditor.editor) {
       return activeEditor.editor;
@@ -531,7 +532,7 @@ export class CommandsManager {
 
     // 最后尝试从活跃叶子获取编辑器
     try {
-      const activeLeafEditor = this.plugin.app.workspace.activeLeaf?.view?.editor;
+      const activeLeafEditor = this.plugin.app.workspace.getActiveViewOfType(MarkdownView)?.editor;
       if (activeLeafEditor) {
         return activeLeafEditor;
       }
@@ -561,7 +562,7 @@ export class CommandsManager {
         this.plugin.settings.cMenuVisibility =
           !this.plugin.settings.cMenuVisibility;
         if (this.plugin.settings.cMenuVisibility) {
-          setTimeout(() => {
+          window.setTimeout(() => {
             dispatchEvent(new Event("editingToolbar-NewCommand"));
           }, 100);
         } else {
@@ -690,7 +691,6 @@ export class CommandsManager {
       id: "ai-inline-completion",
       name: this.formatAICommandName("Complete", "Quick Trigger"),
       icon: "lucide-sparkles",
-      hotkeys: [{ modifiers: ["Mod"], key: "j" }],
       editorCallback: (editor: Editor) => {
         this.plugin.aiManager.triggerInlineCompletion(editor);
       },
@@ -1214,7 +1214,6 @@ export class CommandsManager {
     this.plugin.addCommand({
       id: "fullscreen-focus",
       name: "Toggle Fullscreen Focus Mode",
-      hotkeys: [{ modifiers: ["Mod", "Shift"], key: "F11" }],
       callback: () => {
         return fullscreenMode(app);
       },
@@ -1226,7 +1225,6 @@ export class CommandsManager {
       callback: () => {
         return workplacefullscreenMode(app);
       },
-      hotkeys: [{ modifiers: ["Mod"], key: "F11" }],
       icon: "remix-SplitCellsHorizontal",
     });
 
@@ -1273,7 +1271,7 @@ export class CommandsManager {
           editor &&
             this.executeCommandWithoutBlur(editor, async () => {
               const curserEnd = editor.getCursor("to");
-              let char = this.getCharacterOffset(type["id"]);
+              const char = this.getCharacterOffset(type["id"]);
               await this.plugin.app.commands.executeCommandById(
                 `${type["id"]}`
               );

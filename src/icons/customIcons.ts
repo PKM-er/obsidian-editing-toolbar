@@ -46,7 +46,7 @@ export default function addIcons() {
       name: icon.substring(2),
     });
     const svg = renderToString(
-      // @ts-ignore
+      // @ts-expect-error - Obsidian API type mismatch
       remixicons[icon]({
         size: "100",
       })
@@ -64,7 +64,7 @@ export default function addIcons() {
       name: icon.substring(2),
     });
     const svg = renderToString(
-      // @ts-ignore
+      // @ts-expect-error - Obsidian API type mismatch
       boxicons[icon]({
         size: "100",
       })

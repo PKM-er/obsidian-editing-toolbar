@@ -107,6 +107,21 @@ This differs from the cmenu plugin in the following points:
 This is the Obsidian example vault is amazing, there are a lot of dazzling features and showcase, I believe you will wonder a bit, is this Obsidian?
 [Blue-topaz-examples](https://github.com/cumany/Blue-topaz-examples)
 
+### Privacy & Network Access
+
+This plugin may make network requests in the following scenarios. All requests are initiated by the user; no data is sent anywhere unless you explicitly use these features.
+
+| Feature | Endpoint | Data sent | Purpose |
+|---------|----------|-----------|---------|
+| AI assist / rewrite / inline completion | User-configured AI API endpoint (OpenAI, DeepSeek, Gemini, Ollama, etc.) | Selected note text, custom prompt, frontmatter properties | Send text to your chosen LLM for AI-assisted editing |
+| PKMer sync (optional) | `api.pkmer.cn` | Toolbar settings JSON, OAuth token (base64url-encoded JWT for authentication) | Sync toolbar configuration across devices |
+
+**What is NOT sent:** The plugin does not transmit your vault contents, filenames, or personal data to any server controlled by the plugin author. AI requests go directly to the endpoint **you** configure in settings.
+
+**Base64 usage:** The plugin uses `btoa()`/base64url encoding solely for JWT authentication token construction when the optional PKMer sync feature is enabled. No user note content is base64-encoded for transmission.
+
+**Local-only data:** All toolbar settings, custom commands, and icon configurations are stored locally in your vault's `.obsidian/plugins/editing-toolbar/data.json`.
+
 ### support
 Thank you very much for your support!
 

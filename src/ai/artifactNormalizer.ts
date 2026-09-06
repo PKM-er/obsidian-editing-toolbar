@@ -649,7 +649,7 @@ function normalizeHexId(value: unknown, registry: Set<string>): string {
     }
   }
 
-  let nextId = "";
+  let nextId: string;
   do {
     nextId = generateHexId();
   } while (registry.has(nextId));

@@ -1,6 +1,6 @@
 import type editingToolbarPlugin from "src/plugin/main";
 import { App, Notice, requireApiVersion, ItemView, MarkdownView, ButtonComponent, WorkspaceParent, WorkspaceWindow, WorkspaceParentExt, Menu, setIcon, Platform } from "obsidian";
-import { backcolorpicker, colorpicker } from "src/util/util";
+import { backcolorpicker, colorpicker, safeSetInnerHTML } from "src/util/util";
 import { t } from "src/translations/helper";
 import {
   editingToolbarSettings,
@@ -36,7 +36,7 @@ export function getRootSplits(): WorkspaceParentExt[] {
   // push the main window's root split to the list
   rootSplits.push(app.workspace.rootSplit as WorkspaceParent as WorkspaceParentExt)
 
-  // @ts-ignore floatingSplit is undocumented
+  // @ts-expect-error floatingSplit is undocumented
   const floatingSplit = app.workspace.floatingSplit as WorkspaceParentExt;
   floatingSplit?.children.forEach((child: WorkspaceParentExt) => {
     // if this is a window, push it to the list
@@ -130,7 +130,7 @@ export function isExistoolbar(
 ): HTMLElement {
   const targetDocument =
     hostDocument ||
-    app.workspace.activeLeaf?.view?.containerEl?.ownerDocument ||
+    app.workspace.getActiveViewOfType(ItemView)?.containerEl?.ownerDocument ||
     (requireApiVersion("0.15.0") ? activeWindow.document : window.document);
 
   activeDocument = targetDocument;
@@ -154,12 +154,12 @@ export function isExistoolbar(
   // 缓存未命中，执行 DOM 查询
   const selector = `.editingToolbarModalBar[data-toolbar-style="${targetStyle}"]`;
 
-  let container: HTMLElement | null = null;
+  let container: HTMLElement | null;
 
   if (targetStyle === "top") {
     // top 样式的工具栏挂在当前活动 leaf 容器下
     container =
-      (app.workspace.activeLeaf?.view.containerEl?.querySelector(
+      (app.workspace.getActiveViewOfType(ItemView)?.containerEl?.querySelector(
         selector
       ) as HTMLElement) || null;
   } else {
@@ -190,15 +190,15 @@ function setHilite(keys: any, how: string) {
 }
 
 function getHotkey(app: App, cmdid: string, highlight = false) {
-  // @ts-ignore
-  let arr = app.commands.findCommand(cmdid)
-  let hi = highlight ? '*' : '';
+  // @ts-expect-error - Obsidian API type mismatch
+  const arr = app.commands.findCommand(cmdid)
+  const hi = highlight ? '*' : '';
   if (arr) {
-    let defkeys = arr.hotkeys ? [[getNestedObject(arr.hotkeys, [0, 'modifiers'])],
+    const defkeys = arr.hotkeys ? [[getNestedObject(arr.hotkeys, [0, 'modifiers'])],
     [getNestedObject(arr.hotkeys, [0, 'key'])]] : undefined;
-    // @ts-ignore
-    let ck = app.hotkeyManager.customKeys[arr.id];
-    var hotkeys = ck ? [[getNestedObject(ck, [0, 'modifiers'])], [getNestedObject(ck, [0, 'key'])]] : undefined;
+    // @ts-expect-error - Obsidian API type mismatch
+    const ck = app.hotkeyManager.customKeys[arr.id];
+    const hotkeys = ck ? [[getNestedObject(ck, [0, 'modifiers'])], [getNestedObject(ck, [0, 'key'])]] : undefined;
     return hotkeys ? setHilite(hotkeys, hi) : setHilite(defkeys, '');
   } else
     return "–"
@@ -207,7 +207,7 @@ function getHotkey(app: App, cmdid: string, highlight = false) {
 
 
 export const getCoords = (editor: any) => {
-  let cursorFrom = editor.getCursor("head");
+  const cursorFrom = editor.getCursor("head");
   if (editor.getCursor("head").ch !== editor.getCursor("from").ch) cursorFrom.ch = Math.max(0, cursorFrom.ch - 1);
 
   let coords;
@@ -224,7 +224,7 @@ export const getCoords = (editor: any) => {
 
 
 export function checkHtml(htmlStr: string) {
-  let reg = /<[^>]+>/g;
+  const reg = /<[^>]+>/g;
   return reg.test(htmlStr);
 }
 
@@ -241,7 +241,7 @@ function applyMenuItemIcon(menuItem: any, icon: string) {
     menuItem.setIcon("lucide-square");
     if (menuItem.iconEl) {
       menuItem.iconEl.empty();
-      menuItem.iconEl.innerHTML = icon;
+      safeSetInnerHTML(menuItem.iconEl, icon);
     }
     return;
   }
@@ -356,7 +356,7 @@ function isCanvasOnlyAIAction(commandId?: string | null): boolean {
 
 function getAIToolbarButtonLabel(plugin: editingToolbarPlugin): string {
   const commandId = plugin.lastExecutedCommand;
-  const isCanvasScene = plugin.app.workspace.activeLeaf?.view?.getViewType?.() === "canvas";
+  const isCanvasScene = plugin.app.workspace.getActiveViewOfType(ItemView)?.getViewType() === "canvas";
   const activeEditor = plugin.commandsManager?.getActiveEditor?.();
 
   if ((!commandId || isCanvasOnlyAIAction(commandId)) && isCanvasScene && !activeEditor) {
@@ -433,7 +433,7 @@ async function executeAIToolbarAction(
   }
 
   if (actionId === "editing-toolbar:ai-tools:custom" || actionId === "editing-toolbar:ai-rewrite-custom") {
-    if (plugin.app.workspace.activeLeaf?.view?.getViewType?.() === "canvas" && !editor) {
+    if (plugin.app.workspace.getActiveViewOfType(ItemView)?.getViewType() === "canvas" && !editor) {
       return plugin.aiManager.openCanvasGlobalPromptModal();
     }
     return plugin.aiManager.openCustomRewrite(editor);
@@ -459,7 +459,7 @@ async function executeAIToolbarAction(
 }
 
 export function createDiv(selector: string) {
-  let div = createEl("div");
+  const div = createEl("div");
   div.addClass(selector);
   return div;
 }
@@ -469,14 +469,14 @@ export function createTablecell(app: App, plugin: editingToolbarPlugin, el: stri
   requireApiVersion("0.15.0") ? activeDocument = activeWindow.document : activeDocument = window.document;
 
   const container = root || (isExistoolbar(app, plugin) as HTMLElement | null);
-  let tab = container?.querySelector('#' + el);
+  const tab = container?.querySelector('#' + el);
   if (tab) {
-    // @ts-ignore
-    let rows = tab.rows;
-    let rlen = rows.length;
+    // @ts-expect-error - Obsidian API type mismatch
+    const rows = tab.rows;
+    const rlen = rows.length;
     for (let i = 1; i < rlen; i++) {
       //遍历所有行
-      let cells = rows[i].cells; //得到这一行的所有单元格
+      const cells = rows[i].cells; //得到这一行的所有单元格
       for (let j = 0; j < cells.length; j++) {
         //给每一个单元格添加click事件
         cells[j].onclick = function (event: MouseEvent) {
@@ -489,18 +489,18 @@ export function createTablecell(app: App, plugin: editingToolbarPlugin, el: stri
             if (el == "x-color-picker-table") {
               plugin.settings.cMenuFontColor = backcolor;
               setFontcolor(backcolor, editor);
-              let font_colour_dom = activeDocument.querySelectorAll("#change-font-color-icon")
+              const font_colour_dom = activeDocument.querySelectorAll("#change-font-color-icon")
               font_colour_dom.forEach(element => {
-                let ele = element as HTMLElement
+                const ele = element as HTMLElement
                 ele.style.fill = backcolor;
               });
 
             } else if (el == "x-backgroundcolor-picker-table") {
               plugin.settings.cMenuBackgroundColor = backcolor;
               setBackgroundcolor(backcolor, editor);
-              let background_colour_dom = activeDocument.querySelectorAll("#change-background-color-icon")
+              const background_colour_dom = activeDocument.querySelectorAll("#change-background-color-icon")
               background_colour_dom.forEach(element => {
-                let ele = element as HTMLElement
+                const ele = element as HTMLElement
                 ele.style.fill = backcolor;
               });
 
@@ -518,11 +518,11 @@ export function createTablecell(app: App, plugin: editingToolbarPlugin, el: stri
 
 
 export const setcolorHex = function (color: string) {
-  let that = color;
+  const that = color;
 
-  let reg = /^#([0-9a-fA-f]{3}|[0-9a-fA-f]{6})$/;
+  const reg = /^#([0-9a-fA-f]{3}|[0-9a-fA-f]{6})$/;
   if (/^(rgb|RGB)/.test(that)) {
-    let aColor = that.replace(/(?:\(|\)|rgb|RGB)*/g, "").split(",");
+    const aColor = that.replace(/(?:\(|\)|rgb|RGB)*/g, "").split(",");
     let strHex = "#";
     for (let i = 0; i < aColor.length; i++) {
       let hex = Number(aColor[i]).toString(16);
@@ -539,7 +539,7 @@ export const setcolorHex = function (color: string) {
     }
     return strHex;
   } else if (reg.test(that)) {
-    let aNum = that.replace(/#/, "").split("");
+    const aNum = that.replace(/#/, "").split("");
     if (aNum.length === 6) {
       return that;
     } else if (aNum.length === 3) {
@@ -614,9 +614,9 @@ export function createMoremenu(app: App, plugin: editingToolbarPlugin, selector:
     popoverEl.style.margin = "0";
   };
 
-  let cMoreMenu = selector.createEl("span");
+  const cMoreMenu = selector.createEl("span");
   cMoreMenu.addClass("more-menu");
-  let morebutton = new ButtonComponent(cMoreMenu);
+  const morebutton = new ButtonComponent(cMoreMenu);
   morebutton
     .setClass("editingToolbarCommandItem")
     .setTooltip(t("More"))
@@ -630,7 +630,7 @@ export function createMoremenu(app: App, plugin: editingToolbarPlugin, selector:
         Morecontainer.style.height = "0";
       }
     });
-  morebutton.buttonEl.innerHTML = `<svg  width="14" height="14"  version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" enable-background="new 0 0 1024 1024" xml:space="preserve"><path fill="#666" d="M510.29 14.13 q17.09 -15.07 40.2 -14.07 q23.12 1 39.2 18.08 l334.66 385.92 q25.12 30.15 34.16 66.83 q9.04 36.68 0.5 73.87 q-8.54 37.19 -32.66 67.34 l-335.67 390.94 q-15.07 18.09 -38.69 20.1 q-23.62 2.01 -41.71 -13.07 q-18.08 -15.08 -20.09 -38.19 q-2.01 -23.12 13.06 -41.21 l334.66 -390.94 q11.06 -13.06 11.56 -29.65 q0.5 -16.58 -10.55 -29.64 l-334.67 -386.92 q-15.07 -17.09 -13.56 -40.7 q1.51 -23.62 19.59 -38.7 ZM81.17 14.13 q17.08 -15.07 40.19 -14.07 q23.11 1 39.2 18.08 l334.66 385.92 q25.12 30.15 34.16 66.83 q9.04 36.68 0.5 73.87 q-8.54 37.19 -32.66 67.34 l-335.67 390.94 q-15.07 18.09 -38.69 20.6 q-23.61 2.51 -41.7 -12.57 q-18.09 -15.08 -20.1 -38.69 q-2.01 -23.62 13.06 -41.71 l334.66 -390.94 q11.06 -13.06 11.56 -29.65 q0.5 -16.58 -10.55 -29.64 l-334.66 -386.92 q-15.08 -17.09 -13.57 -40.7 q1.51 -23.62 19.6 -38.7 Z"/></svg>`;
+  safeSetInnerHTML(morebutton.buttonEl, `<svg  width="14" height="14"  version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" enable-background="new 0 0 1024 1024" xml:space="preserve"><path fill="#666" d="M510.29 14.13 q17.09 -15.07 40.2 -14.07 q23.12 1 39.2 18.08 l334.66 385.92 q25.12 30.15 34.16 66.83 q9.04 36.68 0.5 73.87 q-8.54 37.19 -32.66 67.34 l-335.67 390.94 q-15.07 18.09 -38.69 20.1 q-23.62 2.01 -41.71 -13.07 q-18.08 -15.08 -20.09 -38.19 q-2.01 -23.12 13.06 -41.21 l334.66 -390.94 q11.06 -13.06 11.56 -29.65 q0.5 -16.58 -10.55 -29.64 l-334.67 -386.92 q-15.07 -17.09 -13.56 -40.7 q1.51 -23.62 19.59 -38.7 ZM81.17 14.13 q17.08 -15.07 40.19 -14.07 q23.11 1 39.2 18.08 l334.66 385.92 q25.12 30.15 34.16 66.83 q9.04 36.68 0.5 73.87 q-8.54 37.19 -32.66 67.34 l-335.67 390.94 q-15.07 18.09 -38.69 20.6 q-23.61 2.51 -41.7 -12.57 q-18.09 -15.08 -20.1 -38.69 q-2.01 -23.62 13.06 -41.71 l334.66 -390.94 q11.06 -13.06 11.56 -29.65 q0.5 -16.58 -10.55 -29.64 l-334.66 -386.92 q-15.08 -17.09 -13.57 -40.7 q1.51 -23.62 19.6 -38.7 Z"/></svg>`);
   plugin.setIS_MORE_Button(false);
   return cMoreMenu;
 }
@@ -659,17 +659,17 @@ export function setFormateraser(plugin: editingToolbarPlugin, editor: Editor) {
   // 检查是否是 callout 格式
   if (selectText.match(/^>\s*\[\![\w\s]*\]/m)) {
     // 处理 callout 格式
-    let lines = selectText.split('\n');
-    let result = [];
+    const lines = selectText.split('\n');
+    const result = [];
     let inCallout = false;
     let calloutLevel = 0;
     let foundFirstCallout = false;
 
     for (let i = 0; i < lines.length; i++) {
-      let line = lines[i];
+      const line = lines[i];
 
       // 检测 callout 开始
-      let calloutMatch = line.match(/^(>+)\s*\[\!([\w\s]*)\]\s*(.*?)$/);
+      const calloutMatch = line.match(/^(>+)\s*\[\!([\w\s]*)\]\s*(.*?)$/);
       if (calloutMatch && !foundFirstCallout) {
         // 找到第一个 callout，记录其级别
         calloutLevel = calloutMatch[1].length;
@@ -686,11 +686,11 @@ export function setFormateraser(plugin: editingToolbarPlugin, editor: Editor) {
 
       // 处理 callout 内容
       if (inCallout) {
-        let linePrefix = line.match(/^(>+)\s*/);
+        const linePrefix = line.match(/^(>+)\s*/);
         if (linePrefix && linePrefix[1].length >= calloutLevel) {
           // 这行是当前 callout 的一部分
           // 去除与当前 callout 级别相同的前缀
-          let newLine = line.replace(new RegExp(`^>{${calloutLevel}}\\s*`), '');
+          const newLine = line.replace(new RegExp(`^>{${calloutLevel}}\\s*`), '');
 
           // 如果有更深层次的 >，保留它们
           result.push(newLine);
@@ -708,7 +708,7 @@ export function setFormateraser(plugin: editingToolbarPlugin, editor: Editor) {
     return;
   }
 
-  let mdText = /(^#+\s|^#(?=\s)|^\>|^\- \[( |x)\]|^\+ |\<[^\<\>]+?\>|^1\. |^\s*\- |^\-+$|^\*+$)/mg;
+  const mdText = /(^#+\s|^#(?=\s)|^\>|^\- \[( |x)\]|^\+ |\<[^\<\>]+?\>|^1\. |^\s*\- |^\-+$|^\*+$)/mg;
   selectText = selectText.replace(mdText, "");
   selectText = selectText.replace(/^[ ]+|[ ]+$/mg, "");
   selectText = selectText.replace(/\!?\[\[([^\[\]\|]*\|)*([^\(\)\[\]]+)\]\]/g, "$2");
@@ -742,7 +742,7 @@ export function createFollowingbar(
     hostDocument ||
     (editor as any)?.cm?.dom?.ownerDocument ||
     (editor as any)?.cm?.contentDOM?.ownerDocument ||
-    app.workspace.activeLeaf?.view?.containerEl?.ownerDocument ||
+    app.workspace.getActiveViewOfType(ItemView)?.containerEl?.ownerDocument ||
     (requireApiVersion("0.15.0") ? activeWindow.document : window.document);
 
   // 获取或创建“following”样式的工具栏
@@ -776,7 +776,7 @@ export function createFollowingbar(
   const viewType = view?.getViewType();
   const isMarkdownView = viewType === "markdown";
 
-  let height = 30;
+  let height: number;
   if (plugin.settings.aestheticStyle === "tiny") {
     height = 30;
   } else {
@@ -832,7 +832,7 @@ function positionToolbar(toolbar: HTMLElement, editor: Editor) {
   // 获取选择的起点和终点位置
   const from = editor.getCursor("from");
   const to = editor.getCursor("to");
-  //@ts-ignore
+  //@ts-expect-error - Obsidian API type mismatch
   const coords = editor.coordsAtPos(from); //选择开始位置
 
   // 计算左侧位置
@@ -875,7 +875,7 @@ function calculateTopPosition(
 ) {
   const from = editor.getCursor("from");
   const to = editor.getCursor("to");
-  //@ts-ignore
+  //@ts-expect-error - Obsidian API type mismatch
   const coordsTO = editor.coordsAtPos(to); //选择结束位置
 
   const isSingleLineSelection = from.line === to.line;
@@ -910,7 +910,7 @@ export function editingToolbarPopover(
   const settings = plugin.settings;
   const targetDocument =
     hostDocument ||
-    app.workspace.activeLeaf?.view?.containerEl?.ownerDocument ||
+    app.workspace.getActiveViewOfType(ItemView)?.containerEl?.ownerDocument ||
     (requireApiVersion("0.15.0") ? activeWindow.document : window.document);
 
   activeDocument = targetDocument;
@@ -1000,10 +1000,10 @@ export function editingToolbarPopover(
     const generateMenu = () => {
       let btnwidth = 0;
       let leafwidth = 0;
-      let buttonWidth = resolvedIconSize + 8;
+      const buttonWidth = resolvedIconSize + 8;
     
       // 主工具栏容器
-      let editingToolbar = createEl("div");
+      const editingToolbar = createEl("div");
       if (editingToolbar) {
         // 标记为编辑工具栏，并带上样式信息
         editingToolbar.addClass("editingToolbarModalBar");
@@ -1038,7 +1038,7 @@ export function editingToolbarPopover(
       editingToolbar.setAttribute("id", "editingToolbarModalBar");
     
       // 二级弹出菜单
-      let PopoverMenu = createEl("div");
+      const PopoverMenu = createEl("div");
       PopoverMenu.addClass("editingToolbarpopover");
       PopoverMenu.addClass("editingToolbarTinyAesthetic");
     
@@ -1089,13 +1089,13 @@ export function editingToolbarPopover(
       }
 
       if (effectiveStyle === "top") {
-        let currentleaf = app.workspace.activeLeaf.view.containerEl;
+        const currentleaf = app.workspace.getActiveViewOfType(ItemView)?.containerEl;
 
         // 确定要插入工具栏的目标元素
         let targetDom: HTMLElement | null = null;
 
         // 获取当前视图类型
-        const viewType = app.workspace.activeLeaf.view.getViewType();
+        const viewType = app.workspace.getActiveViewOfType(ItemView)?.getViewType();
 
         // 使用映射选择目标DOM
         const selector = viewTypeToSelectorMap[viewType];
@@ -1184,8 +1184,8 @@ export function editingToolbarPopover(
         leafwidth = widthCandidates.length > 0 ? Math.min(...widthCandidates) : 0;
       }
 
-      let editingToolbarPopoverBar = effectiveStyle === "top"
-        ? app.workspace.activeLeaf.view.containerEl?.querySelector("#editingToolbarPopoverBar") as HTMLElement
+      const editingToolbarPopoverBar = effectiveStyle === "top"
+        ? app.workspace.getActiveViewOfType(ItemView)?.containerEl?.querySelector("#editingToolbarPopoverBar") as HTMLElement
         : targetDocument.querySelector(
             `.editingToolbarPopoverBar[data-toolbar-style="${effectiveStyle}"]`
           ) as HTMLElement | null;
@@ -1233,7 +1233,7 @@ export function editingToolbarPopover(
           }
 
           checkHtml(item.icon)
-            ? (_btn.buttonEl.innerHTML = item.icon)
+            ? safeSetInnerHTML(_btn.buttonEl, item.icon)
             : _btn.setIcon(item.icon);
 
           btnwidth += buttonWidth + 2;
@@ -1244,7 +1244,7 @@ export function editingToolbarPopover(
           if (menuType === 'dropdown') {
             // 下拉菜单模式
             _btn.setClass("editingToolbarDropdownButton");
-            let hotkey = getHotkey(app, item.id);
+            const hotkey = getHotkey(app, item.id);
             tip = getLocalizedTooltip(item.name, hotkey);
             _btn.setTooltip(tip);
 
@@ -1313,13 +1313,13 @@ export function editingToolbarPopover(
             });
           } else {
             // 原有的子按钮展开模式
-            let submenu = createDiv("subitem");
+            const submenu = createDiv("subitem");
             if (submenu) {
               item.SubmenuCommands.forEach(
                 (subitem: { name: string; id: any; icon: string }) => {
-                  let hotkey = getHotkey(app, subitem.id);
+                  const hotkey = getHotkey(app, subitem.id);
                   tip = getLocalizedTooltip(subitem.name, hotkey);
-                  let sub_btn = new ButtonComponent(submenu)
+                  const sub_btn = new ButtonComponent(submenu)
                     .setTooltip(tip)
                     .setClass("menu-item")
                     .onClick(() => {
@@ -1352,7 +1352,7 @@ export function editingToolbarPopover(
                     sub_btn.buttonEl.setAttribute('aria-label', getLocalizedLabel(subitem.name));
                   }
                   checkHtml(subitem.icon)
-                    ? (sub_btn.buttonEl.innerHTML = subitem.icon)
+                    ? safeSetInnerHTML(sub_btn.buttonEl, subitem.icon)
                     : sub_btn.setIcon(subitem.icon);
 
                   _btn.buttonEl.insertAdjacentElement("afterbegin", submenu);
@@ -1368,7 +1368,7 @@ export function editingToolbarPopover(
               plugin.setIS_MORE_Button(true);
             }
             const aiButtonHost = resolveButtonHost(shouldUseMoreMenu);
-            let button2 = new ButtonComponent(aiButtonHost);
+            const button2 = new ButtonComponent(aiButtonHost);
             button2
               .setClass("editingToolbarCommandsubItem" + index)
               .setClass("editingToolbarDropdownButton")
@@ -1382,7 +1382,7 @@ export function editingToolbarPopover(
             }
 
             checkHtml(item.icon)
-              ? (button2.buttonEl.innerHTML = item.icon)
+              ? safeSetInnerHTML(button2.buttonEl, item.icon)
               : button2.setIcon(item.icon);
 
             const isCompactAIButton = effectiveStyle === "fixed";
@@ -1411,7 +1411,7 @@ export function editingToolbarPopover(
               ignorePrimaryActionUntil = Date.now() + 240;
               const providerReady = (await plugin.aiManager.getToolbarRouteState()) !== "unavailable";
               const editor = plugin.commandsManager.getActiveEditor();
-              const isCanvasScene = app.workspace.activeLeaf?.view?.getViewType?.() === "canvas";
+              const isCanvasScene = app.workspace.getActiveViewOfType(ItemView)?.getViewType() === "canvas";
               const completionHotkey = getHotkey(app, "editing-toolbar:ai-inline-completion", false);
               const inlineBadge = completionHotkey.includes("+") ? completionHotkey : "";
               const menu = new Menu();
@@ -1624,7 +1624,7 @@ export function editingToolbarPopover(
               }
 
               const editor = plugin.commandsManager.getActiveEditor();
-              const isCanvasScene = app.workspace.activeLeaf?.view?.getViewType?.() === "canvas";
+              const isCanvasScene = app.workspace.getActiveViewOfType(ItemView)?.getViewType() === "canvas";
               const preferredActionId = plugin.lastExecutedCommand;
               const actionId = isCanvasScene && !editor
                 ? ((preferredActionId === "editing-toolbar:ai-canvas-expand" || preferredActionId === "editing-toolbar:ai-canvas-global-prompt" || preferredActionId === "editing-toolbar:ai-tools:custom" || preferredActionId === "editing-toolbar:ai-rewrite-custom")
@@ -1640,7 +1640,7 @@ export function editingToolbarPopover(
               syncToolbarVisibilityAfterAction(editingToolbar, settings, effectiveStyle, plugin);
             });
           } else if (item.id == "editing-toolbar:change-font-color") {
-            let button2 = new ButtonComponent(editingToolbar);
+            const button2 = new ButtonComponent(editingToolbar);
             button2
               .setClass("editingToolbarCommandsubItem-font-color")
               .setTooltip(t("Font Colors"))
@@ -1669,26 +1669,26 @@ export function editingToolbarPopover(
 
               });
             checkHtml(item.icon)
-              ? (button2.buttonEl.innerHTML = item.icon)
+              ? safeSetInnerHTML(button2.buttonEl, item.icon)
               : button2.setIcon(item.icon);
 
             btnwidth += buttonWidth;
             //  let Selection = createDiv("triangle-icon");
-            let submenu2 = createEl("div");
+            const submenu2 = createEl("div");
             submenu2.addClass("subitem");
 
             if (submenu2) {
-              submenu2.innerHTML = colorpicker(plugin);
+              safeSetInnerHTML(submenu2, colorpicker(plugin));
 
               button2.buttonEl.insertAdjacentElement("afterbegin", submenu2);
               //    if (settings.cMenuFontColor)
               //     activeDocument.getElementById("change-font-color-icon").style.fill = settings.cMenuFontColor;
               createTablecell(app, plugin, "x-color-picker-table", submenu2);
-              let el = submenu2.querySelector(
+              const el = submenu2.querySelector(
                 ".x-color-picker-wrapper"
               ) as HTMLElement;
 
-              let button3 = new ButtonComponent(el);
+              const button3 = new ButtonComponent(el);
               button3
                 .setIcon("paintbrush")
                 .setTooltip(t("Format Brush"))
@@ -1702,14 +1702,14 @@ export function editingToolbarPopover(
                   );
 
                 });
-              let button4 = new ButtonComponent(el);
+              const button4 = new ButtonComponent(el);
               button4
                 .setIcon("palette")
                 .setTooltip(t("Custom Font Color"))
                 .onClick(() => {
                   app.setting.open();
                   app.setting.openTabById("editing-toolbar");
-                  setTimeout(() => {
+                  window.setTimeout(() => {
                     // 获取标签页容器
                     const tabsContainer = app.setting.activeTab.containerEl.querySelector(".editing-toolbar-tabs");
                     if (tabsContainer) {
@@ -1718,8 +1718,8 @@ export function editingToolbarPopover(
                       appearanceTab?.click();
 
                       // 等待标签页切换完成后定位到颜色设置
-                      setTimeout(() => {
-                        let settingEI = app.setting.activeTab.containerEl.querySelector(".custom_font");
+                      window.setTimeout(() => {
+                        const settingEI = app.setting.activeTab.containerEl.querySelector(".custom_font");
                         if (settingEI) { settingEI.addClass?.("toolbar-cta"); }
                       }, 100);
                     }
@@ -1728,7 +1728,7 @@ export function editingToolbarPopover(
                 });
             }
           } else if (item.id == "editing-toolbar:change-background-color") {
-            let button2 = new ButtonComponent(editingToolbar);
+            const button2 = new ButtonComponent(editingToolbar);
             button2
               .setClass("editingToolbarCommandsubItem-font-color")
               .setTooltip(t("Background Color"))
@@ -1757,25 +1757,25 @@ export function editingToolbarPopover(
 
               });
             checkHtml(item.icon)
-              ? (button2.buttonEl.innerHTML = item.icon)
+              ? safeSetInnerHTML(button2.buttonEl, item.icon)
               : button2.setIcon(item.icon);
 
             btnwidth += buttonWidth;
             //  let Selection = createDiv("triangle-icon");
-            let submenu2 = createEl("div");
+            const submenu2 = createEl("div");
             submenu2.addClass("subitem");
             if (submenu2) {
-              submenu2.innerHTML = backcolorpicker(plugin);
+              safeSetInnerHTML(submenu2, backcolorpicker(plugin));
 
               button2.buttonEl.insertAdjacentElement("afterbegin", submenu2);
               // if (plugin.settings.cMenuBackgroundColor)
               //  activeDocument.getElementById("change-background-color-icon").style.fill = plugin.settings.cMenuBackgroundColor;
               createTablecell(app, plugin, "x-backgroundcolor-picker-table", submenu2);
-              let el = submenu2.querySelector(
+              const el = submenu2.querySelector(
                 ".x-color-picker-wrapper"
               ) as HTMLElement;
 
-              let button3 = new ButtonComponent(el);
+              const button3 = new ButtonComponent(el);
               button3
                 .setIcon("paintbrush")
                 .setTooltip(t("Format Brush"))
@@ -1789,14 +1789,14 @@ export function editingToolbarPopover(
                   );
 
                 });
-              let button4 = new ButtonComponent(el);
+              const button4 = new ButtonComponent(el);
               button4
                 .setIcon("palette")
                 .setTooltip(t("Custom Backgroud Color"))
                 .onClick(() => {
                   app.setting.open();
                   app.setting.openTabById("editing-toolbar");
-                  setTimeout(() => {
+                  window.setTimeout(() => {
                     // 获取标签页容器
                     const tabsContainer = app.setting.activeTab.containerEl.querySelector(".editing-toolbar-tabs");
                     if (tabsContainer) {
@@ -1805,8 +1805,8 @@ export function editingToolbarPopover(
                       appearanceTab?.click();
 
                       // 等待标签页切换完成后定位到颜色设置
-                      setTimeout(() => {
-                        let settingEI = app.setting.activeTab.containerEl.querySelector(".custom_bg");
+                      window.setTimeout(() => {
+                        const settingEI = app.setting.activeTab.containerEl.querySelector(".custom_bg");
                         if (settingEI) { settingEI.addClass?.("toolbar-cta"); }
                       }, 100);
                     }
@@ -1823,7 +1823,7 @@ export function editingToolbarPopover(
               //globalpluginIS_MORE_Button = true; //需要添加更多按钮
               button = new ButtonComponent(resolveButtonHost(true));
             } else button = new ButtonComponent(editingToolbar);
-            let hotkey = getHotkey(app, item.id);
+            const hotkey = getHotkey(app, item.id);
  
             tip = getLocalizedTooltip(item.name, hotkey);
             button.setTooltip(tip).onClick(() => {
@@ -1859,7 +1859,7 @@ export function editingToolbarPopover(
               button.setClass("editingToolbar-Divider-Line");
 
             checkHtml(item.icon)
-              ? (button.buttonEl.innerHTML = item.icon)
+              ? safeSetInnerHTML(button.buttonEl, item.icon)
               : button.setIcon(item.icon);
             //let __btnwidth2;
             // if (button.buttonEl.offsetWidth > 100) __btnwidth2 = 26;
@@ -1876,7 +1876,7 @@ export function editingToolbarPopover(
       createMoremenu(app, plugin, editingToolbar);
       if (Math.abs(plugin.settings.cMenuWidth - Number(btnwidth)) > (btnwidth + 4)) {
         plugin.settings.cMenuWidth = Number(btnwidth);
-        setTimeout(() => {
+        window.setTimeout(() => {
           plugin.saveSettings();
         }, 100);
       }

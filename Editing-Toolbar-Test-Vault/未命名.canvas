@@ -1,7 +1,0 @@
-{
-	"nodes":[
-		{"id":"73a6da4126f61769","type":"file","file":"test.md","x":0,"y":-188,"width":540,"height":588},
-		{"id":"e200094764333377","x":-171,"y":-248,"width":250,"height":60,"type":"text","text":""}
-	],
-	"edges":[]
-}

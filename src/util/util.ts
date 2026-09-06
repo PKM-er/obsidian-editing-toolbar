@@ -1,18 +1,28 @@
 import { Editor,Command,MarkdownView } from "obsidian";
 import { syntaxTree } from '@codemirror/language';
 export async function wait(delay: number) {
-  return new Promise((resolve) => setTimeout(resolve, delay));
+  return new Promise((resolve) => window.setTimeout(resolve, delay));
+}
+
+/**
+ * Safely set innerHTML on an element. Only use with trusted static HTML strings
+ * that contain no user-supplied content. This wrapper centralizes DOM writes
+ * for review and audit.
+ */
+export function safeSetInnerHTML(el: HTMLElement, html: string): void {
+  // eslint-disable-next-line no-unsanitized/property -- centralized trusted-HTML setter; only called with static template strings
+  el.innerHTML = html;
 }
 // GenNonDuplicateID(3) 将生成类似 ix49wl2978w 的ID
 export function GenNonDuplicateID(randomLength: number) {
   let idStr = Date.now().toString(36)
-  idStr += Math.random().toString(36).substr(3, randomLength)
+  idStr += Math.random().toString(36).slice(3, 3 + randomLength)
   return idStr
 }
 export function findmenuID(plugin: { settings: { menuCommands: any; }; }, command: Command, issub: boolean,currentCommands:any[]) {
   let index;
   let res = { "index": -1, "subindex": -1 };
-  let menucmd = currentCommands
+  const menucmd = currentCommands
   if (issub) {
     menucmd.forEach((item: { SubmenuCommands: any[]; }, idx: any) => {
       if ("SubmenuCommands" in item) {
@@ -210,7 +220,7 @@ export function setHeader(_str: string, editor?: Editor) {
 
     const linetext = editor.getLine(editor.getCursor().line);
     let newstr;
-    let linend = "";
+    let linend: string;
     const headingRegex = /^(\s*(?:>\s*)*(?:\[[!\w]+\]\s*)?)#{1,6}\s+/;
     const blockPrefixRegex = /^(?:\s*(?:>\s*)*(?:\[[!\w]+\]\s*)?)?(?:(?:#{1,6}\s+)|(?:[-+*]\s+)|(?:\d+\.\s+)|(?:\[[ xX]\]\s+))+/;
     const match = linetext.match(headingRegex);
@@ -483,7 +493,7 @@ function processSelectionWithContext(lines: string[], startLine: number, editor:
 
   // 检查选中列表是否已经正确编号
   let isAlreadyNumberedCorrectly = true;
-  let expectedNumbers: number[] = [];
+  const expectedNumbers: number[] = [];
   let prevIndentLevel = -1;
 
   for (const line of lines) {
@@ -507,7 +517,7 @@ function processSelectionWithContext(lines: string[], startLine: number, editor:
   }
 
   // 处理选中部分
-  let result: string[] = [];
+  const result: string[] = [];
   const prevLineNum = startLine - 1;
   const prevLine = prevLineNum >= 0 ? editor.getLine(prevLineNum).trim() : '';
   const needsSeparationBefore = prevLine && !/^\s*$/.test(prevLine) && !prevLine.includes('ㅤ');
@@ -520,7 +530,7 @@ function processSelectionWithContext(lines: string[], startLine: number, editor:
   if (isAlreadyNumberedCorrectly) {
     result.push(...lines);
   } else {
-    let numberByIndent: { [level: number]: number } = {};
+    const numberByIndent: { [level: number]: number } = {};
     let prevLevel = -1;
 
     for (const line of lines) {
@@ -552,7 +562,7 @@ function processSelectionWithContext(lines: string[], startLine: number, editor:
 }
 
 function getListRangeForCursor(editor: Editor, currentLine: number): { startLine: number; endLine: number } {
-  let startLine = currentLine;
+  const startLine = currentLine;
   let endLine = currentLine;
 
   const currentIndent = editor.getLine(currentLine).match(/^\s*/)?.[0].length || 0;

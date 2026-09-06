@@ -1,4 +1,4 @@
-import { TFile, TextFileView, type View } from "obsidian";
+import { TFile, TextFileView, type View, ItemView } from "obsidian";
 import type EditingToolbarPlugin from "src/plugin/main";
 import { t } from "src/translations/helper";
 import { compactContent } from "./contextCompactor";
@@ -165,7 +165,7 @@ const KNOWLEDGE_MAP_SIBLING_GAP = 1;
 const KNOWLEDGE_MAP_ROOT_GAP = 1;
 
 export function getActiveCanvasTextFileView(plugin: EditingToolbarPlugin): TextFileView | null {
-  const view = plugin.app.workspace.activeLeaf?.view;
+  const view = plugin.app.workspace.getActiveViewOfType(ItemView);
   if (!isCanvasTextFileView(view)) {
     return null;
   }
@@ -2251,7 +2251,7 @@ function rectsIntersect(
 }
 
 function generateHexId(usedIds: Set<string>): string {
-  let nextId = "";
+  let nextId: string;
 
   do {
     const values = new Uint8Array(8);

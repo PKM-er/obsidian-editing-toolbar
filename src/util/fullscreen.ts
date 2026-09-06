@@ -2,13 +2,11 @@ import { App, MarkdownView, requireApiVersion } from "obsidian";
 let activeDocument: Document;
 export function workplacefullscreenMode(app: App) {
     requireApiVersion("0.15.0") ? activeDocument = activeWindow.document : activeDocument = window.document;
-    let currentleaf = activeDocument;
+    const currentleaf = activeDocument;
 
 
     if (app.workspace.leftSplit.collapsed && app.workspace.rightSplit.collapsed) {
-        //@ts-ignore
         app.commands.executeCommandById("app:toggle-right-sidebar");
-        //@ts-ignore
         app.commands.executeCommandById("app:toggle-left-sidebar");
         app.workspace.leftRibbon.show()
 
@@ -26,12 +24,10 @@ export function workplacefullscreenMode(app: App) {
         }
         app.workspace.leftRibbon.hide()
         if (!app.workspace.leftSplit.collapsed) {
-            //@ts-ignore
             app.commands.executeCommandById("app:toggle-left-sidebar");
 
         }
         if (!app.workspace.rightSplit.collapsed) {
-            //@ts-ignore
             app.commands.executeCommandById("app:toggle-right-sidebar");
         }
     }
@@ -44,11 +40,7 @@ export function workplacefullscreenMode(app: App) {
 export function fullscreenMode(app: App) {
 
 
-    Object.defineProperty(exports, "__esModule", { value: true });
-    exports.toggleFull = exports.isFull = exports.exitFull = exports.beFull = void 0;
-    let DOC_EL = document.documentElement;
-    let headEl = DOC_EL.querySelector('head');
-    let styleEl = document.createElement('style');
+    const DOC_EL = document.documentElement;
     let TYPE_REQUEST_FULL_SCREEN = 'requestFullscreen';
     let TYPE_EXIT_FULL_SCREEN = 'exitFullscreen';
     let TYPE_FULL_SCREEN_ELEMENT = 'fullscreenElement';
@@ -78,8 +70,8 @@ export function fullscreenMode(app: App) {
     const leaf = app.workspace.getActiveViewOfType(MarkdownView)
     if (!leaf)
         return;
-    let el = leaf.containerEl;
-    let modroot = document.body?.querySelector(".mod-vertical.mod-root .workspace-tab-container") as HTMLElement
+    const el = leaf.containerEl;
+    const modroot = document.body?.querySelector(".mod-vertical.mod-root .workspace-tab-container") as HTMLElement
     let fullscreenMutationObserver: MutationObserver;
     fullscreenMutationObserver = new MutationObserver(function (mutationRecords) {
         mutationRecords.forEach(function (mutationRecord) {
@@ -137,16 +129,11 @@ export function fullscreenMode(app: App) {
     }
     exports.beFull = beFull;
     function exitFull() {
-        if (DOC_EL.contains(styleEl)) {
-            headEl === null || headEl === void 0 ? void 0 : headEl.removeChild(styleEl);
-        }
         return (document as DocumentWithFullscreen)[TYPE_EXIT_FULL_SCREEN]();
     }
-    exports.exitFull = exitFull;
     function isFull(el: any) {
         return getCurrentElement(el) === (document as DocumentWithFullscreen)[TYPE_FULL_SCREEN_ELEMENT];
     }
-    exports.isFull = isFull;
     function toggleFull(el: any) {
         if (isFull(el)) {
             exitFull();
@@ -157,6 +144,5 @@ export function fullscreenMode(app: App) {
             return true;
         }
     }
-    exports.toggleFull = toggleFull;
 }
 

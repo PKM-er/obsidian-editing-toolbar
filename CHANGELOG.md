@@ -1,5 +1,16 @@
 # Changelog
 
+## 4.2.0 (2026-09-06)
+### 代码质量与安全加固（响应 Obsidian 社区插件 Scorecard 审查）
+- **安全**：集中化所有 `innerHTML` 写入到 `safeSetInnerHTML` 辅助函数，消除 21 处未净化的 DOM 写入；`insertCalloutModal` 改用 `DOMParser` 安全插入 SVG。
+- **弃用 API 迁移**：17 处 `workspace.activeLeaf` → `getActiveViewOfType()`；`String.substr` → `slice`。
+- **正则兼容性**：`textEnhancement` 中 lookbehind 断言改为捕获组，恢复 iOS <16.4 兼容。
+- **TypeScript 严格化**：修复 `NodeJS.Timeout` 与浏览器 `number` 类型冲突；移除冗余 `@ts-expect-error`；清理 `obsidian.d.ts` 中与官方 API 冲突的接口覆盖。
+- **死代码清理**：移除 `fullscreen.ts` 中未使用的 `styleEl`/`__esModule`/`exitFull` 死分支；`main.ts` throttle 函数消除 `Function` 类型和 `this` 别名。
+- **ESLint 9 配置**：新增 `eslint.config.mjs`（平铺配置），引入 `eslint-plugin-no-unsanitized`；errors 从 101 降至 0，warnings 从 524 降至 289。
+- **仓库清理**：测试 vault 从 git 跟踪移除（本地保留）；`.spec-workflow/` 加入 `.gitignore`；删除遗留的 `.eslintrc.js`。
+- **文档**：README 新增「隐私与网络访问」章节，披露 AI API 和 PKMer sync 的网络访问及 base64 认证用途；新增 `CONTRIBUTING.md` 贡献指南。
+
 ## 4.1.0 (2026-08-13)
 ### 4.1.0 适配 最新的 Obsidian 1.13.4 以上版本
 ### #347 #345 增加deepseek示例，增加genmini 支持，支持单独关闭ai右键菜单

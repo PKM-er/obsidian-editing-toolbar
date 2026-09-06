@@ -238,7 +238,7 @@ export class InsertCalloutModal extends Modal {
             });
 
         // 自动聚焦到内容文本框
-        setTimeout(() => {
+        window.setTimeout(() => {
             if (this.contentTextArea) {
                 this.contentTextArea.focus();
             }
@@ -252,8 +252,9 @@ export class InsertCalloutModal extends Modal {
             if (typeInfo.isAdmonition) {
                 const adIcon = typeInfo.icon as AdmonitionIconDefinition;
                 if (adIcon.type === 'custom' && adIcon.svg) {
-                    // Admonition custom SVG icon
-                    iconContainer.innerHTML = adIcon.svg; // Directly set SVG content
+                    // Admonition custom SVG icon — parse via DOMParser to avoid unsanitized innerHTML
+                    const svgDoc = new DOMParser().parseFromString(adIcon.svg, 'image/svg+xml');
+                    iconContainer.appendChild(svgDoc.documentElement);
                     const svgEl = iconContainer.querySelector('svg');
                     if (svgEl) {
                         svgEl.style.fill = typeInfo.color; // Set fill color for custom SVG
@@ -355,7 +356,7 @@ export class InsertCalloutModal extends Modal {
         }
 
         // 在下一个事件循环中设置光标位置，确保编辑器已更新
-        setTimeout(() => {
+        window.setTimeout(() => {
             // 在 callout 下方插入一个空行
             editor.replaceRange('\n', newCursorPos);
             // 将光标移动到空行

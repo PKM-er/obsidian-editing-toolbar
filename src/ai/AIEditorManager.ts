@@ -2011,7 +2011,7 @@ export class AIEditorManager {
       };
 
       const submitPrompt = async () => {
-        let prompt = textarea.value.trim();
+        const prompt = textarea.value.trim();
         if (!prompt) {
           return;
         }
@@ -2123,7 +2123,7 @@ export class AIEditorManager {
       settingsBtn.addEventListener("click", () => {
         this.plugin.app.setting.open();
         this.plugin.app.setting.openTabById("editing-toolbar");
-        setTimeout(() => {
+        window.setTimeout(() => {
           const tabsContainer = this.plugin.app.setting.activeTab?.containerEl?.querySelector(".editing-toolbar-tabs");
           if (tabsContainer) {
             const aiTab = Array.from(tabsContainer.children).find((el: HTMLElement) =>
@@ -2237,7 +2237,11 @@ export class AIEditorManager {
               const item = doc.createElement("div");
               item.className = "editing-toolbar-ai-inline-prompt-mention-item";
               if (index === 0) item.classList.add("selected");
-              item.innerHTML = `<span class="editing-toolbar-ai-inline-prompt-mention-icon">📄</span>${file.basename} <span style="color: var(--text-faint); font-size: 10px;">${file.path}</span>`;
+              item.createEl("span", { cls: "editing-toolbar-ai-inline-prompt-mention-icon", text: "📄" });
+              item.appendText(file.basename);
+              const pathSpan = item.createEl("span", { text: file.path });
+              pathSpan.style.color = "var(--text-faint)";
+              pathSpan.style.fontSize = "10px";
               item.addEventListener("click", () => {
                 void selectSuggestion(file);
               });

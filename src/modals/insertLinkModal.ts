@@ -888,7 +888,7 @@ private matchLinkInLine(line: string, startPos: number, endPos: number, lineNumb
             );
     
         // 设置光标聚焦逻辑
-        setTimeout(() => {
+        window.setTimeout(() => {
             if (!this.linkText && !this.linkUrl) {
                 this.linkTextInput.inputEl.focus();
             } else if (!this.linkText && this.linkUrl) {
@@ -989,7 +989,7 @@ private async fetchRemoteTitle(url: string): Promise<string> {
         const editor = this.plugin.commandsManager.getActiveEditor();
         if (!editor) return;
 
-        let linkText = this.linkText || this.linkUrl;
+        const linkText = this.linkText || this.linkUrl;
         const linkUrl = this.linkUrl;
 
         // 构建链接文本
@@ -1069,7 +1069,7 @@ private async fetchRemoteTitle(url: string): Promise<string> {
         }
 
         // 在下一个事件循环中设置光标位置，确保编辑器已更新
-        setTimeout(() => {
+        window.setTimeout(() => {
             // 将光标移动到链接后面
             if (newCursorPos) {
                 editor.setCursor(newCursorPos);

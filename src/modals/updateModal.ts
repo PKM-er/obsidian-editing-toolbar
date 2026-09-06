@@ -46,7 +46,7 @@ export class UpdateNoticeModal extends Modal {
         // 解析 Markdown 内容，提取最新版本的更新说明
         const lines = response.split("\n");
         let latestVersion = "";
-        let content = [];
+        const content = [];
         let isLatestVersion = false;
 
         for (const line of lines) {
@@ -276,7 +276,6 @@ export class UpdateNoticeModal extends Modal {
   }
 
   async reloadPlugin(pluginName: string): Promise<void> {
-    // @ts-ignore
     const { plugins } = this.app;
     try {
       await plugins.disablePlugin(pluginName);
@@ -362,7 +361,7 @@ export class UpdateNoticeModal extends Modal {
     this.changelogContentEl.setText(t("Loading changelog..."));
 
     // 异步加载更新日志，不阻塞界面显示
-    setTimeout(() => {
+    window.setTimeout(() => {
       this.loadChangelog();
     }, 100);
 

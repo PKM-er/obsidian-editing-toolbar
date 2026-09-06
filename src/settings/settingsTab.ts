@@ -7,7 +7,7 @@ import { selfDestruct, editingToolbarPopover, checkHtml } from "src/modals/editi
 import Sortable from "sortablejs";
 import { debounce } from "obsidian";
 import { Modal } from "obsidian";
-import { GenNonDuplicateID } from "src/util/util";
+import { GenNonDuplicateID, safeSetInnerHTML } from "src/util/util";
 import { t } from 'src/translations/helper';
 import { ToolbarCommand } from './ToolbarSettings';
 import { UpdateNoticeModal } from "src/modals/updateModal";
@@ -807,7 +807,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     tooltip: string = t('Delete')
   ) {
     let isConfirming = false;
-    let confirmTimeout: NodeJS.Timeout;
+    let confirmTimeout: number;
 
     button
       .setIcon('editingToolbarDelete')
@@ -815,7 +815,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
       .onClick(async () => {
         if (isConfirming) {
           // 清除确认状态和超时
-          clearTimeout(confirmTimeout);
+          window.clearTimeout(confirmTimeout);
           button
             .setIcon('editingToolbarDelete')
             .setTooltip(tooltip);
@@ -833,7 +833,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
           button.buttonEl.addClass('mod-warning');
 
           // 5秒后重置按钮状态
-          confirmTimeout = setTimeout(() => {
+          confirmTimeout = window.setTimeout(() => {
             button
               .setIcon('editingToolbarDelete')
               .setTooltip(tooltip);
@@ -854,7 +854,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
       .setName(t('Editing Toolbar Append Method'))
       .setDesc(t('Choose where Editing Toolbar will append upon regeneration.'))
       .addDropdown((dropdown) => {
-        let methods: Record<string, string> = {};
+        const methods: Record<string, string> = {};
         APPEND_METHODS.map((method) => (methods[method] = t(method)));
         dropdown.addOptions(methods);
         dropdown
@@ -1439,7 +1439,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
             cls: "editingToolbarSettingsIcon"
           });
           iconContainer.style.marginRight = "8px";
-          checkHtml(command.icon) ? iconContainer.innerHTML = command.icon : setIcon(iconContainer, command.icon)
+          checkHtml(command.icon) ? safeSetInnerHTML(iconContainer, command.icon) : setIcon(iconContainer, command.icon)
         } catch (e) {
           console.error("Failed to set icon:", e);
         }
@@ -1448,7 +1448,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
   }
   // 工具方法
   private triggerRefresh(): void {
-    setTimeout(() => {
+    window.setTimeout(() => {
       dispatchEvent(new Event("editingToolbar-NewCommand"));
     }, 100);
   }
@@ -2055,7 +2055,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
           new ChooseFromIconList(this.plugin, command, false, null, this.currentEditingConfig).open();
         });
       checkHtml(command.icon)
-        ? iconButton.buttonEl.innerHTML = command.icon
+        ? safeSetInnerHTML(iconButton.buttonEl, command.icon)
         : iconButton.setIcon(command.icon);
     });
 
@@ -2181,7 +2181,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
               new ChooseFromIconList(this.plugin, subCommand, true, null, this.currentEditingConfig).open();
             });
           checkHtml(subCommand.icon)
-            ? iconButton.buttonEl.innerHTML = subCommand.icon
+            ? safeSetInnerHTML(iconButton.buttonEl, subCommand.icon)
             : iconButton.setIcon(subCommand.icon);
         })
         .addButton((changeNameButton) => {
@@ -2666,7 +2666,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
               .onClick(async () => {
                 new ChooseFromIconList(this.plugin, newCommand, false, null, this.currentEditingConfig).open();
               });
-            checkHtml(newCommand.icon) ? addicon.buttonEl.innerHTML = newCommand.icon : addicon.setIcon(newCommand.icon)
+            checkHtml(newCommand.icon) ? safeSetInnerHTML(addicon.buttonEl, newCommand.icon) : addicon.setIcon(newCommand.icon)
           })
           .addButton((changename) => {
             changename
@@ -2816,7 +2816,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
                 .onClick(async () => {
                   new ChooseFromIconList(this.plugin, subCommand, true, null, this.currentEditingConfig).open();
                 });
-              checkHtml(subCommand?.icon) ? addicon.buttonEl.innerHTML = subCommand.icon : addicon.setIcon(subCommand.icon)
+              checkHtml(subCommand?.icon) ? safeSetInnerHTML(addicon.buttonEl, subCommand.icon) : addicon.setIcon(subCommand.icon)
             })
             .setName(this.getLocalizedCommandName(subCommand.name))
             .addButton((changename) => {
@@ -2846,7 +2846,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
               .onClick(async () => {
                 new ChooseFromIconList(this.plugin, newCommand, false, null, this.currentEditingConfig).open();
               });
-            checkHtml(newCommand.icon) ? addicon.buttonEl.innerHTML = newCommand.icon : addicon.setIcon(newCommand.icon)
+            checkHtml(newCommand.icon) ? safeSetInnerHTML(addicon.buttonEl, newCommand.icon) : addicon.setIcon(newCommand.icon)
           })
         if (newCommand.id == "editingToolbar-Divider-Line") setting.setClass("editingToolbar-Divider-Line")
         setting
@@ -3402,7 +3402,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
               await this.plugin.saveSettings();
               this.updateUrlValidationNote(customBody, value.trim(), customApiFormat);
             });
-            setTimeout(() => this.updateUrlValidationNote(customBody, customModelBaseUrl, customApiFormat), 50);
+            window.setTimeout(() => this.updateUrlValidationNote(customBody, customModelBaseUrl, customApiFormat), 50);
           });
 
         if (!isOllamaFormat) {
@@ -3620,12 +3620,12 @@ export class editingToolbarSettingTab extends PluginSettingTab {
         frontmatterVariablesInfo.style.background = 'var(--background-secondary)';
         frontmatterVariablesInfo.style.borderRadius = '6px';
         frontmatterVariablesInfo.style.fontSize = '12px';
-        frontmatterVariablesInfo.innerHTML = [
+        safeSetInnerHTML(frontmatterVariablesInfo, [
           '<strong>' + t('Available Variables') + ':</strong><br>',
           '<code>{note}</code> - ' + t('Full document content') + ' | ',
           '<code>{properties}</code> - ' + t('Property List') + ' | ',
           '<code>{language}</code> - ' + t('Output Language'),
-        ].join('');
+        ].join(''));
 
         new Setting(frontmatterBody)
           .setName(t('Property List'))
@@ -3693,7 +3693,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
       variablesInfo.style.background = 'var(--background-secondary)';
       variablesInfo.style.borderRadius = '6px';
       variablesInfo.style.fontSize = '12px';
-      variablesInfo.innerHTML = `
+      safeSetInnerHTML(variablesInfo, `
         <strong>${t('Available Variables')}:</strong><br>
         <code>{{selection}}</code> - ${t('Selected text')} |
         <code>{{file:path}}</code> - ${t('Document path')} |
@@ -3703,7 +3703,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
         <code>{{datetime}}</code> - ${t('Date and time')} |
         <code>{{vault:name}}</code> - ${t('Vault name')}<br>
         <strong>${t('Linked note references')}:</strong> ${t('Use [[note name]] to reference the content of other notes.')}
-      `;
+      `);
 
       const templates = this.plugin.settings.ai.customPromptTemplates || [];
       templates.forEach((template, index) => {
@@ -3894,7 +3894,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     }).style.marginTop = '0';
 
     const shareLink = communityDiv.createEl('p');
-    shareLink.innerHTML = t('Share your toolbar settings and styles in our') + ' <a href="https://github.com/PKM-er/obsidian-editing-toolbar/discussions/categories/show-and-tell" target="_blank" rel="noopener noreferrer">Show and Tell</a> ';
+    safeSetInnerHTML(shareLink, t('Share your toolbar settings and styles in our') + ' <a href="https://github.com/PKM-er/obsidian-editing-toolbar/discussions/categories/show-and-tell" target="_blank" rel="noopener noreferrer">Show and Tell</a> ');
     const shareNote = communityDiv.createEl('p', {
       text: t('Get inspired by what others have created or showcase your own customizations.')
     });

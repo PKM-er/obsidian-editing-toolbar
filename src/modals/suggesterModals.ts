@@ -97,7 +97,7 @@ export class ChooseFromIconList extends FuzzySuggestModal<string> {
     const currentCommands = this.plugin.getCurrentCommands(this.currentEditingConfig);
     // 没有自定义回调，使用默认的命令图标设置逻辑
     if (this.command.icon) { // 存在就修改不存在新增
-      let menuID = findmenuID(this.plugin, this.command, this.issub,currentCommands);
+      const menuID = findmenuID(this.plugin, this.command, this.issub,currentCommands);
       if (this.issub) {
         currentCommands[menuID['index']].SubmenuCommands[menuID['subindex']].icon = item;
       } else {
@@ -113,7 +113,7 @@ export class ChooseFromIconList extends FuzzySuggestModal<string> {
     }
 
     await this.plugin.saveSettings();
-    setTimeout(() => {
+    window.setTimeout(() => {
       dispatchEvent(new Event("editingToolbar-NewCommand"));
     }, 100);
     console.log(
@@ -177,12 +177,12 @@ export class CustomIcon extends Modal {
       const menuID = findmenuID(this.plugin, this.item, this.issub,currentCommands);
       
       if (!this.issub) { // 不是子项
-        let index = menuID['index'];
+        const index = menuID['index'];
         index === -1 
           ? this.plugin.settings.menuCommands.push(this.item) 
           : (this.plugin.settings.menuCommands[index].icon = this.item.icon);
       } else {
-        let subindex = menuID['subindex'];
+        const subindex = menuID['subindex'];
         subindex === -1 
           ? this.plugin.settings.menuCommands[menuID["index"]].SubmenuCommands.push(this.item) 
           : this.plugin.settings.menuCommands[menuID['index']].SubmenuCommands[subindex].icon = value;
@@ -204,7 +204,7 @@ export class CustomIcon extends Modal {
     if (this.customCallback) {
       this.customCallback(this.item.icon || '');
     } else {
-      setTimeout(() => {
+      window.setTimeout(() => {
         dispatchEvent(new Event("editingToolbar-NewCommand"));
       }, 100);
     }
@@ -223,7 +223,7 @@ export class CommandPicker extends FuzzySuggestModal<Command> {
   }
 
   getItems(): Command[] {
-    //@ts-ignore
+    //@ts-expect-error - Obsidian API type mismatch
     return app.commands.listCommands();
   }
 
@@ -236,7 +236,7 @@ export class CommandPicker extends FuzzySuggestModal<Command> {
     
     const currentCommands = this.plugin.getCurrentCommands(this.currentEditingConfig);
 
-    let index = currentCommands.findIndex((v) => v.id == item.id);
+    const index = currentCommands.findIndex((v) => v.id == item.id);
 
     if (index > -1) // 命令已存在
     {
@@ -249,7 +249,7 @@ export class CommandPicker extends FuzzySuggestModal<Command> {
         // 更新当前配置，传递配置样式参数
         this.plugin.updateCurrentCommands(currentCommands, this.currentEditingConfig);
         await this.plugin.saveSettings();
-        setTimeout(() => {
+        window.setTimeout(() => {
           dispatchEvent(new Event("editingToolbar-NewCommand"));
         }, 100);
         console.log(
@@ -294,11 +294,11 @@ export class ChangeCmdname extends Modal {
         // 获取当前命令配置
         const currentCommands = this.plugin.getCurrentCommands(this.currentEditingConfig);
         
-        let menuID = findmenuID(this.plugin, this.item, this.issub,currentCommands)
+        const menuID = findmenuID(this.plugin, this.item, this.issub,currentCommands)
         this.item.name = value;
         if (!this.issub) //不是子项
         {
-          let index = menuID['index']
+          const index = menuID['index']
           //  console.log(index,"index")
           if (index === -1) {
             currentCommands.push(this.item);
@@ -306,7 +306,7 @@ export class ChangeCmdname extends Modal {
             currentCommands[index].name = this.item.name;
           }
         } else {
-          let subindex = menuID['subindex']
+          const subindex = menuID['subindex']
           if (subindex === -1) {
             currentCommands[menuID["index"]].SubmenuCommands.push(this.item);
           } else {
@@ -323,7 +323,7 @@ export class ChangeCmdname extends Modal {
   onClose() {
     const { contentEl } = this;
     contentEl.empty();
-    setTimeout(() => {
+    window.setTimeout(() => {
       dispatchEvent(new Event("editingToolbar-NewCommand"));
     }, 100);
   }
@@ -394,7 +394,7 @@ export class openSlider extends Modal {
         this.needSave = true;
         this.plugin.settings.cMenuNumRows = value;
         await this.plugin.saveSettings();
-        setTimeout(() => {
+        window.setTimeout(() => {
           dispatchEvent(new Event("editingToolbar-NewCommand"));
         }, 100);
       }, 100, true))

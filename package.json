@@ -1,20 +1,24 @@
 {
   "name": "Editing Toolbar",
-  "version": "3.2.2",
+  "version": "4.2.0",
   "description": "The Editing Toolbar is modified from cmenu, which provides more powerful customization settings and has many built-in editing commands to be a MS Word-like toolbar editing experience.",
   "main": "main.js",
   "repository": "https://github.com/cumany/obsidian-editing-toolbar",
   "scripts": {
     "dev": "rollup --config rollup.config.js -w",
-    "build": "rollup --config rollup.config.js --environment BUILD:production"
+    "build": "rollup --config rollup.config.js --environment BUILD:production",
+    "lint": "eslint src --ext .ts",
+    "lint:fix": "eslint src --ext .ts --fix",
+    "lint:count": "eslint src --ext .ts -f compact 2>&1 | grep -c 'problem'"
   },
   "keywords": [],
   "author": "Cuman",
   "license": "MIT",
   "devDependencies": {
+    "@codemirror/language": "^6.11.0",
     "@codemirror/state": "^6.5.2",
     "@codemirror/view": "^6.36.3",
-    "@codemirror/language": "^6.11.0",
+    "@eslint/js": "^10.0.1",
     "@rollup/plugin-commonjs": "^18.1.0",
     "@rollup/plugin-node-resolve": "^11.2.1",
     "@rollup/plugin-typescript": "^8.5.0",
@@ -22,7 +26,9 @@
     "@types/node": "^14.18.63",
     "@types/react-dom": "^17.0.26",
     "@types/sortablejs": "^1.15.8",
-    "eslint-plugin-react": "^7.37.4",
+    "@typescript-eslint/eslint-plugin": "^8.69.0",
+    "@typescript-eslint/parser": "^8.69.0",
+    "eslint-plugin-no-unsanitized": "^4.1.5",
     "obsidian": "^0.15.9",
     "rollup": "^2.79.2",
     "rollup-plugin-styles": "^4.0.0",
@@ -30,6 +36,7 @@
     "rollup-watch": "^4.3.1",
     "tslib": "^2.8.1",
     "typescript": "^4.9.5",
+    "typescript-eslint": "^8.69.0",
     "typings": "^2.1.1"
   },
   "moduleFileExtensions": [

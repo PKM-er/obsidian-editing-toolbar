@@ -13,10 +13,10 @@ export class TextEnhancement {
     }
 
     const mdPattern =
-      /(^#+\s|(?<=^|\s*)#|^>|^\- \[( |x)\]|^\+ |<[^<>]+>|^1\. |^\-+$|^\*+$|==|\*+|~~|```|!*\[\[|\]\])/gm;
-    let plainText = selection
+      /(^#+\s|(^|\s+)#|^>|^\- \[( |x)\]|^\+ |<[^<>]+>|^1\. |^\-+$|^\*+$|==|\*+|~~|```|!*\[\[|\]\])/gm;
+    const plainText = selection
       .replace(/\[([^\[\]]*)\]\([^\(\)]+\)/gim, "$1")
-      .replace(mdPattern, "")
+      .replace(mdPattern, "$2")
       .replace(/^[ ]+|[ ]+$/gm, "")
       .replace(/(\r\n|\n)+/gm, "\n");
 
@@ -517,7 +517,7 @@ export class TextEnhancement {
     let result = "";
 
     for (let i = 0; i < lines.length; i++) {
-      let currentLine = options.trimLines ? lines[i].trim() : lines[i];
+      const currentLine = options.trimLines ? lines[i].trim() : lines[i];
 
       // 处理空行
       if (currentLine === "") {
@@ -588,8 +588,8 @@ export class TextEnhancement {
     });
 
     // 2. 状态机解析
-    let preText: string[] = [];
-    let tableRows: string[][] = [];
+    const preText: string[] = [];
+    const tableRows: string[][] = [];
     let currentRow: string[] = [];
     let isInsideTable = false;
 
@@ -689,7 +689,7 @@ export class TextEnhancement {
       })
       .join("\n");
 
-    let tableMarkdown = header + sep + body;
+    const tableMarkdown = header + sep + body;
 
     // 组装前置、表格、后置内容
     let finalContent = "";

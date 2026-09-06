@@ -234,7 +234,7 @@ export function inlineCompletion(
   const plugin = ViewPlugin.fromClass(
     class {
       private abortController: AbortController | null = null;
-      private autoTriggerTimer: ReturnType<typeof setTimeout> | null = null;
+      private autoTriggerTimer: number | null = null;
       private view: EditorView;
       private ownerDocument: Document;
 
@@ -306,9 +306,9 @@ export function inlineCompletion(
 
       private scheduleAutoTrigger(delay: number): void {
         if (this.autoTriggerTimer) {
-          clearTimeout(this.autoTriggerTimer);
+          window.clearTimeout(this.autoTriggerTimer);
         }
-        this.autoTriggerTimer = setTimeout(() => {
+        this.autoTriggerTimer = window.setTimeout(() => {
           void this.startCompletion();
         }, delay);
       }
@@ -366,7 +366,7 @@ export function inlineCompletion(
         this.ownerDocument.removeEventListener("keydown", this.handleDocumentKeydown, true);
         this.abortController?.abort();
         if (this.autoTriggerTimer) {
-          clearTimeout(this.autoTriggerTimer);
+          window.clearTimeout(this.autoTriggerTimer);
         }
       }
     },

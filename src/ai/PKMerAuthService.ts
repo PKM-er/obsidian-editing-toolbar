@@ -197,7 +197,7 @@ export class PKMerAuthService {
 
     if (Platform.isMobile) {
       window.open(loginEntryUrl);
-      setTimeout(() => {
+      window.setTimeout(() => {
         if (this.isPendingStateMatch(state)) {
           this.clearPendingOAuthRequest();
         }
@@ -314,7 +314,7 @@ export class PKMerAuthService {
             resolve(null);
           }
 
-          setTimeout(() => this.closeCallbackServer(), 500);
+          window.setTimeout(() => this.closeCallbackServer(), 500);
         });
 
         server.on("error", (error: any) => {
@@ -326,7 +326,7 @@ export class PKMerAuthService {
         server.listen(PKMER_OAUTH_CONFIG.callbackPort, "127.0.0.1");
         this.callbackServer = server;
 
-        setTimeout(() => {
+        window.setTimeout(() => {
           if (this.callbackServer === server) {
             this.closeCallbackServer();
             resolve(null);

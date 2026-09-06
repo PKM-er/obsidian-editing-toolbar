@@ -239,7 +239,7 @@ export default class editingToolbarPlugin extends Plugin {
   }
   public refreshAIAvailability(): void {
     this.syncAIToolbarCommandVisibility();
-    setTimeout(() => {
+    window.setTimeout(() => {
       dispatchEvent(new Event("editingToolbar-NewCommand"));
     }, 100);
   }
@@ -362,7 +362,7 @@ export default class editingToolbarPlugin extends Plugin {
 
     const hasSelection = editor.somethingSelected();
     const canUseImplicitBlockRewrite = Platform.isMobileApp;
-    const isCanvasScene = this.app.workspace.activeLeaf?.view?.getViewType?.() === "canvas";
+    const isCanvasScene = this.app.workspace.getActiveViewOfType(ItemView)?.getViewType() === "canvas";
 
     const primaryActions: EditorContextMenuAction[] = [
       { title: t("Trigger AI Inline Completion"), commandId: "ai-inline-completion" },
@@ -478,13 +478,13 @@ export default class editingToolbarPlugin extends Plugin {
       
       // Ensure toolbar respects initial visibility state after Settings Search completes
       // Use a small delay to ensure Settings Search has finished scanning settings tabs
-      setTimeout(() => {
+      window.setTimeout(() => {
         if (!this.settings.cMenuVisibility) {
           this.handleeditingToolbar();
         }
       }, 100);
 
-      setTimeout(() => {
+      window.setTimeout(() => {
         if (shouldShowAIFeatures()) {
           void this.aiManager.maybeShowAIOnboarding();
         }
@@ -494,7 +494,7 @@ export default class editingToolbarPlugin extends Plugin {
     if (requireApiVersion("0.15.0")) {
       this.registerEvent(this.app.workspace.on("window-open", (leaf) => {
         this.init_evt(leaf.doc, editor);
-        setTimeout(() => {
+        window.setTimeout(() => {
           if (!this.settings.cMenuVisibility) {
             return;
           }
@@ -541,7 +541,7 @@ export default class editingToolbarPlugin extends Plugin {
         this.settings.commandIdsFixed = true;
         await this.saveSettings();
       }
-      setTimeout(() => {
+      window.setTimeout(() => {
         updateModal.open();
       }, 3000);
     }
@@ -550,7 +550,7 @@ export default class editingToolbarPlugin extends Plugin {
 
     const isThinoEnabled = app.plugins.enabledPlugins.has("obsidian-memos");
     if (isThinoEnabled) {
-      // @ts-ignore - 自定义事件
+      // @ts-expect-error - 自定义事件
       this.registerEvent( this.app.workspace.on("thino-editor-created", this.handleeditingToolbar)
       );
     }
@@ -567,7 +567,7 @@ export default class editingToolbarPlugin extends Plugin {
 
     // this.app.workspace.onLayoutReady(this.handleeditingToolbar_editor.bind(this));
     if (this.settings.cMenuVisibility == true) {
-      setTimeout(() => {
+      window.setTimeout(() => {
         dispatchEvent(new Event("editingToolbar-NewCommand"));
       }, 100);
     }
@@ -640,7 +640,7 @@ this.app.workspace.onLayoutReady(async () => {
       this.app.workspace.on("canvas:node-menu", this.handleCanvasNodeContextMenu)
     );
     this.registerEvent(
-      // @ts-ignore
+      // @ts-expect-error - Obsidian API type mismatch
       this.app.workspace.on('url-menu', (menu: Menu, url: string, view: MarkdownView) => {
         // 添加自定义菜单项
         menu.addItem((item) =>
@@ -675,7 +675,7 @@ this.app.workspace.onLayoutReady(async () => {
   }
 
   async tryGetAdmonitionTypes(retries = 0): Promise<void> {
-    // @ts-ignore
+    // @ts-expect-error - Obsidian API type mismatch
     const admonitionPluginInstance = this.app.plugins?.getPlugin(ADMONITION_PLUGIN_ID);
     if (admonitionPluginInstance) {
        
@@ -689,7 +689,7 @@ this.app.workspace.onLayoutReady(async () => {
     };
 
     let registeredTypes: string[] | null = null;
-    let typesSource: string | null = null;
+    const typesSource: string | null = null;
 
     if (
       admonitionPlugin.admonitions &&
@@ -707,8 +707,8 @@ this.app.workspace.onLayoutReady(async () => {
 }
 
   isLoadMobile() {
-    let screenWidth = window.innerWidth > 0 ? window.innerWidth : screen.width;
-    let isLoadOnMobile = this.settings?.isLoadOnMobile
+    const screenWidth = window.innerWidth > 0 ? window.innerWidth : screen.width;
+    const isLoadOnMobile = this.settings?.isLoadOnMobile
       ? this.settings.isLoadOnMobile
       : false;
     if (Platform.isMobileApp && !isLoadOnMobile) {
@@ -874,7 +874,7 @@ this.app.workspace.onLayoutReady(async () => {
       return false;
     }
 
-    const leafwidth = this.app.workspace.activeLeaf.view.leaf.width ?? 0;
+    const leafwidth = this.app.workspace.getActiveViewOfType(MarkdownView)?.leaf?.width ?? 0;
     if (leafwidth <= 0 || this.Leaf_Width === leafwidth) {
       return false;
     }
@@ -889,7 +889,7 @@ this.app.workspace.onLayoutReady(async () => {
         return;
       }
 
-      setTimeout(() => {
+      window.setTimeout(() => {
         resetToolbar(this);
         editingToolbarPopover(app, this);
       }, 200);
@@ -1008,7 +1008,7 @@ this.app.workspace.onLayoutReady(async () => {
     if (!this.settings.enableMultipleConfig) {
       return this.settings.menuCommands;
     }
-    let currentstyle = style || this.positionStyle;
+    const currentstyle = style || this.positionStyle;
     // 如果移动端模式开启且在移动设备上
     if (this.settings.isLoadOnMobile && Platform.isMobileApp) {
       return this.settings.mobileCommands;
@@ -1446,7 +1446,7 @@ updateCurrentCommands(commands: any[], style?: string): void {
         // 如果不是粗体，检测是否在斜体中
         if (!detectedFormat) {
           const italicRegex = /(\*|_)([^*_]+)(\*|_)/g;
-          while ((match = italicRegex.exec(lineText)) !== null) {
+          if (italicRegex.test(lineText)) {
             this.lastExecutedCommand = "editor:toggle-italics";
             this.lastExecutedCommandName = "Italic";
             detectedFormat = true;
@@ -1789,7 +1789,7 @@ updateCurrentCommands(commands: any[], style?: string): void {
     return (
       (editor as any)?.cm?.dom?.ownerDocument ||
       (editor as any)?.cm?.contentDOM?.ownerDocument ||
-      this.app.workspace.activeLeaf?.view?.containerEl?.ownerDocument ||
+      this.app.workspace.getActiveViewOfType(ItemView)?.containerEl?.ownerDocument ||
       (requireApiVersion("0.15.0") ? activeWindow.document : window.document)
     );
   }
@@ -1852,14 +1852,13 @@ updateCurrentCommands(commands: any[], style?: string): void {
     }
   }
 
-  private throttle(func: Function, limit: number = 100) {
+  private throttle(func: (...args: any[]) => void, limit: number = 100) {
     let inThrottle: boolean;
-    return function (this: any, ...args: any[]) {
-      const context = this;
+    return (...args: any[]) => {
       if (!inThrottle) {
-        func.apply(context, args);
+        func(...args);
         inThrottle = true;
-        setTimeout(() => (inThrottle = false), limit);
+        window.setTimeout(() => (inThrottle = false), limit);
       }
     };
   }

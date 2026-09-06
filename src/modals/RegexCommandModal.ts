@@ -145,25 +145,25 @@ export class RegexCommandModal extends Modal {
     aiHelpContent.setAttribute('contenteditable', 'false');
     aiHelpContent.style.userSelect = 'text';
 
-    aiHelpContent.innerHTML = `
-      <p><strong>${t('AI question template:')}</strong><br>
-    ${t('[Description]')}:
-      ${t('I need to convert the url to a markdown format link')}
-    <br>
-    ${t('[Example]')}: 
-      ${t('For example, convert https://example.com to [https://example.com](https://example.com)')}
-    <br>
-    ${t('[Requirements]')}:  
-      ${t('Use js regular expression to implement, and output the parameters in the following format (the result does not need to be escaped with json)')}
-    <br>
-    ${t('[Output]')}:
-    <br>
-      "name": "[Descriptive Name]", <br>
-      "pattern": "[Regex Pattern]", <br>
-      "replacement": "[Replacement Pattern, if applicable]", <br>
-      "flags": "[Regex Flags]" <br>
-    </p>
-    `;
+    aiHelpContent.empty();
+    const p = aiHelpContent.createEl("p");
+    p.createEl("strong", { text: t('AI question template:') });
+    p.createEl("br");
+    p.appendText(` ${t('[Description]')}: ${t('I need to convert the url to a markdown format link')}`);
+    p.createEl("br");
+    p.appendText(` ${t('[Example]')}: ${t('For example, convert https://example.com to [https://example.com](https://example.com)')}`);
+    p.createEl("br");
+    p.appendText(` ${t('[Requirements]')}: ${t('Use js regular expression to implement, and output the parameters in the following format (the result does not need to be escaped with json)')}`);
+    p.createEl("br");
+    p.appendText(` ${t('[Output]')}:`);
+    p.createEl("br");
+    p.appendText(` "name": "[Descriptive Name]", `);
+    p.createEl("br");
+    p.appendText(` "pattern": "[Regex Pattern]", `);
+    p.createEl("br");
+    p.appendText(` "replacement": "[Replacement Pattern, if applicable]", `);
+    p.createEl("br");
+    p.appendText(` "flags": "[Regex Flags]" `);
 
     // 添加正则表达式模式设置
     new Setting(regexContainer)
@@ -581,7 +581,7 @@ export class RegexCommandModal extends Modal {
           // 保存设置并关闭模态框
           this.plugin.saveSettings().then(() => {
             this.close();
-            setTimeout(() => {
+            window.setTimeout(() => {
               dispatchEvent(new Event("editingToolbar-NewCommand"));
               this.plugin.reloadCustomCommands();
             }, 100);
@@ -699,7 +699,7 @@ export class RegexCommandModal extends Modal {
     copyButton.addEventListener('click', () => {
       navigator.clipboard.writeText(codeText).then(() => {
         copyButton.textContent = t('Copied!');
-        setTimeout(() => {
+        window.setTimeout(() => {
           copyButton.textContent = t('Copy code');
         }, 2000);
       }).catch(err => {

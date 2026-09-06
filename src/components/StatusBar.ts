@@ -67,7 +67,7 @@ export class StatusBar {
         this.plugin.settings.cMenuVisibility = !this.plugin.settings.cMenuVisibility;
         toggleComponent.setValue(this.plugin.settings.cMenuVisibility);
         this.plugin.settings.cMenuVisibility == true
-          ? setTimeout(() => {
+          ? window.setTimeout(() => {
             dispatchEvent(new Event("editingToolbar-NewCommand"));
           }, 100)
           : setMenuVisibility(this.plugin.settings.cMenuVisibility);
@@ -223,7 +223,7 @@ export class StatusBar {
 
           // 刷新工具栏
           selfDestruct(this.plugin);
-          setTimeout(() => {
+          window.setTimeout(() => {
             dispatchEvent(new Event("editingToolbar-NewCommand"));
           }, 100);
         });
@@ -271,7 +271,7 @@ export class StatusBar {
               // 如果当前视图就是这个类型，则刷新工具栏
               if (viewType === vType) {
                 selfDestruct(this.plugin);
-                setTimeout(() => {
+                window.setTimeout(() => {
                   dispatchEvent(new Event("editingToolbar-NewCommand"));
                 }, 100);
               }
@@ -352,7 +352,7 @@ export class StatusBar {
             this.plugin.settings.aestheticStyle = style;
             await this.plugin.saveSettings();
             selfDestruct(this.plugin);
-            setTimeout(() => {
+            window.setTimeout(() => {
               dispatchEvent(new Event("editingToolbar-NewCommand"));
             }, 100);
           });
