@@ -1,5 +1,17 @@
 # Changelog
 
+## 4.1.3 (2026-09-06)
+### 4.1.3: 修复 release 缺少 styles.css
+### fix(ci): release 上传 styles.css 也从根目录取
+action-gh-release 的 files 列表里 styles.css 仍指向
+OUTPUT_DIR 路径，CI 上不存在该文件被静默跳过，
+导致 release 缺少 styles.css。改为 ./styles.css。
+### build: 构建后自动同步 styles.css 到输出目录
+rollup writeBundle 钩子把根目录 styles.css 复制到
+构建输出目录，本地开发时 Obsidian 能直接加载样式。
+### Update manifest.json and CHANGELOG.md for version 4.1.2
+
+
 ## 4.1.2 (2026-09-06)
 ### fix(ci): 从仓库根目录复制 styles.css
 测试库目录已被 gitignore 移除，CI 环境不存在
