@@ -467,4 +467,5 @@ export const PKMER_OAUTH_CONFIG = {
   desktopRedirectUri: "http://localhost:10891/editing-toolbar/callback",
   mobileRedirectUri: "obsidian://editing-toolbar-pkmer-auth",
   callbackPort: 10891,
+  callbackPath: "/editing-toolbar/callback",
 } as const;

@@ -781,6 +781,13 @@ export class ToolbarAIService implements IAIService {
       );
     }
 
+    // Custom provider 401: API key is missing or invalid.
+    if (getRequestErrorStatus(error) === 401) {
+      throw new AIUserNoticeError(
+        t("AI request failed with status 401 (Unauthorized). Your API key is missing or invalid. Please check your API key in Settings → AI → Custom Model."),
+      );
+    }
+
     throw error;
   }
 
