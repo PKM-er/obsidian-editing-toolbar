@@ -781,10 +781,38 @@ export class ToolbarAIService implements IAIService {
       );
     }
 
-    // Custom provider 401: API key is missing or invalid.
-    if (getRequestErrorStatus(error) === 401) {
+    const status = getRequestErrorStatus(error);
+    if (status === 401) {
       throw new AIUserNoticeError(
         t("AI request failed with status 401 (Unauthorized). Your API key is missing or invalid. Please check your API key in Settings → AI → Custom Model."),
+      );
+    }
+    if (status === 403) {
+      throw new AIUserNoticeError(
+        t("AI request failed with status 403 (Forbidden). The server refused the request. Please check your API key and account permissions."),
+      );
+    }
+    if (status === 404) {
+      throw new AIUserNoticeError(
+        t("AI request failed with status 404 (Not Found). The API endpoint URL may be incorrect. Please check the Base URL in Settings → AI → Custom Model."),
+      );
+    }
+    if (status === 429) {
+      throw new AIUserNoticeError(
+        t("AI request failed with status 429 (Too Many Requests). You are sending requests too quickly or have hit a rate limit. Please wait a moment and try again."),
+      );
+    }
+    if (status && status >= 500) {
+      throw new AIUserNoticeError(
+        t("AI request failed with status {{status}} (Server Error). The AI server is experiencing issues. Please try again later.").replace(/\{\{status\}\}/g, String(status)),
+        10000,
+      );
+    }
+
+    // Network errors (no status code) — connection refused, timeout, DNS, etc.
+    if (status === null) {
+      throw new AIUserNoticeError(
+        t("AI request failed: could not connect to the server. Please check your network connection and the API Base URL in Settings → AI → Custom Model."),
       );
     }
 
