@@ -410,4 +410,6 @@ export default {
 'Toolbar Settings': 'Toolbar Settings',
 "Choose which toolbar style's appearance you want to edit.": "Choose which toolbar style's appearance you want to edit.",
 "Vertical Split": "Vertical Split",
+  'PKMer login has expired or is invalid. Please log in to PKMer again in Settings → AI.': 'PKMer login has expired or is invalid. Please log in to PKMer again in Settings → AI.',
+  'Failed to start login callback server. The port may be in use. Please close other Obsidian windows and try again.': 'Failed to start login callback server. The port may be in use. Please close other Obsidian windows and try again.',
 }

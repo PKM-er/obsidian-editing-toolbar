@@ -412,4 +412,6 @@ export default {
 'Toolbar Settings': 'Configurações da Barra de Ferramentas',
 "Choose which toolbar style's appearance you want to edit.": "Escolha qual estilo de barra de ferramentas você deseja editar.",
 "Vertical Split": "Divisão Vertical",
+'PKMer login has expired or is invalid. Please log in to PKMer again in Settings → AI.': 'O login do PKMer expirou ou é inválido. Faça login novamente no PKMer em Configurações → AI.',
+'Failed to start login callback server. The port may be in use. Please close other Obsidian windows and try again.': 'Falha ao iniciar o servidor de callback de login. A porta pode estar em uso. Feche outras janelas do Obsidian e tente novamente.',
 };

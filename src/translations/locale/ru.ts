@@ -675,6 +675,8 @@ export default {
   "Custom model connection failed:": "Ошибка подключения пользовательской модели:",
   "Unknown connection error.": "Неизвестная ошибка подключения.",
   "PKMer AI request failed because your quota is insufficient. Please get more quota in PKMer and try again.": "Запрос к PKMer AI не выполнен: недостаточно лимита. Получите дополнительный лимит в PKMer и попробуйте снова.",
+  'PKMer login has expired or is invalid. Please log in to PKMer again in Settings → AI.': 'Срок действия входа PKMer истёк или он недействителен. Войдите в PKMer снова в Настройки → AI.',
+  'Failed to start login callback server. The port may be in use. Please close other Obsidian windows and try again.': 'Не удалось запустить сервер обратного вызова для входа. Порт может быть занят. Закройте другие окна Obsidian и попробуйте снова.',
   "Available Variables": "Доступные переменные",
   "Document path": "Путь к документу",
   "Full document content": "Полное содержимое документа",

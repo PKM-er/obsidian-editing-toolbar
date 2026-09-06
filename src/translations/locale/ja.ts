@@ -135,4 +135,6 @@ export default {
   'Reset Default Templates': 'デフォルトテンプレートにリセット',
   'Replace all custom prompt templates with the defaults for the current language? This cannot be undone.': 'すべてのカスタムプロンプトテンプレートを、現在の言語のデフォルトに置き換えますか？この操作は元に戻せません。',
   'Custom prompt templates reset to current language defaults.': 'カスタムプロンプトテンプレートを現在の言語のデフォルトにリセットしました。',
+  'PKMer login has expired or is invalid. Please log in to PKMer again in Settings → AI.': 'PKMerのログインが期限切れまたは無効です。設定 → AI でPKMerに再ログインしてください。',
+  'Failed to start login callback server. The port may be in use. Please close other Obsidian windows and try again.': 'ログインコールバックサーバーの起動に失敗しました。ポートが使用中の可能性があります。他のObsidianウィンドウを閉じて再試行してください。',
 } as const;
