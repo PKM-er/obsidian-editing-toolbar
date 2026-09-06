@@ -136,7 +136,7 @@ jobs:
                     ${{ env.PLUGIN_NAME }}.zip
                     ${{ env.OUTPUT_DIR }}/main.js
                     ./manifest.json
-                    ${{ env.OUTPUT_DIR }}/styles.css
+                    ./styles.css
                   token: ${{ secrets.GITHUB_TOKEN }}
             
             - name: Commit updated files
