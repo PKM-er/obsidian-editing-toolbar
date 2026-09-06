@@ -1,5 +1,96 @@
 # Changelog
 
+## 4.1.2 (2026-09-06)
+### fix(ci): 从仓库根目录复制 styles.css
+测试库目录已被 gitignore 移除，CI 环境不存在
+OUTPUT_DIR/styles.css 路径。styles.css 实际在仓库
+根目录，改为从 ./styles.css 复制。
+### 4.1.2: 修复 AI 错误提示与 OAuth 登录问题
+- 修复 401/403 错误无 UI 提示（requestUrl throw:false + 状态码解析增强）
+- 修复 401 响应体非 JSON 时 createRequestResponseError 崩溃
+- 修复自定义 provider 401 无提示，扩展覆盖所有常见 HTTP 错误
+- 修复 OAuth 回调端口冲突检测与友好提示
+- 修复登录失败后 pending 状态残留导致无法重新登录
+- 更新多语言翻译
+### 修复登录失败后 pending 状态残留导致无法重新登录
+服务器启动失败时（如端口冲突）只清理了 callbackCodeResolve，
+未调用 clearPendingOAuthRequest()，导致 pendingState 和
+pendingCodeVerifier 残留。下次调用 login() 时
+hasPendingOAuthRequest() 返回 true，但 pendingAuthorizationUrl
+为 null，window.open 不执行，只显示'登录已在进行中'但无浏览器跳转。
+修复：
+1. 服务器启动失败时调用 clearPendingOAuthRequest() 清理状态
+2. login() 入口增加防御：pending 状态存在但无 URL 时（说明上次
+   失败），自动清理并重新开始登录流程
+### 扩展 AI 错误提示覆盖所有常见 HTTP 错误
+之前只有 PKMer 配额(403)、PKMer 登录过期(401)、通用 401 三种
+错误会显示 Notice，其他错误（404、429、5xx、网络连接失败等）
+只走 console.error 无 UI 提示。
+新增覆盖：
+- 403 Forbidden：权限问题
+- 404 Not Found：API 地址错误
+- 429 Too Many Requests：频率限制
+- 5xx Server Error：服务器错误
+- 网络错误（无状态码）：连接失败/超时
+所有错误现在都会显示用户友好的 Notice 提示。
+### 修复自定义 provider 401 无提示 + 简化端口冲突提示
+问题1：用户配置了 DeepSeek 自定义 provider 但 API Key 无效，
+DeepSeek 返回 401。isPKMerAuthError 只检查 pkmer.cn URL，
+对 api.deepseek.com 返回 false，错误未转为 AIUserNoticeError，
+只走 console.error 无 UI 提示。
+修复：rethrowUserFacingRequestError 新增通用 401 处理分支，
+非 PKMer 的 401 错误也转为 AIUserNoticeError 提示用户检查
+自定义模型的 API Key。
+问题2：端口冲突提示提及 Hyper-V/WSL 等具体服务过于技术化。
+简化为只提示端口被占用，给出释放端口的通用建议。
+同时移除上一次添加的诊断日志。
+### 修复 401 响应体非 JSON 时 createRequestResponseError 崩溃
+设置 throw:false 后 requestUrl 返回 response 对象，但 401 响应体
+是纯文本 'Authentication required' 而非 JSON。Obsidian 的
+response.json 是一个 getter，内部调用 JSON.parse(this.text)，
+遇到非 JSON 文本抛出 SyntaxError，导致 createRequestResponseError
+自身崩溃，错误处理链断裂。
+修复：
+- createRequestResponseError 用 try-catch 安全访问 response.json
+- getAIErrorMessage 同样安全访问 response.json（防御性修复）
+### 修复 401/403 错误无 UI 提示的根本原因
+Obsidian requestUrl 默认 throw:true，在非 2xx 状态码时直接抛出
+'Error: Request failed, status XXX'，该错误对象没有 .status 属性，
+导致 getRequestErrorStatus() 返回 null，isPKMerAuthError() 永远
+返回 false，401 错误无法转换为 AIUserNoticeError，最终只走
+console.error 而不显示 Notice。
+修复：
+1. 所有 4 个 requestUrl 调用添加 throw:false，让 requestUrl 返回
+   response 对象（含 status 属性），由 createRequestResponseError
+   创建带 status 属性的错误对象
+2. 增强 getRequestErrorStatus 添加消息解析兜底，从 'status XXX'
+   格式的错误消息中提取状态码，防止将来遗漏 throw:false
+### 代码质量与安全加固 (响应 Obsidian Scorecard 审查)
+安全:
+- 集中化 innerHTML 写入到 safeSetInnerHTML, 消除 21 处未净化 DOM 写入
+- insertCalloutModal 改用 DOMParser 安全插入 SVG
+弃用 API 迁移:
+- 17 处 activeLeaf → getActiveViewOfType()
+- substr → slice
+- lookbehind 断言改为捕获组 (iOS <16.4 兼容)
+TypeScript 严格化:
+- 修复 NodeJS.Timeout 与 number 类型冲突
+- 移除冗余 @ts-expect-error 和 obsidian.d.ts 冲突覆盖
+- throttle 函数消除 Function 类型和 this 别名
+ESLint 9 配置:
+- 新增 eslint.config.mjs (平铺配置) + eslint-plugin-no-unsanitized
+- errors 101→0, warnings 524→289
+仓库清理:
+- 测试 vault 从 git 跟踪移除 (本地保留)
+- .spec-workflow/ 加入 .gitignore
+- 删除遗留 .eslintrc.js
+文档:
+- README 新增隐私与网络访问披露
+- 新增 CONTRIBUTING.md 贡献指南
+### Merge branch 'master' of https://github.com/PKM-er/obsidian-editing-toolbar
+### Update manifest.json and CHANGELOG.md for version 4.1.0
+
+
 ## 4.2.0 (2026-09-06)
 ### 代码质量与安全加固（响应 Obsidian 社区插件 Scorecard 审查）
 - **安全**：集中化所有 `innerHTML` 写入到 `safeSetInnerHTML` 辅助函数，消除 21 处未净化的 DOM 写入；`insertCalloutModal` 改用 `DOMParser` 安全插入 SVG。
