@@ -168,9 +168,13 @@ export class PKMerAuthService {
     if (this.hasPendingOAuthRequest()) {
       if (this.pendingAuthorizationUrl) {
         window.open(this.pendingAuthorizationUrl);
+        new Notice(t("PKMer login is already in progress. Please continue in the opened browser window."));
+        return;
       }
-      new Notice(t("PKMer login is already in progress. Please continue in the opened browser window."));
-      return;
+      // Pending state exists but no URL — a previous login attempt failed
+      // before opening the browser (e.g. port conflict). Clear the stale
+      // state and fall through to start a fresh login.
+      this.clearPendingOAuthRequest();
     }
 
     this.closeCallbackServer();
@@ -213,6 +217,7 @@ export class PKMerAuthService {
     const serverStatus = await this.startCallbackServerAndWait();
     if (serverStatus !== "ok") {
       this.callbackCodeResolve = null;
+      this.clearPendingOAuthRequest();
       this.showCallbackServerErrorNotice(serverStatus);
       return;
     }
