@@ -103,6 +103,7 @@ export class ToolbarAIService implements IAIService {
           url: requestUrlValue,
           method: "GET",
           headers: this.buildRequestHeaders(provider.apiKey),
+          throw: false,
         });
 
         if (response.status >= 200 && response.status < 300) {
@@ -137,6 +138,7 @@ export class ToolbarAIService implements IAIService {
         url: modelsUrl,
         method: "GET",
         headers: this.buildRequestHeaders(provider.apiKey),
+        throw: false,
       });
 
       if (response.status >= 200 && response.status < 300) {
@@ -161,6 +163,7 @@ export class ToolbarAIService implements IAIService {
         url: modelsUrl,
         method: "GET",
         headers: this.buildRequestHeaders(provider.apiKey, provider.apiFormat),
+        throw: false,
       });
 
       if (response.status >= 200 && response.status < 300) {
@@ -267,6 +270,7 @@ export class ToolbarAIService implements IAIService {
   ): Promise<{ response: RequestUrlResponse; requestUrlValue: string }> {
     const candidateUrls = this.getChatCompletionsCandidateUrls(provider);
     let lastError: unknown = null;
+    let retried401 = false;
 
     for (let index = 0; index < candidateUrls.length; index += 1) {
       const requestUrlValue = candidateUrls[index];
@@ -278,6 +282,22 @@ export class ToolbarAIService implements IAIService {
         return { response, requestUrlValue };
       } catch (error) {
         lastError = error;
+
+        // PKMer 401: token may have expired mid-session — try refresh + retry once
+        if (
+          !retried401
+          && provider.kind === "pkmer"
+          && getRequestErrorStatus(error) === 401
+        ) {
+          retried401 = true;
+          const refreshed = await this.authService.refreshFor401();
+          if (refreshed) {
+            provider = { ...provider, apiKey: this.authService.aiToken };
+            index -= 1; // retry same URL
+            continue;
+          }
+        }
+
         const canRetryWithNextUrl = provider.kind === "custom"
           && index < candidateUrls.length - 1
           && this.isRetryableEndpointError(error);
@@ -304,6 +324,7 @@ export class ToolbarAIService implements IAIService {
       method: "POST",
       headers: this.buildRequestHeaders(provider.apiKey, provider.apiFormat),
       body: JSON.stringify(this.buildRequestBody(requestUrlValue, provider, messages, options)),
+      throw: false,
     });
 
     if (response.status >= 200 && response.status < 300) {
@@ -743,7 +764,20 @@ export class ToolbarAIService implements IAIService {
       );
     }
 
+    if (this.isPKMerAuthError(error, requestUrlValue)) {
+      throw new AIUserNoticeError(
+        t("PKMer login has expired or is invalid. Please log in to PKMer again in Settings → AI."),
+      );
+    }
+
     throw error;
+  }
+
+  private isPKMerAuthError(error: unknown, requestUrlValue: string): boolean {
+    if (!/pkmer\.cn/i.test(requestUrlValue)) {
+      return false;
+    }
+    return getRequestErrorStatus(error) === 401;
   }
 
   private async isPKMerQuotaError(error: unknown, requestUrlValue: string): Promise<boolean> {

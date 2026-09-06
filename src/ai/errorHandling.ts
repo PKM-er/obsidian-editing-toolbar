@@ -25,6 +25,17 @@ export function getRequestErrorStatus(error: unknown): number | null {
     return responseStatus;
   }
 
+  // Fallback: Obsidian's requestUrl throws "Request failed, status XXX" when
+  // throw is not explicitly set to false. Parse the status from the message so
+  // auth/quota detection still works for those errors.
+  const message = (error as { message?: unknown } | null)?.message;
+  if (typeof message === "string") {
+    const match = message.match(/status\s+(\d{3})/i);
+    if (match) {
+      return Number(match[1]);
+    }
+  }
+
   return null;
 }
 
