@@ -3,6 +3,8 @@ import { nodeResolve } from "@rollup/plugin-node-resolve";
 import commonjs from "@rollup/plugin-commonjs";
 import { terser } from 'rollup-plugin-terser';
 import styles from 'rollup-plugin-styles';
+import { copyFileSync } from 'fs';
+import { dirname } from 'path';
 
 const isProd = process.env.BUILD === "production";
 
@@ -41,6 +43,13 @@ export default {
     }),
     commonjs({ include: "node_modules/**" }),
     terser(),
-    styles()
+    styles(),
+    {
+      name: 'copy-styles',
+      writeBundle(output) {
+        const outDir = output.dir || (output.file && dirname(output.file));
+        if (outDir) copyFileSync('./styles.css', `${outDir}/styles.css`);
+      },
+    },
   ],
 };
