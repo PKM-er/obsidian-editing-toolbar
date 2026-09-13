@@ -214,7 +214,7 @@ editingToolbar SETTING ITEMS
   align-items: center;
   gap: 8px;
   min-width: 0;
-  padding: 8px 4px;
+  padding: 8px 12px;
 }
 
 .editingToolbarSettingsTabsContainer.editing-toolbar-native-command-list
