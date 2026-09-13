@@ -1827,7 +1827,6 @@ transition: none !important;
   display: flex !important;
   align-items: center;
   gap: 6px;
-    color: var(--text-muted); /* 文字直接变透明背景色 */
     filter: contrast(0.5);
 }
 .theme-dark .menu.editing-toolbar-dropdown-menu .menu-item.is-disabled
@@ -2591,6 +2590,7 @@ body.auto-hide-header .workspace-tab-header-container + .workspace-tab-container
  
 
 .is-phone .mod-root .workspace-leaf-content[data-type="markdown"] .view-content:has(.editingToolbarModalBar){
+  -webkit-mask-image: none;
   mask-image: none;
 } 
 
@@ -2873,4 +2873,23 @@ body.auto-hide-header .workspace-tab-header-container + .workspace-tab-container
 
 .editing-toolbar-ai-inline-body .setting-item {
   border-top: 1px solid var(--background-modifier-border-hover);
+}
+
+/* 更新提示弹窗（UpdateNoticeModal）：样式集中在 styles.css，不再动态注入 <style> */
+.editing-toolbar-update-modal .changelog-container {
+  margin-top: 20px;
+  margin-bottom: 20px;
+  padding: 10px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 5px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.editing-toolbar-update-modal .changelog-content {
+  padding: 0 10px;
+}
+
+.editing-toolbar-update-modal .changelog-content a {
+  text-decoration: underline;
 }

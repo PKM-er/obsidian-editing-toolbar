@@ -326,6 +326,9 @@ export class UpdateNoticeModal extends Modal {
   onOpen() {
     const { contentEl } = this;
 
+    // 作用域类：changelog 样式统一放在 styles.css，避免动态注入 <style>
+    contentEl.addClass("editing-toolbar-update-modal");
+
     contentEl.createEl("h2", {
       text: `${this.plugin.manifest.name} v${this.plugin.manifest.version} · ${t("Tips")}`,
     });
@@ -420,27 +423,6 @@ export class UpdateNoticeModal extends Modal {
         this.close();
       })
     );
-
-    // 添加样式
-    contentEl.createEl("style", {
-      text: `
-            .changelog-container {
-                margin-top: 20px;
-                margin-bottom: 20px;
-                padding: 10px;
-                border: 1px solid var(--background-modifier-border);
-                border-radius: 5px;
-                max-height: 200px;
-                overflow-y: auto;
-            }
-            .changelog-content {
-                padding: 0 10px;
-            }
-            .changelog-content a {
-                text-decoration: underline;
-            }
-            `,
-    });
   }
 
   onClose() {

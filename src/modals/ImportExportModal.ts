@@ -1,4 +1,3 @@
-import { settings } from "cluster";
 import { App, Modal, Setting, Notice, TextAreaComponent, ButtonComponent } from "obsidian";
 import type editingToolbarPlugin from "src/plugin/main";
 import { t } from 'src/translations/helper';

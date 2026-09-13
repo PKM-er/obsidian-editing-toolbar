@@ -37,7 +37,8 @@
     "tslib": "^2.8.1",
     "typescript": "^4.9.5",
     "typescript-eslint": "^8.69.0",
-    "typings": "^2.1.1"
+    "typings": "^2.1.1",
+    "terser": "^5.39.0"
   },
   "moduleFileExtensions": [
     "js",
@@ -45,13 +46,6 @@
   ],
   "dependencies": {
     "@simonwep/pickr": "https://github.com/nothingislost/pickr/archive/a17739f7aa1871b44da778cbb79ae76dae77d839.tar.gz",
-    "feather-icons": "^4.29.2",
-    "react": "^17.0.2",
-    "react-dom": "^17.0.2",
-    "react-dom-server": "0.0.5",
-    "react-icons": "^4.12.0",
-    "remixicon": "^2.5.0",
-    "sortablejs": "^1.15.6",
-    "terser": "^5.39.0"
+    "sortablejs": "^1.15.6"
   }
 }
