@@ -2833,7 +2833,6 @@ export class editingToolbarSettingTab extends PluginSettingTab {
               this.display();
               this.triggerRefresh();
             }))
-          subsetting.nameEl;
         });
       } else {
         setting

@@ -57,7 +57,9 @@ export class StatusBar {
     menu.addItem((item) => {
       // 先设置所有属性
       item.setTitle(t("Hide & Show"));
-      requireApiVersion("0.15.0") ? item.setSection("settings") : true;
+      if (requireApiVersion("0.15.0")) {
+        item.setSection("settings");
+      }
       const itemDom = (item as any).dom as HTMLElement;
       const toggleComponent = new ToggleComponent(itemDom)
         .setValue(this.plugin.settings.cMenuVisibility)
@@ -85,7 +87,9 @@ export class StatusBar {
     // 工具栏开关子菜单
     menu.addItem((item) => {
       item.setTitle(t("Toolbar Position"));
-      requireApiVersion("0.15.0") ? item.setSection("settings") : true;
+      if (requireApiVersion("0.15.0")) {
+        item.setSection("settings");
+      }
       item.setIcon("dock");
 
       const submenu = item.setSubmenu();
@@ -196,7 +200,9 @@ export class StatusBar {
     // 主菜单项：当前视图类型状态
     menu.addItem((item) => {
       item.setTitle(t("Current View: ") + viewType);
-      requireApiVersion("0.15.0") ? item.setSection("settings") : true;
+      if (requireApiVersion("0.15.0")) {
+        item.setSection("settings");
+      }
       item.setIcon("layout-template");
       
       // 使用子菜单来显示当前视图类型的显示/隐藏控制
@@ -339,7 +345,9 @@ export class StatusBar {
   private addAestheticStyleToggle(menu: Menu): void {
     menu.addItem((item) => {
       item.setTitle(t("Appearance Style"));
-      requireApiVersion("0.15.0") ? item.setSection("settings") : true;
+      if (requireApiVersion("0.15.0")) {
+        item.setSection("settings");
+      }
       item.setIcon("cherry");
 
       const submenu = item.setSubmenu();

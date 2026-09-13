@@ -71,8 +71,7 @@ export function fullscreenMode(app: App) {
         return;
     const el = leaf.containerEl;
     const modroot = document.body?.querySelector(".mod-vertical.mod-root .workspace-tab-container") as HTMLElement
-    let fullscreenMutationObserver: MutationObserver;
-    fullscreenMutationObserver = new MutationObserver(function (mutationRecords) {
+    const fullscreenMutationObserver: MutationObserver = new MutationObserver(function (mutationRecords) {
         mutationRecords.forEach(function (mutationRecord) {
             mutationRecord.addedNodes.forEach(function (node) {
                 if (isFull(modroot)) {
@@ -81,6 +80,7 @@ export function fullscreenMode(app: App) {
                         document.body.removeChild(node);
                         el.appendChild(node);
                     } catch (error) {
+                      // 忽略节点移动失败（节点可能已被其他插件处理）
                     }
 
                 } else {

@@ -1272,7 +1272,7 @@ export class CommandsManager {
             void this.executeCommandWithoutBlur(editor, async () => {
               const curserEnd = editor.getCursor("to");
               const char = this.getCharacterOffset(type["id"]);
-              await this.plugin.app.commands.executeCommandById(
+              this.plugin.app.commands.executeCommandById(
                 `${type["id"]}`
               );
               if (char != 0)

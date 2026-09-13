@@ -294,7 +294,9 @@ export default class editingToolbarPlugin extends Plugin {
 
     menu.addItem((item) => {
       item.setTitle(title).setIcon(icon);
-      requireApiVersion("0.15.0") ? item.setSection("info") : true;
+      if (requireApiVersion("0.15.0")) {
+        item.setSection("info");
+      }
 
       const submenu = item.setSubmenu();
       actions.forEach((action) => this.addEditorContextAction(submenu, action));

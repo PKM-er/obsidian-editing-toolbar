@@ -213,7 +213,6 @@ export class CommandPicker extends FuzzySuggestModal<Command> {
   currentEditingConfig:string;
   constructor(private plugin: editingToolbarPlugin,currentEditingConfig?:string) {
     super(plugin.app);
-    this.app;
     this.setPlaceholder(t("Choose a command"));
     this.currentEditingConfig = currentEditingConfig || "";
   }
