@@ -65,7 +65,6 @@ export function fullscreenMode(app: App) {
     }
     else if (!("requestFullscreen" in DOC_EL)) {
         // throw "\u5F53\u524D\u6D4F\u89C8\u5668\u4E0D\u652F\u6301Fullscreen API !";
-        console.log("\u5F53\u524D\u6D4F\u89C8\u5668\u4E0D\u652F\u6301Fullscreen API !");
     }
     const leaf = app.workspace.getActiveViewOfType(MarkdownView)
     if (!leaf)
@@ -82,7 +81,6 @@ export function fullscreenMode(app: App) {
                         document.body.removeChild(node);
                         el.appendChild(node);
                     } catch (error) {
-                        console.log(error.message)
                     }
 
                 } else {

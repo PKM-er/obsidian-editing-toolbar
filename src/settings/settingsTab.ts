@@ -861,7 +861,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
           .setValue(this.plugin.settings.appendMethod)
           .onChange((appendMethod) => {
             this.plugin.settings.appendMethod = appendMethod;
-            this.plugin.saveSettings();
+            void this.plugin.saveSettings();
           });
       });
     // 添加多配置切换选项
@@ -980,7 +980,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
       .addToggle(toggle => toggle.setValue(this.plugin.settings?.isLoadOnMobile ?? false)
         .onChange((value) => {
           this.plugin.settings.isLoadOnMobile = value;
-          this.plugin.saveSettings();
+          void this.plugin.saveSettings();
           this.triggerRefresh();
         }));
 
@@ -1032,7 +1032,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
         .addToggle(toggle => toggle.setValue(this.plugin.settings?.autohide)
           .onChange((value) => {
             this.plugin.settings.autohide = value;
-            this.plugin.saveSettings();
+            void this.plugin.saveSettings();
             this.triggerRefresh();
           }));
 
@@ -1044,7 +1044,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
         .addToggle(toggle => toggle.setValue(this.plugin.settings?.Iscentered)
           .onChange((value) => {
             this.plugin.settings.Iscentered = value;
-            this.plugin.saveSettings();
+            void this.plugin.saveSettings();
             this.triggerRefresh();
           }));
     }
@@ -1390,7 +1390,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
               icon: command.icon || 'obsidian-new'
             };
             this.plugin.settings.menuCommands.push(toolbarCommand);
-            this.plugin.saveSettings().then(() => {
+            void this.plugin.saveSettings().then(() => {
               new Notice(t('Command added to toolbar'));
               dispatchEvent(new Event("editingToolbar-NewCommand"));
               this.plugin.reloadCustomCommands();
@@ -2642,7 +2642,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
           } else {
             this.plugin.settings.menuCommands = arrayResult;
           }
-          this.plugin.saveSettings();
+          void this.plugin.saveSettings();
         }
         this.triggerRefresh();
       },
@@ -2697,7 +2697,6 @@ export class editingToolbarSettingTab extends PluginSettingTab {
             await this.plugin.saveSettings();
             this.display();
             this.triggerRefresh();
-            console.log(`%cCommand '${newCommand.name}' was removed from editingToolbar`, "color: #989cab");
           }))
 
         if (newCommand.id == "editingToolbar-plugin:change-font-color") return;  //修改字体颜色指令单独处理
@@ -2744,7 +2743,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
                 subresult.splice(command.newIndex, 0, removed);
                 // 使用updateCurrentCommands更新当前命令配置
                 this.plugin.updateCurrentCommands(arrayResult, this.currentEditingConfig);
-                this.plugin.saveSettings();
+                void this.plugin.saveSettings();
               }
             } else if (command.to.className === "editingToolbarSettingsTabsContainer") {
               // 从子菜单拖动到父菜单的逻辑
@@ -2773,7 +2772,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
               const [removed] = subresult.splice(command.oldIndex, 1);
               arrayResult.splice(command.newIndex, 0, removed);
               this.plugin.updateCurrentCommands(arrayResult, this.currentEditingConfig);
-              this.plugin.saveSettings();
+              void this.plugin.saveSettings();
             } else if (command.from.className === "editingToolbarSettingsTabsContainer") {
               // 从父菜单拖动到子菜单的逻辑
               const arrayResult = commandsToEdit;
@@ -2801,7 +2800,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
               const [removed] = arrayResult.splice(command.oldIndex, 1);
               subresult.splice(command.newIndex, 0, removed);
               this.plugin.updateCurrentCommands(arrayResult, this.currentEditingConfig);
-              this.plugin.saveSettings();
+              void this.plugin.saveSettings();
             }
             this.triggerRefresh();
           },
@@ -2833,7 +2832,6 @@ export class editingToolbarSettingTab extends PluginSettingTab {
               await this.plugin.saveSettings();
               this.display();
               this.triggerRefresh();
-              console.log(`%cCommand '${newCommand.name}' was removed from editingToolbar`, "color: #989cab");
             }))
           subsetting.nameEl;
         });
@@ -2882,7 +2880,6 @@ export class editingToolbarSettingTab extends PluginSettingTab {
                 await this.plugin.saveSettings();
                 this.display();
                 this.triggerRefresh();
-                console.log(`%cCommand '${submenuCommand.id}' add `, "color: #989cab");
               });
           })
           .addButton((addsubButton) => {
@@ -2910,7 +2907,6 @@ export class editingToolbarSettingTab extends PluginSettingTab {
             await this.plugin.saveSettings();
             this.display();
             this.triggerRefresh();
-            console.log(`%cCommand '${newCommand.name}' was removed from editingToolbar`, "color: #989cab");
           }))
       }
     });
@@ -2955,7 +2951,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
         // All other keys (custom_bgX/custom_fcX) stay as global settings
         (this.plugin.settings as any)[settingKey] = hexColor;
       }
-      this.plugin.saveSettings();
+      void this.plugin.saveSettings();
     });
   }
   private destroyPickrs() {

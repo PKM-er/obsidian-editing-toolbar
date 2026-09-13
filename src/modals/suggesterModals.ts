@@ -116,10 +116,6 @@ export class ChooseFromIconList extends FuzzySuggestModal<string> {
     window.setTimeout(() => {
       dispatchEvent(new Event("editingToolbar-NewCommand"));
     }, 100);
-    console.log(
-      `%c命令 '${this.command.name}' 已添加到编辑工具栏`,
-      "color: Violet"
-    );
   }
 }
 
@@ -252,10 +248,6 @@ export class CommandPicker extends FuzzySuggestModal<Command> {
         window.setTimeout(() => {
           dispatchEvent(new Event("editingToolbar-NewCommand"));
         }, 100);
-        console.log(
-          `%c命令 '${item.name}' 已添加到编辑工具栏`,
-          "color: Violet"
-        );
       } else {
         // 使用统一的图标选择器，传递当前编辑的配置
         new ChooseFromIconList(this.plugin, item, false, null, this.currentEditingConfig).open();

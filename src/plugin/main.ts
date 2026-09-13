@@ -451,7 +451,6 @@ export default class editingToolbarPlugin extends Plugin {
 
   async onload(): Promise<void> {
     const currentVersion = this.manifest.version; // 设置当前版本号
-    console.log("editingToolbar v" + currentVersion + " loaded");
   
     requireApiVersion("0.15.0") ? activeDocument = activeWindow.document : activeDocument = window.document;
   
@@ -533,7 +532,7 @@ export default class editingToolbarPlugin extends Plugin {
     const updateModal = new UpdateNoticeModal(this.app, this);
     const isNewInstall = lastVersion === "0.0.0";
     if (isNewInstall) {
-      updateModal.fixCommandIds();
+      void updateModal.fixCommandIds();
     }
     const needUpdateNotice =
       !isNewInstall &&
@@ -717,7 +716,6 @@ this.app.workspace.onLayoutReady(async () => {
     if (Platform.isMobileApp && !isLoadOnMobile) {
       if (screenWidth <= 768) {
         // 移动设备且屏幕宽度小于等于 768px，默认不开启toolbar
-        console.log("editing toolbar disable loading on mobile");
         return false;
       }
     }
@@ -750,7 +748,6 @@ this.app.workspace.onLayoutReady(async () => {
     // 销毁工具栏
     selfDestruct(this);
 
-    console.log("editingToolbar unloaded");
   }
 
   isView() {
@@ -1931,28 +1928,28 @@ updateCurrentCommands(commands: any[], style?: string): void {
         case "following":
           if (!this.settings.followingCommands || this.settings.followingCommands.length === 0) {
             this.settings.followingCommands = [...this.settings.menuCommands];
-            this.saveSettings();
+            void this.saveSettings();
             new Notice(t("Following style commands successfully initialized"));
           }
           break;
         case "top":
           if (!this.settings.topCommands || this.settings.topCommands.length === 0) {
             this.settings.topCommands = [...this.settings.menuCommands];
-            this.saveSettings();
+            void this.saveSettings();
             new Notice(t("Top style commands successfully initialized"));
           }
           break;
         case "fixed":
           if (!this.settings.fixedCommands || this.settings.fixedCommands.length === 0) {
             this.settings.fixedCommands = [...this.settings.menuCommands];
-            this.saveSettings();
+            void this.saveSettings();
             new Notice(t("Fixed style commands successfully initialized"));
           }
           break;
         case "mobile":
           if (!this.settings.mobileCommands || this.settings.mobileCommands.length === 0) {
             this.settings.mobileCommands = [...this.settings.menuCommands];
-            this.saveSettings();
+            void this.saveSettings();
             new Notice(t("Mobile style commands successfully initialized"));
           }
           break;

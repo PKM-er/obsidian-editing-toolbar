@@ -1,6 +1,7 @@
 import js from "@eslint/js";
 import tseslint from "typescript-eslint";
 import noUnsanitized from "eslint-plugin-no-unsanitized";
+import obsidian from "eslint-plugin-obsidianmd";
 
 export default tseslint.config(
   {
@@ -18,6 +19,58 @@ export default tseslint.config(
   },
   js.configs.recommended,
   ...tseslint.configs.recommended,
+  obsidian.configs.recommended,
+  {
+    // 启用类型感知规则（与 Obsidian 插件目录 Scorecard 扫描同口径）
+    // 仅作用于 tsconfig 覆盖的 src 源码
+    files: ["src/**/*.ts"],
+    languageOptions: {
+      parserOptions: {
+        projectService: true,
+        tsconfigRootDir: import.meta.dirname,
+      },
+    },
+    rules: {
+      // no-unsafe-* 系列是 362 处 any 的连带产物，等类型化改造完成后自然消失，
+      // 先关闭避免淹没真正对应 Scorecard 的队列
+      "@typescript-eslint/no-unsafe-member-access": "off",
+      "@typescript-eslint/no-unsafe-assignment": "off",
+      "@typescript-eslint/no-unsafe-call": "off",
+      "@typescript-eslint/no-unsafe-argument": "off",
+      "@typescript-eslint/no-unsafe-return": "off",
+      "@typescript-eslint/no-base-to-string": "off",
+      "@typescript-eslint/restrict-template-expressions": "off",
+      // 官方 recommended 里这些是 error；作为清理队列统一按 warn 跟踪
+      "obsidianmd/no-static-styles-assignment": "warn",
+      "obsidianmd/rule-custom-message": "warn",
+      "obsidianmd/settings-tab/no-manual-html-headings": "warn",
+      "@typescript-eslint/await-thenable": "warn",
+      "@typescript-eslint/no-unnecessary-type-assertion": "warn",
+      "@typescript-eslint/no-floating-promises": "warn",
+      "@typescript-eslint/no-misused-promises": [
+        "warn",
+        { checksVoidReturn: { attributes: false } },
+      ],
+      "@typescript-eslint/no-redundant-type-constituents": "warn",
+      // 全局 app 对象在弹窗/多窗口下不可靠，应使用插件实例提供的引用
+      "no-restricted-globals": [
+        "warn",
+        {
+          name: "app",
+          message:
+            "Do not use the global app object. Use the reference provided by your plugin instance (this.app / plugin.app).",
+        },
+        {
+          name: "setTimeout",
+          message: "Use window.setTimeout() for popout window compatibility.",
+        },
+        {
+          name: "clearTimeout",
+          message: "Use window.clearTimeout() for popout window compatibility.",
+        },
+      ],
+    },
+  },
   {
     languageOptions: {
       ecmaVersion: 2020,
@@ -107,19 +160,6 @@ export default tseslint.config(
       "no-console": [
         "warn",
         { allow: ["warn", "error", "info", "debug"] },
-      ],
-
-      // === Medium: setTimeout/clearTimeout 应加 window. ===
-      "no-restricted-globals": [
-        "warn",
-        {
-          name: "setTimeout",
-          message: "Use window.setTimeout() for popout window compatibility.",
-        },
-        {
-          name: "clearTimeout",
-          message: "Use window.clearTimeout() for popout window compatibility.",
-        },
       ],
 
       // === Info: 弃用 API ===

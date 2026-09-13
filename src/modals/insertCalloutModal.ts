@@ -107,7 +107,7 @@ export class InsertCalloutModal extends Modal {
     }
 
     onOpen() {
-        this.display();
+        void this.display();
     }
 
     private async display() {

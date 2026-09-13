@@ -155,7 +155,7 @@ export class TextInputModal extends Modal {
                     this.inputElements.set(field.key, textarea.inputEl);
                     textarea.inputEl.rows = 5;
                     textarea.inputEl.addClass("editing-toolbar-textarea-input");
-                    this.attachLinkedNoteSupport(field, textarea.inputEl, textarea.inputEl.parentElement instanceof HTMLElement
+                    this.attachLinkedNoteSupport(field, textarea.inputEl, textarea.inputEl.parentElement.instanceOf(HTMLElement)
                         ? textarea.inputEl.parentElement
                         : setting.controlEl);
 
@@ -186,7 +186,7 @@ export class TextInputModal extends Modal {
                     });
 
                 this.inputElements.set(field.key, text.inputEl);
-                this.attachLinkedNoteSupport(field, text.inputEl, text.inputEl.parentElement instanceof HTMLElement
+                this.attachLinkedNoteSupport(field, text.inputEl, text.inputEl.parentElement.instanceOf(HTMLElement)
                     ? text.inputEl.parentElement
                     : setting.controlEl);
 

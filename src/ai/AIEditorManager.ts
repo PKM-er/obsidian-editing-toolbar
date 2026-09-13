@@ -2476,6 +2476,6 @@ export class AIEditorManager {
     }
 
     this.plugin.settings.ai.customPromptHistory = history;
-    this.plugin.saveSettings();
+    void this.plugin.saveSettings();
   }
 }

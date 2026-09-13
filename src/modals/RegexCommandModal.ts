@@ -96,7 +96,7 @@ export class RegexCommandModal extends Modal {
             this.commandId = value;
             // 更新命令ID输入框的值
             const commandNameInput = contentEl.querySelector('.setting-item:nth-child(2) input');
-            if (commandNameInput instanceof HTMLInputElement) {
+            if (commandNameInput.instanceOf(HTMLInputElement)) {
               commandNameInput.value = value;
               this.commandName = value;
             }
@@ -579,7 +579,7 @@ export class RegexCommandModal extends Modal {
 
 
           // 保存设置并关闭模态框
-          this.plugin.saveSettings().then(() => {
+          void this.plugin.saveSettings().then(() => {
             this.close();
             window.setTimeout(() => {
               dispatchEvent(new Event("editingToolbar-NewCommand"));

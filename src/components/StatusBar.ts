@@ -78,7 +78,7 @@ export class StatusBar {
       item.onClick((e) => {
         e.preventDefault();
         e.stopImmediatePropagation();
-        toggle();
+        void toggle();
       });
     });
 

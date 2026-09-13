@@ -83,7 +83,7 @@ export class UpdateNoticeModal extends Modal {
       this.changelogContentEl.empty();
 
       // 渲染 Markdown 内容
-      MarkdownRenderer.renderMarkdown(
+      void MarkdownRenderer.renderMarkdown(
         this.changelogContent,
         this.changelogContentEl,
         "",
@@ -311,7 +311,7 @@ export class UpdateNoticeModal extends Modal {
       );
 
       // 重新加载插件
-      this.reloadPlugin(this.plugin.manifest.id);
+      void this.reloadPlugin(this.plugin.manifest.id);
       this.close();
     } catch (error) {
       console.error("恢复默认设置时出错:", error);
@@ -365,7 +365,7 @@ export class UpdateNoticeModal extends Modal {
 
     // 异步加载更新日志，不阻塞界面显示
     window.setTimeout(() => {
-      this.loadChangelog();
+      void this.loadChangelog();
     }, 100);
 
     // 数据修复按钮

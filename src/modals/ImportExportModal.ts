@@ -153,7 +153,7 @@ export class ImportExportModal extends Modal {
             .setIcon('import')
             .setButtonText(t('Import Configuration'))
             .onClick(() => {
-              this.importConfiguration();
+              void this.importConfiguration();
             });
         });
 

@@ -420,7 +420,7 @@ addSpecialCharButtons(suffixSetting, suffixSetting.controlEl.querySelector('inpu
           }
 
           // 保存设置并关闭模态框
-          this.plugin.saveSettings().then(() => {
+          void this.plugin.saveSettings().then(() => {
             this.close();
             window.setTimeout(() => {
               dispatchEvent(new Event("editingToolbar-NewCommand"));

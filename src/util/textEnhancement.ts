@@ -20,7 +20,7 @@ export class TextEnhancement {
       .replace(/^[ ]+|[ ]+$/gm, "")
       .replace(/(\r\n|\n)+/gm, "\n");
 
-    navigator.clipboard.writeText(plainText);
+    void navigator.clipboard.writeText(plainText);
     new Notice(t("Plain text copied to clipboard"));
   }
 

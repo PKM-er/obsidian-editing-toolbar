@@ -418,7 +418,6 @@ export class PKMerAuthService {
 
         server.once("listening", () => {
           this.callbackServer = server;
-          console.log(`Callback server listening on port ${port}.`);
           resolve("ok");
         });
 

@@ -132,7 +132,7 @@ export class InsertLinkModal extends Modal {
                 this.handleCursorPosition(editor);
             }
         } else {
-            this.parseClipboard();
+            void this.parseClipboard();
         }
     
         this.updateHeader();
@@ -164,7 +164,7 @@ export class InsertLinkModal extends Modal {
             this.selectedText = formattedText;
             this.parseSelectedText(formattedText);
         } else {
-            this.parseClipboard();
+            void this.parseClipboard();
         }
     }
     
@@ -637,7 +637,7 @@ private matchLinkInLine(line: string, startPos: number, endPos: number, lineNumb
     }
 
     onOpen() {
-        this.display();
+        void this.display();
     }
     private updateHeader() {
 

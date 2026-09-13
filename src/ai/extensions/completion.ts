@@ -314,7 +314,7 @@ export function inlineCompletion(
       }
 
       private scheduleCompletionStart(): void {
-        Promise.resolve().then(() => {
+        void Promise.resolve().then(() => {
           void this.startCompletion();
         });
       }

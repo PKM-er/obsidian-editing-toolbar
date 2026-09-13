@@ -118,7 +118,7 @@ export class DeployCommandModal extends Modal {
       });
 
       // 保存设置
-      this.plugin.saveSettings().then(() => {
+      void this.plugin.saveSettings().then(() => {
         let message: string;
         
         if (deployedCount > 0) {

@@ -595,7 +595,7 @@ export function relayoutToolbarOverflow(
   if (Math.abs(plugin.settings.cMenuWidth - Number(btnwidth)) > (btnwidth + 4)) {
     plugin.settings.cMenuWidth = Number(btnwidth);
     window.setTimeout(() => {
-      plugin.saveSettings();
+      void plugin.saveSettings();
     }, 100);
   }
 
@@ -699,7 +699,7 @@ export function createTablecell(app: App, plugin: editingToolbarPlugin, el: stri
 
               //  background_colour_dom.style.fill = plugin.settings.cMenuBackgroundColor;
             }
-            plugin.saveSettings();
+            void plugin.saveSettings();
           }
         };
 
@@ -1289,7 +1289,6 @@ export function editingToolbarPopover(
 
         // 如果没有找到任何目标元素，则退出
         if (!targetDom) {
-          console.log("Editing Toolbar: Failed to find target DOM element for toolbar insertion");
           return;
         }
 
@@ -2053,7 +2052,7 @@ export function editingToolbarPopover(
       if (Math.abs(plugin.settings.cMenuWidth - Number(btnwidth)) > (btnwidth + 4)) {
         plugin.settings.cMenuWidth = Number(btnwidth);
         window.setTimeout(() => {
-          plugin.saveSettings();
+          void plugin.saveSettings();
         }, 100);
       }
     };
