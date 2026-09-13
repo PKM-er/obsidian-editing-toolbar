@@ -651,7 +651,7 @@ async function executeAIToolbarAction(
 }
 
 export function createDiv(selector: string) {
-  const div = createEl("div");
+  const div = window.createDiv();
   div.addClass(selector);
   return div;
 }
@@ -806,7 +806,7 @@ export function createMoremenu(app: App, plugin: editingToolbarPlugin, selector:
     popoverEl.setCssStyles({ margin: "0" });
   };
 
-  const cMoreMenu = selector.createEl("span");
+  const cMoreMenu = selector.createSpan();
   cMoreMenu.addClass("more-menu");
   const morebutton = new ButtonComponent(cMoreMenu);
   morebutton
@@ -1195,7 +1195,7 @@ export function editingToolbarPopover(
       const buttonWidth = resolvedIconSize + 8;
     
       // 主工具栏容器
-      const editingToolbar = createEl("div");
+      const editingToolbar = window.createDiv();
       if (editingToolbar) {
         // 标记为编辑工具栏，并带上样式信息
         editingToolbar.addClass("editingToolbarModalBar");
@@ -1230,7 +1230,7 @@ export function editingToolbarPopover(
       editingToolbar.setAttribute("id", "editingToolbarModalBar");
     
       // 二级弹出菜单
-      const PopoverMenu = createEl("div");
+      const PopoverMenu = window.createDiv();
       PopoverMenu.addClass("editingToolbarpopover");
       PopoverMenu.addClass("editingToolbarTinyAesthetic");
     
@@ -1565,16 +1565,16 @@ export function editingToolbarPopover(
 
             let aiLabel: HTMLSpanElement | null = null;
             if (!isCompactAIButton) {
-              const aiMain = document.createElement("span");
+              const aiMain = createSpan();
               aiMain.className = "editing-toolbar-ai-button-main";
-              aiLabel = document.createElement("span");
+              aiLabel = createSpan();
               aiLabel.className = "editing-toolbar-ai-button-label";
               aiLabel.textContent = getAIToolbarButtonLabel(plugin);
               aiMain.appendChild(aiLabel);
               button2.buttonEl.appendChild(aiMain);
             }
 
-            const aiArrow = document.createElement("span");
+            const aiArrow = createSpan();
             aiArrow.className = "editing-toolbar-ai-button-arrow";
             aiArrow.setAttribute("aria-hidden", "true");
             aiArrow.textContent = String.fromCharCode(9662);
@@ -1849,7 +1849,7 @@ export function editingToolbarPopover(
 
             btnwidth += buttonWidth;
             //  let Selection = createDiv("triangle-icon");
-            const submenu2 = createEl("div");
+            const submenu2 = window.createDiv();
             submenu2.addClass("subitem");
 
             if (submenu2) {
@@ -1937,7 +1937,7 @@ export function editingToolbarPopover(
 
             btnwidth += buttonWidth;
             //  let Selection = createDiv("triangle-icon");
-            const submenu2 = createEl("div");
+            const submenu2 = window.createDiv();
             submenu2.addClass("subitem");
             if (submenu2) {
               safeSetInnerHTML(submenu2, backcolorpicker(plugin));

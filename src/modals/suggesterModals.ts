@@ -150,7 +150,7 @@ export class CustomIcon extends Modal {
     const { contentEl } = this;
     contentEl.createEl("b", { text: t("Enter the icon code, format as <svg>.... </svg>") });
     
-    const textComponent = document.createElement("textarea");
+    const textComponent = createEl("textarea");
     textComponent.className = "wideInputPromptInputEl";
     textComponent.placeholder = "";
     textComponent.value = this.item.icon || '';

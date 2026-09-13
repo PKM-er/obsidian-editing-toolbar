@@ -353,3 +353,12 @@ declare global {
 		setCssProps(props: Record<string, string | null>): void;
 	}
 }
+declare global {
+	/**
+	 * 全局 createDiv/createEl 等助手在 window 上可用（Obsidian 运行时）。
+	 * 本地类型声明——obsidian@0.15.9 类型包未在 Window 接口上声明它们。
+	 */
+	interface Window {
+		createDiv(o?: { cls?: string; text?: string }, callback?: (el: HTMLDivElement) => void): HTMLDivElement;
+	}
+}

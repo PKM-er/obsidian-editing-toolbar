@@ -654,12 +654,12 @@ export class RegexCommandModal extends Modal {
       (codeContainer as HTMLDivElement).setCssStyles({ borderTop: '1px solid var(--background-modifier-border)' });
       (codeContainer as HTMLDivElement).setCssStyles({ paddingTop: '10px' });
 
-      const codeTitle = codeContainer.createEl('div', { text: t('Complete regular expression code (copy to AI for explanation)') });
+      const codeTitle = codeContainer.createDiv({ text: t('Complete regular expression code (copy to AI for explanation)') });
       codeTitle.setCssStyles({ marginBottom: '5px' });
       codeTitle.setCssStyles({ fontWeight: 'bold' });
     } else {
       codeContainer.empty();
-      const codeTitle = codeContainer.createEl('div', { text: t('Complete regular expression code (copy to AI for explanation)') });
+      const codeTitle = codeContainer.createDiv({ text: t('Complete regular expression code (copy to AI for explanation)') });
       codeTitle.setCssStyles({ marginBottom: '5px' });
       codeTitle.setCssStyles({ fontWeight: 'bold' });
     }

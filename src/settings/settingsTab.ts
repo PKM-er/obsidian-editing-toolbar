@@ -750,7 +750,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     this.createHeader(containerEl);
 
     // 创建标签页容器
-    const tabContainer = containerEl.createEl('div', {
+    const tabContainer = containerEl.createDiv({
       cls: 'editing-toolbar-tabs'
     });
 
@@ -758,11 +758,11 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     const visibleTabs = SETTING_TABS;
 
     visibleTabs.forEach(tab => {
-      const tabButton = tabContainer.createEl('div', {
+      const tabButton = tabContainer.createDiv({
         cls: `editing-toolbar-tab ${this.activeTab === tab.id ? 'active' : ''}`
       });
       setIcon(tabButton, tab.icon);
-      tabButton.createEl('span', { text: tab.name });
+      tabButton.createSpan({ text: tab.name });
 
       tabButton.addEventListener('click', () => {
         if (tab.id === 'commands' && useDeclarativeCommandList) {
@@ -775,7 +775,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
       });
     });
     // 创建设置内容容器
-    const contentContainer = containerEl.createEl('div', {
+    const contentContainer = containerEl.createDiv({
       cls: 'editing-toolbar-content'
     });
     // 根据当前激活的标签页显示对应设置
@@ -1254,7 +1254,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     commandListContainer.addClass(`${this.currentEditingConfig}`);
     // 添加当前正在编辑的配置提示
     if (this.plugin.settings.enableMultipleConfig) {
-      const positionStyleInfo = commandListContainer.createEl('div', {
+      const positionStyleInfo = commandListContainer.createDiv({
         cls: `position-style-info ${this.currentEditingConfig}`,
         text: t(`Currently editing commands for`) + ` "${this.currentEditingConfig} Style" ` + t(`configuration`)
       });
@@ -1453,11 +1453,11 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     }, 100);
   }
   private createHeader(containerEl: HTMLElement): void {
-    const headerContainer = containerEl.createEl("div", {
+    const headerContainer = containerEl.createDiv({
       cls: "editing-toolbar-header"
     });
     // 创建左侧标题容器
-    const titleContainer = headerContainer.createEl("div", {
+    const titleContainer = headerContainer.createDiv({
       cls: "editing-toolbar-title-container"
     });
     titleContainer.createEl("h1", {
@@ -1465,7 +1465,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
       cls: "editing-toolbar-title"
     });
     // 创建右侧信息容器
-    const infoContainer = headerContainer.createEl("div", {
+    const infoContainer = headerContainer.createDiv({
       cls: "editing-toolbar-info"
     });
     // Keep the repair action in the header without creating a full Setting row.
@@ -2586,7 +2586,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
 
   private createCommandList(containerEl: HTMLElement): void {
     const commandsToEdit = this.getCommandsToEdit();
-    const editingToolbarCommandsContainer = containerEl.createEl("div", {
+    const editingToolbarCommandsContainer = containerEl.createDiv({
       cls: "editingToolbarSettingsTabsContainer",
     });
     let dragele = "";
@@ -2702,7 +2702,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
         if (newCommand.id == "editingToolbar-plugin:change-font-color") return;  //修改字体颜色指令单独处理
         if (newCommand.id == "editingToolbar-plugin:change-background-color") return;  //修改字体颜色指令单独处理
 
-        const editingToolbarCommandsContainer_sub = setting.settingEl.createEl("div", {
+        const editingToolbarCommandsContainer_sub = setting.settingEl.createDiv({
           cls: "editingToolbarSettingsTabsContainer_sub",
         });
         this.sortables.push(Sortable.create(editingToolbarCommandsContainer_sub, {
@@ -3047,7 +3047,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
 
       if (options.toggle) {
         const { toggle } = options;
-        const toggleEl = header.createEl('div', { cls: 'editing-toolbar-ai-card-toggle checkbox-container' });
+        const toggleEl = header.createDiv({ cls: 'editing-toolbar-ai-card-toggle checkbox-container' });
         if (toggle.value) toggleEl.addClass('is-enabled');
         toggleEl.addEventListener('click', (e) => {
           e.stopPropagation();
@@ -3133,11 +3133,11 @@ export class editingToolbarSettingTab extends PluginSettingTab {
         badge: this.plugin.settings.ai.pkmer.userInfo ? t('Logged in') : t('Not logged in'),
       });
 
-      const pkmerAccountDesc = document.createDocumentFragment();
+      const pkmerAccountDesc = createFragment();
       pkmerAccountDesc.append(this.plugin.aiManager.getPKMerStatusText());
       if (this.plugin.settings.ai.pkmer.userInfo?.ai_quota?.quota !== undefined) {
         pkmerAccountDesc.append(' ');
-        const quotaLink = document.createElement('a');
+        const quotaLink = createEl('a');
         quotaLink.textContent = t('More Quota');
         quotaLink.href = getPKMerAIQuotaUrl();
         quotaLink.target = '_blank';
