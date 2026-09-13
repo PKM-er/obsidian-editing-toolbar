@@ -154,8 +154,8 @@ export class CustomIcon extends Modal {
     textComponent.className = "wideInputPromptInputEl";
     textComponent.placeholder = "";
     textComponent.value = this.item.icon || '';
-    textComponent.style.width = "100%";
-    textComponent.style.height = "200px";
+    textComponent.setCssStyles({ width: "100%" });
+    textComponent.setCssStyles({ height: "200px" });
     contentEl.appendChild(textComponent);
     
     textComponent.addEventListener("input", async () => {

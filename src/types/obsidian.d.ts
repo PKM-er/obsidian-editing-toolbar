@@ -341,3 +341,15 @@ declare module "obsidian" {
 	}
 
 }
+
+// 全局 HTMLElement 增强：Obsidian 0.16+ 运行时提供的官方样式设置 API。
+// 本地类型声明——仓库锁定的 obsidian@0.15.9 类型包里没有这个定义。
+// 注意 setCssStyles 需要运行时 Obsidian >= 0.16（manifest minAppVersion 已对齐到 1.4.5）。
+declare global {
+	interface HTMLElement {
+		/** 设置元素的内联样式（等价于逐项赋值 el.style.prop = value） */
+		setCssStyles(styles: Partial<Record<string, string | number>>): void;
+		/** 设置 CSS 自定义属性/属性值 */
+		setCssProps(props: Record<string, string | null>): void;
+	}
+}

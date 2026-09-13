@@ -467,7 +467,7 @@ private matchLinkInLine(line: string, startPos: number, endPos: number, lineNumb
                 // 显示图片尺寸设置
                 const imageSizeEl = this.contentEl.querySelector('.image-size-setting');
                 if (imageSizeEl) {
-                    (imageSizeEl as HTMLElement).style.display = 'block';
+                    (imageSizeEl as HTMLElement).setCssStyles({ display: 'block' });
                 }
             }
 
@@ -768,8 +768,8 @@ private matchLinkInLine(line: string, startPos: number, endPos: number, lineNumb
     
         // URL 错误提示
         this.urlErrorMsg = urlSetting.descEl.createDiv("url-error");
-        this.urlErrorMsg.style.color = "var(--text-error)";
-        this.urlErrorMsg.style.display = "none";
+        this.urlErrorMsg.setCssStyles({ color: "var(--text-error)" });
+        this.urlErrorMsg.setCssStyles({ display: "none" });
     
         // 嵌入选项
         const embedSetting = new Setting(contentEl)
@@ -862,10 +862,10 @@ private matchLinkInLine(line: string, startPos: number, endPos: number, lineNumb
     
         const shortcutHint = contentEl.createDiv("shortcut-hint");
         shortcutHint.setText(`${Platform.isMacOS ? "⌘" : "Ctrl"} + Enter ${t("to insert")}`);
-        shortcutHint.style.textAlign = "right";
-        shortcutHint.style.fontSize = "0.8em";
-        shortcutHint.style.opacity = "0.7";
-        shortcutHint.style.marginTop = "5px";
+        shortcutHint.setCssStyles({ textAlign: "right" });
+        shortcutHint.setCssStyles({ fontSize: "0.8em" });
+        shortcutHint.setCssStyles({ opacity: "0.7" });
+        shortcutHint.setCssStyles({ marginTop: "5px" });
     
         // 按钮
         const buttonSetting = new Setting(contentEl)
@@ -967,17 +967,17 @@ private async fetchRemoteTitle(url: string): Promise<string> {
 
     private validateUrl(url: string) {
         if (!url) {
-            this.urlErrorMsg.style.display = "none";
+            this.urlErrorMsg.setCssStyles({ display: "none" });
             return true;
         }
 
         if (!this.isValidUrl(url)) {
             this.urlErrorMsg.textContent = t("URL Format Error");
-            this.urlErrorMsg.style.display = "block";
+            this.urlErrorMsg.setCssStyles({ display: "block" });
             return false;
         }
 
-        this.urlErrorMsg.style.display = "none";
+        this.urlErrorMsg.setCssStyles({ display: "none" });
         return true;
     }
 
@@ -1103,7 +1103,7 @@ private async fetchRemoteTitle(url: string): Promise<string> {
         // 更新别名设置的显示状态
         const aliasSettingEl = this.contentEl.querySelector('.setting-item:nth-child(2)');
         if (aliasSettingEl) {
-            (aliasSettingEl as HTMLElement).style.display =  'flex';
+            (aliasSettingEl as HTMLElement).setCssStyles({ display: 'flex' });
         }
         this.updateHeader();
     }

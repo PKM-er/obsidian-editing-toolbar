@@ -1739,7 +1739,7 @@ export class AIEditorManager {
       header.className = "editing-toolbar-ai-inline-prompt-header";
       const dragHandle = doc.createElement("div");
       dragHandle.className = "editing-toolbar-ai-inline-prompt-drag-handle";
-      dragHandle.style.cursor = "grab";
+      dragHandle.setCssStyles({ cursor: "grab" });
       const titleEl = doc.createElement("div");
       titleEl.className = "editing-toolbar-ai-inline-prompt-title";
       titleEl.textContent = t("AI Custom Rewrite");
@@ -1772,11 +1772,11 @@ export class AIEditorManager {
 
       const historyDropdown = doc.createElement("div");
       historyDropdown.className = "editing-toolbar-ai-inline-prompt-history-dropdown";
-      historyDropdown.style.display = "none";
+      historyDropdown.setCssStyles({ display: "none" });
 
       const mentionDropdown = doc.createElement("div");
       mentionDropdown.className = "editing-toolbar-ai-inline-prompt-mention-dropdown";
-      mentionDropdown.style.display = "none";
+      mentionDropdown.setCssStyles({ display: "none" });
    const sendBtn = doc.createElement("button");
       sendBtn.type = "button";
       sendBtn.className = "editing-toolbar-ai-inline-prompt-send-btn";
@@ -1860,7 +1860,7 @@ export class AIEditorManager {
 
       const contextContainer = doc.createElement("div");
       contextContainer.className = "editing-toolbar-ai-inline-prompt-context";
-      contextContainer.style.display = "none";
+      contextContainer.setCssStyles({ display: "none" });
 
       const contextList: Array<{type: string, content: string, label: string}> = [];
 
@@ -1875,10 +1875,10 @@ export class AIEditorManager {
       const renderContextItems = () => {
         contextContainer.empty();
         if (contextList.length === 0) {
-          contextContainer.style.display = "none";
+          contextContainer.setCssStyles({ display: "none" });
           return;
         }
-        contextContainer.style.display = "block";
+        contextContainer.setCssStyles({ display: "block" });
         contextList.forEach((ctx, index) => {
           const item = doc.createElement("div");
           item.className = "editing-toolbar-ai-inline-prompt-context-item";
@@ -1954,8 +1954,8 @@ export class AIEditorManager {
         offsetX = clientX - rect.left;
         offsetY = clientY - rect.top;
 
-        promptEl.style.cursor = 'grabbing';
-        dragHandle.style.cursor = 'grabbing';
+        promptEl.setCssStyles({ cursor: 'grabbing' });
+        dragHandle.setCssStyles({ cursor: 'grabbing' });
 
         if ('touches' in e) {
           e.preventDefault();
@@ -1978,8 +1978,8 @@ export class AIEditorManager {
 
       const onDragEnd = () => {
         isDragging = false;
-        promptEl.style.cursor = '';
-        dragHandle.style.cursor = 'grab';
+        promptEl.setCssStyles({ cursor: '' });
+        dragHandle.setCssStyles({ cursor: 'grab' });
       };
 
       dragHandle.addEventListener('mousedown', onDragStart as EventListener);
@@ -1994,15 +1994,15 @@ export class AIEditorManager {
       doc.addEventListener('touchend', onDragEnd);
 
       const resizeTextarea = () => {
-        textarea.style.height = "auto";
+        textarea.setCssStyles({ height: "auto" });
         const newHeight = Math.min(Math.max(textarea.scrollHeight, 56), 240);
         textarea.style.height = `${newHeight}px`;
 
         // 如果内容超过最大高度，显示滚动条
         if (textarea.scrollHeight > 240) {
-          textarea.style.overflowY = "auto";
+          textarea.setCssStyles({ overflowY: "auto" });
         } else {
-          textarea.style.overflowY = "hidden";
+          textarea.setCssStyles({ overflowY: "hidden" });
         }
       };
 
@@ -2088,7 +2088,7 @@ export class AIEditorManager {
             historyItem.title = item;
             historyItem.addEventListener("click", async () => {
               textarea.value = item;
-              historyDropdown.style.display = "none";
+              historyDropdown.setCssStyles({ display: "none" });
               resizeTextarea();
               updateSendButtonState();
               textarea.focus();
@@ -2111,7 +2111,7 @@ export class AIEditorManager {
 
       doc.addEventListener("click", (e) => {
         if (!historyDropdown.contains(e.target as Node) && e.target !== historyBtn) {
-          historyDropdown.style.display = "none";
+          historyDropdown.setCssStyles({ display: "none" });
         }
       });
 
@@ -2195,7 +2195,7 @@ export class AIEditorManager {
         const beforeLink = textarea.value.substring(0, linkStartPos);
         const afterCursor = textarea.value.substring(cursorPos);
         textarea.value = beforeLink + `[[${file.basename}]] ` + afterCursor;
-        mentionDropdown.style.display = "none";
+        mentionDropdown.setCssStyles({ display: "none" });
 
         textarea.focus();
         const newCursorPos = linkStartPos + file.basename.length + 5;
@@ -2241,19 +2241,19 @@ export class AIEditorManager {
               item.createEl("span", { cls: "editing-toolbar-ai-inline-prompt-mention-icon", text: "📄" });
               item.appendText(file.basename);
               const pathSpan = item.createEl("span", { text: file.path });
-              pathSpan.style.color = "var(--text-faint)";
-              pathSpan.style.fontSize = "10px";
+              pathSpan.setCssStyles({ color: "var(--text-faint)" });
+              pathSpan.setCssStyles({ fontSize: "10px" });
               item.addEventListener("click", () => {
                 void selectSuggestion(file);
               });
               mentionDropdown.appendChild(item);
             });
-            mentionDropdown.style.display = "block";
+            mentionDropdown.setCssStyles({ display: "block" });
           } else {
-            mentionDropdown.style.display = "none";
+            mentionDropdown.setCssStyles({ display: "none" });
           }
         } else {
-          mentionDropdown.style.display = "none";
+          mentionDropdown.setCssStyles({ display: "none" });
           linkStartPos = -1;
           suggestionFiles = [];
         }
@@ -2361,7 +2361,7 @@ export class AIEditorManager {
         if (event.key === "Escape") {
           event.preventDefault();
           if (isSuggestionVisible) {
-            mentionDropdown.style.display = "none";
+            mentionDropdown.setCssStyles({ display: "none" });
           } else {
             closePrompt();
           }

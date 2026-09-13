@@ -384,7 +384,7 @@ function createResultPanelTooltipView(
 
   const actionsBar = document.createElement("div");
   actionsBar.className = "cm-ai-result-actions";
-  actionsBar.style.display = "none";
+  actionsBar.setCssStyles({ display: "none" });
 
   function resetCopyButtonLabel(): void {
     if (copyResetTimer !== null) {
@@ -446,19 +446,19 @@ function createResultPanelTooltipView(
     update(update: ViewUpdate) {
       const state = update.state.field(rewriteField);
       if (!state.operation) {
-        dom.style.display = "none";
+        dom.setCssStyles({ display: "none" });
         dom.dataset.phase = "idle";
         return;
       }
 
-      dom.style.display = "";
+      dom.setCssStyles({ display: "" });
       dom.dataset.phase = state.operation.phase;
       content.textContent = getRewritePreviewText(state.operation);
       if (isFileArtifactOperation(state.operation)) {
         header.textContent = t("AI file suggestion");
         setActionButtonLabel(replaceBtn, t("Create"), REWRITE_PANEL_SHORTCUTS.replace.display);
         setActionButtonLabel(insertBtn, t("Create & Embed"), REWRITE_PANEL_SHORTCUTS.insertBelow.display);
-        insertBtn.style.display = "";
+        insertBtn.setCssStyles({ display: "" });
       } else if (isFrontmatterOperation(state.operation)) {
         header.textContent = t("AI frontmatter suggestion");
         setActionButtonLabel(
@@ -468,7 +468,7 @@ function createResultPanelTooltipView(
             : t("Replace frontmatter"),
           REWRITE_PANEL_SHORTCUTS.replace.display,
         );
-        insertBtn.style.display = "none";
+        insertBtn.setCssStyles({ display: "none" });
       } else {
         setActionButtonLabel(
           replaceBtn,
@@ -478,7 +478,7 @@ function createResultPanelTooltipView(
           REWRITE_PANEL_SHORTCUTS.replace.display,
         );
         setActionButtonLabel(insertBtn, t("Insert below"), REWRITE_PANEL_SHORTCUTS.insertBelow.display);
-        insertBtn.style.display = "";
+        insertBtn.setCssStyles({ display: "" });
       }
 
       if (state.operation.phase === "done") {
@@ -487,12 +487,12 @@ function createResultPanelTooltipView(
             header.textContent = t("AI suggestion");
           }
         }
-        copyBtn.style.display = "";
-        actionsBar.style.display = "flex";
+        copyBtn.setCssStyles({ display: "" });
+        actionsBar.setCssStyles({ display: "flex" });
       } else {
         resetCopyButtonLabel();
         header.textContent = t("AI is writing...");
-        actionsBar.style.display = "none";
+        actionsBar.setCssStyles({ display: "none" });
       }
     },
     destroy() {

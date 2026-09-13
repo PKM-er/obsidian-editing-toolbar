@@ -239,7 +239,7 @@ export class TextInputModal extends Modal {
 
         if (this.hasLinkedNoteSupport()) {
             this.linkedContextWrapEl = contentEl.createDiv({ cls: "editing-toolbar-text-input-context" });
-            this.linkedContextWrapEl.style.display = "none";
+            this.linkedContextWrapEl.setCssStyles({ display: "none" });
             this.linkedContextWrapEl.createDiv({
                 cls: "editing-toolbar-text-input-context-label",
                 text: this.options.linkedNotes?.contextLabel || t("Referenced notes"),
@@ -447,7 +447,7 @@ export class TextInputModal extends Modal {
 
         hostEl.addClass("editing-toolbar-text-input-linked-note-host");
         const dropdownEl = hostEl.createDiv({ cls: "editing-toolbar-text-input-mention-dropdown" });
-        dropdownEl.style.display = "none";
+        dropdownEl.setCssStyles({ display: "none" });
 
         this.linkedNoteFieldStates.set(field.key, {
             fieldKey: field.key,
@@ -489,7 +489,7 @@ export class TextInputModal extends Modal {
         const isSuggestionVisible = state.dropdownEl.style.display !== "none" && state.suggestionFiles.length > 0;
         if (!isSuggestionVisible) {
             if (event.key === "Escape") {
-                state.dropdownEl.style.display = "none";
+                state.dropdownEl.setCssStyles({ display: "none" });
                 state.linkStartPos = -1;
                 state.suggestionFiles = [];
             }
@@ -521,7 +521,7 @@ export class TextInputModal extends Modal {
 
         if (event.key === "Escape") {
             event.preventDefault();
-            state.dropdownEl.style.display = "none";
+            state.dropdownEl.setCssStyles({ display: "none" });
             state.linkStartPos = -1;
             state.suggestionFiles = [];
             return true;
@@ -543,7 +543,7 @@ export class TextInputModal extends Modal {
         const linkMatch = textBeforeCursor.match(/\[\[([^\]]*?)$/);
 
         if (!linkMatch) {
-            state.dropdownEl.style.display = "none";
+            state.dropdownEl.setCssStyles({ display: "none" });
             state.linkStartPos = -1;
             state.suggestionFiles = [];
             return;
@@ -569,7 +569,7 @@ export class TextInputModal extends Modal {
         state.selectedSuggestionIndex = 0;
 
         if (filteredFiles.length === 0) {
-            state.dropdownEl.style.display = "none";
+            state.dropdownEl.setCssStyles({ display: "none" });
             return;
         }
 
@@ -602,7 +602,7 @@ export class TextInputModal extends Modal {
             });
         });
 
-        state.dropdownEl.style.display = "block";
+        state.dropdownEl.setCssStyles({ display: "block" });
         const selectedItem = state.dropdownEl.querySelectorAll<HTMLElement>(".editing-toolbar-text-input-mention-item")[state.selectedSuggestionIndex];
         selectedItem?.scrollIntoView({ block: "nearest" });
     }
@@ -619,7 +619,7 @@ export class TextInputModal extends Modal {
 
         state.inputEl.value = nextValue;
         this.result[state.fieldKey] = nextValue;
-        state.dropdownEl.style.display = "none";
+        state.dropdownEl.setCssStyles({ display: "none" });
         state.suggestionFiles = [];
         state.linkStartPos = -1;
 
@@ -743,11 +743,11 @@ export class TextInputModal extends Modal {
         const linkedItems = Array.from(this.linkedContextByField.values()).flat();
 
         if (linkedItems.length === 0) {
-            this.linkedContextWrapEl.style.display = "none";
+            this.linkedContextWrapEl.setCssStyles({ display: "none" });
             return;
         }
 
-        this.linkedContextWrapEl.style.display = "block";
+        this.linkedContextWrapEl.setCssStyles({ display: "block" });
         linkedItems.forEach((item) => {
             const contextItemEl = this.linkedContextItemsEl?.createDiv({ cls: "editing-toolbar-text-input-context-item" });
             contextItemEl?.createSpan({

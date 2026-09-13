@@ -12,10 +12,10 @@ export const setMenuVisibility = (cMenuVisibility: boolean) => {
     );
     toolbars.forEach((toolbar) => {
       if (cMenuVisibility) {
-        (toolbar as HTMLElement).style.display = "";
-        (toolbar as HTMLElement).style.visibility = "visible";
+        (toolbar as HTMLElement).setCssStyles({ display: "" });
+        (toolbar as HTMLElement).setCssStyles({ visibility: "visible" });
       } else {
-        (toolbar as HTMLElement).style.display = "none";
+        (toolbar as HTMLElement).setCssStyles({ display: "none" });
       }
     });
   });
@@ -24,10 +24,10 @@ export const setMenuVisibility = (cMenuVisibility: boolean) => {
   const legacyToolbar = activeDocument.getElementById("editingToolbarModalBar");
   if (legacyToolbar) {
     if (cMenuVisibility) {
-      legacyToolbar.style.display = "";
-      legacyToolbar.style.visibility = "visible";
+      legacyToolbar.setCssStyles({ display: "" });
+      legacyToolbar.setCssStyles({ visibility: "visible" });
     } else {
-      legacyToolbar.style.display = "none";
+      legacyToolbar.setCssStyles({ display: "none" });
     }
   }
 };

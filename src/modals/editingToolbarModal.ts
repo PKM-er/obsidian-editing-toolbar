@@ -276,13 +276,13 @@ function syncToolbarVisibilityAfterAction(
   const hasSelection = editor && editor.somethingSelected();
 
   if (settings.cMenuVisibility == false) {
-    editingToolbar.style.visibility = "hidden";
+    editingToolbar.setCssStyles({ visibility: "hidden" });
   } else if (effectiveStyle === "following") {
     if (!hasSelection) {
-      editingToolbar.style.visibility = "hidden";
+      editingToolbar.setCssStyles({ visibility: "hidden" });
     }
   } else {
-    editingToolbar.style.visibility = "visible";
+    editingToolbar.setCssStyles({ visibility: "visible" });
   }
 }
 
@@ -298,7 +298,7 @@ function positionAISubmenu(buttonEl: HTMLElement, submenuEl: HTMLElement) {
   const relativeLeft = clampedLeft - buttonRect.left;
 
   submenuEl.style.left = `${relativeLeft}px`;
-  submenuEl.style.right = "auto";
+  submenuEl.setCssStyles({ right: "auto" });
 }
 
 const AI_REWRITE_ICON_MAP: Record<RewriteInstruction, string> = {
@@ -797,13 +797,13 @@ export function createMoremenu(app: App, plugin: editingToolbarPlugin, selector:
       top = Math.max(horizontalPadding, anchorRect.top - popoverHeight - verticalGap);
     }
 
-    popoverEl.style.position = "fixed";
+    popoverEl.setCssStyles({ position: "fixed" });
     popoverEl.style.left = `${left}px`;
     popoverEl.style.top = `${top}px`;
-    popoverEl.style.right = "auto";
-    popoverEl.style.bottom = "auto";
-    popoverEl.style.transform = "none";
-    popoverEl.style.margin = "0";
+    popoverEl.setCssStyles({ right: "auto" });
+    popoverEl.setCssStyles({ bottom: "auto" });
+    popoverEl.setCssStyles({ transform: "none" });
+    popoverEl.setCssStyles({ margin: "0" });
   };
 
   const cMoreMenu = selector.createEl("span");
@@ -814,12 +814,12 @@ export function createMoremenu(app: App, plugin: editingToolbarPlugin, selector:
     .setTooltip(t("More"))
     .onClick(() => {
       if (Morecontainer.style.visibility == "hidden") {
-        Morecontainer.style.visibility = "visible";
-        Morecontainer.style.height = "32px";
+        Morecontainer.setCssStyles({ visibility: "visible" });
+        Morecontainer.setCssStyles({ height: "32px" });
         positionMorePopover(morebutton.buttonEl, Morecontainer, toolbarStyle);
       } else {
-        Morecontainer.style.visibility = "hidden";
-        Morecontainer.style.height = "0";
+        Morecontainer.setCssStyles({ visibility: "hidden" });
+        Morecontainer.setCssStyles({ height: "0" });
       }
     });
   safeSetInnerHTML(morebutton.buttonEl, `<svg  width="14" height="14"  version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" enable-background="new 0 0 1024 1024" xml:space="preserve"><path fill="#666" d="M510.29 14.13 q17.09 -15.07 40.2 -14.07 q23.12 1 39.2 18.08 l334.66 385.92 q25.12 30.15 34.16 66.83 q9.04 36.68 0.5 73.87 q-8.54 37.19 -32.66 67.34 l-335.67 390.94 q-15.07 18.09 -38.69 20.1 q-23.62 2.01 -41.71 -13.07 q-18.08 -15.08 -20.09 -38.19 q-2.01 -23.12 13.06 -41.21 l334.66 -390.94 q11.06 -13.06 11.56 -29.65 q0.5 -16.58 -10.55 -29.64 l-334.67 -386.92 q-15.07 -17.09 -13.56 -40.7 q1.51 -23.62 19.59 -38.7 ZM81.17 14.13 q17.08 -15.07 40.19 -14.07 q23.11 1 39.2 18.08 l334.66 385.92 q25.12 30.15 34.16 66.83 q9.04 36.68 0.5 73.87 q-8.54 37.19 -32.66 67.34 l-335.67 390.94 q-15.07 18.09 -38.69 20.6 q-23.61 2.51 -41.7 -12.57 q-18.09 -15.08 -20.1 -38.69 q-2.01 -23.62 13.06 -41.71 l334.66 -390.94 q11.06 -13.06 11.56 -29.65 q0.5 -16.58 -10.55 -29.64 l-334.66 -386.92 q-15.08 -17.09 -13.57 -40.7 q1.51 -23.62 19.6 -38.7 Z"/></svg>`);
@@ -944,7 +944,7 @@ export function createFollowingbar(
   const view = app.workspace.getActiveViewOfType(ItemView);
   if (!ViewUtils.isAllowedViewType(view)) {
     if (editingToolbarModalBar) {
-      editingToolbarModalBar.style.visibility = "hidden";
+      editingToolbarModalBar.setCssStyles({ visibility: "hidden" });
     }
     return;
   }
@@ -998,13 +998,13 @@ export function createFollowingbar(
     } else {
       // 阅读模式隐藏工具栏
       if (editingToolbarModalBar) {
-        editingToolbarModalBar.style.visibility = "hidden";
+        editingToolbarModalBar.setCssStyles({ visibility: "hidden" });
       }
     }
   } else {
     // 处理其他视图类型（canvas等）
     if (editingToolbarModalBar) {
-      editingToolbarModalBar.style.visibility = "visible";
+      editingToolbarModalBar.setCssStyles({ visibility: "visible" });
       editingToolbarModalBar.style.height = height + "px";
       editingToolbarModalBar.addClass("editingToolbarFlex");
       editingToolbarModalBar.removeClass("editingToolbarGrid");
@@ -1140,7 +1140,7 @@ export function editingToolbarPopover(
   if (!settings.cMenuVisibility) {
     const existingToolbar = isExistoolbar(app, plugin, effectiveStyle, targetDocument);
     if (existingToolbar) {
-      existingToolbar.style.display = "none";
+      existingToolbar.setCssStyles({ display: "none" });
     }
     return; // Don't create new toolbars when visibility is disabled
   }
@@ -1215,7 +1215,7 @@ export function editingToolbarPopover(
           // If cMenuVisibility is false, visibility is already set to hidden above
         } else if (effectiveStyle === "following") {
           // following 工具栏初始隐藏，待选中文本后定位并显示
-          editingToolbar.style.visibility = "hidden";
+          editingToolbar.setCssStyles({ visibility: "hidden" });
         } else if (effectiveStyle === "fixed") {
           const Rowsize = resolvedIconSize || 18;
           const baseStyle = `left: calc(50% - calc(${settings.cMenuNumRows * (Rowsize + 10)}px / 2));
@@ -1241,8 +1241,8 @@ export function editingToolbarPopover(
       // 继续保留旧的 id，以兼容当前 CSS
       PopoverMenu.setAttribute("id", "editingToolbarPopoverBar");
     
-      PopoverMenu.style.visibility = "hidden";
-      PopoverMenu.style.height = "0";
+      PopoverMenu.setCssStyles({ visibility: "hidden" });
+      PopoverMenu.setCssStyles({ height: "0" });
     
       // Apply per-style aesthetic
       applyAestheticStyle(editingToolbar, resolvedAestheticStyle);
@@ -1459,13 +1459,13 @@ export function editingToolbarPopover(
                         const hasSelection = editor && editor.somethingSelected();
 
                         if (settings.cMenuVisibility == false) {
-                          editingToolbar.style.visibility = "hidden";
+                          editingToolbar.setCssStyles({ visibility: "hidden" });
                         } else if (effectiveStyle === "following") {
                           if (!hasSelection) {
-                            editingToolbar.style.visibility = "hidden";
+                            editingToolbar.setCssStyles({ visibility: "hidden" });
                           }
                         } else {
-                          editingToolbar.style.visibility = "visible";
+                          editingToolbar.setCssStyles({ visibility: "visible" });
                         }
                       });
 
@@ -1506,14 +1506,14 @@ export function editingToolbarPopover(
                       const hasSelection = editor && editor.somethingSelected();
 
                       if (settings.cMenuVisibility == false) {
-                        editingToolbar.style.visibility = "hidden";
+                        editingToolbar.setCssStyles({ visibility: "hidden" });
                       } else if (effectiveStyle === "following") {
                         // For the following toolbar, only show when there is a selection.
                         if (!hasSelection) {
-                          editingToolbar.style.visibility = "hidden";
+                          editingToolbar.setCssStyles({ visibility: "hidden" });
                         }
                       } else {
-                        editingToolbar.style.visibility = "visible";
+                        editingToolbar.setCssStyles({ visibility: "visible" });
                       }
 
                     });
@@ -1832,14 +1832,14 @@ export function editingToolbarPopover(
                 const hasSelection = editor && editor.somethingSelected();
   
                 if (settings.cMenuVisibility == false) {
-                  editingToolbar.style.visibility = "hidden";
+                  editingToolbar.setCssStyles({ visibility: "hidden" });
                 } else if (effectiveStyle === "following") {
                   // For the following toolbar, only show when there is a selection.
                   if (!hasSelection) {
-                    editingToolbar.style.visibility = "hidden";
+                    editingToolbar.setCssStyles({ visibility: "hidden" });
                   }
                 } else {
-                  editingToolbar.style.visibility = "visible";
+                  editingToolbar.setCssStyles({ visibility: "visible" });
                 }
 
               });
@@ -1920,14 +1920,14 @@ export function editingToolbarPopover(
                 const hasSelection = editor && editor.somethingSelected();
   
                 if (settings.cMenuVisibility == false) {
-                  editingToolbar.style.visibility = "hidden";
+                  editingToolbar.setCssStyles({ visibility: "hidden" });
                 } else if (effectiveStyle === "following") {
                   // For the following toolbar, only show when there is a selection.
                   if (!hasSelection) {
-                    editingToolbar.style.visibility = "hidden";
+                    editingToolbar.setCssStyles({ visibility: "hidden" });
                   }
                 } else {
-                  editingToolbar.style.visibility = "visible";
+                  editingToolbar.setCssStyles({ visibility: "visible" });
                 }
 
               });
@@ -2009,14 +2009,14 @@ export function editingToolbarPopover(
               const hasSelection = editor && editor.somethingSelected();
 
               if (settings.cMenuVisibility == false) {
-                editingToolbar.style.visibility = "hidden";
+                editingToolbar.setCssStyles({ visibility: "hidden" });
               } else if (effectiveStyle === "following") {
                 // For the following toolbar, only show when there is a selection.
                 if (!hasSelection) {
-                  editingToolbar.style.visibility = "hidden";
+                  editingToolbar.setCssStyles({ visibility: "hidden" });
                 }
               } else {
-                editingToolbar.style.visibility = "visible";
+                editingToolbar.setCssStyles({ visibility: "visible" });
               }
 
             });
@@ -2066,13 +2066,13 @@ export function editingToolbarPopover(
         // 工具栏已存在，只需要更新可见性和样式
         // Check cMenuVisibility first - if disabled, hide all toolbars with display: none
         if (!settings.cMenuVisibility) {
-          existingToolbar.style.display = "none";
+          existingToolbar.setCssStyles({ display: "none" });
         } else if (effectiveStyle === "following") {
-          existingToolbar.style.visibility = "hidden";
-          existingToolbar.style.display = ""; // Reset display to allow visibility to work
+          existingToolbar.setCssStyles({ visibility: "hidden" });
+          existingToolbar.setCssStyles({ display: "" }); // Reset display to allow visibility to work
         } else {
-          existingToolbar.style.visibility = "visible";
-          existingToolbar.style.display = ""; // Reset display to allow visibility to work
+          existingToolbar.setCssStyles({ visibility: "visible" });
+          existingToolbar.setCssStyles({ display: "" }); // Reset display to allow visibility to work
         }
 
         // 更新 CSS 变量（可能用户更改了设置）

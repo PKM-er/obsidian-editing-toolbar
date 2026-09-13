@@ -81,7 +81,7 @@ class GhostTextWidget extends WidgetType {
     if (this.showHint) {
       if (hint) {
         hint.textContent = t("Press Tab to accept");
-        hint.style.display = "inline-flex";
+        hint.setCssStyles({ display: "inline-flex" });
       } else {
         const newHint = document.createElement("span");
         newHint.className = "cm-ai-ghost-hint";
@@ -93,13 +93,13 @@ class GhostTextWidget extends WidgetType {
         }
       }
     } else if (hint) {
-      hint.style.display = "none";
+      hint.setCssStyles({ display: "none" });
     }
 
     if (lines.length > 1) {
       if (rest) {
         rest.textContent = lines.slice(1).join("\n");
-        rest.style.display = "block";
+        rest.setCssStyles({ display: "block" });
       } else {
         const newRest = document.createElement("div");
         newRest.className = "cm-ai-ghost-rest";
@@ -107,7 +107,7 @@ class GhostTextWidget extends WidgetType {
         dom.appendChild(newRest);
       }
     } else if (rest) {
-      rest.style.display = "none";
+      rest.setCssStyles({ display: "none" });
     }
 
     return true;

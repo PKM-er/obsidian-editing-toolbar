@@ -115,35 +115,35 @@ export class RegexCommandModal extends Modal {
 
     // 正则表达式设置容器
     const regexContainer = contentEl.createDiv('regex-settings');
-    regexContainer.style.border = '1px solid var(--background-modifier-border)';
-    regexContainer.style.padding = '10px';
-    regexContainer.style.borderRadius = '5px';
-    regexContainer.style.marginBottom = '10px';
+    regexContainer.setCssStyles({ border: '1px solid var(--background-modifier-border)' });
+    regexContainer.setCssStyles({ padding: '10px' });
+    regexContainer.setCssStyles({ borderRadius: '5px' });
+    regexContainer.setCssStyles({ marginBottom: '10px' });
 
     // 使用原生 details/summary 创建可折叠的AI提示指南
     const aiHelpContainer = regexContainer.createEl('details', { cls: 'ai-help-container' });
-    aiHelpContainer.style.marginBottom = '10px';
-    aiHelpContainer.style.borderRadius = '5px';
-    aiHelpContainer.style.overflow = 'hidden';
+    aiHelpContainer.setCssStyles({ marginBottom: '10px' });
+    aiHelpContainer.setCssStyles({ borderRadius: '5px' });
+    aiHelpContainer.setCssStyles({ overflow: 'hidden' });
 
     const aiHelpSummary = aiHelpContainer.createEl('summary', { text: t('How to use AI to get regular expressions?') });
-    aiHelpSummary.style.padding = '8px 12px';
-    aiHelpSummary.style.backgroundColor = 'var(--background-secondary)';
-    aiHelpSummary.style.cursor = 'pointer';
-    aiHelpSummary.style.fontWeight = 'bold';
-    aiHelpSummary.style.borderRadius = '4px';
-    aiHelpSummary.style.userSelect = 'none';
+    aiHelpSummary.setCssStyles({ padding: '8px 12px' });
+    aiHelpSummary.setCssStyles({ backgroundColor: 'var(--background-secondary)' });
+    aiHelpSummary.setCssStyles({ cursor: 'pointer' });
+    aiHelpSummary.setCssStyles({ fontWeight: 'bold' });
+    aiHelpSummary.setCssStyles({ borderRadius: '4px' });
+    aiHelpSummary.setCssStyles({ userSelect: 'none' });
 
     const aiHelpContent = aiHelpContainer.createDiv('ai-help-content');
-    aiHelpContent.style.padding = '6px';
-    aiHelpContent.style.backgroundColor = 'var(--background-secondary-alt)';
-    aiHelpContent.style.borderBottomLeftRadius = '5px';
-    aiHelpContent.style.borderBottomRightRadius = '5px';
-    aiHelpContent.style.marginTop = '1px';
+    aiHelpContent.setCssStyles({ padding: '6px' });
+    aiHelpContent.setCssStyles({ backgroundColor: 'var(--background-secondary-alt)' });
+    aiHelpContent.setCssStyles({ borderBottomLeftRadius: '5px' });
+    aiHelpContent.setCssStyles({ borderBottomRightRadius: '5px' });
+    aiHelpContent.setCssStyles({ marginTop: '1px' });
 
     // 使内容可复制
     aiHelpContent.setAttribute('contenteditable', 'false');
-    aiHelpContent.style.userSelect = 'text';
+    aiHelpContent.setCssStyles({ userSelect: 'text' });
 
     aiHelpContent.empty();
     const p = aiHelpContent.createEl("p");
@@ -195,8 +195,8 @@ export class RegexCommandModal extends Modal {
 
     // 添加正则表达式选项
     const regexOptionsContainer = regexContainer.createDiv('regex-options');
-    regexOptionsContainer.style.display = 'flex';
-    regexOptionsContainer.style.gap = '8px';
+    regexOptionsContainer.setCssStyles({ display: 'flex' });
+    regexOptionsContainer.setCssStyles({ gap: '8px' });
 
     new Setting(regexOptionsContainer)
       .setName(t('Ignore case'))
@@ -250,10 +250,10 @@ export class RegexCommandModal extends Modal {
 
     const conditionSettingsContainer = conditionContainer.createDiv('condition-settings');
     conditionSettingsContainer.style.display = this.useCondition ? 'block' : 'none';
-    conditionSettingsContainer.style.border = '1px solid var(--background-modifier-border)';
-    conditionSettingsContainer.style.padding = '10px';
-    conditionSettingsContainer.style.borderRadius = '5px';
-    conditionSettingsContainer.style.marginBottom = '15px';
+    conditionSettingsContainer.setCssStyles({ border: '1px solid var(--background-modifier-border)' });
+    conditionSettingsContainer.setCssStyles({ padding: '10px' });
+    conditionSettingsContainer.setCssStyles({ borderRadius: '5px' });
+    conditionSettingsContainer.setCssStyles({ marginBottom: '15px' });
 
     new Setting(conditionSettingsContainer)
       .setName(t('Condition pattern'))
@@ -319,28 +319,28 @@ export class RegexCommandModal extends Modal {
     const regexHelpContainer = regexContainer.createSpan('regex-help');
     // 使用原生 details/summary 创建可折叠的正则表达式示例
     const regexExamplesContainer = regexContainer.createEl('details', { cls: 'regex-examples-container' });
-    regexExamplesContainer.style.marginTop = '15px';
-    regexExamplesContainer.style.borderRadius = '5px';
-    regexExamplesContainer.style.overflow = 'hidden';
+    regexExamplesContainer.setCssStyles({ marginTop: '15px' });
+    regexExamplesContainer.setCssStyles({ borderRadius: '5px' });
+    regexExamplesContainer.setCssStyles({ overflow: 'hidden' });
 
     const examplesSummary = regexExamplesContainer.createEl('summary', { text: t('Regular expression examples') });
-    examplesSummary.style.padding = '8px 12px';
-    examplesSummary.style.backgroundColor = 'var(--background-secondary)';
-    examplesSummary.style.cursor = 'pointer';
-    examplesSummary.style.fontWeight = 'bold';
-    examplesSummary.style.borderRadius = '4px';
-    examplesSummary.style.userSelect = 'none';
+    examplesSummary.setCssStyles({ padding: '8px 12px' });
+    examplesSummary.setCssStyles({ backgroundColor: 'var(--background-secondary)' });
+    examplesSummary.setCssStyles({ cursor: 'pointer' });
+    examplesSummary.setCssStyles({ fontWeight: 'bold' });
+    examplesSummary.setCssStyles({ borderRadius: '4px' });
+    examplesSummary.setCssStyles({ userSelect: 'none' });
 
     const examplesContent = regexExamplesContainer.createDiv('examples-content');
-    examplesContent.style.padding = '10px';
-    examplesContent.style.backgroundColor = 'var(--background-secondary-alt)';
-    examplesContent.style.borderBottomLeftRadius = '5px';
-    examplesContent.style.borderBottomRightRadius = '5px';
-    examplesContent.style.marginTop = '1px';
+    examplesContent.setCssStyles({ padding: '10px' });
+    examplesContent.setCssStyles({ backgroundColor: 'var(--background-secondary-alt)' });
+    examplesContent.setCssStyles({ borderBottomLeftRadius: '5px' });
+    examplesContent.setCssStyles({ borderBottomRightRadius: '5px' });
+    examplesContent.setCssStyles({ marginTop: '1px' });
 
     const examplesList = examplesContent.createEl('ul');
-    examplesList.style.paddingLeft = '20px';
-    examplesList.style.margin = '0';
+    examplesList.setCssStyles({ paddingLeft: '20px' });
+    examplesList.setCssStyles({ margin: '0' });
 
     const examples = [
       {
@@ -408,19 +408,19 @@ export class RegexCommandModal extends Modal {
 
     examples.forEach(example => {
       const item = examplesList.createEl('li');
-      item.style.marginBottom = '8px';
+      item.setCssStyles({ marginBottom: '8px' });
 
       const link = item.createEl('a', {
         text: example.name,
         href: '#'
       });
-      link.style.color = 'var(--text-accent)';
-      link.style.textDecoration = 'none';
+      link.setCssStyles({ color: 'var(--text-accent)' });
+      link.setCssStyles({ textDecoration: 'none' });
       link.addEventListener('mouseenter', () => {
-        link.style.textDecoration = 'underline';
+        link.setCssStyles({ textDecoration: 'underline' });
       });
       link.addEventListener('mouseleave', () => {
-        link.style.textDecoration = 'none';
+        link.setCssStyles({ textDecoration: 'none' });
       });
 
       link.addEventListener('click', (e) => {
@@ -440,12 +440,12 @@ export class RegexCommandModal extends Modal {
           this.conditionPattern = example.conditionPattern || '';
           this.useConditionToggle.setValue(true);
           this.conditionPatternInput.setValue(this.conditionPattern);
-          conditionSettingsContainer.style.display = 'block';
+          conditionSettingsContainer.setCssStyles({ display: 'block' });
         }else{
           this.useCondition = false;
           this.useConditionToggle.setValue(false);
           this.conditionPatternInput.setValue('');
-          conditionSettingsContainer.style.display = 'none';
+          conditionSettingsContainer.setCssStyles({ display: 'none' });
         }
         if (example.toggleMultiline) {
           this.regexMultilineToggle.setValue(true);
@@ -461,32 +461,32 @@ export class RegexCommandModal extends Modal {
     });
     // 预览部分
     const previewContainer = contentEl.createDiv('preview-container');
-    previewContainer.style.marginTop = '20px';
-    previewContainer.style.marginBottom = '20px';
-    previewContainer.style.border = '1px solid var(--background-modifier-border)';
-    previewContainer.style.padding = '10px';
-    previewContainer.style.borderRadius = '5px';
+    previewContainer.setCssStyles({ marginTop: '20px' });
+    previewContainer.setCssStyles({ marginBottom: '20px' });
+    previewContainer.setCssStyles({ border: '1px solid var(--background-modifier-border)' });
+    previewContainer.setCssStyles({ padding: '10px' });
+    previewContainer.setCssStyles({ borderRadius: '5px' });
 
     const previewLabel = previewContainer.createEl('label', { text: t('Preview') });
 
 
     const previewInputContainer = previewContainer.createDiv('preview-input-container');
-    previewInputContainer.style.marginBottom = '10px';
+    previewInputContainer.setCssStyles({ marginBottom: '10px' });
 
     const previewInputLabel = previewInputContainer.createEl('label', { text: t('Example text:') });
-    previewInputLabel.style.display = 'block';
-    previewInputLabel.style.marginBottom = '5px';
+    previewInputLabel.setCssStyles({ display: 'block' });
+    previewInputLabel.setCssStyles({ marginBottom: '5px' });
 
     this.previewInput = previewInputContainer.createEl('textarea', {
       attr: {
         placeholder: t('Input example text to view the formatting effect of the command...')
       }
     });
-    this.previewInput.style.height = 'auto';
-    this.previewInput.style.width = '100%';
-    this.previewInput.style.padding = '8px';
-    this.previewInput.style.borderRadius = '4px';
-    this.previewInput.style.border = '1px solid var(--background-modifier-border)';
+    this.previewInput.setCssStyles({ height: 'auto' });
+    this.previewInput.setCssStyles({ width: '100%' });
+    this.previewInput.setCssStyles({ padding: '8px' });
+    this.previewInput.setCssStyles({ borderRadius: '4px' });
+    this.previewInput.setCssStyles({ border: '1px solid var(--background-modifier-border)' });
     this.previewInput.value = "Sample text https://example.com important text    1234567890";
 
     this.previewInput.addEventListener('input', () => {
@@ -496,15 +496,15 @@ export class RegexCommandModal extends Modal {
     const previewOutputContainer = previewContainer.createDiv('preview-output-container');
 
     const previewOutputLabel = previewOutputContainer.createEl('label', { text: t('Result: ') });
-    previewOutputLabel.style.display = 'block';
-    previewOutputLabel.style.marginBottom = '5px';
+    previewOutputLabel.setCssStyles({ display: 'block' });
+    previewOutputLabel.setCssStyles({ marginBottom: '5px' });
 
     this.previewOutput = previewOutputContainer.createDiv('preview-output');
-    this.previewOutput.style.padding = '8px';
-    this.previewOutput.style.borderRadius = '4px';
-    this.previewOutput.style.border = '1px solid var(--background-modifier-border)';
-    this.previewOutput.style.backgroundColor = 'var(--background-secondary)';
-    this.previewOutput.style.minHeight = '3em';
+    this.previewOutput.setCssStyles({ padding: '8px' });
+    this.previewOutput.setCssStyles({ borderRadius: '4px' });
+    this.previewOutput.setCssStyles({ border: '1px solid var(--background-modifier-border)' });
+    this.previewOutput.setCssStyles({ backgroundColor: 'var(--background-secondary)' });
+    this.previewOutput.setCssStyles({ minHeight: '3em' });
 
     // 初始化预览
     this.updatePreview();
@@ -628,10 +628,10 @@ export class RegexCommandModal extends Modal {
           this.previewOutput.createEl('br');
         }
       });
-      this.previewOutput.style.color = 'var(--text-normal)';
+      this.previewOutput.setCssStyles({ color: 'var(--text-normal)' });
     } catch (error) {
       this.previewOutput.setText(t('Error: ') + error.message);
-      this.previewOutput.style.color = 'var(--text-error)';
+      this.previewOutput.setCssStyles({ color: 'var(--text-error)' });
 
       // 错误时清除正则代码显示
       const codeContainer = this.previewOutput.parentElement?.querySelector('.regex-code-container');
@@ -650,28 +650,28 @@ export class RegexCommandModal extends Modal {
     let codeContainer = previewContainer.querySelector('.regex-code-container');
     if (!codeContainer) {
       codeContainer = previewContainer.createDiv('regex-code-container') as HTMLDivElement;
-      (codeContainer as HTMLDivElement).style.marginTop = '15px';
-      (codeContainer as HTMLDivElement).style.borderTop = '1px solid var(--background-modifier-border)';
-      (codeContainer as HTMLDivElement).style.paddingTop = '10px';
+      (codeContainer as HTMLDivElement).setCssStyles({ marginTop: '15px' });
+      (codeContainer as HTMLDivElement).setCssStyles({ borderTop: '1px solid var(--background-modifier-border)' });
+      (codeContainer as HTMLDivElement).setCssStyles({ paddingTop: '10px' });
 
       const codeTitle = codeContainer.createEl('div', { text: t('Complete regular expression code (copy to AI for explanation)') });
-      codeTitle.style.marginBottom = '5px';
-      codeTitle.style.fontWeight = 'bold';
+      codeTitle.setCssStyles({ marginBottom: '5px' });
+      codeTitle.setCssStyles({ fontWeight: 'bold' });
     } else {
       codeContainer.empty();
       const codeTitle = codeContainer.createEl('div', { text: t('Complete regular expression code (copy to AI for explanation)') });
-      codeTitle.style.marginBottom = '5px';
-      codeTitle.style.fontWeight = 'bold';
+      codeTitle.setCssStyles({ marginBottom: '5px' });
+      codeTitle.setCssStyles({ fontWeight: 'bold' });
     }
 
     // 创建代码块
     const codeBlock = codeContainer.createEl('pre');
-    codeBlock.style.backgroundColor = 'var(--background-code)';
-    codeBlock.style.padding = '8px';
-    codeBlock.style.borderRadius = '4px';
-    codeBlock.style.overflowX = 'auto';
-    codeBlock.style.fontFamily = 'monospace';
-    codeBlock.style.fontSize = 'var(--font-smaller)';
+    codeBlock.setCssStyles({ backgroundColor: 'var(--background-code)' });
+    codeBlock.setCssStyles({ padding: '8px' });
+    codeBlock.setCssStyles({ borderRadius: '4px' });
+    codeBlock.setCssStyles({ overflowX: 'auto' });
+    codeBlock.setCssStyles({ fontFamily: 'monospace' });
+    codeBlock.setCssStyles({ fontSize: 'var(--font-smaller)' });
 
     // 构建完整的正则表达式代码
     let codeText = `//${t('Explain the syntax of JavaScript regular expressions')}\n`;
@@ -691,10 +691,10 @@ export class RegexCommandModal extends Modal {
 
     // 添加复制按钮
     const copyButton = codeContainer.createEl('button', { text: t('Copy code') });
-    copyButton.style.marginTop = '5px';
-    copyButton.style.padding = '4px 8px';
-    copyButton.style.borderRadius = '4px';
-    copyButton.style.cursor = 'pointer';
+    copyButton.setCssStyles({ marginTop: '5px' });
+    copyButton.setCssStyles({ padding: '4px 8px' });
+    copyButton.setCssStyles({ borderRadius: '4px' });
+    copyButton.setCssStyles({ cursor: 'pointer' });
 
     copyButton.addEventListener('click', () => {
       navigator.clipboard.writeText(codeText).then(() => {

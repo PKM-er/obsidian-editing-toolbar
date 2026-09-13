@@ -249,8 +249,8 @@ export class editingToolbarSettingTab extends PluginSettingTab {
       render: (setting: Setting) => {
         setting.settingEl.empty();
         setting.settingEl.addClass('editing-toolbar-settings-root');
-        setting.settingEl.style.display = 'block';
-        setting.settingEl.style.padding = '0';
+        setting.settingEl.setCssStyles({ display: 'block' });
+        setting.settingEl.setCssStyles({ padding: '0' });
         this.createHeader(setting.settingEl);
       },
     }, {
@@ -289,8 +289,8 @@ export class editingToolbarSettingTab extends PluginSettingTab {
         render: (setting: Setting) => {
           setting.settingEl.empty();
           setting.settingEl.addClass('editing-toolbar-declarative-content');
-          setting.settingEl.style.display = 'block';
-          setting.settingEl.style.padding = '0';
+          setting.settingEl.setCssStyles({ display: 'block' });
+          setting.settingEl.setCssStyles({ padding: '0' });
           renderContent(setting.settingEl);
           return () => this.destroySettingsResources();
         },
@@ -566,7 +566,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
         render: (setting: Setting) => {
           setting.settingEl.empty();
           setting.settingEl.addClass('editing-toolbar-declarative-content');
-          setting.settingEl.style.display = 'block';
+          setting.settingEl.setCssStyles({ display: 'block' });
           this.createToolbarPreview(setting.settingEl, editingStyle);
         },
       },
@@ -611,10 +611,10 @@ export class editingToolbarSettingTab extends PluginSettingTab {
 
   private createCustomToolbarColorSettings(containerEl: HTMLElement): void {
     const paintbrushContainer = containerEl.createDiv('custom-paintbrush-container');
-    paintbrushContainer.style.padding = '16px';
-    paintbrushContainer.style.borderRadius = '8px';
-    paintbrushContainer.style.backgroundColor = 'var(--background-secondary)';
-    paintbrushContainer.style.marginBottom = '20px';
+    paintbrushContainer.setCssStyles({ padding: '16px' });
+    paintbrushContainer.setCssStyles({ borderRadius: '8px' });
+    paintbrushContainer.setCssStyles({ backgroundColor: 'var(--background-secondary)' });
+    paintbrushContainer.setCssStyles({ marginBottom: '20px' });
 
     new Setting(paintbrushContainer)
       .setName(t('🎨 Set Custom Background'))
@@ -724,11 +724,11 @@ export class editingToolbarSettingTab extends PluginSettingTab {
 
     warnings.forEach(({ message }) => {
       const noteEl = container.createDiv({ cls: 'editing-toolbar-url-warning editing-toolbar-ai-note' });
-      noteEl.style.color = 'var(--text-warning)';
-      noteEl.style.borderLeft = '3px solid var(--color-orange)';
-      noteEl.style.paddingLeft = '8px';
-      noteEl.style.marginTop = '6px';
-      noteEl.style.fontSize = '12px';
+      noteEl.setCssStyles({ color: 'var(--text-warning)' });
+      noteEl.setCssStyles({ borderLeft: '3px solid var(--color-orange)' });
+      noteEl.setCssStyles({ paddingLeft: '8px' });
+      noteEl.setCssStyles({ marginTop: '6px' });
+      noteEl.setCssStyles({ fontSize: '12px' });
       noteEl.setText(message);
     });
   }
@@ -846,10 +846,10 @@ export class editingToolbarSettingTab extends PluginSettingTab {
   // 拆分设置项到不同方法
   private displayGeneralSettings(containerEl: HTMLElement): void {
     const generalSettingContainer = containerEl.createDiv('generalSetting-container');
-    generalSettingContainer.style.padding = '16px';
-    generalSettingContainer.style.borderRadius = '8px';
-    generalSettingContainer.style.backgroundColor = 'var(--background-secondary)';
-    generalSettingContainer.style.marginBottom = '20px';
+    generalSettingContainer.setCssStyles({ padding: '16px' });
+    generalSettingContainer.setCssStyles({ borderRadius: '8px' });
+    generalSettingContainer.setCssStyles({ backgroundColor: 'var(--background-secondary)' });
+    generalSettingContainer.setCssStyles({ marginBottom: '20px' });
     new Setting(generalSettingContainer)
       .setName(t('Editing Toolbar Append Method'))
       .setDesc(t('Choose where Editing Toolbar will append upon regeneration.'))
@@ -990,10 +990,10 @@ export class editingToolbarSettingTab extends PluginSettingTab {
   private displayAppearanceSettings(containerEl: HTMLElement): void {
 
     const appearanceSettingContainer = containerEl.createDiv('appearanceSetting-container');
-    appearanceSettingContainer.style.padding = '16px';
-    appearanceSettingContainer.style.borderRadius = '8px';
-    appearanceSettingContainer.style.backgroundColor = 'var(--background-secondary)';
-    appearanceSettingContainer.style.marginBottom = '20px';
+    appearanceSettingContainer.setCssStyles({ padding: '16px' });
+    appearanceSettingContainer.setCssStyles({ borderRadius: '8px' });
+    appearanceSettingContainer.setCssStyles({ backgroundColor: 'var(--background-secondary)' });
+    appearanceSettingContainer.setCssStyles({ marginBottom: '20px' });
     // Aesthetic style setting
 
     // Decide which style we are editing in this tab
@@ -1310,20 +1310,20 @@ export class editingToolbarSettingTab extends PluginSettingTab {
         }));
     // 添加命令列表
     const commandListContainer = customCommandsContainer.createDiv('command-list-container');
-    commandListContainer.style.padding = '16px';
-    commandListContainer.style.borderRadius = '8px';
-    commandListContainer.style.backgroundColor = 'var(--background-secondary)';
-    commandListContainer.style.marginBottom = '20px';
-    commandListContainer.style.marginTop = '20px';
+    commandListContainer.setCssStyles({ padding: '16px' });
+    commandListContainer.setCssStyles({ borderRadius: '8px' });
+    commandListContainer.setCssStyles({ backgroundColor: 'var(--background-secondary)' });
+    commandListContainer.setCssStyles({ marginBottom: '20px' });
+    commandListContainer.setCssStyles({ marginTop: '20px' });
     // 添加新命令按钮容器
     const addButtonContainer = customCommandsContainer.createDiv('add-command-button-container');
-    addButtonContainer.style.padding = '16px';
-    addButtonContainer.style.borderRadius = '8px';
-    addButtonContainer.style.backgroundColor = 'var(--background-secondary)';
-    addButtonContainer.style.marginBottom = '20px';
-    addButtonContainer.style.marginTop = '20px';
-    addButtonContainer.style.display = 'flex';
-    addButtonContainer.style.gap = '10px';
+    addButtonContainer.setCssStyles({ padding: '16px' });
+    addButtonContainer.setCssStyles({ borderRadius: '8px' });
+    addButtonContainer.setCssStyles({ backgroundColor: 'var(--background-secondary)' });
+    addButtonContainer.setCssStyles({ marginBottom: '20px' });
+    addButtonContainer.setCssStyles({ marginTop: '20px' });
+    addButtonContainer.setCssStyles({ display: 'flex' });
+    addButtonContainer.setCssStyles({ gap: '10px' });
     // 添加普通格式命令按钮
     const addFormatButton = addButtonContainer.createEl('button', {
       text: t('Add Format Command')
@@ -1438,7 +1438,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
           const iconContainer = commandSetting.nameEl.createSpan({
             cls: "editingToolbarSettingsIcon"
           });
-          iconContainer.style.marginRight = "8px";
+          iconContainer.setCssStyles({ marginRight: "8px" });
           checkHtml(command.icon) ? safeSetInnerHTML(iconContainer, command.icon) : setIcon(iconContainer, command.icon)
         } catch (e) {
           console.error("Failed to set icon:", e);
@@ -1498,9 +1498,9 @@ export class editingToolbarSettingTab extends PluginSettingTab {
    
    
     const toolbarContainer = containerEl.createDiv('custom-toolbar-container');
-    toolbarContainer.style.padding = '16px';
-    toolbarContainer.style.borderRadius = '8px';
-    toolbarContainer.style.backgroundColor = 'var(--background-secondary)';
+    toolbarContainer.setCssStyles({ padding: '16px' });
+    toolbarContainer.setCssStyles({ borderRadius: '8px' });
+    toolbarContainer.setCssStyles({ backgroundColor: 'var(--background-secondary)' });
     // 添加主题选择下拉框
     new Setting(toolbarContainer)
       .setName(t("Toolbar Theme"))
@@ -1686,11 +1686,11 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     const appearanceBucket = this.getAppearanceBucket(editingStyle);
     const previewContainer = containerEl.createDiv('toolbar-preview-container');
     previewContainer.addClass('toolbar-preview-section');
-    previewContainer.style.marginTop = '20px';
+    previewContainer.setCssStyles({ marginTop: '20px' });
     const previewLabel = previewContainer.createEl('h3', {
     text: t(`Toolbar Preview (With a hypothetical command configuration.)`)
     });
-    previewLabel.style.marginBottom = '10px';
+    previewLabel.setCssStyles({ marginBottom: '10px' });
     // 创建预览工具栏 - 使用类似 generateMenu 的方式
     const wrapper = previewContainer.createDiv();
     wrapper.classList.add("preview-toolbar-wrapper");
@@ -1713,10 +1713,10 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     if (editingStyle === "fixed") {
       const icon = this.plugin.settings.toolbarIconSize || 18;
       const cols = this.plugin.settings.cMenuNumRows || 6;
-      editingToolbar.style.display = "grid";
+      editingToolbar.setCssStyles({ display: "grid" });
       editingToolbar.style.gridTemplateColumns = `repeat(${cols}, ${icon + 10}px)`;
       editingToolbar.style.gap = `${Math.max((icon - 18) / 4, 2)}px`;
-      editingToolbar.style.margin = "0 auto";  // centers the grid like top/following
+      editingToolbar.setCssStyles({ margin: "0 auto" });  // centers the grid like top/following
     }
     // 定义预览工具栏的命令
     const previewCommands = [
@@ -3074,19 +3074,19 @@ export class editingToolbarSettingTab extends PluginSettingTab {
       if (options.collapsible) {
         const chevronEl = header.createDiv({ cls: 'editing-toolbar-ai-card-chevron', text: '▾' });
         chevronEl.setAttr('aria-hidden', 'true');
-        chevronEl.style.flexShrink = '0';
-        chevronEl.style.width = '24px';
-        chevronEl.style.height = '24px';
-        chevronEl.style.borderRadius = '999px';
-        chevronEl.style.display = 'flex';
-        chevronEl.style.alignItems = 'center';
-        chevronEl.style.justifyContent = 'center';
-        chevronEl.style.color = 'var(--text-muted)';
-        chevronEl.style.background = 'var(--background-modifier-hover)';
-        chevronEl.style.fontSize = '18px';
-        chevronEl.style.fontWeight = '700';
-        chevronEl.style.lineHeight = '1';
-        chevronEl.style.transition = 'transform 0.16s ease, background-color 0.16s ease, color 0.16s ease';
+        chevronEl.setCssStyles({ flexShrink: '0' });
+        chevronEl.setCssStyles({ width: '24px' });
+        chevronEl.setCssStyles({ height: '24px' });
+        chevronEl.setCssStyles({ borderRadius: '999px' });
+        chevronEl.setCssStyles({ display: 'flex' });
+        chevronEl.setCssStyles({ alignItems: 'center' });
+        chevronEl.setCssStyles({ justifyContent: 'center' });
+        chevronEl.setCssStyles({ color: 'var(--text-muted)' });
+        chevronEl.setCssStyles({ background: 'var(--background-modifier-hover)' });
+        chevronEl.setCssStyles({ fontSize: '18px' });
+        chevronEl.setCssStyles({ fontWeight: '700' });
+        chevronEl.setCssStyles({ lineHeight: '1' });
+        chevronEl.setCssStyles({ transition: 'transform 0.16s ease, background-color 0.16s ease, color 0.16s ease' });
 
         const updateChevron = () => {
           chevronEl.style.transform = (root as HTMLDetailsElement).open ? 'rotate(180deg)' : 'rotate(0deg)';
@@ -3163,7 +3163,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
         })
         .addButton((button) => {
           if (!this.plugin.settings.ai.pkmer.userInfo) {
-            button.buttonEl.style.display = 'none';
+            button.buttonEl.setCssStyles({ display: 'none' });
             return;
           }
 
@@ -3610,11 +3610,11 @@ export class editingToolbarSettingTab extends PluginSettingTab {
         });
       } else {
         const frontmatterVariablesInfo = frontmatterBody.createDiv({ cls: 'setting-item-description' });
-        frontmatterVariablesInfo.style.marginBottom = '12px';
-        frontmatterVariablesInfo.style.padding = '8px 12px';
-        frontmatterVariablesInfo.style.background = 'var(--background-secondary)';
-        frontmatterVariablesInfo.style.borderRadius = '6px';
-        frontmatterVariablesInfo.style.fontSize = '12px';
+        frontmatterVariablesInfo.setCssStyles({ marginBottom: '12px' });
+        frontmatterVariablesInfo.setCssStyles({ padding: '8px 12px' });
+        frontmatterVariablesInfo.setCssStyles({ background: 'var(--background-secondary)' });
+        frontmatterVariablesInfo.setCssStyles({ borderRadius: '6px' });
+        frontmatterVariablesInfo.setCssStyles({ fontSize: '12px' });
         safeSetInnerHTML(frontmatterVariablesInfo, [
           '<strong>' + t('Available Variables') + ':</strong><br>',
           '<code>{note}</code> - ' + t('Full document content') + ' | ',
@@ -3632,8 +3632,8 @@ export class editingToolbarSettingTab extends PluginSettingTab {
                 this.plugin.settings.ai.frontmatterPrompt.properties = value;
                 await this.plugin.saveSettings();
               });
-            text.inputEl.style.width = '100%';
-            text.inputEl.style.minHeight = '100px';
+            text.inputEl.setCssStyles({ width: '100%' });
+            text.inputEl.setCssStyles({ minHeight: '100px' });
           });
 
         new Setting(frontmatterBody)
@@ -3659,8 +3659,8 @@ export class editingToolbarSettingTab extends PluginSettingTab {
                 this.plugin.settings.ai.frontmatterPrompt.prompt = value;
                 await this.plugin.saveSettings();
               });
-            text.inputEl.style.width = '100%';
-            text.inputEl.style.minHeight = '180px';
+            text.inputEl.setCssStyles({ width: '100%' });
+            text.inputEl.setCssStyles({ minHeight: '180px' });
           });
 
         new Setting(frontmatterBody)
@@ -3683,11 +3683,11 @@ export class editingToolbarSettingTab extends PluginSettingTab {
       });
 
       const variablesInfo = templatesBody.createDiv({ cls: 'setting-item-description' });
-      variablesInfo.style.marginBottom = '12px';
-      variablesInfo.style.padding = '8px 12px';
-      variablesInfo.style.background = 'var(--background-secondary)';
-      variablesInfo.style.borderRadius = '6px';
-      variablesInfo.style.fontSize = '12px';
+      variablesInfo.setCssStyles({ marginBottom: '12px' });
+      variablesInfo.setCssStyles({ padding: '8px 12px' });
+      variablesInfo.setCssStyles({ background: 'var(--background-secondary)' });
+      variablesInfo.setCssStyles({ borderRadius: '6px' });
+      variablesInfo.setCssStyles({ fontSize: '12px' });
       safeSetInnerHTML(variablesInfo, `
         <strong>${t('Available Variables')}:</strong><br>
         <code>{{selection}}</code> - ${t('Selected text')} |
@@ -3771,7 +3771,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
           .onChange((value) => {
             nameValue = value;
           });
-        text.inputEl.style.width = '100%';
+        text.inputEl.setCssStyles({ width: '100%' });
       });
 
     new Setting(contentEl)
@@ -3783,8 +3783,8 @@ export class editingToolbarSettingTab extends PluginSettingTab {
           .onChange((value) => {
             promptValue = value;
           });
-        text.inputEl.style.width = '100%';
-        text.inputEl.style.minHeight = '120px';
+        text.inputEl.setCssStyles({ width: '100%' });
+        text.inputEl.setCssStyles({ minHeight: '120px' });
       });
 
     new Setting(contentEl)
@@ -3835,10 +3835,10 @@ export class editingToolbarSettingTab extends PluginSettingTab {
   private displayImportExportSettings(containerEl: HTMLElement): void {
     // 添加样式
     const importExportContainer = containerEl.createDiv('import-export-container');
-    importExportContainer.style.padding = '16px';
-    importExportContainer.style.borderRadius = '8px';
-    importExportContainer.style.backgroundColor = 'var(--background-secondary)';
-    importExportContainer.style.marginBottom = '20px';
+    importExportContainer.setCssStyles({ padding: '16px' });
+    importExportContainer.setCssStyles({ borderRadius: '8px' });
+    importExportContainer.setCssStyles({ backgroundColor: 'var(--background-secondary)' });
+    importExportContainer.setCssStyles({ marginBottom: '20px' });
     // 导出设置
     new Setting(importExportContainer)
       .setName(t('Export Configuration'))
@@ -3863,30 +3863,30 @@ export class editingToolbarSettingTab extends PluginSettingTab {
       );
     // 添加说明
     const infoDiv = containerEl.createDiv('import-export-info');
-    infoDiv.style.marginTop = '20px';
-    infoDiv.style.padding = '16px';
-    infoDiv.style.borderRadius = '8px';
-    infoDiv.style.backgroundColor = 'var(--background-secondary)';
+    infoDiv.setCssStyles({ marginTop: '20px' });
+    infoDiv.setCssStyles({ padding: '16px' });
+    infoDiv.setCssStyles({ borderRadius: '8px' });
+    infoDiv.setCssStyles({ backgroundColor: 'var(--background-secondary)' });
     infoDiv.createEl('h3', {
       text: t('Usage Instructions'),
       cls: 'import-export-heading'
-    }).style.marginTop = '0';
+    }).setCssStyles({ marginTop: '0' });
 
     const ul = infoDiv.createEl('ul');
-    ul.style.paddingLeft = '20px';
+    ul.setCssStyles({ paddingLeft: '20px' });
     ul.createEl('li', { text: t('Export: Generate a JSON configuration that you can save or share.')});
     ul.createEl('li', { text: t('Import: Paste a previously exported JSON configuration.')});
     // 添加社区分享链接
     const communityDiv = containerEl.createDiv('community-share-container');
-    communityDiv.style.marginTop = '20px';
-    communityDiv.style.padding = '16px';
-    communityDiv.style.borderRadius = '8px';
-    communityDiv.style.backgroundColor = 'rgba(var(--color-green-rgb), 0.1)';
-    communityDiv.style.border = '1px solid rgba(var(--color-green-rgb), 0.3)';
+    communityDiv.setCssStyles({ marginTop: '20px' });
+    communityDiv.setCssStyles({ padding: '16px' });
+    communityDiv.setCssStyles({ borderRadius: '8px' });
+    communityDiv.setCssStyles({ backgroundColor: 'rgba(var(--color-green-rgb), 0.1)' });
+    communityDiv.setCssStyles({ border: '1px solid rgba(var(--color-green-rgb), 0.3)' });
     communityDiv.createEl('h3', {
       text: t('Join the Community'),
       cls: 'community-heading'
-    }).style.marginTop = '0';
+    }).setCssStyles({ marginTop: '0' });
 
     const shareLink = communityDiv.createEl('p');
     safeSetInnerHTML(shareLink, t('Share your toolbar settings and styles in our') + ' <a href="https://github.com/PKM-er/obsidian-editing-toolbar/discussions/categories/show-and-tell" target="_blank" rel="noopener noreferrer">Show and Tell</a> ');
@@ -3895,15 +3895,15 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     });
     // 添加警告
     const warningDiv = containerEl.createDiv('import-export-warning');
-    warningDiv.style.marginTop = '20px';
-    warningDiv.style.padding = '16px';
-    warningDiv.style.borderRadius = '8px';
-    warningDiv.style.backgroundColor = 'rgba(var(--color-red-rgb), 0.1)';
-    warningDiv.style.border = '1px solid rgba(var(--color-red-rgb), 0.3)';
+    warningDiv.setCssStyles({ marginTop: '20px' });
+    warningDiv.setCssStyles({ padding: '16px' });
+    warningDiv.setCssStyles({ borderRadius: '8px' });
+    warningDiv.setCssStyles({ backgroundColor: 'rgba(var(--color-red-rgb), 0.1)' });
+    warningDiv.setCssStyles({ border: '1px solid rgba(var(--color-red-rgb), 0.3)' });
     warningDiv.createEl('p', {
       text: t('Warning: Importing configuration will overwrite your current settings. Consider exporting your current configuration first as a backup.'),
       cls: 'warning-text'
-    }).style.margin = '0';
+    }).setCssStyles({ margin: '0' });
   }
   private aestheticStyleMap: { [key: string]: string } = {
     default: "editingToolbarDefaultAesthetic",

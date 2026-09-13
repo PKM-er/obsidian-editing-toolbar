@@ -212,10 +212,10 @@ export class InsertCalloutModal extends Modal {
         // 添加快捷键提示
         const shortcutHint = contentEl.createDiv("shortcut-hint");
         shortcutHint.setText(`${Platform.isMacOS ? "⌘" : "Ctrl"} + Enter ${t("to insert")}`);
-        shortcutHint.style.textAlign = "right";
-        shortcutHint.style.fontSize = "0.8em";
-        shortcutHint.style.opacity = "0.7";
-        shortcutHint.style.marginTop = "5px";
+        shortcutHint.setCssStyles({ textAlign: "right" });
+        shortcutHint.setCssStyles({ fontSize: "0.8em" });
+        shortcutHint.setCssStyles({ opacity: "0.7" });
+        shortcutHint.setCssStyles({ marginTop: "5px" });
 
         // 按钮
         new Setting(contentEl)

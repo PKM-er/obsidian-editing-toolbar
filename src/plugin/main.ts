@@ -767,7 +767,7 @@ this.app.workspace.onLayoutReady(async () => {
     if (!this.settings.cMenuVisibility) {
       (["top", "following", "fixed"] as const).forEach((style) => {
         const el = isExistoolbar(this.app, this, style);
-        if (el) el.style.display = "none";
+        if (el) el.setCssStyles({ display: "none" });
       });
       return;
     }
@@ -778,7 +778,7 @@ this.app.workspace.onLayoutReady(async () => {
     if (!ViewUtils.isAllowedViewType(view)) {
       (["top", "following", "fixed"] as const).forEach((style) => {
         const el = isExistoolbar(this.app, this, style);
-        if (el) el.style.visibility = "hidden";
+        if (el) el.setCssStyles({ visibility: "hidden" });
       });
       return;
     }
@@ -792,7 +792,7 @@ this.app.workspace.onLayoutReady(async () => {
     if (isMarkdownView && !inSourceMode) {
       (["top", "following", "fixed"] as const).forEach((style) => {
         const el = isExistoolbar(this.app, this, style);
-        if (el) el.style.visibility = "hidden";
+        if (el) el.setCssStyles({ visibility: "hidden" });
       });
       return;
     }
@@ -835,7 +835,7 @@ this.app.workspace.onLayoutReady(async () => {
 
       if (!enabled) {
         // Style disabled in settings → hide any existing toolbar of that style.
-        if (existing) existing.style.visibility = "hidden";
+        if (existing) existing.setCssStyles({ visibility: "hidden" });
         continue;
       }
 
@@ -852,15 +852,15 @@ this.app.workspace.onLayoutReady(async () => {
         // Following toolbar only works in markdown source mode
         // For other views (Canvas, etc.), hide it
         if (!inSourceMode) {
-          toolbar.style.visibility = "hidden";
+          toolbar.setCssStyles({ visibility: "hidden" });
         } else {
           // In markdown source mode, stays hidden until text is selected.
           // Your `showFollowingToolbar` / selection handlers will reveal it.
-          toolbar.style.visibility = "hidden";
+          toolbar.setCssStyles({ visibility: "hidden" });
         }
       } else {
         // Top / Fixed: visible in markdown source mode and other allowed views
-        toolbar.style.visibility = "visible";
+        toolbar.setCssStyles({ visibility: "visible" });
       }
     }
   };
@@ -1845,7 +1845,7 @@ updateCurrentCommands(commands: any[], style?: string): void {
       hostDocument || this.getToolbarHostDocument(this.commandsManager.getActiveEditor())
     );
     if (followingToolbar && this.isFollowingToolbarActive()) {
-      followingToolbar.style.visibility = "hidden";
+      followingToolbar.setCssStyles({ visibility: "hidden" });
     }
   }
 
@@ -1903,7 +1903,7 @@ updateCurrentCommands(commands: any[], style?: string): void {
     const followingToolbar = isExistoolbar(this.app, this, "following", targetDocument);
 
     if (followingToolbar) {
-      followingToolbar.style.visibility = "visible";
+      followingToolbar.setCssStyles({ visibility: "visible" });
       followingToolbar.classList.add("editingToolbarFlex");
       followingToolbar.classList.remove("editingToolbarGrid");
 
