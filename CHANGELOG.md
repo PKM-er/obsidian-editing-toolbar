@@ -1,6 +1,55 @@
 # Changelog
 
 ## 4.1.4 (2026-09-13)
+### Update manifest.json and CHANGELOG.md for version 4.1.4
+### Scorecard 清理第三批：innerHTML/表达式语句/await 等手工修复
+- AIEditorManager 5 处静态 SVG 的 innerHTML 直写改为 safeSetInnerHTML
+  （集中式受信 HTML 写入点，与 0049c23 引入的模式一致）
+- StatusBar/main/suggester/settingsTab 7 处三元表达式语句改为 if 判断，
+  删除 2 处无副作用表达式（this.app; / subsetting.nameEl;）
+- commands.ts 1 处对 void 返回 API 的多余 await 移除
+- fullscreen.ts let+分离赋值合并为 const，空 catch 补充注释
+当前本地队列：894 warnings / 0 errors（tsc 0 错误，构建通过）。
+剩余大头：no-static-styles-assignment 362、no-explicit-any 155、
+unnecessary-assertion 93（规则误报率高的 querySelector 转型，需逐处甄别）、
+prefer-create-el 72、转义 42、sentence-case 41、misused-promises 21
+### Scorecard 清理第二批（进行中）：接入官方 eslint 规则 + 类型感知扫描
+- eslint.config.mjs 接入 eslint-plugin-obsidianmd recommended 与
+  type-aware 规则，本地扫描口径与插件目录 Scorecard 对齐
+- 关闭 no-unsafe-* 噪音（362 处 any 类型化后的连带项）与
+  restrict-template-expressions（Scorecard 未收录）
+- 悬浮 Promise 56 处全部修复（void 前缀，含 22 处 editor&&短路表达式
+  逐处核对语义）；console.log 13 处删除
+- 经验：官方 fixer（no-explicit-any/prefer-create-el/断言移除）会产出
+  类型破损代码，全部改为手工/受限修复
+### Scorecard 清理第一批：Risks 归零 + 移除漏洞依赖
+- package.json 移除六个零引用的死依赖（react/react-dom/react-dom-server/
+  react-icons/feather-icons/remixicon），terser 移入 devDependencies；
+  react-dom-server→isomorphic-fetch→node-fetch 1.7.3 漏洞链随之消失，
+  pnpm audit --prod 归零
+- 删除 ImportExportModal.ts:1 误自动导入的 'import { settings } from cluster'
+  （从未使用，且 Node API 移动端不可用）
+- updateModal 弹窗的 <style> 动态注入迁入 styles.css（新增
+  .editing-toolbar-update-modal 作用域类），消除 Risks 级 finding
+- styles.css：移除同一块内重复的 color 声明；mask-image 补 -webkit- 前缀
+### 设置页命令列表内边距调整为 8px 12px
+### 修复 #360 工具栏重复堆积，resize 改为轻量重排
+- resetToolbar/selfDestruct 改为收集所有承载工具栏的窗口文档（主窗口+弹出窗口），
+  不再依赖 activeWindow：Obsidian 1.13+ 的设置是独立 OS 窗口，设置窗口聚焦时
+  activeWindow 指向其空文档，导致旧工具栏清理不掉，每调整一次缩放就多一组工具栏
+- generateMenu 三个插入点在插入前先移除目标容器内同样式旧工具栏（幂等守卫）
+- resize 处理器改为防抖 + 轻量重排（relayoutToolbarOverflow）：
+  宽度变化只移动溢出按钮，不销毁重建工具栏，消除闪烁；
+  任一样式结构不完整时回退到完整重建
+- 抽取 resolveTopTargetDom/computeToolbarLeafWidth 供构建与重排共用，
+  保证重排与全新构建的溢出分割点口径一致
+- onunload 取消未执行的 resize 定时器
+已在 Obsidian 1.13.7 (Windows) 通过 CDP 实测：设置窗口打开连调 5 次缩放，
+工具栏数量恒定，且 DOM 节点身份保持不变
+### Update manifest.json and CHANGELOG.md for version 4.1.3
+
+
+## 4.1.4 (2026-09-13)
 ### 修复 #360 工具栏重复堆积
 Obsidian 1.13+ 的设置是独立窗口，聚焦设置后 activeWindow 指向设置
 窗口，resize 重建只清理了该窗口的文档，旧工具栏删不掉，每调整一次
