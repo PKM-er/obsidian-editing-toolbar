@@ -1,4 +1,3 @@
-import js from "@eslint/js";
 import tseslint from "typescript-eslint";
 import noUnsanitized from "eslint-plugin-no-unsanitized";
 import obsidian from "eslint-plugin-obsidianmd";
@@ -17,18 +16,24 @@ export default tseslint.config(
       "scripts/",
     ],
   },
-  js.configs.recommended,
-  ...tseslint.configs.recommended,
+  // obsidianmd recommended 已内置 js.configs.recommended 与
+  // tseslint.configs.recommended（含 type-aware 规则），无需重复引入
   obsidian.configs.recommended,
   {
-    // 启用类型感知规则（与 Obsidian 插件目录 Scorecard 扫描同口径）
-    // 仅作用于 tsconfig 覆盖的 src 源码
+    // 类型感知规则（与 Obsidian 插件目录 Scorecard 扫描同口径）
+    // 限定 ts 源码：JSON 等非 TS 文件没有类型信息会崩溃
     files: ["src/**/*.ts"],
     languageOptions: {
       parserOptions: {
-        projectService: true,
+        projectService: {
+          allowDefaultProject: ["eslint.config.*"],
+        },
         tsconfigRootDir: import.meta.dirname,
       },
+    },
+    plugins: {
+      // 本块的 type-aware 规则覆盖需要显式注册插件
+      "@typescript-eslint": tseslint.plugin,
     },
     rules: {
       // no-unsafe-* 系列是 362 处 any 的连带产物，等类型化改造完成后自然消失，
@@ -123,6 +128,7 @@ export default tseslint.config(
       },
     },
     plugins: {
+      "@typescript-eslint": tseslint.plugin,
       "no-unsanitized": noUnsanitized,
     },
     rules: {
