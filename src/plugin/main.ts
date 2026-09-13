@@ -15,7 +15,7 @@ import {
   View,
 } from "obsidian";
 import { editingToolbarSettingTab } from '../settings/settingsTab';
-import { selfDestruct, editingToolbarPopover, quiteFormatbrushes, createFollowingbar, setFormateraser, isExistoolbar, resetToolbar } from "src/modals/editingToolbarModal";
+import { selfDestruct, editingToolbarPopover, quiteFormatbrushes, createFollowingbar, setFormateraser, isExistoolbar, resetToolbar, relayoutToolbarOverflow } from "src/modals/editingToolbarModal";
 import { editingToolbarSettings, DEFAULT_SETTINGS } from "src/settings/settingsData";
 import { t } from 'src/translations/helper';
 import addIcons, {
@@ -146,6 +146,9 @@ export default class editingToolbarPlugin extends Plugin {
   // 性能优化：工具栏 DOM 缓存
   private toolbarCache: Map<ToolbarStyleKey, HTMLElement> = new Map();
   private popoverCache: Map<ToolbarStyleKey, HTMLElement> = new Map();
+
+  // resize 防抖：只保留最后一次调度的重排/重建
+  private resizeRelayoutTimer: number | null = null;
 
 
 
@@ -724,6 +727,12 @@ this.app.workspace.onLayoutReady(async () => {
   onunload(): void {
     this.aiManager?.onunload();
 
+    // 取消尚未执行的 resize 重排/重建
+    if (this.resizeRelayoutTimer) {
+      window.clearTimeout(this.resizeRelayoutTimer);
+      this.resizeRelayoutTimer = null;
+    }
+
     // 注销工作区事件
     this.app.workspace.off("active-leaf-change", this.handleeditingToolbar);
     this.app.workspace.off("layout-change", this.handleeditingToolbar_layout);
@@ -889,14 +898,37 @@ this.app.workspace.onLayoutReady(async () => {
         return;
       }
 
-      window.setTimeout(() => {
-        resetToolbar(this);
-        editingToolbarPopover(app, this);
+      // resize 事件会连发多次，只保留最后一次调度
+      if (this.resizeRelayoutTimer) {
+        window.clearTimeout(this.resizeRelayoutTimer);
+      }
+      this.resizeRelayoutTimer = window.setTimeout(() => {
+        this.resizeRelayoutTimer = null;
+        // 优先做轻量重排：只移动溢出按钮，不销毁重建工具栏（避免闪烁与重复创建）；
+        // 任一样式结构不完整时回退到完整重建
+        const styles = this.getEnabledToolbarStyles();
+        const allRelayouted = styles.every((style) => relayoutToolbarOverflow(app, this, style));
+        if (!allRelayouted) {
+          resetToolbar(this);
+          editingToolbarPopover(app, this);
+        }
       }, 200);
     }
 
     return true;
   };
+
+  // 与 editingToolbarPopover 无样式分发一致的启用样式列表
+  private getEnabledToolbarStyles(): ToolbarStyleKey[] {
+    const styles: ToolbarStyleKey[] = [];
+    if (this.settings.enableTopToolbar) styles.push("top");
+    if (this.settings.enableFollowingToolbar) styles.push("following");
+    if (this.settings.enableFixedToolbar) styles.push("fixed");
+    if (styles.length === 0) {
+      styles.push((this.positionStyle as ToolbarStyleKey) || "top");
+    }
+    return styles;
+  }
 
   setIS_MORE_Button(status: boolean): void {
     this.IS_MORE_Button = status;

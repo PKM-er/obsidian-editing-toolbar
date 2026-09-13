@@ -48,15 +48,39 @@ export function getRootSplits(): WorkspaceParentExt[] {
   return rootSplits;
 }
 
-export function resetToolbar(plugin?: editingToolbarPlugin) {
-  requireApiVersion("0.15.0")
-    ? (activeDocument = activeWindow.document)
-    : (activeDocument = window.document);
+// 收集所有承载工具栏的窗口文档（主窗口 + 所有弹出窗口）。
+// 注意不能只依赖 activeWindow.document：Obsidian 1.13+ 的设置是独立 OS 窗口，
+// 设置窗口获得焦点时 activeWindow 指向设置窗口的空文档，
+// 按 activeWindow 清理会漏掉工作区里的旧工具栏，导致重建时重复堆叠。
+export function collectToolbarDocuments(): Document[] {
+  const docs = new Set<Document>();
+  const add = (src?: HTMLElement | Document | null) => {
+    const doc = src instanceof Document ? src : src?.ownerDocument;
+    if (doc) docs.add(doc);
+  };
 
-  const currentDoc = activeDocument;
+  add(window.document);
+  if (typeof activeWindow !== "undefined") {
+    add(activeWindow.document);
+  }
 
-  const toolbars = currentDoc.querySelectorAll(".editingToolbarModalBar");
-  const popovers = currentDoc.querySelectorAll(".editingToolbarPopoverBar");
+  try {
+    add((app.workspace.rootSplit as WorkspaceParent as WorkspaceParentExt)?.containerEl);
+    // @ts-expect-error floatingSplit is undocumented
+    const floatingSplit = app.workspace.floatingSplit as WorkspaceParentExt;
+    floatingSplit?.children.forEach((child: WorkspaceParentExt) => {
+      add(child?.containerEl);
+    });
+  } catch (e) {
+    // workspace 尚未就绪时忽略，至少已覆盖 window/activeWindow 文档
+  }
+
+  return Array.from(docs);
+}
+
+function clearToolbarsInDocument(root: ParentNode) {
+  const toolbars = root.querySelectorAll(".editingToolbarModalBar");
+  const popovers = root.querySelectorAll(".editingToolbarPopoverBar");
 
   toolbars.forEach((element) => {
     if (element.firstChild) {
@@ -71,6 +95,24 @@ export function resetToolbar(plugin?: editingToolbarPlugin) {
     }
     element.remove();
   });
+}
+
+// 幂等守卫：同一容器内只允许存在一个同样式工具栏，插入前先移除旧实例。
+// 防止任何调用路径（如 resize 重建）在旧实例未清理时再次插入，造成工具栏堆叠。
+function removeExistingToolbarBars(container: ParentNode, style: ToolbarStyleKey) {
+  container
+    .querySelectorAll(`.editingToolbarModalBar[data-toolbar-style="${style}"]`)
+    .forEach((element) => element.remove());
+}
+
+export function resetToolbar(plugin?: editingToolbarPlugin) {
+  requireApiVersion("0.15.0")
+    ? (activeDocument = activeWindow.document)
+    : (activeDocument = window.document);
+
+  collectToolbarDocuments().forEach((currentDoc) => {
+    clearToolbarsInDocument(currentDoc);
+  });
 
   // 性能优化：清理缓存
   if (plugin) {
@@ -83,38 +125,9 @@ export function selfDestruct(plugin?: editingToolbarPlugin) {
     ? (activeDocument = activeWindow.document)
     : (activeDocument = window.document);
 
-  const rootSplits = getRootSplits();
-
-  const clearToolbar = (root: ParentNode) => {
-    const toolbars = root.querySelectorAll(".editingToolbarModalBar");
-    const popovers = root.querySelectorAll(".editingToolbarPopoverBar");
-
-    toolbars.forEach((element) => {
-      if (element.firstChild) {
-        element.removeChild(element.firstChild);
-      }
-      element.remove();
-    });
-
-    popovers.forEach((element) => {
-      if (element.firstChild) {
-        element.removeChild(element.firstChild);
-      }
-      element.remove();
-    });
-  };
-
-  // 清理主文档中的工具栏
-  clearToolbar(activeDocument);
-
-  // 清理各个 root split 容器中的工具栏
-  if (rootSplits) {
-    rootSplits.forEach((rootSplit: WorkspaceParentExt) => {
-      if (rootSplit?.containerEl) {
-        clearToolbar(rootSplit.containerEl);
-      }
-    });
-  }
+  collectToolbarDocuments().forEach((doc) => {
+    clearToolbarsInDocument(doc);
+  });
 
   // 性能优化：清理缓存
   if (plugin) {
@@ -408,6 +421,185 @@ function shouldMoveButtonToMoreMenu(
   const availableWidth = Math.max(leafwidth - 16, buttonWidth * 2);
 
   return currentWidth + nextWidth + estimatedGapWidth + reservedMoreButtonWidth + reservedFollowingBufferWidth + reservedTouchBufferWidth >= availableWidth;
+}
+
+// 解析 top 样式工具栏的插入目标元素（generateMenu 与重排逻辑共用）
+function resolveTopTargetDom(
+  currentleaf: HTMLElement | null | undefined,
+  viewType?: string,
+): HTMLElement | null {
+  const selector = viewTypeToSelectorMap[viewType as string];
+  let targetDom: HTMLElement | null =
+    selector ? currentleaf?.querySelector<HTMLElement>(selector) ?? null : null;
+
+  if (!targetDom) {
+    const viewContent = currentleaf?.querySelector<HTMLElement>(".view-content");
+    if (viewContent) {
+      const childDivs = viewContent.querySelectorAll<HTMLElement>(":scope > div");
+      targetDom = childDivs.length > 0 ? childDivs[0] : viewContent;
+    }
+  }
+  return targetDom ?? null;
+}
+
+// 计算溢出判断所用的可用宽度（generateMenu 与重排逻辑共用，口径必须一致）
+function computeToolbarLeafWidth(
+  plugin: editingToolbarPlugin,
+  style: ToolbarStyleKey,
+  targetDocument: Document,
+  targetDom?: HTMLElement | null,
+  currentleaf?: HTMLElement | null,
+): number {
+  if (style === "top") {
+    const targetWidth = targetDom?.clientWidth || targetDom?.offsetWidth || 0;
+    const leafWidth = currentleaf?.clientWidth || currentleaf?.getBoundingClientRect().width || 0;
+    const viewportWidth = targetDocument.defaultView?.innerWidth || 0;
+    const widthCandidates = [targetWidth, leafWidth, viewportWidth].filter((width) => width > 0);
+    return widthCandidates.length > 0 ? Math.min(...widthCandidates) : 0;
+  }
+
+  if (plugin.settings.appendMethod === "workspace") {
+    const workspaceWidth = targetDocument.body?.clientWidth || 0;
+    const viewportWidth = targetDocument.defaultView?.innerWidth || 0;
+    const widthCandidates = [workspaceWidth, viewportWidth].filter((width) => width > 0);
+    return widthCandidates.length > 0 ? Math.min(...widthCandidates) : 0;
+  }
+
+  return targetDocument.defaultView?.innerWidth || targetDocument.body?.clientWidth || 0;
+}
+
+// 根据按钮 DOM 类名推算与 generateMenu 累加口径一致的逻辑宽度
+function getToolbarButtonLogicalWidth(
+  buttonEl: Element,
+  buttonWidth: number,
+  plugin: editingToolbarPlugin,
+  style: ToolbarStyleKey,
+): number {
+  const cls = buttonEl.className || "";
+  if (cls.includes("editingToolbarCommandsubItem-ai")) {
+    return estimateAIToolbarButtonWidth(plugin, style, buttonWidth);
+  }
+  if (cls.includes("editingToolbarCommandItem")) {
+    return buttonWidth;
+  }
+  if (cls.includes("editingToolbarCommandsubItem")) {
+    return cls.includes("editingToolbarCommandsubItem-font-color")
+      ? buttonWidth
+      : buttonWidth + 2;
+  }
+  return buttonWidth;
+}
+
+// 轻量重排：宽度变化后只调整按钮在主栏与溢出面板之间的分布，
+// 不销毁重建工具栏（避免闪烁，也杜绝重建路径带来的重复创建风险）。
+// 按钮在命令顺序上是前缀（主栏）/后缀（溢出面板）的分布，重排即移动分割点。
+// 返回 false 表示结构不完整、无法重排，调用方应回退到完整重建。
+export function relayoutToolbarOverflow(
+  app: App,
+  plugin: editingToolbarPlugin,
+  style: ToolbarStyleKey,
+  hostDocument?: Document,
+): boolean {
+  const targetDocument =
+    hostDocument ||
+    app.workspace.getActiveViewOfType(ItemView)?.containerEl?.ownerDocument ||
+    (requireApiVersion("0.15.0") ? activeWindow.document : window.document);
+
+  let bar: HTMLElement | null;
+  let popover: HTMLElement | null;
+
+  if (style === "top") {
+    const containerEl = app.workspace.getActiveViewOfType(ItemView)?.containerEl;
+    bar = containerEl?.querySelector<HTMLElement>('.editingToolbarModalBar[data-toolbar-style="top"]') ?? null;
+    popover = containerEl?.querySelector<HTMLElement>("#editingToolbarPopoverBar") ?? null;
+  } else {
+    bar = targetDocument.querySelector<HTMLElement>(`.editingToolbarModalBar[data-toolbar-style="${style}"]`);
+    popover = targetDocument.querySelector<HTMLElement>(`.editingToolbarPopoverBar[data-toolbar-style="${style}"]`);
+  }
+
+  if (!bar || !popover) {
+    return false;
+  }
+
+  const isToolbarButton = (el: Element) =>
+    el.tagName === "BUTTON" &&
+    /editingToolbarCommand(Item|subItem)/.test(el.className || "");
+
+  const barButtons = Array.from(bar.children).filter(isToolbarButton);
+  const popoverButtons = Array.from(popover.children).filter(isToolbarButton);
+  const allButtons = [...barButtons, ...popoverButtons];
+  if (allButtons.length === 0) {
+    return false;
+  }
+
+  const appearanceStore = (plugin.settings.appearanceByStyle || {}) as AppearanceByStyle;
+  const appearanceForStyle = (appearanceStore[style] || {}) as StyleAppearanceSettings;
+  const resolvedIconSize = appearanceForStyle.toolbarIconSize ?? plugin.toolbarIconSize ?? 18;
+  const buttonWidth = resolvedIconSize + 8;
+
+  let leafwidth = 0;
+  if (style === "top") {
+    const view = app.workspace.getActiveViewOfType(ItemView);
+    const currentleaf = view?.containerEl;
+    const targetDom = resolveTopTargetDom(currentleaf, view?.getViewType());
+    leafwidth = computeToolbarLeafWidth(plugin, style, targetDocument, targetDom, currentleaf);
+  } else {
+    leafwidth = computeToolbarLeafWidth(plugin, style, targetDocument);
+  }
+  if (leafwidth <= 0) {
+    return false;
+  }
+
+  // 复算溢出分割点
+  let btnwidth = 0;
+  let newSplit = 0;
+  allButtons.forEach((buttonEl) => {
+    const width = getToolbarButtonLogicalWidth(buttonEl, buttonWidth, plugin, style);
+    if (!shouldMoveButtonToMoreMenu(btnwidth, width, leafwidth, buttonWidth, style)) {
+      newSplit++;
+    }
+    btnwidth += width;
+  });
+
+  const oldSplit = barButtons.length;
+  const moreMenu = bar.querySelector<HTMLElement>(":scope > .more-menu");
+
+  if (newSplit < oldSplit) {
+    // 收窄：把主栏尾部的按钮按命令顺序移到溢出面板最前面
+    for (let i = oldSplit - 1; i >= newSplit; i--) {
+      popover.insertBefore(barButtons[i], popover.firstChild);
+    }
+  } else if (newSplit > oldSplit) {
+    // 加宽：把溢出面板头部的按钮按命令顺序移回主栏末尾（more-menu 之前）
+    for (let i = 0; i < newSplit - oldSplit; i++) {
+      const buttonEl = popoverButtons[i];
+      if (moreMenu) {
+        bar.insertBefore(buttonEl, moreMenu);
+      } else {
+        bar.appendChild(buttonEl);
+      }
+    }
+  }
+
+  // 同步 more-menu 按钮的存在性
+  const needsMore = newSplit < allButtons.length;
+  if (needsMore && !moreMenu) {
+    plugin.setIS_MORE_Button(true);
+    createMoremenu(app, plugin, bar as HTMLDivElement);
+  } else if (!needsMore && moreMenu) {
+    moreMenu.remove();
+    plugin.setIS_MORE_Button(false);
+  }
+
+  // 与 generateMenu 相同的 cMenuWidth 同步逻辑
+  if (Math.abs(plugin.settings.cMenuWidth - Number(btnwidth)) > (btnwidth + 4)) {
+    plugin.settings.cMenuWidth = Number(btnwidth);
+    window.setTimeout(() => {
+      plugin.saveSettings();
+    }, 100);
+  }
+
+  return true;
 }
 
 async function executeAIToolbarAction(
@@ -1091,26 +1283,9 @@ export function editingToolbarPopover(
       if (effectiveStyle === "top") {
         const currentleaf = app.workspace.getActiveViewOfType(ItemView)?.containerEl;
 
-        // 确定要插入工具栏的目标元素
-        let targetDom: HTMLElement | null = null;
-
-        // 获取当前视图类型
+        // 获取当前视图类型并确定要插入工具栏的目标元素
         const viewType = app.workspace.getActiveViewOfType(ItemView)?.getViewType();
-
-        // 使用映射选择目标DOM
-        const selector = viewTypeToSelectorMap[viewType];
-        if (selector) {
-          targetDom = currentleaf?.querySelector<HTMLElement>(selector);
-        }
-
-        // 如果没有找到目标DOM，尝试查找view-content后的第一个div元素
-        if (!targetDom) {
-          const viewContent = currentleaf?.querySelector<HTMLElement>(".view-content");
-          if (viewContent) {
-            const childDivs = viewContent.querySelectorAll<HTMLElement>(":scope > div");
-            targetDom = childDivs.length > 0 ? childDivs[0] : viewContent;
-          }
-        }
+        const targetDom = resolveTopTargetDom(currentleaf, viewType);
 
         // 如果没有找到任何目标元素，则退出
         if (!targetDom) {
@@ -1125,6 +1300,9 @@ export function editingToolbarPopover(
             : null;
 
         if (viewType === "canvas" && canvasToolbarAnchor) {
+          if (currentleaf) {
+            removeExistingToolbarBars(currentleaf, effectiveStyle);
+          }
           canvasToolbarAnchor.insertAdjacentElement("beforebegin", editingToolbar);
 
           if (!currentleaf?.querySelector("#editingToolbarPopoverBar")) {
@@ -1139,6 +1317,9 @@ export function editingToolbarPopover(
            }
           }
 
+          if (currentleaf) {
+            removeExistingToolbarBars(currentleaf, effectiveStyle);
+          }
          if (viewType == "excalidraw") {
           targetDom.insertAdjacentElement("afterend", editingToolbar);
          } else {
@@ -1147,11 +1328,7 @@ export function editingToolbarPopover(
         }
 
         // 获取宽度
-        const targetWidth = targetDom?.clientWidth || targetDom?.offsetWidth || 0;
-        const leafWidth = currentleaf?.clientWidth || currentleaf?.getBoundingClientRect().width || 0;
-        const viewportWidth = targetDocument.defaultView?.innerWidth || 0;
-        const widthCandidates = [targetWidth, leafWidth, viewportWidth].filter((width) => width > 0);
-        leafwidth = widthCandidates.length > 0 ? Math.min(...widthCandidates) : 0;
+        leafwidth = computeToolbarLeafWidth(plugin, effectiveStyle, targetDocument, targetDom, currentleaf);
 
       } else if (settings.appendMethod == "body") {
         const existingPopover = targetDocument.querySelector(
@@ -1160,8 +1337,9 @@ export function editingToolbarPopover(
         if (!existingPopover) {
           targetDocument.body.appendChild(PopoverMenu);
         }
+        removeExistingToolbarBars(targetDocument, effectiveStyle);
         targetDocument.body.appendChild(editingToolbar);
-        leafwidth = targetDocument.defaultView?.innerWidth || targetDocument.body?.clientWidth || 0;
+        leafwidth = computeToolbarLeafWidth(plugin, effectiveStyle, targetDocument);
       } else if (settings.appendMethod == "workspace") {
         const workspaceRoot = targetDocument.body
           ?.querySelector(".mod-vertical.mod-root") as HTMLElement | null;
@@ -1177,11 +1355,9 @@ export function editingToolbarPopover(
           workspaceRoot.insertAdjacentElement("afterbegin", PopoverMenu);
         }
 
+        removeExistingToolbarBars(workspaceRoot, effectiveStyle);
         workspaceRoot.insertAdjacentElement("afterbegin", editingToolbar);
-        const workspaceWidth = targetDocument.body?.clientWidth || 0;
-        const viewportWidth = targetDocument.defaultView?.innerWidth || 0;
-        const widthCandidates = [workspaceWidth, viewportWidth].filter((width) => width > 0);
-        leafwidth = widthCandidates.length > 0 ? Math.min(...widthCandidates) : 0;
+        leafwidth = computeToolbarLeafWidth(plugin, effectiveStyle, targetDocument);
       }
 
       const editingToolbarPopoverBar = effectiveStyle === "top"
