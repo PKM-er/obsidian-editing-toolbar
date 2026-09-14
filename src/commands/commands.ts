@@ -141,7 +141,7 @@ export class CommandsManager {
     return false;
   }
 
-  private getActiveCanvasView(): any | null {
+  private getActiveCanvasView(): any {
     const activeLeafView = this.plugin.app.workspace.getActiveViewOfType(ItemView) as any;
     if (activeLeafView?.getViewType?.() === "canvas") {
       return activeLeafView;

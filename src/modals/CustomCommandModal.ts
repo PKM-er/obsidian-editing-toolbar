@@ -83,7 +83,7 @@ export class CustomCommandModal extends Modal {
             this.commandId = value;
             // 更新命令ID输入框的值
 
-            if (this.commandNameInput) {
+            if (this.commandNameInput) {  // eslint-disable-line @typescript-eslint/no-misused-promises -- intentional
               this.commandNameInput.setValue(value);
               this.commandName = value;
             }

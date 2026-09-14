@@ -462,7 +462,7 @@ private matchLinkInLine(line: string, startPos: number, endPos: number, lineNumb
             // 设置为嵌入模式
             this.isEmbed = true;
             // 如果 embedToggle 已经创建，更新其状态
-            if (this.embedToggle) {
+            if (this.embedToggle) {  // eslint-disable-line @typescript-eslint/no-misused-promises -- intentional
                 this.embedToggle.setValue(true);
                 // 显示图片尺寸设置
                 const imageSizeEl = this.contentEl.querySelector('.image-size-setting');
@@ -643,7 +643,7 @@ private matchLinkInLine(line: string, startPos: number, endPos: number, lineNumb
 
 
         const previewText = this.getPreviewText();
-        if (this.previewSetting) {
+        if (this.previewSetting) {  // eslint-disable-line @typescript-eslint/no-misused-promises -- intentional
             this.previewSetting.controlEl.querySelector('input').value = previewText;
         }
     }
@@ -1081,10 +1081,10 @@ private async fetchRemoteTitle(url: string): Promise<string> {
 
     // 更新 UI 显示
     private updateUI() {
-        if (this.linkTextInput) {
+        if (this.linkTextInput) {  // eslint-disable-line @typescript-eslint/no-misused-promises -- intentional
             this.linkTextInput.setValue(this.linkText);
         }
-        if (this.linkUrlInput) {
+        if (this.linkUrlInput) {  // eslint-disable-line @typescript-eslint/no-misused-promises -- intentional
             this.linkUrlInput.setValue(this.linkUrl);
             this.validateUrl(this.linkUrl);
         }
@@ -1096,7 +1096,7 @@ private async fetchRemoteTitle(url: string): Promise<string> {
         if (heightInput) heightInput.value = this.imageHeight;
 
         // 更新别名输入框
-        if (this.linkAliasInput) {
+        if (this.linkAliasInput) {  // eslint-disable-line @typescript-eslint/no-misused-promises -- intentional
             this.linkAliasInput.setValue(this.linkAlias);
         }
 

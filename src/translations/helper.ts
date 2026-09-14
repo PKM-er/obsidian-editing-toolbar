@@ -54,7 +54,7 @@ const localeMap: { [k: string]: Partial<typeof en> } = {
 
 const locale = localeMap[moment.locale()];
 
-export function t(str: keyof typeof en | string): string {
+export function t(str: string): string {
   if (typeof str !== 'string' || str.length === 0) {
     return '';
   }

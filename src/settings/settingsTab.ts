@@ -1238,7 +1238,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
         text: t('One-click Clear'),
         cls: 'mod-warning' // Obsidian 的警告样式类
       });
-      clearButton.addEventListener('click', async () => {
+      clearButton.addEventListener('click', async () => {  // eslint-disable-line @typescript-eslint/no-misused-promises -- intentional
         ConfirmModal.show(this.app, {
           message: t('Are you sure you want to clear all commands under the current style?'),
           onConfirm: async () => {
@@ -1460,10 +1460,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     const titleContainer = headerContainer.createDiv({
       cls: "editing-toolbar-title-container"
     });
-    titleContainer.createEl("h1", {
-      text: "Obsidian Editing Toolbar: " + this.plugin.manifest.version,
-      cls: "editing-toolbar-title"
-    });
+    new Setting(titleContainer).setName("Obsidian Editing Toolbar: " + this.plugin.manifest.version).setHeading().nameEl.addClass("editing-toolbar-title");
     // 创建右侧信息容器
     const infoContainer = headerContainer.createDiv({
       cls: "editing-toolbar-info"
@@ -1687,9 +1684,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     const previewContainer = containerEl.createDiv('toolbar-preview-container');
     previewContainer.addClass('toolbar-preview-section');
     previewContainer.setCssStyles({ marginTop: '20px' });
-    const previewLabel = previewContainer.createEl('h3', {
-    text: t(`Toolbar Preview (With a hypothetical command configuration.)`)
-    });
+    const previewLabel = new Setting(previewContainer).setName(t(`Toolbar Preview (With a hypothetical command configuration.)`)).setHeading().nameEl;
     previewLabel.setCssStyles({ marginBottom: '10px' });
     // 创建预览工具栏 - 使用类似 generateMenu 的方式
     const wrapper = previewContainer.createDiv();
@@ -3103,7 +3098,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
       desc: t('Enable AI editor features such as inline completion and selection rewrite.'),
       toggle: {
         value: this.plugin.settings.ai.enabled,
-        onChange: async (value) => {
+        onChange: async (value) => {  // eslint-disable-line @typescript-eslint/no-misused-promises -- intentional
           if (value) {
             await this.plugin.aiManager.requestEnableAIWithConsent('settings');
           } else {
@@ -3196,7 +3191,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
         desc: t('Configure inline completion and rewrite after your AI provider is ready.'),
         toggle: {
           value: this.plugin.settings.ai.enableInlineCompletion,
-          onChange: async (value) => {
+          onChange: async (value) => {  // eslint-disable-line @typescript-eslint/no-misused-promises -- intentional
             this.plugin.settings.ai.enableInlineCompletion = value;
             await this.plugin.saveSettings();
             this.display();
@@ -3260,7 +3255,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
             { value: 'manual', label: t('Manual') },
           ],
           value: pkmerModelRoutingMode,
-          onChange: async (value) => {
+          onChange: async (value) => {  // eslint-disable-line @typescript-eslint/no-misused-promises -- intentional
             this.plugin.settings.ai.pkmerModelRouting.mode = value as 'smart' | 'manual';
             await this.plugin.saveSettings();
             this.display();
@@ -3335,7 +3330,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
         desc: t('Custom model is used automatically when PKMer AI is unavailable.'),
         toggle: {
           value: this.plugin.settings.ai.enableCustomModel,
-          onChange: async (value) => {
+          onChange: async (value) => {  // eslint-disable-line @typescript-eslint/no-misused-promises -- intentional
             this.plugin.settings.ai.enableCustomModel = value;
             await this.plugin.saveSettings();
             this.display();
@@ -3754,7 +3749,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     }
   }
 
-  private openTemplateEditor(template: any | null, index: number): void {
+  private openTemplateEditor(template: any, index: number): void {
     const modal = new Modal(this.app);
     modal.titleEl.setText(template ? t('Edit Template') : t('Add Template'));
 
@@ -3867,10 +3862,9 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     infoDiv.setCssStyles({ padding: '16px' });
     infoDiv.setCssStyles({ borderRadius: '8px' });
     infoDiv.setCssStyles({ backgroundColor: 'var(--background-secondary)' });
-    infoDiv.createEl('h3', {
-      text: t('Usage Instructions'),
-      cls: 'import-export-heading'
-    }).setCssStyles({ marginTop: '0' });
+    const usageHeading = new Setting(infoDiv).setName(t('Usage Instructions')).setHeading();
+    usageHeading.nameEl.addClass('import-export-heading');
+    usageHeading.nameEl.setCssStyles({ marginTop: '0' });
 
     const ul = infoDiv.createEl('ul');
     ul.setCssStyles({ paddingLeft: '20px' });
@@ -3883,10 +3877,9 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     communityDiv.setCssStyles({ borderRadius: '8px' });
     communityDiv.setCssStyles({ backgroundColor: 'rgba(var(--color-green-rgb), 0.1)' });
     communityDiv.setCssStyles({ border: '1px solid rgba(var(--color-green-rgb), 0.3)' });
-    communityDiv.createEl('h3', {
-      text: t('Join the Community'),
-      cls: 'community-heading'
-    }).setCssStyles({ marginTop: '0' });
+    const communityHeading = new Setting(communityDiv).setName(t('Join the Community')).setHeading();
+    communityHeading.nameEl.addClass('community-heading');
+    communityHeading.nameEl.setCssStyles({ marginTop: '0' });
 
     const shareLink = communityDiv.createEl('p');
     safeSetInnerHTML(shareLink, t('Share your toolbar settings and styles in our') + ' <a href="https://github.com/PKM-er/obsidian-editing-toolbar/discussions/categories/show-and-tell" target="_blank" rel="noopener noreferrer">Show and Tell</a> ');

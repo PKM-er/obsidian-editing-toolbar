@@ -86,7 +86,7 @@ function dispatchRewrite(view: EditorView, instruction: RewriteInstruction, cust
   });
 }
 
-function formatShortcutLabel(parts: Array<"Mod" | "Shift" | "Alt" | "Ctrl" | string>): string {
+function formatShortcutLabel(parts: Array<string>): string {
   const displayParts = parts.map((part) => {
     if (part === "Mod") {
       return Platform.isMacOS ? "⌘" : "Ctrl";

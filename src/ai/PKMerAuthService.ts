@@ -502,7 +502,7 @@ export class PKMerAuthService {
   }
 
   private async refreshTokens(): Promise<boolean> {
-    if (this.refreshPromise) return this.refreshPromise;
+    if (this.refreshPromise) return this.refreshPromise;  // eslint-disable-line @typescript-eslint/no-misused-promises -- intentional
 
     this.refreshPromise = (async () => {
       try {

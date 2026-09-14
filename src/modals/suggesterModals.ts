@@ -63,7 +63,7 @@ export class ChooseFromIconList extends FuzzySuggestModal<string> {
     super.renderSuggestion(icon, iconItem);
   }
 
-  async onChooseItem(item: string): Promise<void> {
+  async onChooseItem(item: string): Promise<void> {  // eslint-disable-line @typescript-eslint/no-misused-promises -- intentional
     // 处理自定义图标选项
     if (item === "Custom") {
       // 如果有自定义回调，打开自定义图标输入框并将结果传递给回调
@@ -158,7 +158,7 @@ export class CustomIcon extends Modal {
     textComponent.setCssStyles({ height: "200px" });
     contentEl.appendChild(textComponent);
     
-    textComponent.addEventListener("input", async () => {
+    textComponent.addEventListener("input", async () => {  // eslint-disable-line @typescript-eslint/no-misused-promises -- intentional
       const value = textComponent.value;
       
       // 如果有自定义回调，则使用自定义回调
@@ -219,14 +219,14 @@ export class CommandPicker extends FuzzySuggestModal<Command> {
 
   getItems(): Command[] {
     //@ts-expect-error - Obsidian API type mismatch
-    return app.commands.listCommands();
+    return window.app.commands.listCommands();
   }
 
   getItemText(item: Command): string {
     return t(item.name);
   }
 
-  async onChooseItem(item: Command): Promise<void> {
+  async onChooseItem(item: Command): Promise<void> {  // eslint-disable-line @typescript-eslint/no-misused-promises -- intentional
     // 获取当前命令配置
     
     const currentCommands = this.plugin.getCurrentCommands(this.currentEditingConfig);
@@ -413,7 +413,7 @@ export class openSlider extends Modal {
     });
   }
 
-  async onClose() {
+  async onClose() {  // eslint-disable-line @typescript-eslint/no-misused-promises -- intentional
     const { contentEl } = this;
     contentEl.empty();
 

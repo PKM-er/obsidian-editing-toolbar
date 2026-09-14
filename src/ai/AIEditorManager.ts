@@ -1846,7 +1846,7 @@ export class AIEditorManager {
         templateBtn.className = "editing-toolbar-ai-inline-prompt-template-btn";
         templateBtn.textContent = template.name;
         templateBtn.title = template.prompt;
-        templateBtn.addEventListener("click", async () => {
+        templateBtn.addEventListener("click", async () => {  // eslint-disable-line @typescript-eslint/no-misused-promises -- intentional
           textarea.value = replaceTemplateVariables(template.prompt);
           renderContextItems();
           resizeTextarea();
@@ -2086,7 +2086,7 @@ export class AIEditorManager {
             historyItem.className = "editing-toolbar-ai-inline-prompt-history-item";
             historyItem.textContent = item.length > 50 ? item.substring(0, 50) + "..." : item;
             historyItem.title = item;
-            historyItem.addEventListener("click", async () => {
+            historyItem.addEventListener("click", async () => {  // eslint-disable-line @typescript-eslint/no-misused-promises -- intentional
               textarea.value = item;
               historyDropdown.setCssStyles({ display: "none" });
               resizeTextarea();

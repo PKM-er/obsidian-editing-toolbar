@@ -34,10 +34,10 @@ export function getRootSplits(): WorkspaceParentExt[] {
   const rootSplits: WorkspaceParentExt[] = [];
 
   // push the main window's root split to the list
-  rootSplits.push(app.workspace.rootSplit as WorkspaceParent as WorkspaceParentExt)
+  rootSplits.push(window.app.workspace.rootSplit as WorkspaceParent as WorkspaceParentExt)
 
   // @ts-expect-error floatingSplit is undocumented
-  const floatingSplit = app.workspace.floatingSplit as WorkspaceParentExt;
+  const floatingSplit = window.app.workspace.floatingSplit as WorkspaceParentExt;
   floatingSplit?.children.forEach((child: WorkspaceParentExt) => {
     // if this is a window, push it to the list
     if (child instanceof WorkspaceWindow) {
@@ -65,9 +65,9 @@ export function collectToolbarDocuments(): Document[] {
   }
 
   try {
-    add((app.workspace.rootSplit as WorkspaceParent as WorkspaceParentExt)?.containerEl);
+    add((window.app.workspace.rootSplit as WorkspaceParent as WorkspaceParentExt)?.containerEl);
     // @ts-expect-error floatingSplit is undocumented
-    const floatingSplit = app.workspace.floatingSplit as WorkspaceParentExt;
+    const floatingSplit = window.app.workspace.floatingSplit as WorkspaceParentExt;
     floatingSplit?.children.forEach((child: WorkspaceParentExt) => {
       add(child?.containerEl);
     });
@@ -269,7 +269,7 @@ function applyMenuItemIcon(menuItem: any, icon: string) {
 function syncToolbarVisibilityAfterAction(
   editingToolbar: HTMLElement,
   settings: editingToolbarSettings,
-  effectiveStyle: ToolbarStyleKey | string,
+  effectiveStyle: ToolbarStyleKey,
   plugin: editingToolbarPlugin
 ) {
   const editor = plugin.commandsManager.getActiveEditor();
@@ -389,7 +389,7 @@ function getAIToolbarButtonLabel(plugin: editingToolbarPlugin): string {
 
 function estimateAIToolbarButtonWidth(
   plugin: editingToolbarPlugin,
-  effectiveStyle: ToolbarStyleKey | string,
+  effectiveStyle: ToolbarStyleKey,
   buttonWidth: number,
 ): number {
   if (effectiveStyle === "fixed") {
@@ -406,7 +406,7 @@ function shouldMoveButtonToMoreMenu(
   nextWidth: number,
   leafwidth: number,
   buttonWidth: number,
-  toolbarStyle?: ToolbarStyleKey | string,
+  toolbarStyle?: ToolbarStyleKey,
 ): boolean {
   if (leafwidth <= 100) {
     return false;
@@ -1772,13 +1772,13 @@ export function editingToolbarPopover(
 
             let ignorePrimaryActionUntil = 0;
 
-            aiArrow.addEventListener("click", async (evt: MouseEvent) => {
+            aiArrow.addEventListener("click", async (evt: MouseEvent) => {  // eslint-disable-line @typescript-eslint/no-misused-promises -- intentional
               evt.preventDefault();
               evt.stopPropagation();
               await openAIMenu(evt);
             });
 
-            button2.buttonEl.addEventListener("click", async (evt: MouseEvent) => {
+            button2.buttonEl.addEventListener("click", async (evt: MouseEvent) => {  // eslint-disable-line @typescript-eslint/no-misused-promises -- intentional
               evt.preventDefault();
               evt.stopPropagation();
 

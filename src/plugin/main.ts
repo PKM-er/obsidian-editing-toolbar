@@ -451,7 +451,7 @@ export default class editingToolbarPlugin extends Plugin {
     }
   };
 
-  async onload(): Promise<void> {
+  async onload(): Promise<void> {  // eslint-disable-line @typescript-eslint/no-misused-promises -- intentional
     const currentVersion = this.manifest.version; // 设置当前版本号
   
     requireApiVersion("0.15.0") ? activeDocument = activeWindow.document : activeDocument = window.document;
@@ -552,7 +552,7 @@ export default class editingToolbarPlugin extends Plugin {
     this.settings.lastVersion = currentVersion;
     await this.saveSettings();
 
-    const isThinoEnabled = app.plugins.enabledPlugins.has("obsidian-memos");
+    const isThinoEnabled = this.app.plugins.enabledPlugins.has("obsidian-memos");
     if (isThinoEnabled) {
       // @ts-expect-error - 自定义事件
       this.registerEvent( this.app.workspace.on("thino-editor-created", this.handleeditingToolbar)
@@ -877,7 +877,7 @@ this.app.workspace.onLayoutReady(async () => {
       return false;
     }
 
-    const view = app.workspace.getActiveViewOfType(ItemView);
+    const view = this.app.workspace.getActiveViewOfType(ItemView);
     if (!ViewUtils.isSourceMode(view)) {
       return false;
     }
@@ -906,10 +906,10 @@ this.app.workspace.onLayoutReady(async () => {
         // 优先做轻量重排：只移动溢出按钮，不销毁重建工具栏（避免闪烁与重复创建）；
         // 任一样式结构不完整时回退到完整重建
         const styles = this.getEnabledToolbarStyles();
-        const allRelayouted = styles.every((style) => relayoutToolbarOverflow(app, this, style));
+        const allRelayouted = styles.every((style) => relayoutToolbarOverflow(this.app, this, style));
         if (!allRelayouted) {
           resetToolbar(this);
-          editingToolbarPopover(app, this);
+          editingToolbarPopover(this.app, this);
         }
       }, 200);
     }
