@@ -71,8 +71,8 @@ class GhostTextWidget extends WidgetType {
   updateDOM(dom: HTMLElement): boolean {
     const lines = this.text.split("\n");
     const firstLine = dom.querySelector(".cm-ai-ghost-first-line");
-    const hint = dom.querySelector(".cm-ai-ghost-hint") as HTMLElement | null;
-    const rest = dom.querySelector(".cm-ai-ghost-rest") as HTMLElement | null;
+    const hint = dom.querySelector<HTMLElement>(".cm-ai-ghost-hint");
+    const rest = dom.querySelector<HTMLElement>(".cm-ai-ghost-rest");
 
     if (firstLine) {
       firstLine.textContent = lines[0];

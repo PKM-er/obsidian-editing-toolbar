@@ -70,7 +70,7 @@ export function fullscreenMode(app: App) {
     if (!leaf)
         return;
     const el = leaf.containerEl;
-    const modroot = document.body?.querySelector(".mod-vertical.mod-root .workspace-tab-container") as HTMLElement
+    const modroot = document.body?.querySelector<HTMLElement>(".mod-vertical.mod-root .workspace-tab-container")
     const fullscreenMutationObserver: MutationObserver = new MutationObserver(function (mutationRecords) {
         mutationRecords.forEach(function (mutationRecord) {
             mutationRecord.addedNodes.forEach(function (node) {
@@ -118,7 +118,7 @@ export function fullscreenMode(app: App) {
 
     // 修改相关代码
     function getCurrentElement(el: HTMLElement): HTMLElementWithFullscreen {
-      return el as HTMLElementWithFullscreen;
+      return el;
     }
 
     function beFull(el: HTMLElement) {
@@ -127,7 +127,8 @@ export function fullscreenMode(app: App) {
     }
     exports.beFull = beFull;
     function exitFull() {
-        return (document as DocumentWithFullscreen)[TYPE_EXIT_FULL_SCREEN]();
+        return (document as DocumentWithFullscreen)[TYPE_EXIT_FULL_SCREEN](); // 类型收窄必需：动态全屏 API 键名
+
     }
     function isFull(el: any) {
         return getCurrentElement(el) === (document as DocumentWithFullscreen)[TYPE_FULL_SCREEN_ELEMENT];

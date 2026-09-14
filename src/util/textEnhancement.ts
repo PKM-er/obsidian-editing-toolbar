@@ -571,7 +571,7 @@ export class TextEnhancement {
       .map((l) => l.match(listRegex))
       .filter((m) => m && m[2].length > 0)
       .map((m) => {
-        const len = m![2].replace(/\t/g, "    ").length;
+        const len = m[2].replace(/\t/g, "    ").length;
         return len;
       });
     const finalTabSize = indents.length > 0 ? Math.min(...indents) : 4;

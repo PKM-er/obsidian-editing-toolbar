@@ -649,7 +649,7 @@ export class RegexCommandModal extends Modal {
     // 检查是否已存在代码容器，如果存在则更新，否则创建新的
     let codeContainer = previewContainer.querySelector('.regex-code-container');
     if (!codeContainer) {
-      codeContainer = previewContainer.createDiv('regex-code-container') as HTMLDivElement;
+      codeContainer = previewContainer.createDiv('regex-code-container');
       (codeContainer as HTMLDivElement).setCssStyles({ marginTop: '15px' });
       (codeContainer as HTMLDivElement).setCssStyles({ borderTop: '1px solid var(--background-modifier-border)' });
       (codeContainer as HTMLDivElement).setCssStyles({ paddingTop: '10px' });

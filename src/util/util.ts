@@ -456,7 +456,7 @@ function processSelectionWithContext(lines: string[], startLine: number, editor:
   };
 
   // 获取 CodeMirror 视图和语法树
-  const view = (app.workspace.getActiveViewOfType(MarkdownView) as MarkdownView)?.editor.cm;
+  const view = (app.workspace.getActiveViewOfType(MarkdownView))?.editor.cm;
   if (!view) return;
 
   const state = view.state;
@@ -500,7 +500,7 @@ function processSelectionWithContext(lines: string[], startLine: number, editor:
     const trimmedLine = line.trim();
     if (/^\d+\.\s/.test(trimmedLine)) {
       const indentLevel = line.match(/^\s*/)?.[0].length || 0;
-      const currentNumber = parseInt(trimmedLine.match(/^\d+/)![0], 10);
+      const currentNumber = parseInt(trimmedLine.match(/^\d+/)[0], 10);
 
       if (indentLevel !== prevIndentLevel) {
         expectedNumbers[indentLevel] = 1;

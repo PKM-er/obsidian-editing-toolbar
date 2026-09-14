@@ -153,7 +153,7 @@ export function isExistoolbar(
     (style ||
       (plugin.positionStyle as ToolbarStyleKey) ||
       (plugin.settings.positionStyle as ToolbarStyleKey) ||
-      "top") as ToolbarStyleKey;
+      "top");
 
   // 性能优化：先检查缓存
   // 注意：Top 工具栏不使用缓存，因为每个 leaf 都有独立的工具栏
@@ -174,10 +174,10 @@ export function isExistoolbar(
     container =
       (app.workspace.getActiveViewOfType(ItemView)?.containerEl?.querySelector(
         selector
-      ) as HTMLElement) || null;
+      )) || null;
   } else {
     // 其它样式的工具栏在整个文档范围查找
-    container = targetDocument.querySelector(selector) as HTMLElement;
+    container = targetDocument.querySelector(selector);
   }
 
   // 如果找到，缓存起来（但 top 工具栏不缓存）
@@ -185,7 +185,7 @@ export function isExistoolbar(
     plugin.setCachedToolbar(targetStyle, container);
   }
 
-  return container ? (container as HTMLElement) : null;
+  return container ? (container) : null;
 }
 
 const getNestedObject = (nestedObj: any, pathArr: any[]) => {
@@ -359,7 +359,7 @@ const CANVAS_ONLY_AI_ACTION_IDS = new Set<string>([
 function setLastAIAction(plugin: editingToolbarPlugin, commandId: string) {
   plugin.lastExecutedCommand = commandId;
   plugin.lastExecutedCommandName = AI_BUTTON_LABEL_KEYS[commandId]
-    ? t(AI_BUTTON_LABEL_KEYS[commandId] as any)
+    ? t(AI_BUTTON_LABEL_KEYS[commandId])
     : t("AI");
 }
 
@@ -377,7 +377,7 @@ function getAIToolbarButtonLabel(plugin: editingToolbarPlugin): string {
   }
 
   if (commandId && AI_BUTTON_LABEL_KEYS[commandId] && (!isCanvasOnlyAIAction(commandId) || isCanvasScene)) {
-    return t(AI_BUTTON_LABEL_KEYS[commandId] as any);
+    return t(AI_BUTTON_LABEL_KEYS[commandId]);
   }
 
   if (commandId?.startsWith("editing-toolbar:ai") && plugin.lastExecutedCommandName && (!isCanvasOnlyAIAction(commandId) || isCanvasScene)) {
@@ -428,7 +428,7 @@ function resolveTopTargetDom(
   currentleaf: HTMLElement | null | undefined,
   viewType?: string,
 ): HTMLElement | null {
-  const selector = viewTypeToSelectorMap[viewType as string];
+  const selector = viewTypeToSelectorMap[viewType];
   let targetDom: HTMLElement | null =
     selector ? currentleaf?.querySelector<HTMLElement>(selector) ?? null : null;
 
@@ -532,8 +532,8 @@ export function relayoutToolbarOverflow(
     return false;
   }
 
-  const appearanceStore = (plugin.settings.appearanceByStyle || {}) as AppearanceByStyle;
-  const appearanceForStyle = (appearanceStore[style] || {}) as StyleAppearanceSettings;
+  const appearanceStore = (plugin.settings.appearanceByStyle || {});
+  const appearanceForStyle = (appearanceStore[style] || {});
   const resolvedIconSize = appearanceForStyle.toolbarIconSize ?? plugin.toolbarIconSize ?? 18;
   const buttonWidth = resolvedIconSize + 8;
 
@@ -660,7 +660,7 @@ export function createDiv(selector: string) {
 export function createTablecell(app: App, plugin: editingToolbarPlugin, el: string, root?: ParentNode) {
   requireApiVersion("0.15.0") ? activeDocument = activeWindow.document : activeDocument = window.document;
 
-  const container = root || (isExistoolbar(app, plugin) as HTMLElement | null);
+  const container = root || (isExistoolbar(app, plugin));
   const tab = container?.querySelector('#' + el);
   if (tab) {
     // @ts-expect-error - Obsidian API type mismatch
@@ -754,8 +754,8 @@ export function createMoremenu(app: App, plugin: editingToolbarPlugin, selector:
 
   const toolbarStyle = selector.getAttribute("data-toolbar-style");
   const Morecontainer = (toolbarStyle
-    ? selector.ownerDocument?.querySelector(`.editingToolbarPopoverBar[data-toolbar-style="${toolbarStyle}"]`)
-    : view.containerEl.querySelector("#editingToolbarPopoverBar")) as HTMLElement | null;
+    ? selector.ownerDocument?.querySelector<HTMLElement>(`.editingToolbarPopoverBar[data-toolbar-style="${toolbarStyle}"]`)
+    : view.containerEl.querySelector<HTMLElement>("#editingToolbarPopoverBar"));
 
   if (!Morecontainer) {
     plugin.setIS_MORE_Button(false);
@@ -1133,7 +1133,7 @@ export function editingToolbarPopover(
   }
 
   // From here on, we are rendering a single toolbar instance for a specific style
-  const effectiveStyle: ToolbarStyleKey = style as ToolbarStyleKey;
+  const effectiveStyle: ToolbarStyleKey = style;
 
   // If toolbar visibility is disabled globally, hide any existing toolbars and return early
   // This prevents toolbars from being created when they should be hidden
@@ -1146,15 +1146,15 @@ export function editingToolbarPopover(
   }
 
   // Per-style appearance for this toolbar instance
-  const appearanceStore = (settings.appearanceByStyle || {}) as AppearanceByStyle;
+  const appearanceStore = (settings.appearanceByStyle || {});
   const appearanceForStyle =
-    (appearanceStore[effectiveStyle] || {}) as StyleAppearanceSettings;
+    (appearanceStore[effectiveStyle] || {});
 
   const resolvedIconSize =
     appearanceForStyle.toolbarIconSize ?? plugin.toolbarIconSize ?? 18;
 
   const resolvedAestheticStyle: string =
-    (appearanceForStyle.aestheticStyle as string) ??
+    (appearanceForStyle.aestheticStyle) ??
     settings.aestheticStyle ??
     "default";
 
@@ -1330,9 +1330,9 @@ export function editingToolbarPopover(
         leafwidth = computeToolbarLeafWidth(plugin, effectiveStyle, targetDocument, targetDom, currentleaf);
 
       } else if (settings.appendMethod == "body") {
-        const existingPopover = targetDocument.querySelector(
+        const existingPopover = targetDocument.querySelector<HTMLElement>(
           `.editingToolbarPopoverBar[data-toolbar-style="${effectiveStyle}"]`
-        ) as HTMLElement | null;
+        );
         if (!existingPopover) {
           targetDocument.body.appendChild(PopoverMenu);
         }
@@ -1341,15 +1341,15 @@ export function editingToolbarPopover(
         leafwidth = computeToolbarLeafWidth(plugin, effectiveStyle, targetDocument);
       } else if (settings.appendMethod == "workspace") {
         const workspaceRoot = targetDocument.body
-          ?.querySelector(".mod-vertical.mod-root") as HTMLElement | null;
+          ?.querySelector<HTMLElement>(".mod-vertical.mod-root");
 
         if (!workspaceRoot) {
           return;
         }
 
-        const existingPopover = workspaceRoot.querySelector(
+        const existingPopover = workspaceRoot.querySelector<HTMLElement>(
           `.editingToolbarPopoverBar[data-toolbar-style="${effectiveStyle}"]`
-        ) as HTMLElement | null;
+        );
         if (!existingPopover) {
           workspaceRoot.insertAdjacentElement("afterbegin", PopoverMenu);
         }
@@ -1360,10 +1360,10 @@ export function editingToolbarPopover(
       }
 
       const editingToolbarPopoverBar = effectiveStyle === "top"
-        ? app.workspace.getActiveViewOfType(ItemView)?.containerEl?.querySelector("#editingToolbarPopoverBar") as HTMLElement
-        : targetDocument.querySelector(
+        ? app.workspace.getActiveViewOfType(ItemView)?.containerEl?.querySelector<HTMLElement>("#editingToolbarPopoverBar")
+        : targetDocument.querySelector<HTMLElement>(
             `.editingToolbarPopoverBar[data-toolbar-style="${effectiveStyle}"]`
-          ) as HTMLElement | null;
+          );
 
       const resolveButtonHost = (shouldUseMoreMenu: boolean): HTMLElement => {
         if (!shouldUseMoreMenu) {
@@ -1380,7 +1380,7 @@ export function editingToolbarPopover(
 
       // Use per-style commands based on the toolbar we are rendering
       const currentCommands = plugin.getCurrentCommands(effectiveStyle);
-      const getLocalizedLabel = (label: string): string => t(label as any);
+      const getLocalizedLabel = (label: string): string => t(label);
       const getLocalizedTooltip = (label: string, hotkey: string): string => {
         const localizedLabel = getLocalizedLabel(label);
         return hotkey === "–" ? localizedLabel : `${localizedLabel}(${hotkey})`;
@@ -1434,7 +1434,7 @@ export function editingToolbarPopover(
                   // 添加一个禁用的菜单项作为分类标题，使用翻译函数
                   menu.addItem((menuItem) => {
                     menuItem
-                      .setTitle(t(subitem.name as any))  // 使用翻译函数，添加类型断言
+                      .setTitle(t(subitem.name))  // 使用翻译函数，添加类型断言
                       .setDisabled(true);
 
                     applyMenuItemIcon(menuItem, "");
@@ -1444,7 +1444,7 @@ export function editingToolbarPopover(
                   menu.addItem((menuItem) => {
                     // 获取快捷键
                     const hotkey = getHotkey(app, subitem.id, false);
-                    const title = t(subitem.name as any);
+                    const title = t(subitem.name);
 
                     // 如果有快捷键，添加到标题后面
                     const displayTitle = hotkey !== "–" ? `${title}` : title;
@@ -1624,7 +1624,7 @@ export function editingToolbarPopover(
 
                 menu.addItem((menuItem) => {
                   menuItem
-                    .setTitle(t(options.title as any))
+                    .setTitle(t(options.title))
                     .setIcon(options.icon)
                     .onClick(runAction);
 
@@ -1647,12 +1647,12 @@ export function editingToolbarPopover(
                 }>,
               ) => {
                 menu.addItem((menuItem) => {
-                  menuItem.setTitle(t(title as any)).setIcon(icon);
+                  menuItem.setTitle(t(title)).setIcon(icon);
                   const submenu = menuItem.setSubmenu();
                   actions.forEach((action) => {
                     submenu.addItem((subItem) => {
                       subItem
-                        .setTitle(t(action.title as any))
+                        .setTitle(t(action.title))
                         .setIcon(action.icon)
                         .onClick(async () => {
                           if (!providerReady) {
@@ -1806,7 +1806,7 @@ export function editingToolbarPopover(
                   ? (preferredActionId as string)
                   : "editing-toolbar:ai-canvas-global-prompt")
                 : (AI_BUTTON_LABEL_KEYS[preferredActionId || ""] && !isCanvasOnlyAIAction(preferredActionId))
-                  ? (preferredActionId as string)
+                  ? (preferredActionId)
                   : "editing-toolbar:ai-inline-completion";
               const result = await executeAIToolbarAction(plugin, actionId, editor);
               if (result !== false) {
@@ -1859,9 +1859,9 @@ export function editingToolbarPopover(
               //    if (settings.cMenuFontColor)
               //     activeDocument.getElementById("change-font-color-icon").style.fill = settings.cMenuFontColor;
               createTablecell(app, plugin, "x-color-picker-table", submenu2);
-              const el = submenu2.querySelector(
+              const el = submenu2.querySelector<HTMLElement>(
                 ".x-color-picker-wrapper"
-              ) as HTMLElement;
+              );
 
               const button3 = new ButtonComponent(el);
               button3
@@ -1946,9 +1946,9 @@ export function editingToolbarPopover(
               // if (plugin.settings.cMenuBackgroundColor)
               //  activeDocument.getElementById("change-background-color-icon").style.fill = plugin.settings.cMenuBackgroundColor;
               createTablecell(app, plugin, "x-backgroundcolor-picker-table", submenu2);
-              const el = submenu2.querySelector(
+              const el = submenu2.querySelector<HTMLElement>(
                 ".x-color-picker-wrapper"
-              ) as HTMLElement;
+              );
 
               const button3 = new ButtonComponent(el);
               button3

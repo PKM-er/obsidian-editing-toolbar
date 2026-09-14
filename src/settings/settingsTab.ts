@@ -167,7 +167,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
   private currentEditingConfig: string;
 
   private getLocalizedCommandName(name: string): string {
-    return t(name as any);
+    return t(name);
   }
 
   private setDeclarativeCommandName(
@@ -421,7 +421,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
 
   private createDeclarativeAppearancePageDefinitions(): any[] {
     const editingStyle: ToolbarStyleKey =
-      (this.plugin.appearanceEditStyle as ToolbarStyleKey) ||
+      (this.plugin.appearanceEditStyle) ||
       (this.plugin.settings.positionStyle as ToolbarStyleKey) || 'top';
 
     const definitions: any[] = [{
@@ -489,7 +489,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
 
     definitions.push(
       this.createDeclarativeAppearanceColorDefinition('Toolbar Theme', [t('Theme'), t('Preset Theme')], (setting) => {
-        const style = (this.plugin.appearanceEditStyle as ToolbarStyleKey) || editingStyle;
+        const style = (this.plugin.appearanceEditStyle) || editingStyle;
         const bucket = this.getAppearanceBucket(style);
         const options: Record<string, string> = {};
         AESTHETIC_STYLES.forEach((aesthetic) => { options[aesthetic] = aesthetic === 'custom' ? t('Custom Theme') : t(aesthetic); });
@@ -531,11 +531,11 @@ export class editingToolbarSettingTab extends PluginSettingTab {
         });
       }),
       this.createDeclarativeAppearanceColorDefinition('Toolbar Background Color', [t('Background Color'), t('Toolbar Background')], (setting) => {
-        const style = (this.plugin.appearanceEditStyle as ToolbarStyleKey) || editingStyle;
+        const style = (this.plugin.appearanceEditStyle) || editingStyle;
         return this.addAppearancePicker(setting, style, 'toolbarBackgroundColor', true);
       }),
       this.createDeclarativeAppearanceColorDefinition('Toolbar Icon Color', [t('Icon Color'), t('Toolbar Icons')], (setting) => {
-        const style = (this.plugin.appearanceEditStyle as ToolbarStyleKey) || editingStyle;
+        const style = (this.plugin.appearanceEditStyle) || editingStyle;
         return this.addAppearancePicker(setting, style, 'toolbarIconColor', false);
       }),
       {
@@ -547,7 +547,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
           .setValue(this.getAppearanceBucket(editingStyle).toolbarIconSize ?? this.plugin.settings.toolbarIconSize)
           .setDynamicTooltip()
           .onChange(async (value) => {
-            const style = (this.plugin.appearanceEditStyle as ToolbarStyleKey) || editingStyle;
+            const style = (this.plugin.appearanceEditStyle) || editingStyle;
             const bucket = this.getAppearanceBucket(style);
             bucket.toolbarIconSize = value;
             bucket.aestheticStyle = 'custom';
@@ -998,7 +998,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
 
     // Decide which style we are editing in this tab
     const editingStyle: ToolbarStyleKey =
-      (this.plugin.appearanceEditStyle as ToolbarStyleKey) ||
+      (this.plugin.appearanceEditStyle) ||
       (this.plugin.settings.positionStyle as ToolbarStyleKey) ||
       "top";
     this.plugin.appearanceEditStyle = editingStyle;
@@ -1481,17 +1481,17 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     const settings = this.plugin.settings;
   
     if (!settings.appearanceByStyle || typeof settings.appearanceByStyle !== "object") {
-      settings.appearanceByStyle = {} as AppearanceByStyle;
+      settings.appearanceByStyle = {};
     }
-    const store = settings.appearanceByStyle as AppearanceByStyle;
+    const store = settings.appearanceByStyle;
     if (!store[style] || typeof store[style] !== "object") {
       store[style] = {};
     }
-    return store[style]!;
+    return store[style];
   }
   private createColorSettings(containerEl: HTMLElement): void {
     const editingStyle: ToolbarStyleKey =
-      (this.plugin.appearanceEditStyle as ToolbarStyleKey) ||
+      (this.plugin.appearanceEditStyle) ||
       (this.plugin.settings.positionStyle as ToolbarStyleKey) ||
       "top";
     const appearanceBucket = this.getAppearanceBucket(editingStyle);
@@ -1520,12 +1520,12 @@ export class editingToolbarSettingTab extends PluginSettingTab {
         dropdown.addOption("elegant", t("└ Elegant"));
         // Use the bucket for the currently edited style
         dropdown.setValue(
-          (appearanceBucket.aestheticStyle as string) ??
+          (appearanceBucket.aestheticStyle) ??
             this.plugin.settings.aestheticStyle
         );
         dropdown.onChange(async (value) => {
           const style =
-            (this.plugin.appearanceEditStyle as ToolbarStyleKey) ||
+            (this.plugin.appearanceEditStyle) ||
             (this.plugin.settings.positionStyle as ToolbarStyleKey) ||
             "top";
           const bucket = this.getAppearanceBucket(style);
@@ -1657,7 +1657,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
           .onChange(async (value) => {
             const activeStyle = this.plugin.positionStyle;
             const style =
-              (this.plugin.appearanceEditStyle as ToolbarStyleKey) ||
+              (this.plugin.appearanceEditStyle) ||
               (this.plugin.settings.positionStyle as ToolbarStyleKey) ||
               "top";
             const bucket = this.getAppearanceBucket(style);
@@ -1701,7 +1701,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     editingToolbar.setAttribute("id", "editingToolbarModalBar");
     // Use the per-style aesthetic if set; fall back to the global one
     const previewAestheticStyle =
-      (appearanceBucket.aestheticStyle as string) ??
+      (appearanceBucket.aestheticStyle) ??
       this.plugin.settings.aestheticStyle ??
       "default";
     this.applyAestheticStyle(
@@ -1789,7 +1789,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
       const button = new ButtonComponent(editingToolbar);
       button.setClass("editingToolbarCommandItem");
       button.buttonEl.classList.add("preview-button");
-      button.setTooltip(t(item.name as any));
+      button.setTooltip(t(item.name));
 
       // 设置图标
       if (item.icon) {
@@ -2920,7 +2920,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
   
       const activeStyle = this.plugin.positionStyle;
       const editingStyle =
-        (this.plugin.appearanceEditStyle as ToolbarStyleKey) ||
+        (this.plugin.appearanceEditStyle) ||
         (this.plugin.settings.positionStyle as ToolbarStyleKey) ||
         activeStyle ||
         "top";
@@ -3344,7 +3344,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
       });
 
       if (customModelEnabled) {
-        const customApiFormat = (this.plugin.settings.ai.customModel.apiFormat ?? 'openai-compatible') as CustomModelApiFormat;
+        const customApiFormat = (this.plugin.settings.ai.customModel.apiFormat ?? 'openai-compatible');
         const isOllamaFormat = customApiFormat === 'ollama';
         const isGeminiFormat = customApiFormat === 'gemini';
         const customModelBaseUrl = this.plugin.settings.ai.customModel.baseUrl.trim();

@@ -913,8 +913,8 @@ private async fetchRemoteTitle(url: string): Promise<string> {
         if (!view) return null;
     
         // 获取编辑器内容区域
-    const editorEl = view.contentEl.querySelector('.markdown-source-view .cm-content') as HTMLElement;
-    const containerEl = view.contentEl as HTMLElement;
+    const editorEl = view.contentEl.querySelector<HTMLElement>('.markdown-source-view .cm-content');
+    const containerEl = view.contentEl;
     if (!editorEl || !containerEl) return null;
 
     const editorWidth = editorEl.offsetWidth;
@@ -930,7 +930,7 @@ private async fetchRemoteTitle(url: string): Promise<string> {
             if (this.linkUrl) {
                 imgEls.forEach((img) => {
                     if (img.src === this.linkUrl && img.complete && img.naturalWidth > 0) {
-                        targetImg = img as HTMLImageElement;
+                        targetImg = img;
                     }
                 });
             }
@@ -1090,8 +1090,8 @@ private async fetchRemoteTitle(url: string): Promise<string> {
         }
 
         // 更新图片尺寸输入框
-        const widthInput = this.contentEl.querySelector('.image-width-input') as HTMLInputElement;
-        const heightInput = this.contentEl.querySelector('.image-height-input') as HTMLInputElement;
+        const widthInput = this.contentEl.querySelector<HTMLInputElement>('.image-width-input');
+        const heightInput = this.contentEl.querySelector<HTMLInputElement>('.image-height-input');
         if (widthInput) widthInput.value = this.imageWidth;
         if (heightInput) heightInput.value = this.imageHeight;
 

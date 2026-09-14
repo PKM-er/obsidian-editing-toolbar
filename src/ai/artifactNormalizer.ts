@@ -458,11 +458,11 @@ function buildCanvasLayers(
     visited.add(candidateId);
 
     while (queue.length > 0) {
-      const current = queue.shift()!;
+      const current = queue.shift();
       if (!layers[current.depth]) {
         layers[current.depth] = [];
       }
-      layers[current.depth].push(nodeById.get(current.id)!);
+      layers[current.depth].push(nodeById.get(current.id));
 
       const neighbors = [...(adjacency.get(current.id) ?? [])]
         .filter((neighborId) => !visited.has(neighborId))

@@ -1746,13 +1746,13 @@ export class AIEditorManager {
       const closeBtn = doc.createEl("button");
       closeBtn.type = "button";
       closeBtn.className = "editing-toolbar-ai-inline-prompt-close";
-      closeBtn.title = t("Close" as any);
+      closeBtn.title = t("Close");
       safeSetInnerHTML(closeBtn, `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>`);
       header.append(dragHandle, titleEl, closeBtn);
       const settingsBtn = doc.createEl("button");
       settingsBtn.type = "button";
       settingsBtn.className = "editing-toolbar-ai-inline-prompt-settings";
-      settingsBtn.title = t("Manage Templates" as any);
+      settingsBtn.title = t("Manage Templates");
       safeSetInnerHTML(settingsBtn, `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v6m0 6v6M4.22 4.22l4.24 4.24m5.08 5.08l4.24 4.24M1 12h6m6 0h6M4.22 19.78l4.24-4.24m5.08-5.08l4.24-4.24"/></svg>`);
 
       const inputWrapper = doc.createDiv();
@@ -1767,7 +1767,7 @@ export class AIEditorManager {
       const historyBtn = doc.createEl("button");
       historyBtn.type = "button";
       historyBtn.className = "editing-toolbar-ai-inline-prompt-history-btn";
-      historyBtn.title = t("History" as any);
+      historyBtn.title = t("History");
       safeSetInnerHTML(historyBtn, `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg>`);
 
       const historyDropdown = doc.createDiv();
@@ -1781,7 +1781,7 @@ export class AIEditorManager {
       sendBtn.type = "button";
       sendBtn.className = "editing-toolbar-ai-inline-prompt-send-btn";
       safeSetInnerHTML(sendBtn, `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>`);
-      sendBtn.title = t("Send" as any);
+      sendBtn.title = t("Send");
 
       inputWrapper.append(textarea, historyBtn, historyDropdown, mentionDropdown,sendBtn);
 
@@ -1929,8 +1929,8 @@ export class AIEditorManager {
       const hint = doc.createDiv();
       hint.className = "editing-toolbar-ai-inline-prompt-hint";
       const promptHint = Platform.isMobileApp
-        ? t("Enter inserts a newline. Tap Send to submit." as any)
-        : t("Press Enter to send, Shift+Enter for newline, Esc to close." as any);
+        ? t("Enter inserts a newline. Tap Send to submit.")
+        : t("Press Enter to send, Shift+Enter for newline, Esc to close.");
       hint.textContent = promptHint  ;
 
    
@@ -1982,13 +1982,13 @@ export class AIEditorManager {
         dragHandle.setCssStyles({ cursor: 'grab' });
       };
 
-      dragHandle.addEventListener('mousedown', onDragStart as EventListener);
-      titleEl.addEventListener('mousedown', onDragStart as EventListener);
-      dragHandle.addEventListener('touchstart', onDragStart as EventListener, { passive: false });
-      titleEl.addEventListener('touchstart', onDragStart as EventListener, { passive: false });
+      dragHandle.addEventListener('mousedown', onDragStart);
+      titleEl.addEventListener('mousedown', onDragStart);
+      dragHandle.addEventListener('touchstart', onDragStart, { passive: false });
+      titleEl.addEventListener('touchstart', onDragStart, { passive: false });
 
-      doc.addEventListener('mousemove', onDrag as EventListener);
-      doc.addEventListener('touchmove', onDrag as EventListener, { passive: false });
+      doc.addEventListener('mousemove', onDrag);
+      doc.addEventListener('touchmove', onDrag, { passive: false });
 
       doc.addEventListener('mouseup', onDragEnd);
       doc.addEventListener('touchend', onDragEnd);
@@ -2078,7 +2078,7 @@ export class AIEditorManager {
         if (history.length === 0) {
           const emptyItem = doc.createDiv();
           emptyItem.className = "editing-toolbar-ai-inline-prompt-history-empty";
-          emptyItem.textContent = t("No history" as any);
+          emptyItem.textContent = t("No history");
           historyDropdown.appendChild(emptyItem);
         } else {
           history.forEach((item, index) => {
@@ -2387,12 +2387,12 @@ export class AIEditorManager {
       this.inlineCustomPromptCleanup = [
         () => win.removeEventListener("resize", reposition),
         () => doc.removeEventListener("scroll", reposition, true),
-        () => dragHandle.removeEventListener('mousedown', onDragStart as EventListener),
-        () => titleEl.removeEventListener('mousedown', onDragStart as EventListener),
-        () => dragHandle.removeEventListener('touchstart', onDragStart as EventListener),
-        () => titleEl.removeEventListener('touchstart', onDragStart as EventListener),
-        () => doc.removeEventListener('mousemove', onDrag as EventListener),
-        () => doc.removeEventListener('touchmove', onDrag as EventListener),
+        () => dragHandle.removeEventListener('mousedown', onDragStart),
+        () => titleEl.removeEventListener('mousedown', onDragStart),
+        () => dragHandle.removeEventListener('touchstart', onDragStart),
+        () => titleEl.removeEventListener('touchstart', onDragStart),
+        () => doc.removeEventListener('mousemove', onDrag),
+        () => doc.removeEventListener('touchmove', onDrag),
         () => doc.removeEventListener('mouseup', onDragEnd),
         () => doc.removeEventListener('touchend', onDragEnd),
       ];
@@ -2442,7 +2442,7 @@ export class AIEditorManager {
       return editor;
     }
     try {
-      return this.plugin.commandsManager?.getActiveEditor() ?? ((this.plugin.app.workspace.getActiveViewOfType(MarkdownView) as MarkdownView | null)?.editor ?? null);
+      return this.plugin.commandsManager?.getActiveEditor() ?? ((this.plugin.app.workspace.getActiveViewOfType(MarkdownView))?.editor ?? null);
     } catch {
       return null;
     }

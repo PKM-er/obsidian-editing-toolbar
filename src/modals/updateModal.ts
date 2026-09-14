@@ -87,7 +87,7 @@ export class UpdateNoticeModal extends Modal {
         this.changelogContent,
         this.changelogContentEl,
         "",
-        this.plugin as any
+        this.plugin
       );
     }
   }

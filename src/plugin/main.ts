@@ -57,7 +57,7 @@ function ensureAppearanceStore(
     settings.appearanceByStyle = {};
   }
 
-  const store = settings.appearanceByStyle as AppearanceByStyle;
+  const store = settings.appearanceByStyle;
 
   // Ensure bucket objects exist for each style
   STYLE_KEYS.forEach((style) => {
@@ -73,7 +73,7 @@ function ensureAppearanceStore(
       if (legacyValue === undefined) return;
 
       STYLE_KEYS.forEach((style) => {
-        const bucket = store[style]!;
+        const bucket = store[style];
         if (!(key in bucket)) {
           (bucket as any)[key] = legacyValue;
         }
@@ -160,7 +160,7 @@ export default class editingToolbarPlugin extends Plugin {
     const migratingFromGlobal = !settings.appearanceByStyle;
     ensureAppearanceStore(settings, migratingFromGlobal);
 
-    const store = settings.appearanceByStyle as AppearanceByStyle;
+    const store = settings.appearanceByStyle;
     
     const getCurrentStyle = (): ToolbarStyleKey => {
       const raw = (
@@ -168,7 +168,7 @@ export default class editingToolbarPlugin extends Plugin {
         this.positionStyle ||             // 2. live toolbar style
         settings.positionStyle ||         // 3. stored fallback
         "top"
-      ) as string;
+      );
 
       return STYLE_KEYS.includes(raw as ToolbarStyleKey)
         ? (raw as ToolbarStyleKey)
@@ -196,7 +196,7 @@ export default class editingToolbarPlugin extends Plugin {
         set(value: any) {
           const style = getCurrentStyle();
           ensureAppearanceStore(settings, false);
-          const bucket = (settings.appearanceByStyle as AppearanceByStyle)[style]!;
+          const bucket = (settings.appearanceByStyle)[style];
           (bucket as any)[key] = value;
         },
       });
