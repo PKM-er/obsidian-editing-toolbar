@@ -933,7 +933,7 @@ export default {
   'Property List': '属性列表',
   'One YAML property per line. Add a short instruction after a colon.': '每行一个 YAML 属性。可在冒号后添加简短说明。',
   'Output Language': '输出语言',
-  'Use \"auto\" to follow the current note language, or enter a specific language.': '使用 “auto” 自动跟随当前笔记语言，或输入指定语言。',
+  'Use "auto" to follow the current note language, or enter a specific language.': '使用 “auto” 自动跟随当前笔记语言，或输入指定语言。',
   'Prompt Template': '提示词模板',
   'Available placeholders: {note}, {properties}, {language}.': '可用占位符：{note}、{properties}、{language}。',
   'Reset Frontmatter Prompt': '重置 Frontmatter 提示词',

@@ -13,9 +13,9 @@ export class TextEnhancement {
     }
 
     const mdPattern =
-      /(^#+\s|(^|\s+)#|^>|^\- \[( |x)\]|^\+ |<[^<>]+>|^1\. |^\-+$|^\*+$|==|\*+|~~|```|!*\[\[|\]\])/gm;
+      /(^#+\s|(^|\s+)#|^>|- \[( |x)\]|^\+ |<[^<>]+>|^1\. |^-+$|^\*+$|==|\*+|~~|```|!*\[\[|\]\])/gm;
     const plainText = selection
-      .replace(/\[([^\[\]]*)\]\([^\(\)]+\)/gim, "$1")
+      .replace(/\[([^\[\]]*)\]\([^()]+\)/gim, "$1")
       .replace(mdPattern, "$2")
       .replace(/^[ ]+|[ ]+$/gm, "")
       .replace(/(\r\n|\n)+/gm, "\n");
@@ -140,7 +140,7 @@ export class TextEnhancement {
    */
   private static detectPattern(text: string): RegExp | null {
     // 模式 A: 阿拉伯数字列表 "1. ", "2. " (必须后面跟着点和空格，防止误伤小数)
-    const numberedList = /\s?\d+[\.、]\s?/g;
+    const numberedList = /\s?\d+[.、]\s?/g;
 
     // 模式 B: 箭头或符号分隔 "→", "=>", ">"
     const arrowSymbol = /\s?[→=>]\s?/g;
@@ -434,7 +434,7 @@ export class TextEnhancement {
 
         // 2. 智能清理：移除行首现有的数字序号模式 (如 "1. ", "2) ", "3、")
         // 正则解释：匹配开头可选的空格 + 数字 + [点/右括号/顿号] + 可选空格
-        const cleanLine = line.replace(/^\s*\d+[\.\)）、]?\s*/, "");
+        const cleanLine = line.replace(/^\s*\d+[.)）、]?\s*/, "");
 
         // 3. 组合新序号
         const numberedLine = `${prefix}${currentNum}${separator}${cleanLine}`;

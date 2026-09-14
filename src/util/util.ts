@@ -346,6 +346,7 @@ export function setBackgroundcolor(color: string, editor?: Editor) {
   const isAlreadyInSameColor = (text: string, targetColor: string): boolean => {
     // 转义正则表达式中的特殊字符，特别是对于rgba格式
     const escapedColor = targetColor.replace(/([()[{*+.$^\\|?])/g, '\\$1');
+    // eslint-disable-next-line no-useless-escape -- \s and \/ are literal escapes for RegExp string constructor
     const cleanColorRegex = new RegExp(`^<mark\\s+style=["']?background:${escapedColor}["']?>([\s\S]+)<\\/mark>$`);
     return cleanColorRegex.test(text.trim());
   };

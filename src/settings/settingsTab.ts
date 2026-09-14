@@ -3638,7 +3638,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
 
         new Setting(frontmatterBody)
           .setName(t('Output Language'))
-          .setDesc(t('Use \"auto\" to follow the current note language, or enter a specific language.'))
+          .setDesc(t('Use "auto" to follow the current note language, or enter a specific language.'))
           .addText((text) => {
             text
               .setPlaceholder('auto')

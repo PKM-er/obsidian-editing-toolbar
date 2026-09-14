@@ -849,7 +849,7 @@ export function setFormateraser(plugin: editingToolbarPlugin, editor: Editor) {
   // 处理 callout 格式
   // 处理最外层的 callout 格式，每次只脱一层壳
   // 检查是否是 callout 格式
-  if (selectText.match(/^>\s*\[\![\w\s]*\]/m)) {
+  if (selectText.match(/^>\s*\[![\w\s]*\]/m)) {
     // 处理 callout 格式
     const lines = selectText.split('\n');
     const result = [];
@@ -861,7 +861,7 @@ export function setFormateraser(plugin: editingToolbarPlugin, editor: Editor) {
       const line = lines[i];
 
       // 检测 callout 开始
-      const calloutMatch = line.match(/^(>+)\s*\[\!([\w\s]*)\]\s*(.*?)$/);
+      const calloutMatch = line.match(/^(>+)\s*\[!([\w\s]*)\]\s*(.*?)$/);
       if (calloutMatch && !foundFirstCallout) {
         // 找到第一个 callout，记录其级别
         calloutLevel = calloutMatch[1].length;
@@ -899,17 +899,16 @@ export function setFormateraser(plugin: editingToolbarPlugin, editor: Editor) {
     editor.replaceSelection(result.join('\n'));
     return;
   }
-
-  const mdText = /(^#+\s|^#(?=\s)|^\>|^\- \[( |x)\]|^\+ |\<[^\<\>]+?\>|^1\. |^\s*\- |^\-+$|^\*+$)/mg;
+  const mdText = /(^#+\s|^#(?=\s)|^>|- \[( |x)\]|^\+ |<[^<>]+?>|^1\. |^\s*- |^-+$|^\*+$)/mg;
   selectText = selectText.replace(mdText, "");
   selectText = selectText.replace(/^[ ]+|[ ]+$/mg, "");
-  selectText = selectText.replace(/\!?\[\[([^\[\]\|]*\|)*([^\(\)\[\]]+)\]\]/g, "$2");
-  selectText = selectText.replace(/\!?\[+([^\[\]\(\)]+)\]+\(([^\(\)]+)\)/g, "$1");
+  selectText = selectText.replace(/!?\[\[([^\[\]|]*\|)*([^()\[\]]+)\]\]/g, "$2");
+  selectText = selectText.replace(/!?\[+([^\[\]\(\)]+)\]+\(([^\(\)]+)\)/g, "$1");
   selectText = selectText.replace(/`([^`]+)`/g, "$1");
   selectText = selectText.replace(/_([^_]+)_/g, "$1");
   selectText = selectText.replace(/==([^=]+)==/g, "$1");
-  selectText = selectText.replace(/\*\*\*([^\*]+)\*\*\*/g, "$1");
-  selectText = selectText.replace(/\*\*?([^\*]+)\*\*?/g, "$1");
+  selectText = selectText.replace(/\*\*\*([^*]+)\*\*\*/g, "$1");
+  selectText = selectText.replace(/\*\*?([^*]+)\*\*?/g, "$1");
   selectText = selectText.replace(/~~([^~]+)~~/g, "$1");
 
   // selectText = selectText.replace(/(\r*\n)+/mg, "\r\n");

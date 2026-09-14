@@ -914,7 +914,7 @@ export default {
   'Property List': 'Property List',
   'One YAML property per line. Add a short instruction after a colon.': 'One YAML property per line. Add a short instruction after a colon.',
   'Output Language': 'Output Language',
-  'Use \"auto\" to follow the current note language, or enter a specific language.': 'Use \"auto\" to follow the current note language, or enter a specific language.',
+  'Use "auto" to follow the current note language, or enter a specific language.': 'Use "auto" to follow the current note language, or enter a specific language.',
   'Prompt Template': 'Prompt Template',
   'Available placeholders: {note}, {properties}, {language}.': 'Available placeholders: {note}, {properties}, {language}.',
   'Reset Frontmatter Prompt': 'Reset Frontmatter Prompt',
