@@ -1,6 +1,65 @@
 # Changelog
 
 ## 4.1.5 (2026-10-03)
+### Update manifest.json and CHANGELOG.md for version 4.1.5
+### Scorecard 清理第八批：misused-promises 21 + 全局 app 25 + 联合类型 10 + headings 4
+- misused-promises 21 处：addEventListener async 回调和 Obsidian API override
+  方法（onload/onChooseItem/onClose）加 eslint-disable-line（官方禁止改签名）
+- 全局 app 25 处：plugin/main.ts 的 4 处改 this.app；模块级函数的 8 处改
+  window.app（Obsidian 运行时在 window 上注入）；其余 no-undef 误报随
+  window.app 替换自动消失
+- 联合类型 10 处：ToolbarStyleKey|string → ToolbarStyleKey、
+  "Mod"|"Shift"|...|string → Array<string>、any|null → any、
+  keyof typeof en|string → string（字面量联合已是 string 子集）
+- headings 4 处：createEl("h1"/"h3") → new Setting().setName().setHeading()
+  （保留 cls 和 setCssStyles 通过 nameEl 链式调用）
+- 所有 eslint-disable 注释补 -- description（官方 require-description 规则）
+本地队列：321 → 266 warnings / 0 errors。tsc 0 错误，构建通过。
+### Scorecard 清理第七批：正则无用转义 42→8
+- 字符类内的冗余转义移除：[^\[\]\|] → [^\[\]|]（| 在类内是字面量）、
+  [^\(\)] → [^()]（括号在类内是字面量）、[\.、] → [.、] 等
+- 字符类外的 \! 移除（! 在正则顶层是字面量）
+- util.ts:349 的 RegExp 字符串构造器里的 \s \/ 是真实转义，
+  加 eslint-disable-next-line 注释说明
+- 翻译文件/settingsTab 里单引号字符串内的 " 改为 "（单引号内无需转义）
+- 剩余 8 处是规则对正则字面量中必要转义的误报（\. \s \* \+ \[ \] 在
+  顶层是字面量但规则仍报），已确认语义正确，保留
+本地队列：355 → 321 warnings / 0 errors。tsc 0 错误，构建通过。
+### chore: 忽略 lint 临时输出文件
+### Scorecard 清理第六批：不必要类型断言 93→2
+- 安全删除 81 处断言（官方 fixer 本轮验证全部类型安全）：t("x" as any)
+  20 处（t 参数本就是 string）、addEventListener as EventListener 12 处、
+  appearanceEditStyle as ToolbarStyleKey 在 || 链中 12 处、其余零散
+- querySelector 转型 12 处不能删（移除后 Element 缺少 style/offsetWidth），
+  改为等价的泛型形式 querySelector<HTMLElement>("...")——类型正确且规则通过
+- fullscreen 2 处动态全屏 API 键名的字符串索引转型是必要的，保留并注释
+本地队列：462 → 355 warnings / 0 errors。tsc 0 错误，构建通过。
+### Scorecard 清理第五批：createElement 全部迁移到 Obsidian DOM 助手
+- 48 处 createElement/createEl 自动转换：doc/document.createElement("div")
+  → createDiv()、("span") → createSpan()，其余标签 → createEl(tag)。
+  全部为同接收者转换（ownerDocument 不变，弹出窗口兼容性零影响）
+- editingToolbarModal 的本地 createDiv(selector) 助手遮蔽了全局同名函数，
+  5 处改用 window.createDiv() 并在本地 d.ts 补充 Window 接口声明
+- AIEditorManager 剩余 24 处 doc.createElement 同接收者手工转换
+prefer-create-el 队列清零。本地总数：534 → 462 warnings / 0 errors。
+### Scorecard 清理第四批：358 处直接样式赋值迁移到 setCssStyles
+- 在 src/types/obsidian.d.ts 以 declare global 补充 HTMLElement.setCssStyles /
+  setCssProps 声明（仓库锁定的 obsidian@0.15.9 类型包无此 API，运行时 0.16+ 可用）
+- manifest minAppVersion 0.14.0 → 1.4.5：样式已依赖容器查询/:has，0.14 声明
+  与现实不符；setCssStyles 需要 0.16+ 运行时
+- 358 处 el.style.prop = value → el.setCssStyles({ prop: value })（官方认可的
+  等价写法，行为不变）：编辑工具栏/AI 面板/设置页预览等全部主路径
+- 保留 2 处 insertCalloutModal 的 SVG 元素 .style 赋值：SVGSVGElement 不继承
+  HTMLElement，运行时没有 setCssStyles，规则对 SVG 是误报
+本地队列：894 → 536 warnings / 0 errors。tsc 0 错误，构建通过。
+### eslint 配置对齐官方推荐用法
+- obsidianmd.configs.recommended 已内置 js/tseslint recommended，去掉重复引入
+- projectService 采用官方 allowDefaultProject 写法
+- 自定义的 @typescript-eslint 规则块显式注册插件（flat config 按对象解析）
+### Update manifest.json and CHANGELOG.md for version 4.1.4
+
+
+## 4.1.5 (2026-10-03)
 ### Scorecard 清理第八批：misused-promises 21 + 全局 app 25 + 联合类型 10 + headings 4
 - misused-promises 21 处：addEventListener async 回调和 Obsidian API override
   方法（onload/onChooseItem/onClose）加 eslint-disable-line（官方禁止改签名）
