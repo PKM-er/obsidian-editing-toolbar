@@ -1,8 +1,8 @@
 import type editingToolbarPlugin from "src/plugin/main";
 import { CommandPicker, ChooseFromIconList, openSlider, ChangeCmdname } from "src/modals/suggesterModals";
-import { App, Setting, PluginSettingTab, Command, Notice, setIcon } from "obsidian";
+import { App, Setting, PluginSettingTab, Command, Notice, setIcon, DropdownComponent } from "obsidian";
 import { APPEND_METHODS, AESTHETIC_STYLES, POSITION_STYLES } from "src/settings/settingsData";
-import type { ToolbarStyleKey, StyleAppearanceSettings, AppearanceByStyle } from "src/settings/settingsData";
+import type { ToolbarStyleKey, StyleAppearanceSettings } from "src/settings/settingsData";
 import { selfDestruct, editingToolbarPopover, checkHtml } from "src/modals/editingToolbarModal";
 import Sortable from "sortablejs";
 import { debounce } from "obsidian";
@@ -20,7 +20,7 @@ import { RegexCommandModal } from "src/modals/RegexCommandModal";
 import { ButtonComponent } from "obsidian";
 import { ConfirmModal } from "src/modals/ConfirmModal";
 import { createDefaultFrontmatterPromptSettings, getDefaultCustomPromptTemplates, PKMER_MODEL_OPTIONS, resolvePKMerModelForScene } from "src/ai/types";
-import type { CustomModelApiFormat } from "src/ai/types";
+import type { CustomModelApiFormat, CustomPromptTemplate } from "src/ai/types";
 import { AIUrlHelper } from "src/ai/urlValidation";
 import { getAIErrorMessage } from "src/ai/errorHandling";
 import { getPKMerAIEntryUrl, getPKMerAIQuotaUrl } from "src/ai/pkmerWeb";
@@ -111,7 +111,19 @@ export function getPickrSettings(opts: {
     },
   };
 }
-export function getComandindex(item: any, arr: any[]): number {
+interface DeclarativeSettingsNode {
+  type?: string;
+  name?: string;
+  aliases?: string[];
+  desc?: string;
+  heading?: string;
+  cls?: string;
+  items?: DeclarativeSettingsNode[];
+  render?: (setting: Setting) => unknown;
+  [key: string]: unknown;
+}
+
+export function getComandindex(item: string, arr: Command[]): number {
   if (!arr || !Array.isArray(arr)) {
     return -1;
   }
@@ -155,7 +167,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
   private cachedCustomGeminiModelsBaseUrl = '';
   private cachedCustomGeminiModelsError = '';
   private commandDragState: CommandDragState | null = null;
-  private commandSettingsPageDefinition: any = null;
+  private commandSettingsPageDefinition: DeclarativeSettingsNode | null = null;
   private selectedImportSourceStyle = 'Main menu';
   private commandDragControllers = new WeakMap<HTMLElement, AbortController>();
   private commandDropControllers = new WeakMap<HTMLElement, AbortController>();
@@ -243,7 +255,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
         ),
     ];
 
-    return [{
+    const definitions: DeclarativeSettingsNode[] = [{
       name: t('Editing Toolbar'),
       aliases: SETTING_TABS.map((tab) => tab.name),
       render: (setting: Setting) => {
@@ -258,6 +270,28 @@ export class editingToolbarSettingTab extends PluginSettingTab {
       cls: 'editing-toolbar-page-navigation',
       items: pages,
     }];
+    this.normalizeDefinitionRenders(definitions);
+    return definitions;
+  }
+
+  /**
+   * Obsidian 1.13 声明式渲染器把 render() 的返回值当作页面切换时的清理函数调用。
+   * 表达式形式的回调（如 render: (setting) => setting.addDropdown(...)）会返回
+   * Setting 组件这类"真值但非函数"的对象，导致核心在 openPage 清理阶段抛出
+   * "TypeError: t is not a function"，且页面永远无法切换。这里统一规范化：
+   * 只有返回函数（真正的清理函数，如 pickr 的销毁回调）才保留。
+   */
+  private normalizeDefinitionRenders(nodes: DeclarativeSettingsNode[]): void {
+    for (const node of nodes) {
+      if (typeof node.render === "function") {
+        const original = node.render;
+        node.render = (setting: Setting) => {
+          const result = original(setting);
+          return typeof result === "function" ? result : undefined;
+        };
+      }
+      if (Array.isArray(node.items)) this.normalizeDefinitionRenders(node.items);
+    }
   }
 
   /**
@@ -278,7 +312,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     name: string,
     aliases: string[],
     renderContent: (container: HTMLElement) => void,
-  ): any {
+  ): DeclarativeSettingsNode {
     return {
       type: 'page',
       name,
@@ -298,7 +332,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     };
   }
 
-  private createDeclarativeGeneralPageDefinitions(): any[] {
+  private createDeclarativeGeneralPageDefinitions(): DeclarativeSettingsNode[] {
     return [
       {
         name: t('Editing Toolbar Append Method'),
@@ -419,12 +453,12 @@ export class editingToolbarSettingTab extends PluginSettingTab {
       }));
   }
 
-  private createDeclarativeAppearancePageDefinitions(): any[] {
+  private createDeclarativeAppearancePageDefinitions(): DeclarativeSettingsNode[] {
     const editingStyle: ToolbarStyleKey =
       (this.plugin.appearanceEditStyle) ||
       (this.plugin.settings.positionStyle as ToolbarStyleKey) || 'top';
 
-    const definitions: any[] = [{
+    const definitions: DeclarativeSettingsNode[] = [{
       name: t('Toolbar Settings'),
       aliases: [t('Appearance Style'), t('Position Style')],
       desc: t("Choose which toolbar style's appearance you want to edit."),
@@ -578,7 +612,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     name: string,
     aliases: string[],
     render: (setting: Setting) => void | (() => void),
-  ): any {
+  ): DeclarativeSettingsNode {
     return { name: t(name), aliases, render };
   }
 
@@ -599,7 +633,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
         ? ['#F5F8FA', '#F4F1E8', '#2D3033', '#1A2F28', '#2A1D3B']
         : ['#4A5568', '#D4AF37', '#2D3033', '#6D5846', '#4C2A55'],
       opacity,
-      defaultColor: bucket[settingKey] ?? (this.plugin.settings as any)[settingKey],
+      defaultColor: bucket[settingKey] ?? this.plugin.settings[settingKey],
     }));
     this.setupPickrEvents(pickr, settingKey, opacity ? 'background-color' : 'icon-color');
     this.pickrs.push(pickr);
@@ -655,7 +689,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
         containerEl: pickerContainer,
         swatches,
         opacity: true,
-        defaultColor: (this.plugin.settings as any)[`${settingPrefix}${i + 1}`] || '#000000',
+        defaultColor: (this.plugin.settings as unknown as Record<string, string>)[`${settingPrefix}${i + 1}`] || '#000000',
       }));
       this.setupPickrEvents(pickr, `${settingPrefix}${i + 1}`, cssProperty);
       this.pickrs.push(pickr);
@@ -802,7 +836,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
   }
   // 创建删除按钮
   private createDeleteButton(
-    button: any,
+    button: ButtonComponent,
     deleteAction: () => Promise<void>,
     tooltip: string = t('Delete')
   ) {
@@ -1086,7 +1120,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
   private displayCommandSettings(containerEl: HTMLElement, useDeclarativeCommandList = false): void {
     const commandSettingContainer = containerEl.createDiv('commandSetting-container');
     if (this.plugin.settings.enableMultipleConfig) {
-      const configSwitcher = new Setting(commandSettingContainer)
+      new Setting(commandSettingContainer)
         .setName(t('Current Configuration'))
         .setDesc(t('Switch between different command configurations.'))
         .addDropdown(dropdown => {
@@ -1254,7 +1288,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     commandListContainer.addClass(`${this.currentEditingConfig}`);
     // 添加当前正在编辑的配置提示
     if (this.plugin.settings.enableMultipleConfig) {
-      const positionStyleInfo = commandListContainer.createDiv({
+      commandListContainer.createDiv({
         cls: `position-style-info ${this.currentEditingConfig}`,
         text: t(`Currently editing commands for`) + ` "${this.currentEditingConfig} Style" ` + t(`configuration`)
       });
@@ -1278,7 +1312,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
 
   private openDeclarativeCommandSettingsPage(): void {
     const declarativeTab = this as unknown as {
-      getElementForDefinition?: (definition: any) => HTMLElement | undefined;
+      getElementForDefinition?: (definition: DeclarativeSettingsNode) => HTMLElement | undefined;
     };
     const pageEl = declarativeTab.getElementForDefinition?.(
       this.commandSettingsPageDefinition
@@ -1296,7 +1330,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
 
     const customCommandsContainer = containerEl.createDiv('custom-commands-container');
     // 添加说明
-    const descriptionEl = customCommandsContainer.createEl('p', {
+    customCommandsContainer.createEl('p', {
       text: t('Add, edit or delete custom format commands.')
     });
       // Regex command behavior setting
@@ -1840,7 +1874,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     }
   }
 
-  private createDeclarativeCommandListDefinition(): any {
+  private createDeclarativeCommandListDefinition(): DeclarativeSettingsNode {
     const commands = this.getCommandsToEdit();
 
     return {
@@ -1878,8 +1912,8 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     return aliases.filter((alias): alias is string => Boolean(alias));
   }
 
-  private createDeclarativeCommandPageDefinitions(): any[] {
-    const definitions: any[] = [];
+  private createDeclarativeCommandPageDefinitions(): DeclarativeSettingsNode[] {
+    const definitions: DeclarativeSettingsNode[] = [];
 
     if (this.plugin.settings.enableMultipleConfig) {
       definitions.push({
@@ -2906,11 +2940,11 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     });
   }
   private setupPickrEvents(
-    pickr: any,
+    pickr: Pickr,
     settingKey: string,
     cssProperty: string
   ) {
-    pickr.on("save", (color: any) => {
+    pickr.on("save", (color: Pickr.HSVaColor) => {
       const hexColor = color.toHEXA().toString();
   
       const activeStyle = this.plugin.positionStyle;
@@ -2925,7 +2959,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
         settingKey === "toolbarIconColor"
       ) {
         const bucket = this.getAppearanceBucket(editingStyle as ToolbarStyleKey);
-        (bucket as any)[settingKey] = hexColor;
+        bucket[settingKey] = hexColor;
         // Only push CSS variables if we're editing the active style
         if (activeStyle === editingStyle) {
           document.documentElement.style.setProperty(
@@ -2943,7 +2977,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
         this.triggerRefresh();
       } else {
         // All other keys (custom_bgX/custom_fcX) stay as global settings
-        (this.plugin.settings as any)[settingKey] = hexColor;
+        (this.plugin.settings as unknown as Record<string, string>)[settingKey] = hexColor;
       }
       void this.plugin.saveSettings();
     });
@@ -2976,7 +3010,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     super.hide();
   }
   // 添加一个辅助方法用于从配置中删除命令
-  private removeCommandFromConfig(commands: any[], commandId: string) {
+  private removeCommandFromConfig(commands: Command[], commandId: string) {
     if (!commands) return;
     // 删除主菜单中的命令
     for (let i = commands.length - 1; i >= 0; i--) {
@@ -3008,7 +3042,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
           return model;
       }
     };
-    const addPkmerModelOptions = (dropdown: any) => {
+    const addPkmerModelOptions = (dropdown: DropdownComponent) => {
       PKMER_MODEL_OPTIONS.forEach((option) => {
         dropdown.addOption(option.value, getPkmerModelLabel(option.value));
       });
@@ -3697,7 +3731,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
 
       const templates = this.plugin.settings.ai.customPromptTemplates || [];
       templates.forEach((template, index) => {
-        const setting = new Setting(templatesBody)
+        new Setting(templatesBody)
           .setName(template.name)
           .setDesc(template.prompt.length > 80 ? template.prompt.substring(0, 80) + '...' : template.prompt)
           .addButton((button) => {
@@ -3749,7 +3783,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     }
   }
 
-  private openTemplateEditor(template: any, index: number): void {
+  private openTemplateEditor(template: CustomPromptTemplate | null, index: number): void {
     const modal = new Modal(this.app);
     modal.titleEl.setText(template ? t('Edit Template') : t('Add Template'));
 
@@ -3883,7 +3917,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
 
     const shareLink = communityDiv.createEl('p');
     safeSetInnerHTML(shareLink, t('Share your toolbar settings and styles in our') + ' <a href="https://github.com/PKM-er/obsidian-editing-toolbar/discussions/categories/show-and-tell" target="_blank" rel="noopener noreferrer">Show and Tell</a> ');
-    const shareNote = communityDiv.createEl('p', {
+    communityDiv.createEl('p', {
       text: t('Get inspired by what others have created or showcase your own customizations.')
     });
     // 添加警告

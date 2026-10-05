@@ -29,7 +29,7 @@ export interface ToolbarSettings {
   custom_fc3: string;
   custom_fc4: string;
   custom_fc5: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export interface ToolbarCommand {
@@ -57,7 +57,7 @@ export interface editingToolbarSettings {
   toolbarBackgroundColor: string;
   toolbarIconColor: string;
   toolbarIconSize: number;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 

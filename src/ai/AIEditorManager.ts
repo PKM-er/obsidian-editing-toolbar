@@ -1,4 +1,4 @@
-import { MarkdownView, Notice, Platform, type Editor } from "obsidian";
+import { MarkdownView, Notice, Platform, TFile, type Editor } from "obsidian";
 import type { EditorView } from "@codemirror/view";
 import type EditingToolbarPlugin from "src/plugin/main";
 import { t } from "src/translations/helper";
@@ -65,9 +65,9 @@ export class AIEditorManager {
     this.authService.loadSecrets();
     void this.authService.syncLoginState();
     void this.authService.migrateCustomModelApiKeyFromSettings();
-    const registerHandler = (this.plugin as any).registerObsidianProtocolHandler;
+    const registerHandler = this.plugin.registerObsidianProtocolHandler.bind(this.plugin);
     if (typeof registerHandler === "function") {
-      registerHandler.call(this.plugin, "editing-toolbar-pkmer-auth", async (params: Record<string, string>) => {
+      registerHandler("editing-toolbar-pkmer-auth", async (params: Record<string, string>) => {
         if (params.code && params.state) {
           await this.authService.handleOAuthCallback(params.code, params.state);
         }
@@ -75,22 +75,22 @@ export class AIEditorManager {
     }
 
     this.plugin.registerEvent?.(
-      (this.plugin.app.metadataCache as any).on?.("changed", () => {
+      this.plugin.app.metadataCache.on("changed", () => {
         this.invalidateFrontmatterStatsCache();
       }),
     );
     this.plugin.registerEvent?.(
-      (this.plugin.app.vault as any).on?.("create", () => {
+      this.plugin.app.vault.on("create", () => {
         this.invalidateFrontmatterStatsCache();
       }),
     );
     this.plugin.registerEvent?.(
-      (this.plugin.app.vault as any).on?.("delete", () => {
+      this.plugin.app.vault.on("delete", () => {
         this.invalidateFrontmatterStatsCache();
       }),
     );
     this.plugin.registerEvent?.(
-      (this.plugin.app.vault as any).on?.("rename", () => {
+      this.plugin.app.vault.on("rename", () => {
         this.invalidateFrontmatterStatsCache();
       }),
     );
@@ -1352,7 +1352,7 @@ export class AIEditorManager {
       return false;
     }
 
-    const fullText = (resolvedEditor as any).getValue?.() ?? "";
+    const fullText = resolvedEditor.getValue?.() ?? "";
     const frontmatterRange = this.findFrontmatterRange(fullText);
     const noteBody = frontmatterRange
       ? `${fullText.slice(0, frontmatterRange.from)}${fullText.slice(frontmatterRange.to)}`.trim()
@@ -1441,7 +1441,7 @@ export class AIEditorManager {
 
   private buildFrontmatterStyleSummary(): { context: string; preferredAliases: Record<string, string> } {
     const activeFile = this.plugin.app.workspace.getActiveFile();
-    const allMarkdownFiles = ((this.plugin.app.vault as any).getMarkdownFiles?.() ?? []) as Array<any>;
+    const allMarkdownFiles: TFile[] = this.plugin.app.vault.getMarkdownFiles?.() ?? [];
     if (!activeFile || allMarkdownFiles.length === 0) {
       return { context: "", preferredAliases: {} };
     }
@@ -1508,13 +1508,13 @@ export class AIEditorManager {
     };
   }
 
-  private collectFrontmatterStats(files: Array<any>, exampleLimit: number): FrontmatterStats {
+  private collectFrontmatterStats(files: TFile[], exampleLimit: number): FrontmatterStats {
     const keyCounts = new Map<string, number>();
     const examples: string[] = [];
     let fileCount = 0;
 
     for (const file of files) {
-      const cache = (this.plugin.app.metadataCache as any)?.getFileCache?.(file);
+      const cache = this.plugin.app.metadataCache.getFileCache(file);
       const frontmatter = cache?.frontmatter;
       if (!frontmatter || typeof frontmatter !== "object") {
         continue;
@@ -1565,7 +1565,7 @@ export class AIEditorManager {
     };
   }
 
-  private getVaultFrontmatterStats(allMarkdownFiles: Array<any>): FrontmatterStats {
+  private getVaultFrontmatterStats(allMarkdownFiles: TFile[]): FrontmatterStats {
     const now = Date.now();
     const cached = this.vaultFrontmatterStatsCache;
     if (
@@ -2081,7 +2081,7 @@ export class AIEditorManager {
           emptyItem.textContent = t("No history");
           historyDropdown.appendChild(emptyItem);
         } else {
-          history.forEach((item, index) => {
+          history.forEach((item) => {
             const historyItem = doc.createDiv();
             historyItem.className = "editing-toolbar-ai-inline-prompt-history-item";
             historyItem.textContent = item.length > 50 ? item.substring(0, 50) + "..." : item;
@@ -2140,7 +2140,7 @@ export class AIEditorManager {
       });
       let linkStartPos = -1;
       let selectedSuggestionIndex = 0;
-      let suggestionFiles: any[] = [];
+      let suggestionFiles: TFile[] = [];
 
       const syncLinkedNotesContext = async () => {
         const text = textarea.value;
@@ -2190,7 +2190,7 @@ export class AIEditorManager {
         renderContextItems();
       };
 
-      const selectSuggestion = async (file: any) => {
+      const selectSuggestion = async (file: TFile) => {
         const cursorPos = textarea.selectionStart;
         const beforeLink = textarea.value.substring(0, linkStartPos);
         const afterCursor = textarea.value.substring(cursorPos);
@@ -2301,7 +2301,7 @@ export class AIEditorManager {
         return { value: normalizedValue, cursorPos: normalizedCursorPos };
       };
 
-      textarea.addEventListener("input", (e) => {
+      textarea.addEventListener("input", () => {
         const normalized = normalizeLinkTriggerInput(textarea.value, textarea.selectionStart);
 
         if (normalized.value !== textarea.value || normalized.cursorPos !== textarea.selectionStart) {
@@ -2450,9 +2450,9 @@ export class AIEditorManager {
 
   private getEditorView(editor?: Editor | null): EditorView | null {
     const resolvedEditor = this.resolveEditor(editor);
-    const view = (resolvedEditor as any)?.cm;
+    const view = (resolvedEditor as Editor & { cm?: EditorView })?.cm;
     if (view && view.state && typeof view.dispatch === "function") {
-      return view as EditorView;
+      return view;
     }
     return null;
   }

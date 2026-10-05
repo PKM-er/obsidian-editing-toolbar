@@ -10,8 +10,13 @@ export async function wait(delay: number) {
  * for review and audit.
  */
 export function safeSetInnerHTML(el: HTMLElement, html: string): void {
-  // eslint-disable-next-line no-unsanitized/property -- centralized trusted-HTML setter; only called with static template strings
-  el.innerHTML = html;
+  // 仅用于可信的静态模板字符串。用 DOMParser 解析后移入节点：
+  // 解析结果处于惰性文档中，不会加载图片/脚本等外部资源，比直接写 innerHTML 更安全。
+  const parsed = new DOMParser().parseFromString(html, "text/html");
+  el.textContent = "";
+  for (const node of Array.from(parsed.body.childNodes)) {
+    el.appendChild(el.ownerDocument.adoptNode(node));
+  }
 }
 // GenNonDuplicateID(3) 将生成类似 ix49wl2978w 的ID
 export function GenNonDuplicateID(randomLength: number) {
@@ -19,12 +24,12 @@ export function GenNonDuplicateID(randomLength: number) {
   idStr += Math.random().toString(36).slice(3, 3 + randomLength)
   return idStr
 }
-export function findmenuID(plugin: { settings: { menuCommands: any; }; }, command: Command, issub: boolean,currentCommands:any[]) {
+export function findmenuID(plugin: { settings: { menuCommands: Command[]; }; }, command: Command, issub: boolean,currentCommands:Command[]) {
   let index;
   let res = { "index": -1, "subindex": -1 };
   const menucmd = currentCommands
   if (issub) {
-    menucmd.forEach((item: { SubmenuCommands: any[]; }, idx: any) => {
+    menucmd.forEach((item: Command, idx: number) => {
       if ("SubmenuCommands" in item) {
         index = item.SubmenuCommands.findIndex((v) => v.id == command.id);
         if (index >= 0) {
@@ -35,13 +40,13 @@ export function findmenuID(plugin: { settings: { menuCommands: any; }; }, comman
     });
   }
   else {
-    index = menucmd.findIndex((v: { id: any; }) => v.id == command.id);
+    index = menucmd.findIndex((v: Command) => v.id == command.id);
     res = { "index": index, "subindex": -1 };
   }
   return res;
 }
 
-export function colorpicker(plugin: { settings: { custom_fc1: any; custom_fc2: any; custom_fc3: any; custom_fc4: any; custom_fc5: any; }; }) {
+export function colorpicker(plugin: { settings: { custom_fc1: string; custom_fc2: string; custom_fc3: string; custom_fc4: string; custom_fc5: string; }; }) {
   return `<div class='x-color-picker-wrapper'>
 <div class='x-color-picker' >
   <table class="x-color-picker-table" id='x-color-picker-table'>
@@ -158,7 +163,7 @@ export function colorpicker(plugin: { settings: { custom_fc1: any; custom_fc2: a
 </div>`;
 }
 
-export function backcolorpicker(plugin: { settings: { custom_bg1: any; custom_bg2: any; custom_bg3: any; custom_bg4: any; custom_bg5: any; }; }) {
+export function backcolorpicker(plugin: { settings: { custom_bg1: string; custom_bg2: string; custom_bg3: string; custom_bg4: string; custom_bg5: string; }; }) {
   return `<div class='x-color-picker-wrapper'>
 <div class='x-color-picker' >
   <table class="x-color-picker-table" id='x-backgroundcolor-picker-table'>

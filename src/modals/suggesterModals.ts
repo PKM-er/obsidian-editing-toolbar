@@ -1,6 +1,6 @@
 import type editingToolbarPlugin from "src/plugin/main";
 import { appIcons } from "src/icons/appIcons";
-import { Notice, Command, setIcon, FuzzyMatch, FuzzySuggestModal, Modal, SliderComponent, TextAreaComponent, TextComponent, debounce, App } from "obsidian";
+import { Notice, Command, setIcon, FuzzyMatch, FuzzySuggestModal, Modal, SliderComponent, TextComponent, debounce, App } from "obsidian";
 import { findmenuID } from "src/util/util";
 import { setBottomValue, setHorizontalValue } from "src/util/statusBarConstants";
 import { t } from "src/translations/helper";
@@ -10,13 +10,13 @@ export type IconSelectCallback = (iconId: string) => void;
 
 export class ChooseFromIconList extends FuzzySuggestModal<string> {
   plugin: editingToolbarPlugin;
-  command: any;
+  command: Command;
   issub: boolean;
   currentEditingConfig:string;
   customCallback: IconSelectCallback | null = null;
   constructor(
     plugin: editingToolbarPlugin, 
-    command: any, 
+    command: Command,
     issub: boolean = false,
     callback?: IconSelectCallback,
     currentEditingConfig?:string
@@ -125,7 +125,7 @@ export class CustomIcon extends Modal {
   item: Command;
   issub: boolean;
   currentEditingConfig:string;
-  submitEnterCallback: (this: HTMLTextAreaElement, ev: KeyboardEvent) => any;
+  submitEnterCallback: (this: HTMLTextAreaElement, ev: KeyboardEvent) => unknown;
   customCallback: IconSelectCallback | null = null;
 
   constructor(
@@ -263,7 +263,7 @@ export class ChangeCmdname extends Modal {
   item: Command;
   issub: boolean;
   currentEditingConfig:string;
-  submitEnterCallback: (this: HTMLInputElement, ev: KeyboardEvent) => any;
+  submitEnterCallback: (this: HTMLInputElement, ev: KeyboardEvent) => unknown;
   constructor(app: App, plugin: editingToolbarPlugin, item: Command, issub: boolean,currentEditingConfig?:string) {
     super(plugin.app);
     this.plugin = plugin;

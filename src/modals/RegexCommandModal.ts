@@ -82,7 +82,7 @@ export class RegexCommandModal extends Modal {
     // 基本设置部分
     const basicSettingsContainer = contentEl.createDiv('basic-settings-container');
 
-    const commandIdSetting = new Setting(basicSettingsContainer)
+    new Setting(basicSettingsContainer)
       .setName(t('Command ID'))
       .setDesc(t('Unique identifier, no spaces, e.g.: "my-custom-format"'))
       .addText(text => {
@@ -105,7 +105,7 @@ export class RegexCommandModal extends Modal {
         return text;
       });
 
-    const commandNameSetting = new Setting(basicSettingsContainer)
+    new Setting(basicSettingsContainer)
       .setName(t('Command Name'))
       .setDesc(t('Displayed name in toolbar and menu'))
       .addText(text => text
@@ -276,7 +276,7 @@ export class RegexCommandModal extends Modal {
     if (this.icon) {
       try {
         setIcon(this.iconDisplay, this.icon);
-      } catch (e) {
+      } catch {
         this.iconDisplay.setText(this.icon);
       }
     }
@@ -302,7 +302,7 @@ export class RegexCommandModal extends Modal {
             if (this.icon) {
               try {
                 setIcon(this.iconDisplay, this.icon);
-              } catch (e) {
+              } catch {
                 this.iconDisplay.setText(this.icon);
               }
             }
@@ -316,7 +316,7 @@ export class RegexCommandModal extends Modal {
       })
     );
       // 正则演示
-    const regexHelpContainer = regexContainer.createSpan('regex-help');
+    regexContainer.createSpan('regex-help');
     // 使用原生 details/summary 创建可折叠的正则表达式示例
     const regexExamplesContainer = regexContainer.createEl('details', { cls: 'regex-examples-container' });
     regexExamplesContainer.setCssStyles({ marginTop: '15px' });
@@ -467,7 +467,7 @@ export class RegexCommandModal extends Modal {
     previewContainer.setCssStyles({ padding: '10px' });
     previewContainer.setCssStyles({ borderRadius: '5px' });
 
-    const previewLabel = previewContainer.createEl('label', { text: t('Preview') });
+    previewContainer.createEl('label', { text: t('Preview') });
 
 
     const previewInputContainer = previewContainer.createDiv('preview-input-container');

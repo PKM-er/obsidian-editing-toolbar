@@ -44,7 +44,7 @@ export class StatusBar {
     menu.addSections(["controls"]); // 使用 addSections 添加部分
     this.addToolbarControls(menu);
 
-    const menuDom = (menu as any).dom as HTMLElement;
+    const menuDom = (menu as unknown as { dom: HTMLElement }).dom;
     menuDom.addClass("editingToolbar-statusbar-menu");
 
     menu.showAtPosition({
@@ -60,7 +60,7 @@ export class StatusBar {
       if (requireApiVersion("0.15.0")) {
         item.setSection("settings");
       }
-      const itemDom = (item as any).dom as HTMLElement;
+      const itemDom = (item as unknown as { dom: HTMLElement }).dom;
       const toggleComponent = new ToggleComponent(itemDom)
         .setValue(this.plugin.settings.cMenuVisibility)
         .setDisabled(true);
@@ -97,7 +97,7 @@ export class StatusBar {
       // Top 工具栏开关
       submenu.addItem((subItem) => {
         subItem.setTitle(t("Top Toolbar"));
-        const itemDom = (subItem as any).dom as HTMLElement;
+        const itemDom = (subItem as unknown as { dom: HTMLElement }).dom;
         const toggleComponent = new ToggleComponent(itemDom)
           .setValue(this.plugin.settings.enableTopToolbar || false)
           .setDisabled(true);
@@ -128,7 +128,7 @@ export class StatusBar {
       // Following 工具栏开关
       submenu.addItem((subItem) => {
         subItem.setTitle(t("Following Toolbar"));
-        const itemDom = (subItem as any).dom as HTMLElement;
+        const itemDom = (subItem as unknown as { dom: HTMLElement }).dom;
         const toggleComponent = new ToggleComponent(itemDom)
           .setValue(this.plugin.settings.enableFollowingToolbar || false)
           .setDisabled(true);
@@ -159,7 +159,7 @@ export class StatusBar {
       // Fixed 工具栏开关
       submenu.addItem((subItem) => {
         subItem.setTitle(t("Fixed Toolbar"));
-        const itemDom = (subItem as any).dom as HTMLElement;
+        const itemDom = (subItem as unknown as { dom: HTMLElement }).dom;
         const toggleComponent = new ToggleComponent(itemDom)
           .setValue(this.plugin.settings.enableFixedToolbar || false)
           .setDisabled(true);

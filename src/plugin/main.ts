@@ -2,17 +2,14 @@ import {
   Menu,
   Plugin,
   Notice,
-  Command,
-  setIcon,
   Platform,
+  Command,
   Editor,
   MarkdownView,
   ItemView,
-  ToggleComponent,
   requireApiVersion,
   App,
   debounce,
-  View,
 } from "obsidian";
 import { editingToolbarSettingTab } from '../settings/settingsTab';
 import { selfDestruct, editingToolbarPopover, quiteFormatbrushes, createFollowingbar, setFormateraser, isExistoolbar, resetToolbar, relayoutToolbarOverflow } from "src/modals/editingToolbarModal";
@@ -29,7 +26,6 @@ import { UpdateNoticeModal } from "src/modals/updateModal";
 import { StatusBar } from "src/components/StatusBar";
 import { CommandsManager } from "src/commands/commands";
 import { InsertLinkModal } from "src/modals/insertLinkModal";
-import { InsertCalloutModal } from "src/modals/insertCalloutModal";
 import { AIEditorManager } from "src/ai/AIEditorManager";
 import { AI_TOOLBAR_COMMAND_ID, createAIToolbarCommand } from "src/ai/toolbarCommand";
 import { shouldShowAIFeatures } from "src/util/locale";
@@ -38,7 +34,7 @@ import { createDefaultFrontmatterPromptSettings, getDefaultCustomPromptTemplates
 let activeDocument: Document;
 
 // ---- Per-style appearance support (patch v3, integrated) ----
-import type { AppearanceByStyle, ToolbarStyleKey, StyleAppearanceSettings} from "src/settings/settingsData";
+import type { ToolbarStyleKey, StyleAppearanceSettings} from "src/settings/settingsData";
 
 const STYLE_KEYS: ToolbarStyleKey[] = ["top", "following", "fixed", "mobile"];
 
@@ -69,13 +65,13 @@ function ensureAppearanceStore(
   // On first migration: seed all style buckets from the legacy/global fields
   if (migratingFromGlobal) {
     APPEARANCE_KEYS.forEach((key) => {
-      const legacyValue = (settings as any)[key];
+      const legacyValue = settings[key];
       if (legacyValue === undefined) return;
 
       STYLE_KEYS.forEach((style) => {
         const bucket = store[style];
         if (!(key in bucket)) {
-          (bucket as any)[key] = legacyValue;
+          (bucket as unknown as Record<keyof StyleAppearanceSettings, string | number>)[key] = legacyValue;
         }
       });
     });
@@ -93,10 +89,6 @@ export interface AdmonitionDefinition  {
   copy?: boolean;
 }
 
-interface AdmonitionPluginPublic {
-  admonitions: Map<string, AdmonitionDefinition>;
-  postprocessors: Map<string, any>;
-}
 // ... 常量定义 ...
 interface EditorContextMenuAction {
   title: string;
@@ -179,7 +171,7 @@ export default class editingToolbarPlugin extends Plugin {
       // Only patch properties that actually exist on settings
       if (!(key in settings)) return;
 
-      const initialGlobal = (settings as any)[key];
+      const initialGlobal = settings[key];
 
       Object.defineProperty(settings, key, {
         configurable: true,
@@ -188,22 +180,22 @@ export default class editingToolbarPlugin extends Plugin {
           const style = getCurrentStyle();
           const bucket = store[style];
           if (bucket && Object.prototype.hasOwnProperty.call(bucket, key)) {
-            return (bucket as any)[key];
+            return bucket[key];
           }
           // Fallback to the original global value
           return initialGlobal;
         },
-        set(value: any) {
+        set(value: string | number) {
           const style = getCurrentStyle();
           ensureAppearanceStore(settings, false);
           const bucket = (settings.appearanceByStyle)[style];
-          (bucket as any)[key] = value;
+          (bucket as unknown as Record<keyof StyleAppearanceSettings, string | number>)[key] = value;
         },
       });
     });
   }
 
-  private removeToolbarCommandById(commands: any[] | undefined, commandId: string): void {
+  private removeToolbarCommandById(commands: Command[] | undefined, commandId: string): void {
     if (!Array.isArray(commands)) return;
 
     for (let index = commands.length - 1; index >= 0; index--) {
@@ -530,7 +522,6 @@ export default class editingToolbarPlugin extends Plugin {
       };
     };
     const lastVer = parseVersion(lastVersion);
-    const currentVer = parseVersion(currentVersion);
     const updateModal = new UpdateNoticeModal(this.app, this);
     const isNewInstall = lastVersion === "0.0.0";
     if (isNewInstall) {
@@ -645,7 +636,7 @@ this.app.workspace.onLayoutReady(async () => {
     );
     this.registerEvent(
       // @ts-expect-error - Obsidian API type mismatch
-      this.app.workspace.on('url-menu', (menu: Menu, url: string, view: MarkdownView) => {
+      this.app.workspace.on('url-menu', (menu: Menu, _url: string, _view: MarkdownView) => {
         // 添加自定义菜单项
         menu.addItem((item) =>
           item
@@ -678,7 +669,7 @@ this.app.workspace.onLayoutReady(async () => {
     );
   }
 
-  async tryGetAdmonitionTypes(retries = 0): Promise<void> {
+  async tryGetAdmonitionTypes(): Promise<void> {
     // @ts-expect-error - Obsidian API type mismatch
     const admonitionPluginInstance = this.app.plugins?.getPlugin(ADMONITION_PLUGIN_ID);
     if (admonitionPluginInstance) {
@@ -687,13 +678,11 @@ this.app.workspace.onLayoutReady(async () => {
       }  
     }
 
-  processAdmonitionTypes(pluginInstance: any) {
+  processAdmonitionTypes(pluginInstance: unknown) {
     const admonitionPlugin = pluginInstance as {
       admonitions?: Record<string, AdmonitionDefinition>;
     };
 
-    let registeredTypes: string[] | null = null;
-    const typesSource: string | null = null;
 
     if (
       admonitionPlugin.admonitions &&
@@ -701,7 +690,6 @@ this.app.workspace.onLayoutReady(async () => {
       !Array.isArray(admonitionPlugin.admonitions) && // 确保不是数组
       Object.keys(admonitionPlugin.admonitions).length > 0
     ) {
-      registeredTypes = Object.keys(admonitionPlugin.admonitions);
       this.admonitionDefinitions = admonitionPlugin.admonitions;
    
   }  else {
@@ -801,18 +789,18 @@ this.app.workspace.onLayoutReady(async () => {
 
     // If you already added `isTopToolbarActive` earlier, this will call it.
     // If not, it falls back to a legacy-compatible check.
+    const topProbe = this as unknown as { isTopToolbarActive?: () => boolean };
     const topEnabled =
-      typeof (this as any).isTopToolbarActive === "function"
-        ? (this as any).isTopToolbarActive()
+      typeof topProbe.isTopToolbarActive === "function"
+        ? topProbe.isTopToolbarActive()
         : this.settings.enableTopToolbar ||
           (!this.settings.enableFollowingToolbar &&
             !this.settings.enableFixedToolbar &&
             this.positionStyle === "top");
 
     const followingEnabled =
-      typeof (this as any).isFollowingToolbarActive === "function"
-        ? this.isFollowingToolbarActive()
-        : this.settings.enableFollowingToolbar ||
+      this.isFollowingToolbarActive() ||
+      this.settings.enableFollowingToolbar ||
           (!this.settings.enableTopToolbar &&
             !this.settings.enableFixedToolbar &&
             this.positionStyle === "following");
@@ -1035,7 +1023,7 @@ this.app.workspace.onLayoutReady(async () => {
   }
 
   // 获取当前位置样式对应的命令配置
-  getCurrentCommands(style?: string): any[] {
+  getCurrentCommands(style?: string): Command[] {
     if (!this.settings.enableMultipleConfig) {
       return this.settings.menuCommands;
     }
@@ -1058,7 +1046,7 @@ this.app.workspace.onLayoutReady(async () => {
   }
 
   // 更新指定样式对应的命令配置（设置页可以显式指定样式）
-updateCurrentCommands(commands: any[], style?: string): void {
+updateCurrentCommands(commands: Command[], style?: string): void {
   // 单一配置模式：一直使用 menuCommands
   if (!this.settings.enableMultipleConfig) {
     this.settings.menuCommands = commands;
@@ -1560,7 +1548,7 @@ updateCurrentCommands(commands: any[], style?: string): void {
 
     // 处理多行 Callout 文本，去除第二行及以后的行首 >
     const lines = cleanedText.split("\n");
-    const processedLines = lines.map((line, index) =>
+    const processedLines = lines.map((line) =>
       line.replace(/^\s*>\s*/, "")
     );
 
@@ -1614,7 +1602,7 @@ updateCurrentCommands(commands: any[], style?: string): void {
     this.commandsManager.reloadCustomCommands();
   }
 
-  init_evt(container: Document, editor: Editor) {
+  init_evt(container: Document, _editor: Editor) {
     // 重置状态
     this.resetFormatBrushStates();
 
@@ -1759,7 +1747,7 @@ updateCurrentCommands(commands: any[], style?: string): void {
     return false;
   }
 
-  private handleMiddleClickToolbar(e: MouseEvent) {
+  private handleMiddleClickToolbar(_e: MouseEvent) {
     const cmEditor = this.commandsManager.getActiveEditor();
     if (this.isFollowingToolbarActive() && cmEditor?.hasFocus()) {
       this.showFollowingToolbar(cmEditor);
@@ -1807,8 +1795,6 @@ updateCurrentCommands(commands: any[], style?: string): void {
       "ShiftRight",
     ];
 
-    const cmEditor = this.commandsManager.getActiveEditor();
-
     if (selectionKeys.includes(e.code) || e.shiftKey) {
       this.handleTextSelection();
     } else if (!e.shiftKey && this.isFollowingToolbarActive()) {
@@ -1817,9 +1803,15 @@ updateCurrentCommands(commands: any[], style?: string): void {
   };
 
   private getToolbarHostDocument(editor?: Editor): Document {
+    // 运行时 editor.cm 是 CodeMirror 6 视图（类型包声明的 CodeMirror.Editor 无 dom 字段），按实际形状收窄
+    const cmRaw: unknown = editor?.cm;
+    const cmView = cmRaw as {
+      dom?: { ownerDocument?: Document };
+      contentDOM?: { ownerDocument?: Document };
+    } | undefined;
     return (
-      (editor as any)?.cm?.dom?.ownerDocument ||
-      (editor as any)?.cm?.contentDOM?.ownerDocument ||
+      cmView?.dom?.ownerDocument ||
+      cmView?.contentDOM?.ownerDocument ||
       this.app.workspace.getActiveViewOfType(ItemView)?.containerEl?.ownerDocument ||
       (requireApiVersion("0.15.0") ? activeWindow.document : window.document)
     );
@@ -1883,9 +1875,9 @@ updateCurrentCommands(commands: any[], style?: string): void {
     }
   }
 
-  private throttle(func: (...args: any[]) => void, limit: number = 100) {
+  private throttle<A extends unknown[]>(func: (...args: A) => void, limit: number = 100) {
     let inThrottle: boolean;
-    return (...args: any[]) => {
+    return (...args: A) => {
       if (!inThrottle) {
         func(...args);
         inThrottle = true;

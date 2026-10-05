@@ -707,7 +707,7 @@ export class ToolbarAIService implements IAIService {
     // body is not valid JSON (e.g. a 401 "Authentication required" plain-text
     // response), accessing it throws SyntaxError. Parse defensively so the
     // error path itself never crashes.
-    let parsedJson: any;
+    let parsedJson: { error?: { message?: unknown }; message?: unknown } | null;
     try {
       parsedJson = response.json;
     } catch {
@@ -727,10 +727,10 @@ export class ToolbarAIService implements IAIService {
     return error;
   }
 
-  private extractOllamaModelNames(payload: any): string[] {
+  private extractOllamaModelNames(payload: { models?: Array<{ name?: unknown; model?: unknown }> } | null | undefined): string[] {
     const models = Array.isArray(payload?.models) ? payload.models : [];
     const names: string[] = models
-      .map((item: any): string => {
+      .map((item): string => {
         if (typeof item?.name === "string" && item.name.trim()) {
           return item.name.trim();
         }
@@ -744,10 +744,10 @@ export class ToolbarAIService implements IAIService {
     return Array.from(new Set(names)).sort((left, right) => left.localeCompare(right));
   }
 
-  private extractOpenAIModelNames(payload: any): string[] {
+  private extractOpenAIModelNames(payload: { data?: Array<{ id?: unknown }> } | null | undefined): string[] {
     const models = Array.isArray(payload?.data) ? payload.data : [];
     const names: string[] = models
-      .map((item: any): string => {
+      .map((item): string => {
         if (typeof item?.id === "string" && item.id.trim()) {
           return item.id.trim();
         }
@@ -758,12 +758,14 @@ export class ToolbarAIService implements IAIService {
     return Array.from(new Set(names)).sort((left, right) => left.localeCompare(right));
   }
 
-  private extractGeminiModelNames(payload: any): string[] {
+  private extractGeminiModelNames(payload: { models?: Array<{ name?: unknown; supportedGenerationMethods?: unknown }> } | null | undefined): string[] {
     const models = Array.isArray(payload?.models) ? payload.models : [];
     const names: string[] = models
-      .filter((item: any) => !Array.isArray(item?.supportedGenerationMethods)
-        || item.supportedGenerationMethods.includes("generateContent"))
-      .map((item: any) => typeof item?.name === "string" ? item.name.replace(/^models\//, "").trim() : "")
+      .filter((item) => {
+        const methods = item?.supportedGenerationMethods;
+        return !Array.isArray(methods) || methods.includes("generateContent");
+      })
+      .map((item) => typeof item?.name === "string" ? item.name.replace(/^models\//, "").trim() : "")
       .filter((name: string): boolean => !!name);
     return Array.from(new Set(names)).sort((left, right) => left.localeCompare(right));
   }
@@ -1003,7 +1005,12 @@ export class ToolbarAIService implements IAIService {
     return false;
   }
 
-  private extractText(payload: any): string {
+  private extractText(payload: {
+    choices?: Array<{ message?: { content?: unknown }; text?: unknown }>;
+    candidates?: Array<{ content?: { parts?: unknown } }>;
+    message?: { content?: unknown };
+    response?: unknown;
+  } | null | undefined): string {
     const content = payload?.choices?.[0]?.message?.content
       ?? payload?.choices?.[0]?.text
       ?? payload?.candidates?.[0]?.content?.parts

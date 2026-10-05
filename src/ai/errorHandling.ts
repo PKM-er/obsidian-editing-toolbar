@@ -48,11 +48,11 @@ export function getAIErrorMessage(error: unknown): string {
     return error.trim();
   }
 
-  const response = (error as { response?: { json?: any; text?: unknown } } | null)?.response;
+  const response = (error as { response?: { json?: { error?: { message?: unknown }; message?: unknown } | null; text?: unknown } } | null)?.response;
   // response.json is a getter that may throw SyntaxError on non-JSON bodies.
-  let parsedJson: any;
+  let parsedJson: { error?: { message?: unknown }; message?: unknown } | null;
   try {
-    parsedJson = response?.json;
+    parsedJson = response?.json ?? null;
   } catch {
     parsedJson = null;
   }

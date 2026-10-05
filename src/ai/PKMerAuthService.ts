@@ -17,7 +17,7 @@ export class PKMerAuthService {
   private plugin: EditingToolbarPlugin;
   private cachedVerified: boolean | null = null;
   private refreshPromise: Promise<boolean> | null = null;
-  private callbackServer: any = null;
+  private callbackServer: import("http").Server | null = null;
   private callbackCodeResolve: ((code: string | null) => void) | null = null;
   private pendingCodeVerifier: string | null = null;
   private pendingState: string | null = null;
@@ -32,7 +32,7 @@ export class PKMerAuthService {
   }
 
   private get secrets() {
-    return (this.plugin.app as any).secretStorage;
+    return this.plugin.app.secretStorage;
   }
 
   private get supportsSecretStorage(): boolean {
@@ -370,15 +370,15 @@ export class PKMerAuthService {
   private startCallbackServerAndWait(): Promise<"ok" | "EACCES" | "EADDRINUSE" | "EUNKNOWN" | "NO_HTTP"> {
     return new Promise((resolve) => {
       try {
-        const http = (window as any).require("node:http");
+        const http = window.require("node:http") as typeof import("http");
         if (!http) {
           resolve("NO_HTTP");
           return;
         }
 
         const port = PKMER_OAUTH_CONFIG.callbackPort;
-        const server = http.createServer((req: any, res: any) => {
-          const url = new URL(req.url, `http://localhost:${port}`);
+        const server = http.createServer((req, res) => {
+          const url = new URL(req.url ?? "/", `http://localhost:${port}`);
 
           if (url.pathname !== PKMER_OAUTH_CONFIG.callbackPath) {
             res.writeHead(404);
@@ -407,7 +407,7 @@ export class PKMerAuthService {
           window.setTimeout(() => this.closeCallbackServer(), 500);
         });
 
-        server.once("error", (error: any) => {
+        server.once("error", (error: Error & { code?: string }) => {
           const code = error?.code ?? "";
           console.error(`Callback server error on port ${port}:`, error);
           this.callbackServer = null;

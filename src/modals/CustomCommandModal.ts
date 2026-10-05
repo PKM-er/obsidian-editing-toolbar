@@ -1,4 +1,4 @@
-import { App, Modal, Setting, Notice, setIcon, TextComponent } from "obsidian";
+import { App, Modal, Setting, Notice, setIcon, TextComponent, Command } from "obsidian";
 import editingToolbarPlugin from "src/plugin/main";
 import { ChooseFromIconList } from "src/modals/suggesterModals";
 import { RegexCommandModal } from "src/modals/RegexCommandModal";
@@ -68,7 +68,7 @@ export class CustomCommandModal extends Modal {
       new RegexCommandModal(this.app, this.plugin, null).open();
     });
 
-    const commandIdSetting = new Setting(contentEl)
+    new Setting(contentEl)
       .setName(t('Command ID'))
       .setDesc(t('Unique identifier, no spaces, e.g.: "my-custom-format"'))
       .addText(text => {
@@ -92,7 +92,7 @@ export class CustomCommandModal extends Modal {
         return text;
       });
 
-    const commandNameSetting = new Setting(contentEl)
+    new Setting(contentEl)
       .setName(t('Command Name'))
       .setDesc(t('Displayed name in toolbar and menu'))
       .addText(text => this.commandNameInput = text
@@ -268,7 +268,7 @@ const suffixSetting = new Setting(contentEl)
 addSpecialCharButtons(suffixSetting, suffixSetting.controlEl.querySelector('input'));
 
 
-    const charSetting = new Setting(contentEl)
+    new Setting(contentEl)
       .setName(t('Cursor Position Offset'))
       .setDesc(t('Default 0, format will keep the text selected'))
       .addText(text => text
@@ -276,7 +276,7 @@ addSpecialCharButtons(suffixSetting, suffixSetting.controlEl.querySelector('inpu
         .onChange(value => this.char = parseInt(value) || 0)
       );
 
-    const lineSetting = new Setting(contentEl)
+    new Setting(contentEl)
       .setName(t('Line Offset'))
       .setDesc(t('Line offset of cursor after formatting'))
       .addText(text => text
@@ -302,7 +302,7 @@ addSpecialCharButtons(suffixSetting, suffixSetting.controlEl.querySelector('inpu
     if (this.icon) {
       try {
         setIcon(this.iconDisplay, this.icon);
-      } catch (e) {
+      } catch {
         this.iconDisplay.setText(this.icon);
       }
     }
@@ -330,7 +330,7 @@ addSpecialCharButtons(suffixSetting, suffixSetting.controlEl.querySelector('inpu
             if (this.icon) {
               try {
                 setIcon(this.iconDisplay, this.icon);
-              } catch (e) {
+              } catch {
                 this.iconDisplay.setText(this.icon);
               }
             }
@@ -444,7 +444,7 @@ addSpecialCharButtons(suffixSetting, suffixSetting.controlEl.querySelector('inpu
   }
 
   // 添加更新命令图标的辅助方法
-  private updateCommandIcon(commands: any[], commandId: string) {
+  private updateCommandIcon(commands: Command[], commandId: string) {
     if (!commands) return;
 
     commands.forEach(cmd => {

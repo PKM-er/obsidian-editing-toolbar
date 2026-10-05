@@ -210,11 +210,6 @@ const dismissCompletion: Command = (view) => {
   return true;
 };
 
-const requestCompletion: Command = (view) => {
-  view.dispatch({ effects: triggerCompletionEffect.of(undefined) });
-  return true;
-};
-
 const completionKeymap = keymap.of([
   { key: "Escape", run: dismissCompletion },
 ]);

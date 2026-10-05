@@ -1,4 +1,4 @@
-import { View, Plugin } from 'obsidian';
+import { View } from 'obsidian';
 import type editingToolbarPlugin from 'src/plugin/main';
 
 // 新建工具类文件来统一管理视图相关逻辑
@@ -11,7 +11,7 @@ export class ViewUtils {
     const viewType = view.getViewType();
 
     // 尝试获取插件实例
-    const plugin = (window as any).app?.plugins?.plugins?.['editing-toolbar'] as editingToolbarPlugin | undefined;
+    const plugin = window.app?.plugins?.plugins?.['editing-toolbar'] as editingToolbarPlugin | undefined;
     
     // 如果有插件设置且有视图类型设置，使用用户设置的值
     if (plugin?.settings?.viewTypeSettings && plugin.settings.viewTypeSettings[viewType] !== undefined) {

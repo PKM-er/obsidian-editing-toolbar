@@ -1,12 +1,10 @@
 import type editingToolbarPlugin from "src/plugin/main";
-import { App, Notice, requireApiVersion, ItemView, MarkdownView, ButtonComponent, WorkspaceParent, WorkspaceWindow, WorkspaceParentExt, Menu, setIcon, Platform } from "obsidian";
+import { App, Notice, requireApiVersion, ItemView, ButtonComponent, WorkspaceParent, WorkspaceWindow, WorkspaceParentExt, Menu, setIcon, Platform } from "obsidian";
 import { backcolorpicker, colorpicker, safeSetInnerHTML } from "src/util/util";
 import { t } from "src/translations/helper";
 import {
   editingToolbarSettings,
   ToolbarStyleKey,
-  StyleAppearanceSettings,
-  AppearanceByStyle,
 } from "src/settings/settingsData";
 import { ViewUtils } from 'src/util/viewUtils';
 import { setBottomValue, setHorizontalValue } from "src/util/statusBarConstants";
@@ -71,7 +69,7 @@ export function collectToolbarDocuments(): Document[] {
     floatingSplit?.children.forEach((child: WorkspaceParentExt) => {
       add(child?.containerEl);
     });
-  } catch (e) {
+  } catch {
     // workspace 尚未就绪时忽略，至少已覆盖 window/activeWindow 文档
   }
 
@@ -188,14 +186,36 @@ export function isExistoolbar(
   return container ? (container) : null;
 }
 
-const getNestedObject = (nestedObj: any, pathArr: any[]) => {
-  return pathArr.reduce((obj, key) =>
-    (obj && obj[key] !== 'undefined') ? obj[key] : undefined, nestedObj);
+interface ToolbarEditorCoords {
+  top: number;
+  left: number;
+  bottom?: number;
+  right?: number;
 }
 
-function setHilite(keys: any, how: string) {
+interface ToolbarEditorLike {
+  getCursor(mode?: 'from' | 'to' | 'head' | 'anchor'): { ch: number; line: number };
+  cursorCoords?(at: boolean, unit?: string): ToolbarEditorCoords | undefined;
+  coordsAtPos?(pos: unknown): ToolbarEditorCoords | null | undefined;
+  posToOffset?(pos: { ch: number; line: number }): number;
+  cm?: unknown;
+}
+
+interface MenuItemLike {
+  setIcon(icon: string): unknown;
+  iconEl?: HTMLElement;
+}
+
+const getNestedObject = (nestedObj: unknown, pathArr: Array<string | number>) => {
+  return pathArr.reduce<unknown>((obj, key) =>
+    (obj !== null && typeof obj === "object" && (obj as Record<string, unknown>)[key] !== 'undefined')
+      ? (obj as Record<string, unknown>)[key]
+      : undefined, nestedObj);
+}
+
+function setHilite(keys: unknown, how: string) {
   // need to check if existing key combo is overridden by undefining it
-  if (keys && keys[1][0] !== undefined) {
+  if (Array.isArray(keys) && Array.isArray(keys[1]) && keys[1][0] !== undefined) {
     return how + keys.flat(2).join('+').replace('Mod', 'Ctrl') + how;
   } else {
     return how + '–' + how;
@@ -219,7 +239,7 @@ function getHotkey(app: App, cmdid: string, highlight = false) {
 
 
 
-export const getCoords = (editor: any) => {
+export const getCoords = (editor: ToolbarEditorLike) => {
   const cursorFrom = editor.getCursor("head");
   if (editor.getCursor("head").ch !== editor.getCursor("from").ch) cursorFrom.ch = Math.max(0, cursorFrom.ch - 1);
 
@@ -227,7 +247,10 @@ export const getCoords = (editor: any) => {
   if (editor.cursorCoords) coords = editor.cursorCoords(true, "window");
   else if (editor.coordsAtPos) {
     const offset = editor.posToOffset(cursorFrom);
-    coords = editor.cm.coordsAtPos?.(offset) ?? editor.coordsAtPos(offset);
+    // 运行时 editor.cm 是 CodeMirror 6 EditorView（类型包里声明的是 CM5 旧类型），此处按实际形状收窄
+    const cmRaw: unknown = editor.cm;
+    const cmCoords = (cmRaw as { coordsAtPos?: (offset: number) => ToolbarEditorCoords | null | undefined })?.coordsAtPos?.(offset);
+    coords = cmCoords ?? editor.coordsAtPos(offset);
   } else return;
 
   return coords;
@@ -241,7 +264,7 @@ export function checkHtml(htmlStr: string) {
   return reg.test(htmlStr);
 }
 
-function applyMenuItemIcon(menuItem: any, icon: string) {
+function applyMenuItemIcon(menuItem: MenuItemLike, icon: string) {
   if (!icon) {
     menuItem.setIcon("");
     if (menuItem.iconEl) {
@@ -284,21 +307,6 @@ function syncToolbarVisibilityAfterAction(
   } else {
     editingToolbar.setCssStyles({ visibility: "visible" });
   }
-}
-
-function positionAISubmenu(buttonEl: HTMLElement, submenuEl: HTMLElement) {
-  const viewportWidth = window.innerWidth || document.documentElement.clientWidth || 0;
-  if (!viewportWidth) return;
-
-  const margin = 12;
-  const buttonRect = buttonEl.getBoundingClientRect();
-  const submenuWidth = Math.min(submenuEl.offsetWidth || 280, viewportWidth - margin * 2);
-  const idealLeft = buttonRect.left + buttonRect.width / 2 - submenuWidth / 2;
-  const clampedLeft = Math.max(margin, Math.min(idealLeft, viewportWidth - submenuWidth - margin));
-  const relativeLeft = clampedLeft - buttonRect.left;
-
-  submenuEl.style.left = `${relativeLeft}px`;
-  submenuEl.setCssStyles({ right: "auto" });
 }
 
 const AI_REWRITE_ICON_MAP: Record<RewriteInstruction, string> = {
@@ -902,8 +910,8 @@ export function setFormateraser(plugin: editingToolbarPlugin, editor: Editor) {
   const mdText = /(^#+\s|^#(?=\s)|^>|- \[( |x)\]|^\+ |<[^<>]+?>|^1\. |^\s*- |^-+$|^\*+$)/mg;
   selectText = selectText.replace(mdText, "");
   selectText = selectText.replace(/^[ ]+|[ ]+$/mg, "");
-  selectText = selectText.replace(/!?\[\[([^\[\]|]*\|)*([^()\[\]]+)\]\]/g, "$2");
-  selectText = selectText.replace(/!?\[+([^\[\]\(\)]+)\]+\(([^\(\)]+)\)/g, "$1");
+  selectText = selectText.replace(/!?\[\[([^[\]|]*\|)*([^()[\]]+)\]\]/g, "$2");
+  selectText = selectText.replace(/!?\[+([^[\]()]+)\]+\(([^()]+)\)/g, "$1");
   selectText = selectText.replace(/`([^`]+)`/g, "$1");
   selectText = selectText.replace(/_([^_]+)_/g, "$1");
   selectText = selectText.replace(/==([^=]+)==/g, "$1");
@@ -931,8 +939,8 @@ export function createFollowingbar(
 ) {
   const targetDocument =
     hostDocument ||
-    (editor as any)?.cm?.dom?.ownerDocument ||
-    (editor as any)?.cm?.contentDOM?.ownerDocument ||
+    (editor as Editor & { cm?: { dom?: { ownerDocument?: Document }; contentDOM?: { ownerDocument?: Document } } })?.cm?.dom?.ownerDocument ||
+    (editor as Editor & { cm?: { dom?: { ownerDocument?: Document }; contentDOM?: { ownerDocument?: Document } } })?.cm?.contentDOM?.ownerDocument ||
     app.workspace.getActiveViewOfType(ItemView)?.containerEl?.ownerDocument ||
     (requireApiVersion("0.15.0") ? activeWindow.document : window.document);
 
@@ -1022,7 +1030,6 @@ function positionToolbar(toolbar: HTMLElement, editor: Editor) {
 
   // 获取选择的起点和终点位置
   const from = editor.getCursor("from");
-  const to = editor.getCursor("to");
   //@ts-expect-error - Obsidian API type mismatch
   const coords = editor.coordsAtPos(from); //选择开始位置
 
@@ -1388,7 +1395,7 @@ export function editingToolbarPopover(
       currentCommands.forEach((item, index) => {
         let tip;
         if ("SubmenuCommands" in item) {
-          let _btn: any;
+          let _btn: ButtonComponent;
 
           if (shouldMoveButtonToMoreMenu(btnwidth, buttonWidth, leafwidth, buttonWidth, effectiveStyle)) {
             //说明已经溢出
@@ -1425,7 +1432,7 @@ export function editingToolbarPopover(
             _btn.onClick((evt: MouseEvent) => {
               const menu = new Menu();
 
-              item.SubmenuCommands.forEach((subitem: { name: string; id: any; icon: string }) => {
+              item.SubmenuCommands.forEach((subitem: { name: string; id: string; icon: string }) => {
                 // 检查是否是分割线
                 if (subitem.id === "editingToolbar-Divider-Line") {
                   // 添加分割线和分类标题
@@ -1490,7 +1497,7 @@ export function editingToolbarPopover(
             const submenu = createDiv("subitem");
             if (submenu) {
               item.SubmenuCommands.forEach(
-                (subitem: { name: string; id: any; icon: string }) => {
+                (subitem: { name: string; id: string; icon: string }) => {
                   const hotkey = getHotkey(app, subitem.id);
                   tip = getLocalizedTooltip(subitem.name, hotkey);
                   const sub_btn = new ButtonComponent(submenu)

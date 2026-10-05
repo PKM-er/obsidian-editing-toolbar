@@ -16,6 +16,18 @@ declare module "obsidian" {
 		setSecret(key: string, value: string): void;
 	}
 
+	/**
+	 * 本插件使用的扩展编辑器方法（由 Enhanced Editing 等插件注入运行时）。
+	 */
+	export interface Editor {
+		indentList?(): void;
+		unindentList?(): void;
+		toggleNumberList?(): void;
+		toggleBulletList?(): void;
+		toggleCheckList?(state?: boolean): void;
+		toggleMarkdownFormatting?(format: string): void;
+	}
+
 	interface SettingsManager {
 		activeTab: SettingTab | null;
 		openTabById(id: string): SettingTab | null;

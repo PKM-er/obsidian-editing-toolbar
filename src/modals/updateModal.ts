@@ -5,8 +5,6 @@ import {
   Notice,
   request,
   MarkdownRenderer,
-  MarkdownView,
-  Component,
 } from "obsidian";
 import type editingToolbarPlugin from "src/plugin/main";
 import { DEFAULT_SETTINGS } from "src/settings/settingsData";

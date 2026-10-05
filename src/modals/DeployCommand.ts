@@ -1,5 +1,6 @@
-import { App, Modal, Setting, Notice, setIcon, ToggleComponent } from "obsidian";
+import { App, Modal, Setting, Notice, ToggleComponent, Command } from "obsidian";
 import editingToolbarPlugin from "src/plugin/main";
+import { CustomCommand } from "src/settings/settingsData";
 import { t } from 'src/translations/helper';
 
 interface DeployOption {
@@ -11,11 +12,11 @@ interface DeployOption {
 
 export class DeployCommandModal extends Modal {
     private deployOptions: DeployOption[] = [];
-    private command: any;
+    private command: CustomCommand;
     private plugin: editingToolbarPlugin;
   
 
-    constructor(app: App, plugin: editingToolbarPlugin, command: any) {
+    constructor(app: App, plugin: editingToolbarPlugin, command: CustomCommand) {
       super(app);
       this.plugin = plugin;
       this.command = command;
@@ -35,7 +36,7 @@ export class DeployCommandModal extends Modal {
       
       contentEl.createEl('h3', { text: t('Deploy command to configurations') });
       
-      const allContainer = contentEl.createDiv('deploy-option');
+      contentEl.createDiv('deploy-option');
   
   
       const optionsContainer = contentEl.createDiv('deploy-options');
@@ -93,7 +94,7 @@ export class DeployCommandModal extends Modal {
       // 部署到选中的配置
       this.deployOptions.forEach(option => {
         if (option.enabled) {
-          let targetCommands: any[] | undefined;
+          let targetCommands: Command[] | undefined;
           
           switch (option.id) {
             case 'mobile':

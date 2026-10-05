@@ -44,24 +44,20 @@ export function fullscreenMode(app: App) {
     let TYPE_REQUEST_FULL_SCREEN = 'requestFullscreen';
     let TYPE_EXIT_FULL_SCREEN = 'exitFullscreen';
     let TYPE_FULL_SCREEN_ELEMENT = 'fullscreenElement';
-    let TYPE_ON_FULL_SCREEN_CHANGE = 'onfullscreenchange';
     if ("webkitRequestFullScreen" in DOC_EL) {
         TYPE_REQUEST_FULL_SCREEN = 'webkitRequestFullScreen';
         TYPE_EXIT_FULL_SCREEN = 'webkitExitFullscreen';
         TYPE_FULL_SCREEN_ELEMENT = 'webkitFullscreenElement';
-        TYPE_ON_FULL_SCREEN_CHANGE = 'onwebkitfullscreenchange';
     }
     else if ("msRequestFullscreen" in DOC_EL) {
         TYPE_REQUEST_FULL_SCREEN = 'msRequestFullscreen';
         TYPE_EXIT_FULL_SCREEN = 'msExitFullscreen';
         TYPE_FULL_SCREEN_ELEMENT = 'msFullscreenElement';
-        TYPE_ON_FULL_SCREEN_CHANGE = 'MSFullscreenChange';
     }
     else if ("mozRequestFullScreen" in DOC_EL) {
         TYPE_REQUEST_FULL_SCREEN = 'mozRequestFullScreen';
         TYPE_EXIT_FULL_SCREEN = 'mozCancelFullScreen';
         TYPE_FULL_SCREEN_ELEMENT = 'mozFullScreenElement';
-        TYPE_ON_FULL_SCREEN_CHANGE = 'onmozfullscreenchange';
     }
     else if (!("requestFullscreen" in DOC_EL)) {
         // throw "\u5F53\u524D\u6D4F\u89C8\u5668\u4E0D\u652F\u6301Fullscreen API !";
@@ -79,7 +75,7 @@ export function fullscreenMode(app: App) {
 
                         document.body.removeChild(node);
                         el.appendChild(node);
-                    } catch (error) {
+                    } catch {
                       // 忽略节点移动失败（节点可能已被其他插件处理）
                     }
 
@@ -109,39 +105,24 @@ export function fullscreenMode(app: App) {
 
     // 添加类型定义
     interface HTMLElementWithFullscreen extends HTMLElement {
-      [key: string]: any;
-    }
-
-    interface DocumentWithFullscreen extends Document {
-      [key: string]: any;
+      [key: string]: unknown;
     }
 
     // 修改相关代码
     function getCurrentElement(el: HTMLElement): HTMLElementWithFullscreen {
-      return el;
+      return el as HTMLElementWithFullscreen;
     }
 
     function beFull(el: HTMLElement) {
-
-        return getCurrentElement(el)[TYPE_REQUEST_FULL_SCREEN]();
+        const request = getCurrentElement(el)[TYPE_REQUEST_FULL_SCREEN] as (this: HTMLElement) => void;
+        return request.call(getCurrentElement(el));
     }
-    exports.beFull = beFull;
     function exitFull() {
-        return (document as DocumentWithFullscreen)[TYPE_EXIT_FULL_SCREEN](); // 类型收窄必需：动态全屏 API 键名
-
+        const exit = Reflect.get(document, TYPE_EXIT_FULL_SCREEN) as (this: Document) => void;
+        return exit.call(document);
     }
-    function isFull(el: any) {
-        return getCurrentElement(el) === (document as DocumentWithFullscreen)[TYPE_FULL_SCREEN_ELEMENT];
-    }
-    function toggleFull(el: any) {
-        if (isFull(el)) {
-            exitFull();
-            return false;
-        }
-        else {
-            beFull(el);
-            return true;
-        }
+    function isFull(el: HTMLElement | null) {
+        return el != null && getCurrentElement(el) === Reflect.get(document, TYPE_FULL_SCREEN_ELEMENT);
     }
 }
 

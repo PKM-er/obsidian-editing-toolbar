@@ -15,7 +15,7 @@ export class TextEnhancement {
     const mdPattern =
       /(^#+\s|(^|\s+)#|^>|- \[( |x)\]|^\+ |<[^<>]+>|^1\. |^-+$|^\*+$|==|\*+|~~|```|!*\[\[|\]\])/gm;
     const plainText = selection
-      .replace(/\[([^\[\]]*)\]\([^()]+\)/gim, "$1")
+      .replace(/\[([^[\]]*)\]\([^()]+\)/gim, "$1")
       .replace(mdPattern, "$2")
       .replace(/^[ ]+|[ ]+$/gm, "")
       .replace(/(\r\n|\n)+/gm, "\n");
@@ -237,7 +237,7 @@ export class TextEnhancement {
       processed = processed.replace(/[ \t]+$/gm, "");
 
       editor.replaceSelection(processed);
-    } catch (err) {
+    } catch {
       new Notice(t("Paste failed"));
     }
   }
@@ -487,7 +487,7 @@ export class TextEnhancement {
       } else {
         new Notice(t("No matches found"));
       }
-    } catch (e) {
+    } catch {
       new Notice(t("Extraction failed"));
     }
   }

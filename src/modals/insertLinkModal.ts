@@ -1,4 +1,4 @@
-import { App, Modal,Editor,EditorPosition, Setting, TextComponent, ToggleComponent, Platform, setIcon, Notice, requestUrl, MarkdownView } from "obsidian";
+import { Modal,Editor,EditorPosition, Setting, TextComponent, ToggleComponent, Platform, setIcon, Notice, requestUrl, MarkdownView } from "obsidian";
 import editingToolbarPlugin from "src/plugin/main";
 import { t } from "src/translations/helper";
 
@@ -25,7 +25,7 @@ class UrlTitleFetcher {
         try {
             new URL(url);
             return true;
-        } catch (err) {
+        } catch {
             return false;
         }
     }
@@ -169,7 +169,7 @@ export class InsertLinkModal extends Modal {
     }
     
     // 尝试扩展选择范围，查找完整链接或图片
-    private tryExpandSelection(editor: Editor, selectedText: string): LinkTarget | null {
+    private tryExpandSelection(editor: Editor, _selectedText: string): LinkTarget | null {
         const cursorFrom = editor.getCursor('from');
         const line = editor.getLine(cursorFrom.line);
         const selectionStart = cursorFrom.ch;
@@ -436,7 +436,7 @@ private matchLinkInLine(line: string, startPos: number, endPos: number, lineNumb
 
             new URL(url);
             return true;
-        } catch (e) {
+        } catch {
             // 如果 URL 构造失败，检查是否符合基本格式
             // 允许几乎任何不包含空格的字符串作为 URL
             return false;
@@ -587,7 +587,7 @@ private matchLinkInLine(line: string, startPos: number, endPos: number, lineNumb
                     }
                 }
             }
-        } catch (e) {
+        } catch {
             // 如果无法访问剪贴板 API，回退到基本文本读取
             try {
                 const text = await navigator.clipboard.readText();
@@ -730,7 +730,7 @@ private matchLinkInLine(line: string, startPos: number, endPos: number, lineNumb
        
     
         // 链接别名输入（非图片模式时显示）
-        const aliasSetting = new Setting(contentEl)
+        new Setting(contentEl)
             .setName(t("Title"))
             .addText((text) => {
                 this.linkAliasInput = text;
@@ -782,7 +782,6 @@ private matchLinkInLine(line: string, startPos: number, endPos: number, lineNumb
             .onChange((value) => {
                 this.isEmbed = value;
                 const imageSizeEl = contentEl.querySelector('.image-size-setting');
-                const aliasSettingEl = aliasSetting.settingEl;
                 if (imageSizeEl) {
                     (imageSizeEl as HTMLElement).style.display = value ? 'flex' : 'none';
                 }
@@ -868,7 +867,7 @@ private matchLinkInLine(line: string, startPos: number, endPos: number, lineNumb
         shortcutHint.setCssStyles({ marginTop: "5px" });
     
         // 按钮
-        const buttonSetting = new Setting(contentEl)
+        new Setting(contentEl)
             .addButton((btn) => {
                 btn
                     .setButtonText(t("Insert"))

@@ -382,7 +382,6 @@ function autoLayoutCanvas(
   const root = chooseCanvasRoot(regularNodes, degree, sourceText);
   const layers = buildCanvasLayers(regularNodes, adjacency, root?.id);
   const xGap = 420;
-  const yGap = 220;
 
   layers.forEach((layer, layerIndex) => {
     const totalHeight = layer.reduce((sum, node) => sum + node.height, 0) + Math.max(0, layer.length - 1) * 42;

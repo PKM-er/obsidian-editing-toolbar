@@ -1,5 +1,5 @@
-import { App, Modal, Setting, setIcon, DropdownComponent, Platform } from "obsidian";
-import editingToolbarPlugin, { AdmonitionDefinition } from "src/plugin/main";
+import { Modal, Setting, setIcon, DropdownComponent, Platform } from "obsidian";
+import editingToolbarPlugin from "src/plugin/main";
 import { t } from "src/translations/helper";
 interface BuiltInCalloutType {
     type: string;
@@ -170,7 +170,7 @@ export class InsertCalloutModal extends Modal {
         this.updateIconAndColor(this.iconContainerEl, this.type); // Initial icon update
 
         // 标题输入
-        const titleSetting = new Setting(contentEl)
+        new Setting(contentEl)
             .setName(t("Title"))
             .setDesc(t("Optional, leave blank for default title"))
             .addText((text) => {
@@ -196,7 +196,7 @@ export class InsertCalloutModal extends Modal {
             });
 
         // 内容输入
-        const contentSetting = new Setting(contentEl)
+        new Setting(contentEl)
             .setName(t("Content"))
             .addTextArea((text) => {
                 text.setPlaceholder(t("Input content"))
@@ -258,8 +258,7 @@ export class InsertCalloutModal extends Modal {
                     const svgEl = iconContainer.querySelector('svg');
                     if (svgEl) {
                         svgEl.style.fill = typeInfo.color; // Set fill color for custom SVG
-                        svgEl.style.width = "var(--icon-size)"; // Use Obsidian's icon size variable
-                        svgEl.style.height = "var(--icon-size)";
+                        svgEl.classList.add("custom-admonition-icon");
                     }
                 } else if ( adIcon.name.startsWith('lucide-')) {
                     // Admonition using a Lucide icon

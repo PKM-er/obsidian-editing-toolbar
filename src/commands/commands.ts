@@ -11,7 +11,6 @@ import { setMenuVisibility } from "src/util/statusBarConstants";
 import {
   selfDestruct,
   setFormateraser,
-  quiteFormatbrushes,
 } from "src/modals/editingToolbarModal";
 import {
   setHeader,
@@ -31,15 +30,21 @@ import { DEFAULT_REWRITE_ACTIONS, type RewriteInstruction } from "src/ai/types";
 import {
   TextInputModal,
   IWrapInputResult,
-  IExtractColumnResult,
   IExtractBetweenResult,
 } from "src/modals/TextInputModal";
+
+interface CanvasViewLike extends ItemView {
+  canvas?: Record<string, unknown> & {
+    wrapperEl?: HTMLElement;
+    history?: Record<string, unknown> | undefined;
+  };
+}
 
 export class CommandsManager {
   private plugin: editingToolbarPlugin;
 
   private formatAICommandName(...segments: string[]): string {
-    return [t("AI"), ...segments.map((segment) => t(segment as any))].join(" / ");
+    return [t("AI"), ...segments.map((segment) => t(segment))].join(" / ");
   }
 
   private aiRewriteCommandIcons: Record<RewriteInstruction, string> = {
@@ -69,7 +74,7 @@ export class CommandsManager {
   // 执行命令时保持编辑器焦点的辅助函数
   private executeCommandWithoutBlur = async (
     editor: Editor,
-    callback: () => any
+    callback: () => unknown
   ) => {
     if (editor) {
       await callback();
@@ -121,7 +126,7 @@ export class CommandsManager {
       // noop
     }
 
-    const invocationCandidates: Array<{ owner: any; method: string; label: string }> = [
+    const invocationCandidates: Array<{ owner: Record<string, unknown> | undefined; method: string; label: string }> = [
       { owner: activeView.canvas, method: action, label: `canvas.${action}()` },
       {
         owner: activeView.canvas?.history,
@@ -141,15 +146,15 @@ export class CommandsManager {
     return false;
   }
 
-  private getActiveCanvasView(): any {
-    const activeLeafView = this.plugin.app.workspace.getActiveViewOfType(ItemView) as any;
+  private getActiveCanvasView(): CanvasViewLike | null {
+    const activeLeafView = this.plugin.app.workspace.getActiveViewOfType(ItemView) as CanvasViewLike | null;
     if (activeLeafView?.getViewType?.() === "canvas") {
       return activeLeafView;
     }
 
     const canvasLeaves = this.plugin.app.workspace.getLeavesOfType?.("canvas") ?? [];
     for (const leaf of canvasLeaves) {
-      const view = (leaf as any)?.view;
+      const view = (leaf as unknown as { view?: CanvasViewLike })?.view;
       if (view?.getViewType?.() === "canvas") {
         return view;
       }
@@ -510,7 +515,7 @@ export class CommandsManager {
           }
         }
       }
-    } catch (e) {
+    } catch {
       // 如果无法访问剪贴板 API，回退到基本文本读取
       try {
         const text = await navigator.clipboard.readText();
@@ -523,7 +528,7 @@ export class CommandsManager {
     return items;
   }
 
-  public getActiveEditor(): any {
+  public getActiveEditor(): Editor | null {
     // @ts-expect-error - Obsidian API type mismatch
     const activeEditor = this.plugin.app.workspace?.activeEditor;
     if (activeEditor && activeEditor.editor) {
@@ -1215,7 +1220,7 @@ export class CommandsManager {
       id: "fullscreen-focus",
       name: "Toggle Fullscreen Focus Mode",
       callback: () => {
-        return fullscreenMode(app);
+        return fullscreenMode(this.plugin.app);
       },
       icon: "fullscreen",
     });
@@ -1223,7 +1228,7 @@ export class CommandsManager {
       id: "workplace-fullscreen-focus",
       name: "Toggle Workplace Fullscreen Focus",
       callback: () => {
-        return workplacefullscreenMode(app);
+        return workplacefullscreenMode(this.plugin.app);
       },
       icon: "remix-SplitCellsHorizontal",
     });
@@ -1287,7 +1292,7 @@ export class CommandsManager {
       id: "toggle-format-brush",
       name: "Toggle Format Brush",
       icon: "paintbrush",
-      editorCallback: (editor: Editor) => {
+      editorCallback: () => {
         this.plugin.toggleFormatBrush();
       },
     });

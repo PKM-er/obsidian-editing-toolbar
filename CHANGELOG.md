@@ -1,5 +1,62 @@
 # Changelog
 
+### 修复 Obsidian 1.13.x 设置子页面无法进入的兼容性问题
+- 根因：1.13 原生声明式渲染器把每个条目 render() 的返回值存为 cleanup，
+  在页面切换（openPage → G2 清理）时作为函数调用。本插件大量表达式形式的
+  回调（render: (setting) => setting.addDropdown(...)）返回 Setting 组件这类
+  "真值但非函数"的对象，导致核心抛 "TypeError: t is not a function"，
+  且六个设置子页面（常规/外观/自定义命令/工具栏命令/AI/导入导出）全部无法进入
+- 修复：getSettingDefinitions() 出口新增 normalizeDefinitionRenders 深度遍历，
+  将 render 返回值规范化——只有真正的清理函数（如 pickr 销毁回调）才保留，
+  其余丢弃；保留 1.13 声明式渲染路径，无需退回 display() 兼容模式
+- Obsidian 1.13.7 独立设置窗口实测：六个子页面全部正常打开（常规页 10 个
+  取色器、工具栏命令页 78 项、AI/导入导出页分享链接锚点正确渲染），零报错
+### Scorecard 清理第十批：no-explicit-any 132 → 0
+- Obsidian API 兼容断言：vault.on/metadataCache.on/getMarkdownFiles/getFileCache
+  等直接使用 0.15.9 类型包已有 API，去掉 as any；secretStorage 已有类型声明，直接使用
+- Editor.cm 相关（getToolbarHostDocument/getCoords/getEditorView）：运行时是
+  CodeMirror 6 视图而类型包声明为 CM5 Editor，改为 unknown 中转 + 结构化类型收窄
+- 命令数组统一使用 obsidian Command 类型（settingsData 已做 SubmenuCommands 模块增强）
+- AI 响应解析（AIService/errorHandling）：payload 参数改为结构化接口 + unknown 收窄
+- PKMerAuthService：callbackServer 使用 node:http Server 类型，window.require
+  返回值 as typeof import("http")，错误回调参数改 Error & { code?: string }
+- 颜色选择器（settingsTab）：pickr 参数使用 Pickr/Pickr.HSVaColor 类型；
+  动态键写入设置改用 Record 视图断言（避免联合键写入 never）
+- 声明式设置页框架：新增 DeclarativeSettingsNode 接口替换 any/any[]
+- fullscreen：HTMLElementWithFullscreen 索引签名 any → unknown，动态全屏 API
+  键访问改用 Reflect.get + 函数断言；isFull 增加 null 守卫（修复 modroot 为
+  null 时误判为全屏的隐患）
+- main.ts 设置外观迁移：APPEARANCE_KEYS 已是 keyof StyleAppearanceSettings，
+  去掉 as any 直接索引；throttle 改泛型；isTopToolbarActive 探测改结构化断言
+- util.ts：findmenuID/colorpicker/backcolorpicker 参数 any → 具体类型
+- viewUtils：window.app 为 obsidian 官方声明的全局 App 类型，去掉 as any
+- 本地 eslint 队列：266 → 41（全部为官方扫描不包含的 sentence-case）。
+  tsc 0 错误，构建通过。
+### Scorecard 清理第九批：未使用变量 72 → 0 + 正则转义 8 → 0 + 断言/app/SVG样式/innerHTML 清零
+- no-unused-vars 72 处：删除无用导入（Command/setIcon/ToggleComponent/View/
+  MarkdownView/TextAreaComponent/Plugin/AdmonitionDefinition/App 等）、删除从未
+  使用的局部变量（currentVer/registeredTypes/typesSource/positionAISubmenu/
+  toggleFull/requestCompletion/TYPE_ON_FULL_SCREEN_CHANGE/AdmonitionPluginPublic
+  接口及 exports.beFull 遗留语句等）、Setting/createDiv/createEl 构建语句去掉
+  无用变量名、未使用回调参数改 _ 前缀或直接删除、catch (e) 改可选 catch 绑定
+- no-useless-escape 8 处：字符类内多余转义清理（类内 \[ \( \) 为字面量无需转义，
+  类内 \] 属必要转义保留）
+- no-unnecessary-type-assertion 2 处：document as DocumentWithFullscreen 改
+  Reflect.get 访问动态全屏 API 键
+- 全局 app 2 处：fullscreenMode(app) → fullscreenMode(this.plugin.app)
+- no-static-styles-assignment 2 处：insertCalloutModal 自定义 SVG 的 width/height
+  内联样式迁移为 styles.css 的 .custom-admonition-icon 类（fill 为动态值保留）
+- @microsoft/sdl/no-inner-html 1 处：safeSetInnerHTML 改用 DOMParser 解析后
+  adoptNode 移入节点（惰性文档不加载资源，比 innerHTML 更安全；官方配置禁止
+  disable 该规则）
+- 本地 eslint 队列：321 → 266 warnings。tsc 0 错误，构建通过。
+### 发布流程修复（scorecard Other 项）
+- release.yml：zip 改用 -j 将 main.js/manifest.json/styles.css 放到压缩包根层级
+  （原 zip -r 产生嵌套目录，对应官方 "Release contains extra unsupported files"）
+- release.yml：新增 actions/attest-build-provenance 步骤为 4 个发布资产生成
+  构建来源证明，并补充 id-token/attestations 权限（对应官方
+  "Missing GitHub artifact attestations for release assets"）
+
 ## 4.1.5 (2026-10-03)
 ### Update manifest.json and CHANGELOG.md for version 4.1.5
 ### Scorecard 清理第八批：misused-promises 21 + 全局 app 25 + 联合类型 10 + headings 4

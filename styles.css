@@ -2125,6 +2125,11 @@ body.auto-hide-header .workspace-tab-header-container + .workspace-tab-container
   height: 16px;
   color: rgb(var(--callout-color));
 }
+
+.callout-icon-container svg.custom-admonition-icon {
+  width: var(--icon-size);
+  height: var(--icon-size);
+}
 .insert-link-modal .setting-item
 {
  border-top: none;
