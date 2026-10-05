@@ -27,3 +27,6 @@ data.json
 # spec workflow (local only)
 /.spec-workflow
 lint_*.json
+
+# CDP test scripts (local only)
+/tmp_cdp

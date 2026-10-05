@@ -18,6 +18,10 @@ env:
 jobs:
     build:
         runs-on: ubuntu-latest
+        permissions:
+            contents: write
+            id-token: write
+            attestations: write
         steps:
             - uses: actions/checkout@v3
               with:
@@ -119,9 +123,19 @@ jobs:
                   mkdir ${{ env.PLUGIN_NAME }}
                   # main.js 来自构建输出目录，styles.css 和 manifest.json 来自仓库根目录
                   cp ${{ env.OUTPUT_DIR }}/main.js ./styles.css ./manifest.json ${{ env.PLUGIN_NAME }}/
-                  zip -r ${{ env.PLUGIN_NAME }}.zip ${{ env.PLUGIN_NAME }}
+                  # 官方要求 zip 根层级只包含 main.js / manifest.json / styles.css，禁止嵌套目录
+                  zip -j ${{ env.PLUGIN_NAME }}.zip ${{ env.PLUGIN_NAME }}/main.js ${{ env.PLUGIN_NAME }}/styles.css ${{ env.PLUGIN_NAME }}/manifest.json
                   ls
             
+            - name: Attest build provenance
+              uses: actions/attest-build-provenance@v2
+              with:
+                  subject-path: |
+                    ${{ env.PLUGIN_NAME }}.zip
+                    ${{ env.OUTPUT_DIR }}/main.js
+                    ./manifest.json
+                    ./styles.css
+
             - name: Create Release
               id: create_release
               uses: softprops/action-gh-release@v1
