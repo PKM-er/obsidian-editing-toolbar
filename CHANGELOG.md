@@ -1,5 +1,27 @@
 # Changelog
 
+## 4.1.6 (2026-10-05)
+### Update manifest.json and versions.json for version 4.1.6
+### chore: 发布 zip 根层级化并生成构建来源证明
+- zip 改用 -j 使 main.js/manifest.json/styles.css 位于压缩包根层级
+  （对应官方 scorecard 的 Release contains extra unsupported files）
+- 新增 actions/attest-build-provenance 为发布资产生成来源证明
+  （对应 Missing GitHub artifact attestations for release assets）
+### Scorecard 清理第九批+第十批 + 修复 Obsidian 1.13.x 设置子页面兼容性
+Scorecard 官方扫描问题从 288 清到约 60：
+- no-unused-vars 72→0、no-useless-escape 8→0、不必要断言/app 全局/SVG 内联样式/
+  innerHTML 全部清零；safeSetInnerHTML 改 DOMParser 解析后移入节点
+- no-explicit-any 132→0：Obsidian API/命令数组/AI 响应/声明式设置框架等
+  全部替换为真实类型
+- 修复 Obsidian 1.13.x 设置子页面无法进入：1.13 声明式渲染器把 render() 返回值
+  当 cleanup 函数调用，表达式回调返回 Setting 组件导致核心抛
+  "t is not a function"；getSettingDefinitions 出口统一规范化返回值
+- 修复全屏 Reflect.get 未绑定接收者的 Illegal invocation；isFull 增加 null 守卫
+本地 eslint 队列 266→41（均为官方不扫描的 sentence-case）。tsc 0 错误，构建通过。
+Obsidian 1.13.7 实测：六个子页面全部正常、工具栏/命令/弹窗/全屏/跟随模式正常。
+### Update manifest.json and CHANGELOG.md for version 4.1.5
+
+
 ### 修复 Obsidian 1.13.x 设置子页面无法进入的兼容性问题
 - 根因：1.13 原生声明式渲染器把每个条目 render() 的返回值存为 cleanup，
   在页面切换（openPage → G2 清理）时作为函数调用。本插件大量表达式形式的
