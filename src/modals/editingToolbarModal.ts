@@ -671,6 +671,12 @@ export function createTablecell(app: App, plugin: editingToolbarPlugin, el: stri
   const container = root || (isExistoolbar(app, plugin));
   const tab = container?.querySelector('#' + el);
   if (tab) {
+    // 加固调色板色块颜色：把 style 属性里的 background-color 提升为内联 !important，
+    // 防止主题/插件样式表用 !important 把色块覆盖成纯色（issue #88）
+    tab.querySelectorAll<HTMLElement>("td[style*=background-color]").forEach((td) => {
+      const m = td.getAttribute("style")?.match(/background-color:s*([^;]+)/);
+      if (m) td.style.setProperty("background-color", m[1].trim(), "important");
+    });
     // @ts-expect-error - Obsidian API type mismatch
     const rows = tab.rows;
     const rlen = rows.length;
