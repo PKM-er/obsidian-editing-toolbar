@@ -1,5 +1,21 @@
 # Changelog
 
+## 4.1.7 (2026-10-06)
+### 修复 1.13.x 设置子页面兼容性 + setFontcolor 崩溃 + 清理 27 处 !important
+- 修复 Obsidian 1.13+/1.14+ 设置子页面无法进入：声明式渲染器把 render()
+  返回值当 cleanup 调用，表达式回调返回 Setting 组件导致核心抛
+  "t is not a function"；getSettingDefinitions 出口统一规范化返回值
+- 修复无选区点击调色板色块的 TypeError：setFontcolor 模块级函数误用
+  this.plugin，签名新增 plugin 参数并传入全部调用点
+- styles.css 清理 27 处 !important（39→12，经 CDP computed-style 逐条实测
+  确认无视觉变化；3 处承重的以选择器增强/删除死代码替代；保留 12 处必要的
+  主题防御并注释说明）；删除标准 mask-image 行消除 css-masks 兼容警告
+- scorecard 清理：d.ts any 4 处、不必要断言、enabledPlugins 改 Set 类型
+- Obsidian 1.14.4 实测回归：工具栏/调色板/AI 按钮/设置页预览/跟随工具栏
+  全部正常，控制台零错误
+### Update manifest.json and CHANGELOG.md for version 4.1.6
+
+
 ## 4.1.6 (2026-10-05)
 ### Update manifest.json and versions.json for version 4.1.6
 ### chore: 发布 zip 根层级化并生成构建来源证明
