@@ -688,7 +688,7 @@ export function createTablecell(app: App, plugin: editingToolbarPlugin, el: stri
             backcolor = setcolorHex(backcolor);
             if (el == "x-color-picker-table") {
               plugin.settings.cMenuFontColor = backcolor;
-              setFontcolor(backcolor, editor);
+              setFontcolor(backcolor, editor, plugin);
               const font_colour_dom = activeDocument.querySelectorAll("#change-font-color-icon")
               font_colour_dom.forEach(element => {
                 const ele = element as HTMLElement
@@ -1248,7 +1248,6 @@ export function editingToolbarPopover(
       PopoverMenu.setAttribute("id", "editingToolbarPopoverBar");
     
       PopoverMenu.setCssStyles({ visibility: "hidden" });
-      PopoverMenu.setCssStyles({ height: "0" });
     
       // Apply per-style aesthetic
       applyAestheticStyle(editingToolbar, resolvedAestheticStyle);

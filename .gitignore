@@ -30,3 +30,4 @@ lint_*.json
 
 # CDP test scripts (local only)
 /tmp_cdp
+.zcodeignore

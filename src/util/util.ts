@@ -252,13 +252,17 @@ export function setHeader(_str: string, editor?: Editor) {
 }
 
 
-export function setFontcolor(color: string, editor?: Editor) {
+export function setFontcolor(
+  color: string,
+  editor?: Editor,
+  plugin?: { setLastExecutedCommand(commandId: string): void },
+) {
   if (!editor) return;
 
   const selectText = editor.getSelection();
 
   if (!selectText || selectText.trim() === "") {
-    this.plugin.setLastExecutedCommand("editing-toolbar:change-font-color");
+    plugin?.setLastExecutedCommand("editing-toolbar:change-font-color");
     return;
   }
 

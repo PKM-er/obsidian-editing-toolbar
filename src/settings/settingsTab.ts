@@ -111,6 +111,13 @@ export function getPickrSettings(opts: {
     },
   };
 }
+const TOOLBAR_STYLE_KEYS: readonly ToolbarStyleKey[] = ["top", "following", "fixed", "mobile"];
+
+function toToolbarStyleKey(value: string | null | undefined): ToolbarStyleKey | null {
+  if (!value) return null;
+  return (TOOLBAR_STYLE_KEYS as readonly string[]).includes(value) ? (value as ToolbarStyleKey) : null;
+}
+
 interface DeclarativeSettingsNode {
   type?: string;
   name?: string;
@@ -2949,16 +2956,16 @@ export class editingToolbarSettingTab extends PluginSettingTab {
   
       const activeStyle = this.plugin.positionStyle;
       const editingStyle =
-        (this.plugin.appearanceEditStyle) ||
-        (this.plugin.settings.positionStyle as ToolbarStyleKey) ||
-        activeStyle ||
+        toToolbarStyleKey(this.plugin.appearanceEditStyle) ??
+        toToolbarStyleKey(this.plugin.settings.positionStyle) ??
+        toToolbarStyleKey(activeStyle) ??
         "top";
       // For the main toolbar colour fields, use the per-style bucket.
       if (
         settingKey === "toolbarBackgroundColor" ||
         settingKey === "toolbarIconColor"
       ) {
-        const bucket = this.getAppearanceBucket(editingStyle as ToolbarStyleKey);
+        const bucket = this.getAppearanceBucket(editingStyle);
         bucket[settingKey] = hexColor;
         // Only push CSS variables if we're editing the active style
         if (activeStyle === editingStyle) {

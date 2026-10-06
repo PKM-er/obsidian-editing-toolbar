@@ -1856,7 +1856,7 @@ updateCurrentCommands(commands: Command[], style?: string): void {
 
   private handleSelectedText(cmEditor: Editor) {
     if (this.EN_FontColor_Format_Brush) {
-      setFontcolor(this.settings.cMenuFontColor, cmEditor);
+      setFontcolor(this.settings.cMenuFontColor, cmEditor, this);
     } else if (this.EN_BG_Format_Brush) {
       setBackgroundcolor(this.settings.cMenuBackgroundColor, cmEditor);
     } else if (this.EN_Text_Format_Brush) {

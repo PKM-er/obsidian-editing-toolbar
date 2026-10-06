@@ -46,7 +46,7 @@ declare module "obsidian" {
 	interface Plugins {
 		manifests: Record<string, PluginManifest>;
 		plugins: Record<string, Plugin_2>;
-		enabledPlugins: any;
+		enabledPlugins: Set<string>;
 		enablePlugin(pluginId: string): Promise<boolean>;
 		disablePlugin(pluginId: string): Promise<void>;
 	}
@@ -66,7 +66,7 @@ declare module "obsidian" {
 	}
 
 	interface Workspace {
-		on(name: 'canvas:node-menu', callback: (menu: Menu, node: unknown) => any, ctx?: any): EventRef;
+		on(name: 'canvas:node-menu', callback: (menu: Menu, node: unknown) => unknown, ctx?: unknown): EventRef;
 	}
 
 	interface MarkdownSubView {
@@ -81,7 +81,7 @@ declare module "obsidian" {
 	}
 
 	interface EditorSuggestManager {
-		suggests: EditorSuggest<any>[];
+		suggests: EditorSuggest<unknown>[];
 	}
 
 	interface Notice {

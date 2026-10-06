@@ -147,7 +147,7 @@ export class CommandsManager {
   }
 
   private getActiveCanvasView(): CanvasViewLike | null {
-    const activeLeafView = this.plugin.app.workspace.getActiveViewOfType(ItemView) as CanvasViewLike | null;
+    const activeLeafView: CanvasViewLike | null = this.plugin.app.workspace.getActiveViewOfType(ItemView);
     if (activeLeafView?.getViewType?.() === "canvas") {
       return activeLeafView;
     }
@@ -988,7 +988,8 @@ export class CommandsManager {
           void this.executeCommandWithoutBlur(editor, () =>
             setFontcolor(
               this.plugin.settings.cMenuFontColor ?? "#2DC26B",
-              editor
+              editor,
+              this.plugin
             )
           );
       },
