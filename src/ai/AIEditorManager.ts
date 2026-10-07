@@ -1733,51 +1733,51 @@ export class AIEditorManager {
   private renderInlineCustomPrompt(editor: Editor, view: EditorView, initialSelection?: string): void {
     const doc = view.dom.ownerDocument;
     if (!this.inlineCustomPromptEl) {
-      const promptEl = doc.createDiv();
+      const promptEl = doc.createElement("div");
       promptEl.className = "editing-toolbar-ai-inline-prompt";
-      const header = doc.createDiv();
+      const header = doc.createElement("div");
       header.className = "editing-toolbar-ai-inline-prompt-header";
-      const dragHandle = doc.createDiv();
+      const dragHandle = doc.createElement("div");
       dragHandle.className = "editing-toolbar-ai-inline-prompt-drag-handle";
       dragHandle.setCssStyles({ cursor: "grab" });
-      const titleEl = doc.createDiv();
+      const titleEl = doc.createElement("div");
       titleEl.className = "editing-toolbar-ai-inline-prompt-title";
       titleEl.textContent = t("AI Custom Rewrite");
-      const closeBtn = doc.createEl("button");
+      const closeBtn = doc.createElement("button");
       closeBtn.type = "button";
       closeBtn.className = "editing-toolbar-ai-inline-prompt-close";
       closeBtn.title = t("Close");
       safeSetInnerHTML(closeBtn, `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>`);
       header.append(dragHandle, titleEl, closeBtn);
-      const settingsBtn = doc.createEl("button");
+      const settingsBtn = doc.createElement("button");
       settingsBtn.type = "button";
       settingsBtn.className = "editing-toolbar-ai-inline-prompt-settings";
       settingsBtn.title = t("Manage Templates");
       safeSetInnerHTML(settingsBtn, `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v6m0 6v6M4.22 4.22l4.24 4.24m5.08 5.08l4.24 4.24M1 12h6m6 0h6M4.22 19.78l4.24-4.24m5.08-5.08l4.24-4.24"/></svg>`);
 
-      const inputWrapper = doc.createDiv();
+      const inputWrapper = doc.createElement("div");
       inputWrapper.className = "editing-toolbar-ai-inline-prompt-input-wrapper";
 
-      const textarea = doc.createEl("textarea");
+      const textarea = doc.createElement("textarea");
       textarea.className = "editing-toolbar-ai-inline-prompt-input";
       textarea.placeholder = t("Describe what you want AI to do...");
       textarea.rows = 3;
       textarea.wrap = "soft";
 
-      const historyBtn = doc.createEl("button");
+      const historyBtn = doc.createElement("button");
       historyBtn.type = "button";
       historyBtn.className = "editing-toolbar-ai-inline-prompt-history-btn";
       historyBtn.title = t("History");
       safeSetInnerHTML(historyBtn, `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg>`);
 
-      const historyDropdown = doc.createDiv();
+      const historyDropdown = doc.createElement("div");
       historyDropdown.className = "editing-toolbar-ai-inline-prompt-history-dropdown";
       historyDropdown.setCssStyles({ display: "none" });
 
-      const mentionDropdown = doc.createDiv();
+      const mentionDropdown = doc.createElement("div");
       mentionDropdown.className = "editing-toolbar-ai-inline-prompt-mention-dropdown";
       mentionDropdown.setCssStyles({ display: "none" });
-   const sendBtn = doc.createEl("button");
+   const sendBtn = doc.createElement("button");
       sendBtn.type = "button";
       sendBtn.className = "editing-toolbar-ai-inline-prompt-send-btn";
       safeSetInnerHTML(sendBtn, `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>`);
@@ -1785,7 +1785,7 @@ export class AIEditorManager {
 
       inputWrapper.append(textarea, historyBtn, historyDropdown, mentionDropdown,sendBtn);
 
-      const templatesContainer = doc.createDiv();
+      const templatesContainer = doc.createElement("div");
       templatesContainer.className = "editing-toolbar-ai-inline-prompt-templates";
 
       const templates = this.plugin.settings.ai.customPromptTemplates || [];
@@ -1841,7 +1841,7 @@ export class AIEditorManager {
       };
 
       templates.slice(0, 9).forEach((template) => {
-        const templateBtn = doc.createEl("button");
+        const templateBtn = doc.createElement("button");
         templateBtn.type = "button";
         templateBtn.className = "editing-toolbar-ai-inline-prompt-template-btn";
         templateBtn.textContent = template.name;
@@ -1858,7 +1858,7 @@ export class AIEditorManager {
         templatesContainer.appendChild(templateBtn);
       });
 
-      const contextContainer = doc.createDiv();
+      const contextContainer = doc.createElement("div");
       contextContainer.className = "editing-toolbar-ai-inline-prompt-context";
       contextContainer.setCssStyles({ display: "none" });
 
@@ -1880,14 +1880,14 @@ export class AIEditorManager {
         }
         contextContainer.setCssStyles({ display: "block" });
         contextList.forEach((ctx, index) => {
-          const item = doc.createDiv();
+          const item = doc.createElement("div");
           item.className = "editing-toolbar-ai-inline-prompt-context-item";
 
-          const label = doc.createSpan();
+          const label = doc.createElement("span");
           label.className = "editing-toolbar-ai-inline-prompt-context-label";
           label.textContent = ctx.label;
 
-          const preview = doc.createSpan();
+          const preview = doc.createElement("span");
           preview.className = "editing-toolbar-ai-inline-prompt-context-preview";
           const previewText = ctx.content.substring(0, 50).replace(/\n/g, " ");
           const suffix = ctx.content.length > 50 ? "..." : "";
@@ -1895,7 +1895,7 @@ export class AIEditorManager {
           preview.textContent = `${previewText}${suffix} ${charCount}`;
           preview.title = ctx.content.length > 100 ? ctx.content.substring(0, 100) + "..." : ctx.content;
 
-          const removeBtn = doc.createEl("button");
+          const removeBtn = doc.createElement("button");
           removeBtn.type = "button";
           removeBtn.className = "editing-toolbar-ai-inline-prompt-context-remove";
           safeSetInnerHTML(removeBtn, `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>`);
@@ -1924,9 +1924,9 @@ export class AIEditorManager {
 
       renderContextItems();
 
-      const footer = doc.createDiv();
+      const footer = doc.createElement("div");
       footer.className = "editing-toolbar-ai-inline-prompt-footer";
-      const hint = doc.createDiv();
+      const hint = doc.createElement("div");
       hint.className = "editing-toolbar-ai-inline-prompt-hint";
       const promptHint = Platform.isMobileApp
         ? t("Enter inserts a newline. Tap Send to submit.")
@@ -2076,13 +2076,13 @@ export class AIEditorManager {
         historyDropdown.empty();
 
         if (history.length === 0) {
-          const emptyItem = doc.createDiv();
+          const emptyItem = doc.createElement("div");
           emptyItem.className = "editing-toolbar-ai-inline-prompt-history-empty";
           emptyItem.textContent = t("No history");
           historyDropdown.appendChild(emptyItem);
         } else {
           history.forEach((item) => {
-            const historyItem = doc.createDiv();
+            const historyItem = doc.createElement("div");
             historyItem.className = "editing-toolbar-ai-inline-prompt-history-item";
             historyItem.textContent = item.length > 50 ? item.substring(0, 50) + "..." : item;
             historyItem.title = item;
@@ -2235,7 +2235,7 @@ export class AIEditorManager {
           if (filtered.length > 0) {
             mentionDropdown.empty();
             filtered.forEach((file, index) => {
-              const item = doc.createDiv();
+              const item = doc.createElement("div");
               item.className = "editing-toolbar-ai-inline-prompt-mention-item";
               if (index === 0) item.classList.add("selected");
               item.createSpan({ cls: "editing-toolbar-ai-inline-prompt-mention-icon", text: "📄" });
