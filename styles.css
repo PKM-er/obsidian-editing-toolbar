@@ -1621,13 +1621,13 @@ body[data-editing-toolbar-ai-busy="true"]
 
 /* Some themes animate all workspace SVG icons. Opt toolbar controls out so
    inherited visibility changes hide the whole toolbar in one frame. */
-body :is(#editingToolbarModalBar, #editingToolbarPopoverBar) :is(.editingToolbarCommandItem, button[class^=editingToolbarCommandsubItem]):not(.editingToolbar-Divider-Line):not(.editingToolbarCommandsubItem-ai),
-body :is(#editingToolbarModalBar, #editingToolbarPopoverBar) :is(.editingToolbarCommandItem, button[class^=editingToolbarCommandsubItem]):not(.editingToolbar-Divider-Line):not(.editingToolbarCommandsubItem-ai) *:not(.subitem),
-body :is(#editingToolbarModalBar, #editingToolbarPopoverBar) :is(.editingToolbarCommandItem, button[class^=editingToolbarCommandsubItem]):not(.editingToolbar-Divider-Line):not(.editingToolbarCommandsubItem-ai) svg.svg-icon,
-body :is(#editingToolbarModalBar, #editingToolbarPopoverBar) :is(.editingToolbarCommandItem, button[class^=editingToolbarCommandsubItem]):not(.editingToolbar-Divider-Line):not(.editingToolbarCommandsubItem-ai) svg.svg-icon * {
-animation: none !important;
-transition: none !important;
--webkit-transition: none !important;
+body :is(#editingToolbarModalBar#editingToolbarModalBar, #editingToolbarPopoverBar#editingToolbarPopoverBar) :is(.editingToolbarCommandItem, button[class^=editingToolbarCommandsubItem]):not(.editingToolbar-Divider-Line):not(.editingToolbarCommandsubItem-ai),
+body :is(#editingToolbarModalBar#editingToolbarModalBar, #editingToolbarPopoverBar#editingToolbarPopoverBar) :is(.editingToolbarCommandItem, button[class^=editingToolbarCommandsubItem]):not(.editingToolbar-Divider-Line):not(.editingToolbarCommandsubItem-ai) *:not(.subitem),
+body :is(#editingToolbarModalBar#editingToolbarModalBar, #editingToolbarPopoverBar#editingToolbarPopoverBar) :is(.editingToolbarCommandItem, button[class^=editingToolbarCommandsubItem]):not(.editingToolbar-Divider-Line):not(.editingToolbarCommandsubItem-ai) svg.svg-icon,
+body :is(#editingToolbarModalBar#editingToolbarModalBar, #editingToolbarPopoverBar#editingToolbarPopoverBar) :is(.editingToolbarCommandItem, button[class^=editingToolbarCommandsubItem]):not(.editingToolbar-Divider-Line):not(.editingToolbarCommandsubItem-ai) svg.svg-icon * {
+animation: none;
+transition: none;
+-webkit-transition: none;
 }
 #editingToolbarModalBar ~.canvas-controls{
   top: calc(var(--size-4-2) + 50px);
