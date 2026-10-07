@@ -1,5 +1,81 @@
 # Changelog
 
+### styles.css :has 全部清零（23 → 0，官方性能建议）
+- AI 加载状态 15 处：:has(.cm-ai-loading / .cm-ai-result-panel[data-phase=streaming])
+  冗余路径删除，保留已有的 body[data-editing-toolbar-ai-busy] 状态属性选择器
+  （AIEditorManager 一直在维护该属性）
+- hide-toolbar 2 处：新增 MutationObserver 监听编辑器 hide-toolbar 类
+  （class 变化 + setTimeout 100ms 防抖），同步为工具栏
+  editing-toolbar-force-hidden 类，CSS 改为 #id.类 双条件（特异性高于基础规则）
+- 手机端 4 处：工具栏挂载时给宿主容器加 has-editing-toolbar 标记类
+  （view-content / workspace-leaf-content），CSS 改用标记类
+- thino 3 处：同理给 memo-editor-wrapper / common-editor-inputer 加标记类
+### styles.css !important 全部清零（39 → 0，含此前保留的 12 处）
+- following 过渡禁用、CustomAesthetic gap：选择器特异性本已足够，直接移除
+- 工具栏按钮字体（font-size: initial）：加 body 前缀 + 双写类至 (1,3,0)
+- 设置页拖拽把手：加 .modal.mod-settings 前缀
+- hide-toolbar 旧规则：并入 force-hidden 类方案
+- AI 内联面板按钮（padding/box-shadow ×4）：双写类增强
+- 主题动画防御（transition none ×2）：4 支选择器加 body 前缀
+- 格式刷高亮：hover 规则排除 Format Brush 按钮，专属高亮无冲突生效
+### 其他
+- d.ts：Menu 增强声明的 addItem/onHide 回调 any → void
+- Obsidian 1.14.4 实测回归：hide-toolbar 隐藏/恢复、AI busy 状态、调色板
+  （含颜色加固）、AI 按钮、设置页预览、跟随工具栏全部正常，控制台零错误
+### 修复无选区点击调色板色块时的 TypeError
+- setFontcolor() 是模块级函数却在内部使用 this.plugin，无选中文本时点击
+  字体颜色色块（或执行 Change Font Color 命令）必抛
+  "TypeError: Cannot read properties of undefined (reading 'plugin')"，
+  中断后续的图标颜色更新与设置保存
+- 签名新增可选 plugin 参数并传入全部 3 个调用点（main.ts / commands.ts /
+  editingToolbarModal.ts），改用 plugin?.setLastExecutedCommand
+### styles.css 清理 27 处 !important（39 → 12，经 CDP computed-style 逐条实测）
+- 经 CDP computed-style 逐条实测：27 处移除后渲染无任何变化，安全删除；
+  3 处真实承重的以选择器增强替代（AI 按钮 padding 双写类、跟随栏 height
+  改为删除 JS 侧从未生效的内联 height:0 死代码）
+- 删除标准 mask-image 行保留 -webkit- 回退（消除 css-masks 兼容性警告）
+### 修复 Obsidian 1.13.x/1.14.x 设置子页面无法进入的兼容性问题
+- 根因：1.13 原生声明式渲染器把每个条目 render() 的返回值存为 cleanup，
+  在页面切换（openPage → G2 清理）时作为函数调用。本插件大量表达式形式的
+  回调（render: (setting) => setting.addDropdown(...)）返回 Setting 组件这类
+  "真值但非函数"的对象，导致核心抛 "TypeError: t is not a function"，
+  且六个设置子页面（常规/外观/自定义命令/工具栏命令/AI/导入导出）全部无法进入
+- 修复：getSettingDefinitions() 出口新增 normalizeDefinitionRenders 深度遍历，
+  将 render 返回值规范化——只有真正的清理函数（如 pickr 销毁回调）才保留，
+  其余丢弃；保留 1.13 声明式渲染路径，无需退回 display() 兼容模式
+- Obsidian 1.13.7/1.14.4 实测（含独立设置窗口）：六个子页面全部正常打开
+  （常规页 10 个取色器、工具栏命令页 78 项、AI/导入导出页分享链接锚点正确
+  渲染），零报错
+### Scorecard 清理第十批：no-explicit-any 132 → 0
+- Obsidian API 兼容断言：vault.on/metadataCache.on/getMarkdownFiles/getFileCache
+  等直接使用 0.15.9 类型包已有 API，去掉 as any；secretStorage 已有类型声明，直接使用
+- Editor.cm 相关（getToolbarHostDocument/getCoords/getEditorView）：运行时是
+  CodeMirror 6 视图而类型包声明为 CM5 Editor，改为 unknown 中转 + 结构化类型收窄
+- 命令数组统一使用 obsidian Command 类型（settingsData 已做 SubmenuCommands 模块增强）
+- AI 响应解析（AIService/errorHandling）：payload 参数改为结构化接口 + unknown 收窄
+- PKMerAuthService：callbackServer 使用 node:http Server 类型，window.require
+  返回值 as typeof import("http")，错误回调参数改 Error & { code?: string }
+- 颜色选择器（settingsTab）：pickr 参数使用 Pickr/Pickr.HSVaColor 类型；
+  动态键写入设置改用 Record 视图断言（避免联合键写入 never）
+- 声明式设置页框架：新增 DeclarativeSettingsNode 接口替换 any/any[]
+- main.ts 设置外观迁移：APPEARANCE_KEYS 已是 keyof StyleAppearanceSettings，
+  去掉 as any 直接索引；throttle 改泛型；isTopToolbarActive 探测改结构化断言
+- util.ts：findmenuID/colorpicker/backcolorpicker 参数 any → 具体类型
+- viewUtils：window.app 为 obsidian 官方声明的全局 App 类型，去掉 as any
+- 本地 eslint 队列：266 → 41（全部为官方扫描不包含的 sentence-case）。
+  tsc 0 错误，构建通过。
+### Scorecard 清理第九批：未使用变量 72 → 0 + 正则转义 8 → 0 + 断言/app/SVG样式/innerHTML 清零
+- no-unused-vars 72 处：删除无用导入与死代码、构建语句去掉无用变量名、
+  未使用回调参数改 _ 前缀、catch (e) 改可选 catch 绑定
+- no-useless-escape 8 处：字符类内多余转义清理
+- 全局 app 2 处：fullscreenMode(app) → fullscreenMode(this.plugin.app)
+- no-static-styles-assignment 2 处：自定义 SVG 内联样式迁移为 CSS 类
+- @microsoft/sdl/no-inner-html 1 处：safeSetInnerHTML 改用 DOMParser 解析后
+  adoptNode 移入节点（惰性文档不加载资源，比 innerHTML 更安全）
+### 发布流程修复（scorecard Other 项）
+- release.yml：zip 改用 -j 将三个官方允许文件放到压缩包根层级
+- release.yml：新增 actions/attest-build-provenance 生成构建来源证明
+
 ## 4.1.7 (2026-10-06)
 ### 修复 1.13.x 设置子页面兼容性 + setFontcolor 崩溃 + 清理 27 处 !important
 - 修复 Obsidian 1.13+/1.14+ 设置子页面无法进入：声明式渲染器把 render()

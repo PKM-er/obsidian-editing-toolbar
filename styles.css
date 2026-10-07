@@ -23,8 +23,8 @@
   transform: translate(var(--toolbar-horizontal-offset), var(--toolbar-vertical-offset));
 }
 #editingToolbarModalBar[data-toolbar-style="following"] {
- transition: none !important;
-  -webkit-transition: none !important;
+ transition: none;
+  -webkit-transition: none;
 }
 
 
@@ -32,7 +32,7 @@
 :is(#editingToolbarModalBar, #editingToolbarPopoverBar).editingToolbarCustomAesthetic button[class^=editingToolbarCommandsubItem]>.subitem,
 #editingToolbarPopoverBar.editingToolbarCustomAesthetic {
   background-color: var(--editing-toolbar-background-color);
-  gap: calc(var(--toolbar-icon-size) / 15) !important;
+  gap: calc(var(--toolbar-icon-size) / 15);
 }
 
 :is(#editingToolbarModalBar, #editingToolbarPopoverBar).editingToolbarCustomAesthetic button[class^=editingToolbarCommandsubItem]>.subitem::before {
@@ -83,7 +83,7 @@ height: var(--toolbar-icon-size) + 8px;
   min-width: 20px;
 }
 
-#editingToolbarModalBar .editingToolbarCommandItem.editingToolbarCommandItem {
+body #editingToolbarModalBar .editingToolbarCommandItem.editingToolbarCommandItem {
   margin: 2px;
   border: none;
   display: flex;
@@ -94,7 +94,7 @@ height: var(--toolbar-icon-size) + 8px;
   margin-right: 3px;
   position: relative;
   border-radius: var(--radius-s);
-  font-size: initial !important;
+  font-size: initial;
   background-color: var(--background-primary-alt);
   height: auto;
 }
@@ -108,7 +108,7 @@ flex-wrap: wrap;
   padding-right:1em;
 }
 :is(#editingToolbarModalBar, #editingToolbarPopoverBar) button[class^=editingToolbarCommandsubItem]>.subitem button:hover,
-:is(#editingToolbarModalBar, #editingToolbarPopoverBar) button[class^=editingToolbarCommand]:hover,
+:is(#editingToolbarModalBar, #editingToolbarPopoverBar) button[class^=editingToolbarCommand]:not([aria-label="Format Brush"]):hover,
 #editingToolbarSecond:hover {
   background-color: var(--background-modifier-hover);
 }
@@ -174,8 +174,8 @@ editingToolbar SETTING ITEMS
   box-shadow: 0px 3px 32px rgb(31 38 135 / 15%);
 }
 
-.editingToolbarSettingsTabsContainer .sortable-grab {
-  cursor: grabbing !important;
+.modal.mod-settings .editingToolbarSettingsTabsContainer .sortable-grab {
+  cursor: grabbing;
 }
 
 .editingToolbarSettingsTabsContainer .sortable-ghost {
@@ -624,13 +624,10 @@ button[class^=editingToolbarCommandsubItem]::after {
 
 
 
-.hide-toolbar :is(#editingToolbarModalBar,#editingToolbarPopoverBar) {
-  display: none!important;
-}
-.workspace:has(.markdown-source-view.hide-toolbar) > .workspace-split>#editingToolbarModalBar {
+#editingToolbarModalBar.editing-toolbar-force-hidden {
   display: none;
 }
-.workspace:has(.markdown-source-view.hide-toolbar) > .workspace-split>#editingToolbarPopoverBar {
+#editingToolbarPopoverBar.editing-toolbar-force-hidden {
   display: none;
 }
 :is(#editingToolbarModalBar, #editingToolbarPopoverBar) button.editingToolbarCommandsubItem-font-color .triangle-icon {
@@ -801,22 +798,18 @@ button[class^=editingToolbarCommandsubItem]::after {
 }
 
 
-.workspace-leaf-content:has(.cm-ai-loading, .cm-ai-result-panel[data-phase="streaming"])
   :is(#editingToolbarModalBar, #editingToolbarPopoverBar) button.editingToolbarCommandsubItem-ai,
 body[data-editing-toolbar-ai-busy="true"]
   :is(#editingToolbarModalBar, #editingToolbarPopoverBar) button.editingToolbarCommandsubItem-ai,
-body:has(.workspace-leaf.mod-active .cm-ai-loading, .workspace-leaf.mod-active .cm-ai-result-panel[data-phase="streaming"])
   :is(#editingToolbarModalBar[data-toolbar-style="fixed"], #editingToolbarModalBar[data-toolbar-style="mobile"], #editingToolbarPopoverBar[data-toolbar-style="fixed"], #editingToolbarPopoverBar[data-toolbar-style="mobile"]) button.editingToolbarCommandsubItem-ai {
   opacity: 0.82;
   pointer-events: none;
   overflow: hidden;
 }
 
-.workspace-leaf-content:has(.cm-ai-loading, .cm-ai-result-panel[data-phase="streaming"])
   :is(#editingToolbarModalBar, #editingToolbarPopoverBar) button.editingToolbarCommandsubItem-ai::before,
 body[data-editing-toolbar-ai-busy="true"]
   :is(#editingToolbarModalBar, #editingToolbarPopoverBar) button.editingToolbarCommandsubItem-ai::before,
-body:has(.workspace-leaf.mod-active .cm-ai-loading, .workspace-leaf.mod-active .cm-ai-result-panel[data-phase="streaming"])
   :is(#editingToolbarModalBar[data-toolbar-style="fixed"], #editingToolbarModalBar[data-toolbar-style="mobile"], #editingToolbarPopoverBar[data-toolbar-style="fixed"], #editingToolbarPopoverBar[data-toolbar-style="mobile"]) button.editingToolbarCommandsubItem-ai::before {
   opacity: 1;
   background: linear-gradient(135deg, color-mix(in srgb, var(--interactive-accent) 14%, transparent), color-mix(in srgb, var(--background-secondary) 90%, transparent));
@@ -824,11 +817,9 @@ body:has(.workspace-leaf.mod-active .cm-ai-loading, .workspace-leaf.mod-active .
   animation: cm-ai-toolbar-glow 2.1s ease-in-out infinite;
 }
 
-.workspace-leaf-content:has(.cm-ai-loading, .cm-ai-result-panel[data-phase="streaming"])
   :is(#editingToolbarModalBar, #editingToolbarPopoverBar) button.editingToolbarCommandsubItem-ai::after,
 body[data-editing-toolbar-ai-busy="true"]
   :is(#editingToolbarModalBar, #editingToolbarPopoverBar) button.editingToolbarCommandsubItem-ai::after,
-body:has(.workspace-leaf.mod-active .cm-ai-loading, .workspace-leaf.mod-active .cm-ai-result-panel[data-phase="streaming"])
   :is(#editingToolbarModalBar[data-toolbar-style="fixed"], #editingToolbarModalBar[data-toolbar-style="mobile"], #editingToolbarPopoverBar[data-toolbar-style="fixed"], #editingToolbarPopoverBar[data-toolbar-style="mobile"]) button.editingToolbarCommandsubItem-ai::after {
   content: "";
   position: absolute;
@@ -842,33 +833,25 @@ body:has(.workspace-leaf.mod-active .cm-ai-loading, .workspace-leaf.mod-active .
   mix-blend-mode: screen;
 }
 
-.workspace-leaf-content:has(.cm-ai-loading, .cm-ai-result-panel[data-phase="streaming"])
   :is(#editingToolbarModalBar, #editingToolbarPopoverBar) button.editingToolbarCommandsubItem-ai > svg,
-.workspace-leaf-content:has(.cm-ai-loading, .cm-ai-result-panel[data-phase="streaming"])
   :is(#editingToolbarModalBar, #editingToolbarPopoverBar) button.editingToolbarCommandsubItem-ai svg.svg-icon,
 body[data-editing-toolbar-ai-busy="true"]
   :is(#editingToolbarModalBar, #editingToolbarPopoverBar) button.editingToolbarCommandsubItem-ai > svg,
 body[data-editing-toolbar-ai-busy="true"]
   :is(#editingToolbarModalBar, #editingToolbarPopoverBar) button.editingToolbarCommandsubItem-ai svg.svg-icon,
-body:has(.workspace-leaf.mod-active .cm-ai-loading, .workspace-leaf.mod-active .cm-ai-result-panel[data-phase="streaming"])
   :is(#editingToolbarModalBar[data-toolbar-style="fixed"], #editingToolbarModalBar[data-toolbar-style="mobile"], #editingToolbarPopoverBar[data-toolbar-style="fixed"], #editingToolbarPopoverBar[data-toolbar-style="mobile"]) button.editingToolbarCommandsubItem-ai > svg,
-body:has(.workspace-leaf.mod-active .cm-ai-loading, .workspace-leaf.mod-active .cm-ai-result-panel[data-phase="streaming"])
   :is(#editingToolbarModalBar[data-toolbar-style="fixed"], #editingToolbarModalBar[data-toolbar-style="mobile"], #editingToolbarPopoverBar[data-toolbar-style="fixed"], #editingToolbarPopoverBar[data-toolbar-style="mobile"]) button.editingToolbarCommandsubItem-ai svg.svg-icon {
   animation: cm-ai-toolbar-breathe 1.8s ease-in-out infinite;
   filter: drop-shadow(0 0 8px color-mix(in srgb, var(--interactive-accent) 26%, transparent));
 }
 
-.workspace-leaf-content:has(.cm-ai-loading, .cm-ai-result-panel[data-phase="streaming"])
   :is(#editingToolbarModalBar, #editingToolbarPopoverBar) button.editingToolbarCommandsubItem-ai .editing-toolbar-ai-button-label,
-.workspace-leaf-content:has(.cm-ai-loading, .cm-ai-result-panel[data-phase="streaming"])
   :is(#editingToolbarModalBar, #editingToolbarPopoverBar) button.editingToolbarCommandsubItem-ai .editing-toolbar-ai-button-arrow,
 body[data-editing-toolbar-ai-busy="true"]
   :is(#editingToolbarModalBar, #editingToolbarPopoverBar) button.editingToolbarCommandsubItem-ai .editing-toolbar-ai-button-label,
 body[data-editing-toolbar-ai-busy="true"]
   :is(#editingToolbarModalBar, #editingToolbarPopoverBar) button.editingToolbarCommandsubItem-ai .editing-toolbar-ai-button-arrow,
-body:has(.workspace-leaf.mod-active .cm-ai-loading, .workspace-leaf.mod-active .cm-ai-result-panel[data-phase="streaming"])
   :is(#editingToolbarModalBar[data-toolbar-style="fixed"], #editingToolbarModalBar[data-toolbar-style="mobile"], #editingToolbarPopoverBar[data-toolbar-style="fixed"], #editingToolbarPopoverBar[data-toolbar-style="mobile"]) button.editingToolbarCommandsubItem-ai .editing-toolbar-ai-button-label,
-body:has(.workspace-leaf.mod-active .cm-ai-loading, .workspace-leaf.mod-active .cm-ai-result-panel[data-phase="streaming"])
   :is(#editingToolbarModalBar[data-toolbar-style="fixed"], #editingToolbarModalBar[data-toolbar-style="mobile"], #editingToolbarPopoverBar[data-toolbar-style="fixed"], #editingToolbarPopoverBar[data-toolbar-style="mobile"]) button.editingToolbarCommandsubItem-ai .editing-toolbar-ai-button-arrow {
   color: var(--text-muted);
   animation: cm-ai-label-breathe 1.8s ease-in-out infinite;
@@ -891,9 +874,9 @@ body:has(.workspace-leaf.mod-active .cm-ai-loading, .workspace-leaf.mod-active .
   backdrop-filter: blur(8px);
   overflow: hidden;
 }
-.editing-toolbar-ai-inline-prompt button {
-    padding: unset!important;
-    box-shadow: none!important;
+.editing-toolbar-ai-inline-prompt.editing-toolbar-ai-inline-prompt button {
+    padding: unset;
+    box-shadow: none;
 }
 @media (max-width: 768px) {
   .editing-toolbar-ai-inline-prompt {
@@ -1130,8 +1113,8 @@ body:has(.workspace-leaf.mod-active .cm-ai-loading, .workspace-leaf.mod-active .
   margin-bottom: 6px;
 }
  
-.editing-toolbar-ai-inline-prompt-template-btn {
-    box-shadow: none !important;
+.editing-toolbar-ai-inline-prompt-template-btn.editing-toolbar-ai-inline-prompt-template-btn {
+    box-shadow: none;
     padding: 0px 6px;
     height: 22px;
     border: 1px solid var(--background-modifier-border);
@@ -1290,7 +1273,7 @@ body:has(.workspace-leaf.mod-active .cm-ai-loading, .workspace-leaf.mod-active .
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  box-shadow: none!important;
+  box-shadow: none;
   
 }
 
@@ -1652,13 +1635,13 @@ body:has(.workspace-leaf.mod-active .cm-ai-loading, .workspace-leaf.mod-active .
 
 /* Some themes animate all workspace SVG icons. Opt toolbar controls out so
    inherited visibility changes hide the whole toolbar in one frame. */
-:is(#editingToolbarModalBar, #editingToolbarPopoverBar) :is(.editingToolbarCommandItem, button[class^=editingToolbarCommandsubItem]):not(.editingToolbar-Divider-Line):not(.editingToolbarCommandsubItem-ai),
-:is(#editingToolbarModalBar, #editingToolbarPopoverBar) :is(.editingToolbarCommandItem, button[class^=editingToolbarCommandsubItem]):not(.editingToolbar-Divider-Line):not(.editingToolbarCommandsubItem-ai) *:not(.subitem),
-:is(#editingToolbarModalBar, #editingToolbarPopoverBar) :is(.editingToolbarCommandItem, button[class^=editingToolbarCommandsubItem]):not(.editingToolbar-Divider-Line):not(.editingToolbarCommandsubItem-ai) svg.svg-icon,
-:is(#editingToolbarModalBar, #editingToolbarPopoverBar) :is(.editingToolbarCommandItem, button[class^=editingToolbarCommandsubItem]):not(.editingToolbar-Divider-Line):not(.editingToolbarCommandsubItem-ai) svg.svg-icon * {
+body :is(#editingToolbarModalBar, #editingToolbarPopoverBar) :is(.editingToolbarCommandItem, button[class^=editingToolbarCommandsubItem]):not(.editingToolbar-Divider-Line):not(.editingToolbarCommandsubItem-ai),
+body :is(#editingToolbarModalBar, #editingToolbarPopoverBar) :is(.editingToolbarCommandItem, button[class^=editingToolbarCommandsubItem]):not(.editingToolbar-Divider-Line):not(.editingToolbarCommandsubItem-ai) *:not(.subitem),
+body :is(#editingToolbarModalBar, #editingToolbarPopoverBar) :is(.editingToolbarCommandItem, button[class^=editingToolbarCommandsubItem]):not(.editingToolbar-Divider-Line):not(.editingToolbarCommandsubItem-ai) svg.svg-icon,
+body :is(#editingToolbarModalBar, #editingToolbarPopoverBar) :is(.editingToolbarCommandItem, button[class^=editingToolbarCommandsubItem]):not(.editingToolbar-Divider-Line):not(.editingToolbarCommandsubItem-ai) svg.svg-icon * {
 animation: none;
-transition: none !important;
--webkit-transition: none !important;
+transition: none;
+-webkit-transition: none;
 }
 #editingToolbarModalBar ~.canvas-controls{
   top: calc(var(--size-4-2) + 50px);
@@ -1915,14 +1898,14 @@ transition: none !important;
 }
 
 
-div[data-type="thino_view"] .memo-editor-wrapper:has(#editingToolbarModalBar)
+div[data-type="thino_view"] .memo-editor-wrapper.has-editing-toolbar
 {
     padding-top:0;
     padding-left:0;
     padding-right:0;
 }
 
-div[data-type="thino_view"] .memo-editor-wrapper:has(#editingToolbarModalBar) .common-tools-wrapper
+div[data-type="thino_view"] .memo-editor-wrapper.has-editing-toolbar .common-tools-wrapper
 {
    padding-left:16px;
     padding-right:16px;
@@ -1933,7 +1916,7 @@ div[data-type="thino_view"] .memo-editor-wrapper #editingToolbarModalBar ~ .cm-e
     padding-left:16px;
     padding-right:16px;
 }
-div[data-type=thino_view] .common-editor-wrapper .common-editor-inputer:has(#editingToolbarModalBar)
+div[data-type=thino_view] .common-editor-wrapper .common-editor-inputer.has-editing-toolbar
 {
   min-height:118px;
 }
@@ -2529,7 +2512,7 @@ body.auto-hide-header .workspace-tab-header-container + .workspace-tab-container
 }
 .format-brush-cursor button[aria-label="Format Brush"]
 {
-    background-color: var(--background-modifier-hover) !important ;
+    background-color: var(--background-modifier-hover);
 }
 
 .theme-dark.format-brush-cursor .cm-content {
@@ -2593,12 +2576,12 @@ body.auto-hide-header .workspace-tab-header-container + .workspace-tab-container
 
  
 
-.is-phone .mod-root .workspace-leaf-content[data-type="markdown"] .view-content:has(.editingToolbarModalBar){
+.is-phone .mod-root .workspace-leaf-content[data-type="markdown"] .view-content.has-editing-toolbar{
   -webkit-mask-image: none;
 } 
 
  
-.is-mobile.is-hidden-nav .mod-root .workspace-leaf-content[data-type="markdown"]:has(.editingToolbarModalBar) .view-header
+.is-mobile.is-hidden-nav .mod-root .workspace-leaf-content[data-type="markdown"].has-editing-toolbar .view-header
 {
 
     display:none;
@@ -2611,12 +2594,12 @@ body.auto-hide-header .workspace-tab-header-container + .workspace-tab-container
      margin-top: calc(var(--safe-area-inset-top) + var(--view-header-height) + var(--toolbar-icon-size) + 10px);
 }
 
-.is-phone .mod-root .workspace-leaf-content .view-content:has(.editingToolbarModalBar) .markdown-source-view > .cm-editor > .cm-scroller {
+.is-phone .mod-root .workspace-leaf-content .view-content.has-editing-toolbar .markdown-source-view > .cm-editor > .cm-scroller {
   padding-top: 0px;
 }
  
 
-.is-phone .mod-root .workspace-leaf-content .view-content:has(.editingToolbarModalBar) .markdown-reading-view > .markdown-preview-view
+.is-phone .mod-root .workspace-leaf-content .view-content.has-editing-toolbar .markdown-reading-view > .markdown-preview-view
  {
   padding-top: calc(var(--safe-area-inset-top) + var(--view-header-height) + 36px);
 }

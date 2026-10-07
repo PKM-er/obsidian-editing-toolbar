@@ -658,6 +658,48 @@ async function executeAIToolbarAction(
   return plugin.aiManager.triggerInlineCompletion(editor);
 }
 
+const hideToolbarSyncedDocuments = new WeakSet<Document>();
+
+/**
+ * 同步编辑器 hide-toolbar 状态到工具栏（替代 CSS :has，官方性能建议）。
+ * hide-toolbar 类出现在编辑器上时（如 Hover Editor 的隐藏选项），隐藏工具栏。
+ */
+function syncHideToolbarState(doc: Document) {
+  const hidden = !!doc.querySelector(".hide-toolbar");
+  doc.querySelectorAll<HTMLElement>("#editingToolbarModalBar, #editingToolbarPopoverBar").forEach((bar) => {
+    bar.classList.toggle("editing-toolbar-force-hidden", hidden);
+  });
+}
+
+function ensureHideToolbarSync(doc: Document) {
+  if (hideToolbarSyncedDocuments.has(doc)) {
+    syncHideToolbarState(doc);
+    return;
+  }
+  hideToolbarSyncedDocuments.add(doc);
+  syncHideToolbarState(doc);
+  const scope = doc.querySelector(".workspace") ?? doc.body;
+  if (!scope) return;
+  // setTimeout 防抖（后台窗口的 requestAnimationFrame 会被暂停，导致状态同步被吞）
+  let syncTimer: number | null = null;
+  const observer = new MutationObserver(() => {
+    if (syncTimer !== null) return;
+    syncTimer = window.setTimeout(() => {
+      syncTimer = null;
+      syncHideToolbarState(doc);
+    }, 100);
+  });
+  observer.observe(scope, { subtree: true, attributes: true, attributeFilter: ["class"] });
+}
+
+/** 给工具栏宿主容器加标记类（供 CSS 替代 :has 的父级条件样式） */
+function markToolbarHostContainers(targetDom: HTMLElement) {
+  targetDom.closest(".view-content")?.addClass("has-editing-toolbar");
+  targetDom.closest(".workspace-leaf-content")?.addClass("has-editing-toolbar");
+  targetDom.closest(".memo-editor-wrapper")?.addClass("has-editing-toolbar");
+  targetDom.closest(".common-editor-inputer")?.addClass("has-editing-toolbar");
+}
+
 export function createDiv(selector: string) {
   const div = window.createDiv();
   div.addClass(selector);
@@ -1301,6 +1343,11 @@ export function editingToolbarPopover(
         // 如果没有找到任何目标元素，则退出
         if (!targetDom) {
           return;
+        }
+
+        ensureHideToolbarSync(targetDocument);
+        if (targetDom instanceof HTMLElement) {
+          markToolbarHostContainers(targetDom);
         }
 
         // 只有在没有工具栏时才添加 PopoverMenu

@@ -259,7 +259,7 @@ declare module "obsidian" {
 		/**
 		 * @public
 		 */
-		addItem(cb: (item: MenuItem) => any): this;
+		addItem(cb: (item: MenuItem) => void): this;
 		/**
 		 * @public
 		 */
@@ -280,7 +280,7 @@ declare module "obsidian" {
 		/**
 		 * @public
 		 */
-		onHide(callback: () => any): void;
+		onHide(callback: () => void): void;
 
 	}
 
