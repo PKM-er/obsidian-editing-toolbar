@@ -847,30 +847,37 @@ body[data-editing-toolbar-ai-busy="true"]
   opacity: 0.72;
 }
 
+/* ================= AI 自定义改写面板（Obsidian 原生风格） =================
+ * 全部使用 Obsidian 设计变量（prompt / 表单域 / 交互态 / 字体 / 间距 / 圆角 / 阴影），
+ * 随主题与用户外观设置自动适配。 */
+
 .editing-toolbar-ai-inline-prompt {
   position: fixed;
   z-index: 1001;
-  width: min(420px, calc(100vw - 24px));
+  width: min(440px, calc(100vw - 24px));
   max-width: 90vw;
-  padding: 10px;
-  border: 1px solid var(--background-modifier-border);
-  border-radius: 12px;
-  background: var(--background-primary);
-  box-shadow:
-    0 1px 2px rgba(0, 0, 0, 0.04),
-    0 8px 24px rgba(0, 0, 0, 0.12);
+  padding: var(--size-4-2, 8px);
+  border: var(--prompt-border-width, 1px) solid var(--prompt-border-color, var(--background-modifier-border));
+  border-radius: var(--prompt-radius, var(--radius-l, 12px));
+  background-color: var(--prompt-background, var(--background-primary));
+  box-shadow: var(--prompt-shadow, var(--shadow-s));
+  color: var(--text-normal);
+  font-family: var(--font-interface);
   overflow: hidden;
-  animation: et-prompt-in 0.14s ease-out;
+  animation: et-prompt-in 0.12s ease-out;
 }
 
 @keyframes et-prompt-in {
-  from { opacity: 0; transform: translateY(6px) scale(0.985); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
 }
+
+/* 面板内按钮统一由本插件控制，复位主题按钮样式 */
 .editing-toolbar-ai-inline-prompt.editing-toolbar-ai-inline-prompt button {
-    padding: unset;
-    box-shadow: none;
+  padding: unset;
+  box-shadow: none;
 }
+
 @media (max-width: 768px) {
   .editing-toolbar-ai-inline-prompt {
     width: calc(100vw - 16px);
@@ -882,39 +889,41 @@ body[data-editing-toolbar-ai-busy="true"]
   .editing-toolbar-ai-inline-prompt {
     width: calc(100vw - 8px);
     max-width: calc(100vw - 8px);
-    border-radius: 8px;
   }
 }
 
- 
+/* ---- 标题栏 ---- */
 
-@media (max-width: 768px) {
-  .editing-toolbar-ai-inline-prompt-header {
-    padding: 10px 12px;
-    min-height: 44px;
-  }
+.editing-toolbar-ai-inline-prompt-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--size-4-2, 8px);
+  padding: 0 0 var(--size-4-2, 8px);
+  margin-bottom: var(--size-4-2, 8px);
+  border-bottom: 1px solid var(--background-modifier-border);
+  user-select: none;
+}
+
+.editing-toolbar-ai-inline-prompt-header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--size-2-2, 4px);
+  flex-shrink: 0;
 }
 
 .editing-toolbar-ai-inline-prompt-drag-handle {
-  width: 30px;
-  height: 4px;
-  border-radius: 2px;
-  background: var(--background-modifier-border-hover);
+  width: var(--size-4-6, 24px);
+  height: var(--size-2-2, 4px);
+  border-radius: var(--radius-s, 4px);
+  background-color: var(--background-modifier-border);
   cursor: grab;
   flex-shrink: 0;
-  transition: background 0.15s ease, width 0.15s ease;
+  transition: background-color 0.15s ease;
 }
 
 .editing-toolbar-ai-inline-prompt-drag-handle:hover {
-  width: 40px;
-  background: var(--text-faint);
-}
-
-@media (max-width: 768px) {
-  .editing-toolbar-ai-inline-prompt-drag-handle {
-    width: 6px;
-    height: 24px;
-  }
+  background-color: var(--text-faint);
 }
 
 .editing-toolbar-ai-inline-prompt-drag-handle:active {
@@ -923,8 +932,8 @@ body[data-editing-toolbar-ai-busy="true"]
 
 .editing-toolbar-ai-inline-prompt-title {
   flex: 1;
-  font-size: 12px;
-  font-weight: 600;
+  font-size: var(--font-ui-small);
+  font-weight: var(--font-medium, 500);
   color: var(--text-normal);
   cursor: grab;
   white-space: nowrap;
@@ -936,273 +945,220 @@ body[data-editing-toolbar-ai-busy="true"]
   cursor: grabbing;
 }
 
-.editing-toolbar-ai-inline-prompt-header-actions {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  flex-shrink: 0;
+@media (max-width: 768px) {
+  .editing-toolbar-ai-inline-prompt-header {
+    min-height: 40px;
+  }
+
+  .editing-toolbar-ai-inline-prompt-drag-handle {
+    height: var(--size-2-3, 6px);
+  }
 }
-.editing-toolbar-ai-inline-prompt-header {
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
-  align-items: center;
-  padding: 2px 2px 8px;
-  margin-bottom: 4px;
-  border-bottom: 1px solid var(--background-modifier-border);
-  user-select: none;
-}
-.editing-toolbar-ai-inline-prompt-close {
+
+/* ---- 图标按钮（关闭 / 设置 / 历史） ---- */
+
+.editing-toolbar-ai-inline-prompt-close,
+.editing-toolbar-ai-inline-prompt-settings,
+.editing-toolbar-ai-inline-prompt-history-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 20px;
-  height: 20px;
+  width: var(--size-4-6, 24px);
+  height: var(--size-4-6, 24px);
   padding: 0;
   border: none;
-  border-radius: 6px;
-  background: transparent;
+  border-radius: var(--radius-s, 4px);
+  background-color: transparent;
   color: var(--text-muted);
+  box-shadow: none;
   cursor: pointer;
 }
 
-.editing-toolbar-ai-inline-prompt-close:hover {
-  background: var(--background-modifier-hover);
+.editing-toolbar-ai-inline-prompt-close:hover,
+.editing-toolbar-ai-inline-prompt-settings:hover,
+.editing-toolbar-ai-inline-prompt-history-btn:hover {
+  background-color: var(--background-modifier-hover);
   color: var(--text-normal);
 }
 
-.editing-toolbar-ai-inline-prompt-settings {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
-  padding: 0;
-  border: none;
-  border-radius: 6px;
-  background: transparent;
-  color: var(--text-muted);
-  cursor: pointer;
+.editing-toolbar-ai-inline-prompt-history-btn {
+  position: absolute;
+  top: var(--size-4-1, 4px);
+  right: var(--size-4-1, 4px);
+  color: var(--text-faint);
 }
 
-.editing-toolbar-ai-inline-prompt-settings:hover {
-  background: var(--background-modifier-hover);
-  color: var(--text-normal);
-}
+/* ---- 输入区 ---- */
 
 .editing-toolbar-ai-inline-prompt-input-wrapper {
   position: relative;
-  margin: 8px;
-  margin-bottom: 6px;
 }
 
 .editing-toolbar-ai-inline-prompt-input {
   width: 100%;
-  min-height: 56px;
+  min-height: 64px;
   max-height: 240px;
   resize: none;
-  padding: 8px 42px 8px 10px;
+  padding: var(--size-4-2, 8px) var(--size-4-8, 32px) var(--size-4-2, 8px) var(--size-4-3, 12px);
   border: 1px solid var(--background-modifier-border);
-  border-radius: 8px;
-  background: var(--background-secondary);
+  border-radius: var(--input-radius, var(--radius-s, 4px));
+  background-color: var(--background-modifier-form-field);
   color: var(--text-normal);
-  font-size: 13px;
-  line-height: 1.5;
+  font-family: inherit;
+  font-size: var(--font-ui-small);
+  line-height: var(--line-height-tight, 1.4);
+  box-shadow: none;
   overflow-y: hidden;
-  transition: height 0.1s ease;
+  transition: height 0.1s ease, border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
-@media (max-width: 768px) {
-  .editing-toolbar-ai-inline-prompt-input {
-    font-size: 14px;
-    min-height: 48px;
-    padding: 10px 32px 10px 12px;
-  }
-}
-
-@media (max-width: 480px) {
-  .editing-toolbar-ai-inline-prompt-input {
-    font-size: 16px;
-    min-height: 44px;
-  }
+.editing-toolbar-ai-inline-prompt-input:hover {
+  border-color: var(--background-modifier-border-hover);
 }
 
 .editing-toolbar-ai-inline-prompt-input:focus {
   outline: none;
-  border-color: var(--interactive-accent);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--interactive-accent) 18%, transparent);
-  background: var(--background-primary);
+  border-color: var(--background-modifier-border-focus);
+  box-shadow: 0 0 0 2px var(--background-modifier-border-focus);
 }
 
 .editing-toolbar-ai-inline-prompt-input::placeholder {
   color: var(--text-faint);
 }
 
-.editing-toolbar-ai-inline-prompt-history-btn {
+@media (max-width: 768px) {
+  .editing-toolbar-ai-inline-prompt-input {
+    min-height: 56px;
+  }
+}
+
+/* ---- 发送按钮 ---- */
+
+.editing-toolbar-ai-inline-prompt-send-btn {
   position: absolute;
-  top: 6px;
-  right: 6px;
-  width: 22px;
-  height: 22px;
-  padding: 0;
-  border: none;
-  border-radius: 5px;
-  background: transparent;
-  color: var(--text-muted);
-  cursor: pointer;
+  bottom: var(--size-4-1, 4px);
+  right: var(--size-4-1, 4px);
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.15s ease;
+  width: var(--size-4-6, 24px);
+  height: var(--size-4-6, 24px);
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-s, 4px);
+  background-color: var(--interactive-accent);
+  color: var(--text-on-accent);
+  box-shadow: none;
+  cursor: pointer;
+  flex-shrink: 0;
+  z-index: 1;
+  transition: background-color 0.15s ease;
 }
 
-.editing-toolbar-ai-inline-prompt-history-btn:hover {
-  background: var(--background-modifier-hover);
-  color: var(--text-normal);
+.editing-toolbar-ai-inline-prompt-send-btn:hover:not(:disabled) {
+  background-color: var(--interactive-accent-hover);
 }
+
+.editing-toolbar-ai-inline-prompt-send-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  background-color: var(--background-modifier-border);
+}
+
+@media (max-width: 768px) {
+  .editing-toolbar-ai-inline-prompt-send-btn {
+    width: var(--size-4-9, 36px);
+    height: var(--size-4-9, 36px);
+  }
+}
+
+/* ---- 历史下拉 ---- */
 
 .editing-toolbar-ai-inline-prompt-history-dropdown {
   position: absolute;
-  top: 32px;
+  top: calc(var(--size-4-6, 24px) + var(--size-4-2, 8px));
   right: 0;
   width: 100%;
   max-height: 180px;
   overflow-y: auto;
-  border: 1px solid var(--background-modifier-border);
-  border-radius: 6px;
-  background: var(--background-primary);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  padding: var(--size-2-1, 2px);
+  border: var(--prompt-border-width, 1px) solid var(--prompt-border-color, var(--background-modifier-border));
+  border-radius: var(--radius-m, 8px);
+  background-color: var(--prompt-background, var(--background-primary));
+  box-shadow: var(--shadow-s);
   z-index: 10;
 }
 
 .editing-toolbar-ai-inline-prompt-history-item {
-  padding: 6px 10px;
+  padding: var(--size-2-3, 6px) var(--size-4-2, 8px);
+  border-radius: var(--radius-s, 4px);
   cursor: pointer;
-  font-size: 12px;
+  font-size: var(--font-ui-smaller);
   color: var(--text-normal);
-  border-bottom: 1px solid var(--background-modifier-border);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  transition: background 0.1s ease;
-}
-
-.editing-toolbar-ai-inline-prompt-history-item:last-child {
-  border-bottom: none;
 }
 
 .editing-toolbar-ai-inline-prompt-history-item:hover {
-  background: var(--background-modifier-hover);
+  background-color: var(--background-modifier-hover);
 }
 
 .editing-toolbar-ai-inline-prompt-history-empty {
-  padding: 10px;
+  padding: var(--size-4-2, 8px);
   text-align: center;
-  font-size: 11px;
+  font-size: var(--font-ui-smaller);
   color: var(--text-faint);
 }
+
+/* ---- 模板快选 ---- */
 
 .editing-toolbar-ai-inline-prompt-templates {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
-  margin-bottom: 6px;
+  gap: var(--size-2-2, 4px);
+  margin-bottom: var(--size-4-1, 4px);
 }
- 
+
 .editing-toolbar-ai-inline-prompt-template-btn.editing-toolbar-ai-inline-prompt-template-btn {
-    box-shadow: none;
-    padding: 0px 6px;
-    height: 22px;
-    border: 1px solid var(--background-modifier-border);
-    border-radius: 8px;
-    background: var(--background-secondary);
-    color: var(--text-muted);
-    font-size: 10px;
-    cursor: pointer;
-    transition: all 0.12s ease;
-    white-space: nowrap;
+  height: var(--size-4-6, 24px);
+  padding: 0 var(--size-4-2, 8px);
+  border: none;
+  border-radius: var(--radius-s, 4px);
+  background-color: var(--background-modifier-hover);
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.12s ease, color 0.12s ease;
 }
 
 .editing-toolbar-ai-inline-prompt-template-btn:hover {
-  background: var(--interactive-accent);
-  color: var(--text-on-accent);
-  border-color: var(--interactive-accent);
-  transform: translateY(-1px);
+  background-color: var(--background-modifier-active-hover, var(--interactive-hover));
+  color: var(--text-normal);
 }
+
+/* ---- 底部与提示 ---- */
 
 .editing-toolbar-ai-inline-prompt-footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap:15px;
-}
-
-.editing-toolbar-ai-inline-prompt-send-btn {
-  position: absolute;
-  bottom: 6px;
-  right: 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 22px;
-  height: 22px;
-  padding: 0;
-  border: none;
-  border-radius: 6px;
-  background: var(--interactive-accent);
-  color: var(--text-on-accent);
-  cursor: pointer;
-  transition: all 0.15s ease;
-  flex-shrink: 0;
-  z-index: 1;
-}
-
-@media (max-width: 768px) {
-  .editing-toolbar-ai-inline-prompt-send-btn {
-    width: 32px;
-    height: 32px;
-  }
-
-  .editing-toolbar-ai-inline-prompt-send-btn svg {
-    width: 14px;
-    height: 14px;
-  }
-}
-
-@media (max-width: 480px) {
-  .editing-toolbar-ai-inline-prompt-send-btn {
-    width: 36px;
-    height: 36px;
-  }
-
-  .editing-toolbar-ai-inline-prompt-send-btn svg {
-    width: 16px;
-    height: 16px;
-  }
-}
-
-.editing-toolbar-ai-inline-prompt-send-btn:hover:not(:disabled) {
-  background: var(--interactive-accent-hover);
-  transform: scale(1.08);
-}
-
-.editing-toolbar-ai-inline-prompt-send-btn:disabled {
-  opacity: 0.3;
-  cursor: not-allowed;
-  background: var(--background-modifier-border);
+  gap: var(--size-4-2, 8px);
 }
 
 .editing-toolbar-ai-inline-prompt-hint {
-
-  font-size: 10px;
+  font-size: var(--font-ui-smaller);
   color: var(--text-faint);
 }
 
+/* ---- 上下文区 ---- */
+
 .editing-toolbar-ai-inline-prompt-context {
-  margin-bottom: 8px;
-  padding: 8px;
-  background: var(--background-secondary);
-  border-radius: 6px;
+  margin-bottom: var(--size-4-2, 8px);
+  padding: var(--size-4-2, 8px);
+  background-color: var(--background-secondary);
+  border-radius: var(--radius-m, 8px);
   max-height: 120px;
   overflow-y: auto;
 }
@@ -1210,19 +1166,19 @@ body[data-editing-toolbar-ai-busy="true"]
 .editing-toolbar-ai-inline-prompt-context-stats {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 6px 10px;
-  margin-bottom: 8px;
-  background: var(--background-modifier-border);
-  border-radius: 6px;
-  font-size: 10px;
+  gap: var(--size-4-3, 12px);
+  padding: var(--size-2-3, 6px) var(--size-4-2, 8px);
+  margin-bottom: var(--size-4-2, 8px);
+  background-color: var(--background-modifier-hover);
+  border-radius: var(--radius-s, 4px);
+  font-size: var(--font-ui-smaller);
   color: var(--text-muted);
 }
 
 .editing-toolbar-ai-inline-prompt-context-stats-item {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--size-2-2, 4px);
 }
 
 .editing-toolbar-ai-inline-prompt-context-stats-item svg {
@@ -1232,12 +1188,12 @@ body[data-editing-toolbar-ai-busy="true"]
 .editing-toolbar-ai-inline-prompt-context-item {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 4px 6px;
-  margin-bottom: 4px;
-  background: var(--background-primary);
-  border-radius: 4px;
-  font-size: 11px;
+  gap: var(--size-2-3, 6px);
+  padding: var(--size-2-2, 4px) var(--size-2-3, 6px);
+  margin-bottom: var(--size-2-2, 4px);
+  background-color: var(--background-primary);
+  border-radius: var(--radius-s, 4px);
+  font-size: var(--font-ui-smaller);
 }
 
 .editing-toolbar-ai-inline-prompt-context-item:last-child {
@@ -1246,7 +1202,7 @@ body[data-editing-toolbar-ai-busy="true"]
 
 .editing-toolbar-ai-inline-prompt-context-label {
   color: var(--text-accent);
-  font-weight: 500;
+  font-weight: var(--font-medium, 500);
   flex-shrink: 0;
 }
 
@@ -1259,94 +1215,96 @@ body[data-editing-toolbar-ai-busy="true"]
 }
 
 .editing-toolbar-ai-inline-prompt-context-remove {
-  padding: 2px;
-  border: none;
-  background: transparent;
-  color: var(--text-muted);
-  cursor: pointer;
-  border-radius: 3px;
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
+  padding: var(--size-2-1, 2px);
+  border: none;
+  border-radius: var(--radius-s, 4px);
+  background-color: transparent;
+  color: var(--text-muted);
   box-shadow: none;
-  
+  cursor: pointer;
+  flex-shrink: 0;
 }
 
 .editing-toolbar-ai-inline-prompt-context-remove:hover {
-  background: var(--background-modifier-error);
+  background-color: var(--background-modifier-error);
   color: var(--text-error);
 }
 
+/* ---- @ 提及下拉 ---- */
+
 .editing-toolbar-ai-inline-prompt-mention-dropdown {
-  
   bottom: 100%;
   left: 0;
   width: 100%;
   max-height: 200px;
   overflow-y: auto;
-  margin-bottom: 4px;
-  border: 1px solid var(--background-modifier-border);
-  border-radius: 6px;
-  background: var(--background-primary);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  margin-bottom: var(--size-2-2, 4px);
+  padding: var(--size-2-1, 2px);
+  border: var(--prompt-border-width, 1px) solid var(--prompt-border-color, var(--background-modifier-border));
+  border-radius: var(--radius-m, 8px);
+  background-color: var(--prompt-background, var(--background-primary));
+  box-shadow: var(--shadow-s);
   z-index: 10;
 }
 
 .editing-toolbar-ai-inline-prompt-mention-item {
-  padding: 8px 12px;
+  padding: var(--size-2-3, 6px) var(--size-4-2, 8px);
+  border-radius: var(--radius-s, 4px);
   cursor: pointer;
-  font-size: 12px;
+  font-size: var(--font-ui-smaller);
   color: var(--text-normal);
-  border-bottom: 1px solid var(--background-modifier-border);
-  transition: background 0.1s ease;
-}
-
-.editing-toolbar-ai-inline-prompt-mention-item:last-child {
-  border-bottom: none;
 }
 
 .editing-toolbar-ai-inline-prompt-mention-item:hover,
 .editing-toolbar-ai-inline-prompt-mention-item.selected {
-  background: var(--background-modifier-hover);
+  background-color: var(--background-modifier-hover);
 }
 
 .editing-toolbar-ai-inline-prompt-mention-icon {
   display: inline-block;
-  width: 16px;
-  margin-right: 6px;
+  width: var(--size-4-4, 16px);
+  margin-right: var(--size-2-3, 6px);
   color: var(--text-accent);
 }
+
+/* ---- 操作按钮 ---- */
 
 .editing-toolbar-ai-inline-prompt-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 8px;
-  margin-top: 10px;
+  gap: var(--size-4-2, 8px);
+  margin-top: var(--size-4-2, 8px);
 }
 
 .editing-toolbar-ai-inline-prompt-action {
   min-width: 72px;
-  padding: 8px 12px;
-  border: 1px solid var(--background-modifier-border);
-  border-radius: 10px;
-  background: var(--background-secondary);
+  padding: var(--size-4-1, 4px) var(--size-4-3, 12px);
+  border: none;
+  border-radius: var(--button-radius, var(--radius-s, 4px));
+  background-color: var(--interactive-normal);
   color: var(--text-normal);
+  box-shadow: none;
   cursor: pointer;
 }
 
 .editing-toolbar-ai-inline-prompt-action:hover:not(:disabled) {
-  background: var(--background-modifier-hover);
+  background-color: var(--interactive-hover);
 }
 
 .editing-toolbar-ai-inline-prompt-action.mod-cta {
-  border-color: var(--interactive-accent);
-  background: var(--interactive-accent);
-  color: var(--text-on-accent, #fff);
+  background-color: var(--interactive-accent);
+  color: var(--text-on-accent);
+}
+
+.editing-toolbar-ai-inline-prompt-action.mod-cta:hover:not(:disabled) {
+  background-color: var(--interactive-accent-hover);
 }
 
 .editing-toolbar-ai-inline-prompt-action:disabled {
-  opacity: 0.55;
+  opacity: 0.5;
   cursor: not-allowed;
 }
 
