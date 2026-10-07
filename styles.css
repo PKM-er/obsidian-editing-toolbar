@@ -798,29 +798,23 @@ button[class^=editingToolbarCommandsubItem]::after {
 }
 
 
-  :is(#editingToolbarModalBar, #editingToolbarPopoverBar) button.editingToolbarCommandsubItem-ai,
 body[data-editing-toolbar-ai-busy="true"]
-  :is(#editingToolbarModalBar, #editingToolbarPopoverBar) button.editingToolbarCommandsubItem-ai,
-  :is(#editingToolbarModalBar[data-toolbar-style="fixed"], #editingToolbarModalBar[data-toolbar-style="mobile"], #editingToolbarPopoverBar[data-toolbar-style="fixed"], #editingToolbarPopoverBar[data-toolbar-style="mobile"]) button.editingToolbarCommandsubItem-ai {
+  :is(#editingToolbarModalBar, #editingToolbarPopoverBar) button.editingToolbarCommandsubItem-ai {
   opacity: 0.82;
   pointer-events: none;
   overflow: hidden;
 }
 
-  :is(#editingToolbarModalBar, #editingToolbarPopoverBar) button.editingToolbarCommandsubItem-ai::before,
 body[data-editing-toolbar-ai-busy="true"]
-  :is(#editingToolbarModalBar, #editingToolbarPopoverBar) button.editingToolbarCommandsubItem-ai::before,
-  :is(#editingToolbarModalBar[data-toolbar-style="fixed"], #editingToolbarModalBar[data-toolbar-style="mobile"], #editingToolbarPopoverBar[data-toolbar-style="fixed"], #editingToolbarPopoverBar[data-toolbar-style="mobile"]) button.editingToolbarCommandsubItem-ai::before {
+  :is(#editingToolbarModalBar, #editingToolbarPopoverBar) button.editingToolbarCommandsubItem-ai::before {
   opacity: 1;
   background: linear-gradient(135deg, color-mix(in srgb, var(--interactive-accent) 14%, transparent), color-mix(in srgb, var(--background-secondary) 90%, transparent));
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--interactive-accent) 14%, transparent), 0 8px 22px color-mix(in srgb, var(--interactive-accent) 10%, transparent), inset 0 1px 0 color-mix(in srgb, white 16%, transparent);
   animation: cm-ai-toolbar-glow 2.1s ease-in-out infinite;
 }
 
-  :is(#editingToolbarModalBar, #editingToolbarPopoverBar) button.editingToolbarCommandsubItem-ai::after,
 body[data-editing-toolbar-ai-busy="true"]
-  :is(#editingToolbarModalBar, #editingToolbarPopoverBar) button.editingToolbarCommandsubItem-ai::after,
-  :is(#editingToolbarModalBar[data-toolbar-style="fixed"], #editingToolbarModalBar[data-toolbar-style="mobile"], #editingToolbarPopoverBar[data-toolbar-style="fixed"], #editingToolbarPopoverBar[data-toolbar-style="mobile"]) button.editingToolbarCommandsubItem-ai::after {
+  :is(#editingToolbarModalBar, #editingToolbarPopoverBar) button.editingToolbarCommandsubItem-ai::after {
   content: "";
   position: absolute;
   inset: -1px;
@@ -833,26 +827,18 @@ body[data-editing-toolbar-ai-busy="true"]
   mix-blend-mode: screen;
 }
 
-  :is(#editingToolbarModalBar, #editingToolbarPopoverBar) button.editingToolbarCommandsubItem-ai > svg,
-  :is(#editingToolbarModalBar, #editingToolbarPopoverBar) button.editingToolbarCommandsubItem-ai svg.svg-icon,
 body[data-editing-toolbar-ai-busy="true"]
   :is(#editingToolbarModalBar, #editingToolbarPopoverBar) button.editingToolbarCommandsubItem-ai > svg,
 body[data-editing-toolbar-ai-busy="true"]
-  :is(#editingToolbarModalBar, #editingToolbarPopoverBar) button.editingToolbarCommandsubItem-ai svg.svg-icon,
-  :is(#editingToolbarModalBar[data-toolbar-style="fixed"], #editingToolbarModalBar[data-toolbar-style="mobile"], #editingToolbarPopoverBar[data-toolbar-style="fixed"], #editingToolbarPopoverBar[data-toolbar-style="mobile"]) button.editingToolbarCommandsubItem-ai > svg,
-  :is(#editingToolbarModalBar[data-toolbar-style="fixed"], #editingToolbarModalBar[data-toolbar-style="mobile"], #editingToolbarPopoverBar[data-toolbar-style="fixed"], #editingToolbarPopoverBar[data-toolbar-style="mobile"]) button.editingToolbarCommandsubItem-ai svg.svg-icon {
+  :is(#editingToolbarModalBar, #editingToolbarPopoverBar) button.editingToolbarCommandsubItem-ai svg.svg-icon {
   animation: cm-ai-toolbar-breathe 1.8s ease-in-out infinite;
   filter: drop-shadow(0 0 8px color-mix(in srgb, var(--interactive-accent) 26%, transparent));
 }
 
-  :is(#editingToolbarModalBar, #editingToolbarPopoverBar) button.editingToolbarCommandsubItem-ai .editing-toolbar-ai-button-label,
-  :is(#editingToolbarModalBar, #editingToolbarPopoverBar) button.editingToolbarCommandsubItem-ai .editing-toolbar-ai-button-arrow,
 body[data-editing-toolbar-ai-busy="true"]
   :is(#editingToolbarModalBar, #editingToolbarPopoverBar) button.editingToolbarCommandsubItem-ai .editing-toolbar-ai-button-label,
 body[data-editing-toolbar-ai-busy="true"]
-  :is(#editingToolbarModalBar, #editingToolbarPopoverBar) button.editingToolbarCommandsubItem-ai .editing-toolbar-ai-button-arrow,
-  :is(#editingToolbarModalBar[data-toolbar-style="fixed"], #editingToolbarModalBar[data-toolbar-style="mobile"], #editingToolbarPopoverBar[data-toolbar-style="fixed"], #editingToolbarPopoverBar[data-toolbar-style="mobile"]) button.editingToolbarCommandsubItem-ai .editing-toolbar-ai-button-label,
-  :is(#editingToolbarModalBar[data-toolbar-style="fixed"], #editingToolbarModalBar[data-toolbar-style="mobile"], #editingToolbarPopoverBar[data-toolbar-style="fixed"], #editingToolbarPopoverBar[data-toolbar-style="mobile"]) button.editingToolbarCommandsubItem-ai .editing-toolbar-ai-button-arrow {
+  :is(#editingToolbarModalBar, #editingToolbarPopoverBar) button.editingToolbarCommandsubItem-ai .editing-toolbar-ai-button-arrow {
   color: var(--text-muted);
   animation: cm-ai-label-breathe 1.8s ease-in-out infinite;
 }
@@ -1639,9 +1625,9 @@ body :is(#editingToolbarModalBar, #editingToolbarPopoverBar) :is(.editingToolbar
 body :is(#editingToolbarModalBar, #editingToolbarPopoverBar) :is(.editingToolbarCommandItem, button[class^=editingToolbarCommandsubItem]):not(.editingToolbar-Divider-Line):not(.editingToolbarCommandsubItem-ai) *:not(.subitem),
 body :is(#editingToolbarModalBar, #editingToolbarPopoverBar) :is(.editingToolbarCommandItem, button[class^=editingToolbarCommandsubItem]):not(.editingToolbar-Divider-Line):not(.editingToolbarCommandsubItem-ai) svg.svg-icon,
 body :is(#editingToolbarModalBar, #editingToolbarPopoverBar) :is(.editingToolbarCommandItem, button[class^=editingToolbarCommandsubItem]):not(.editingToolbar-Divider-Line):not(.editingToolbarCommandsubItem-ai) svg.svg-icon * {
-animation: none;
-transition: none;
--webkit-transition: none;
+animation: none !important;
+transition: none !important;
+-webkit-transition: none !important;
 }
 #editingToolbarModalBar ~.canvas-controls{
   top: calc(var(--size-4-2) + 50px);
