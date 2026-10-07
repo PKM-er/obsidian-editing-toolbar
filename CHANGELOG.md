@@ -1,5 +1,46 @@
 # Changelog
 
+## 4.1.8 (2026-10-07)
+### styles.css :has 与 !important 全部清零（官方性能与样式建议）
+:has 23 → 0：
+- AI 加载状态 15 处删除冗余 :has 路径（body[data-editing-toolbar-ai-busy]
+  状态属性选择器已覆盖，属性由 AIEditorManager 维护）
+- hide-toolbar 2 处：新增 MutationObserver 同步 editing-toolbar-force-hidden
+  类（setTimeout 防抖，替代 :has 跨级条件）
+- 手机端 4 处 + thino 3 处：工具栏挂载时给宿主容器加 has-editing-toolbar
+  标记类，CSS 改用标记类
+!important 12 → 0：
+- following 过渡/gap/拖拽把手：特异性增强或确认无对手后移除
+- font-size initial：body 前缀 + 双写类至 (1,3,0)
+- AI 内联面板按钮 ×4：双写类增强
+- 主题动画防御 ×2：4 支选择器加 body 前缀
+- 格式刷高亮：hover 规则 :not 排除 Format Brush 按钮
+- hide-toolbar 旧规则并入 force-hidden 类方案
+其他：
+- d.ts Menu 增强声明 addItem/onHide 回调 any → void
+- Obsidian 1.14.4 实测回归：hide-toolbar 隐藏/恢复、AI busy 状态、调色板
+  颜色加固、AI 按钮 padding、设置页预览、跟随工具栏全部正常，零错误
+### 调色板色块颜色加固为内联 !important（issue #88）
+主题/插件样式表的 !important 会把调色板色块覆盖成纯色（用户环境
+computed 全部变 #232323）。createTablecell 渲染时把 HTML style 属性里的
+background-color 提升为内联 !important，样式表无法再覆盖。
+已在注入覆盖 CSS 的环境下实测：75 个色块颜色全部保持正确。
+### Update manifest.json and CHANGELOG.md for version 4.1.7
+### 修复 1.13.x 设置子页面兼容性 + setFontcolor 崩溃 + 清理 27 处 !important
+- 修复 Obsidian 1.13+/1.14+ 设置子页面无法进入：声明式渲染器把 render()
+  返回值当 cleanup 调用，表达式回调返回 Setting 组件导致核心抛
+  "t is not a function"；getSettingDefinitions 出口统一规范化返回值
+- 修复无选区点击调色板色块的 TypeError：setFontcolor 模块级函数误用
+  this.plugin，签名新增 plugin 参数并传入全部调用点
+- styles.css 清理 27 处 !important（39→12，经 CDP computed-style 逐条实测
+  确认无视觉变化；3 处承重的以选择器增强/删除死代码替代；保留 12 处必要的
+  主题防御并注释说明）；删除标准 mask-image 行消除 css-masks 兼容警告
+- scorecard 清理：d.ts any 4 处、不必要断言、enabledPlugins 改 Set 类型
+- Obsidian 1.14.4 实测回归：工具栏/调色板/AI 按钮/设置页预览/跟随工具栏
+  全部正常，控制台零错误
+### Update manifest.json and CHANGELOG.md for version 4.1.6
+
+
 ### styles.css :has 全部清零（23 → 0，官方性能建议）
 - AI 加载状态 15 处：:has(.cm-ai-loading / .cm-ai-result-panel[data-phase=streaming])
   冗余路径删除，保留已有的 body[data-editing-toolbar-ai-busy] 状态属性选择器
