@@ -1,5 +1,33 @@
 # Changelog
 
+## 4.1.9 (2026-10-07)
+### Update manifest.json and versions.json for version 4.1.9
+### 修复 AI 自定义改写面板无法打开的问题
+- 面板类操作（自定义改写 / Canvas 提示）不再受 provider 登录态检查拦截，直接打开；
+  provider 检查仅保留给真正发起 AI 请求的操作（行内补全、改写指令等），未登录时在发送环节提示
+- 面板渲染增加陈旧引用自愈：面板 DOM 被外部移除时（全屏模式的 body 节点搬移观察器、
+  工作区重建、其他插件清理 body 节点），管理器引用会脱离 DOM，导致后续打开跳过创建、
+  点击无任何反应；现在检测到引用脱离 DOM 即丢弃并重建
+- 覆盖 AI 菜单项与 AI 主按钮两条点击路径
+### AI 自定义改写面板外观改为 Obsidian 原生风格
+- 面板改用 Obsidian 设计变量：prompt 系列（--prompt-radius/-border-color/-background/-shadow）、
+  表单域（--background-modifier-form-field）、交互态（--interactive-normal/-hover/-accent）、
+  字体/间距/圆角/阴影令牌，随主题与用户外观设置自适应；输入框 hover/focus 采用原生表单域反馈
+### 修复 AI 菜单被 PKMer 网络检查阻塞 + 刷新超时保护
+- AI 下拉菜单不再在弹出前等待网络检查（此前 PKMer 服务慢时菜单弹不出来）；
+  登录状态改为点击菜单项时动态检查，并后台预热
+- token 刷新加 3 秒超时上限，网络挂起不再阻塞交互
+### 主题动画防御去掉 !important，改用 id 双写超高特异性
+- animation/transition 的 none 恢复为普通声明；防御选择器特异性增强至 (2,x,x) 级，
+  实测可压制普通高特异性及带 !important 的主题图标动画
+### 修复 4.1.8 回归：AI 按钮无法点击 + 工具栏闪烁
+- 删除 AI busy 规则中的孤儿选择器行（曾导致 AI 按钮常驻 pointer-events: none 与循环动画）
+- 主题动画防御恢复生效（防主题 svg 循环动画导致的工具栏闪烁）
+### AI 自定义改写面板：修复 1.14 下创建失败 + 外观优化
+- 面板构建改用原生 createElement（24 处）：Obsidian 1.14 的 enhance.js 会 patch
+  HTMLDocument 的 createDiv/createEl/createSpan 帮助函数，导致面板创建失败、输入框不出现
+- 外观改简约精致风：实色背景 + 细边框 + 双层柔和阴影，去除毛玻璃
+- 拖动手柄改横向圆角胶囊（hover 加宽提亮）；标题栏加分隔线
 ## 4.1.8 (2026-10-07)
 ### styles.css :has 与 !important 全部清零（官方性能与样式建议）
 :has 23 → 0：

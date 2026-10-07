@@ -160,4 +160,6 @@ jobs:
                 git config --local user.name "GitHub Action"
                 git add manifest.json CHANGELOG.md
                 git commit -m "Update manifest.json and CHANGELOG.md for version ${{ steps.get_version.outputs.version }}" || echo "No changes to commit"
+                # 回推前先与远端同步，避免期间 master 有新提交导致 non-fast-forward 失败
+                git pull --rebase origin master || true
                 git push origin HEAD:master
