@@ -1642,7 +1642,9 @@ export function editingToolbarPopover(
 
             const openAIMenu = async (evt: MouseEvent) => {
               ignorePrimaryActionUntil = Date.now() + 240;
-              const providerReady = (await plugin.aiManager.getToolbarRouteState()) !== "unavailable";
+              // 菜单立即弹出：登录状态改为点击菜单项时动态检查；此处仅后台预热 token 刷新
+              // （此前 await 路由状态会走网络，PKMer 服务慢时菜单弹不出来，表现为点击无反应）
+              void plugin.aiManager.getToolbarRouteState().catch(() => {});
               const editor = plugin.commandsManager.getActiveEditor();
               const isCanvasScene = app.workspace.getActiveViewOfType(ItemView)?.getViewType() === "canvas";
               const completionHotkey = getHotkey(app, "editing-toolbar:ai-inline-completion", false);
@@ -1661,7 +1663,7 @@ export function editingToolbarPopover(
                 commandIdForLabel?: string;
               }) => {
                 const runAction = async () => {
-                  if (!providerReady) {
+                  if ((await plugin.aiManager.getToolbarRouteState()) === "unavailable") {
                     new Notice(await plugin.aiManager.getProviderRouteStatusText());
                     return;
                   }
@@ -1713,7 +1715,7 @@ export function editingToolbarPopover(
                         .setTitle(t(action.title))
                         .setIcon(action.icon)
                         .onClick(async () => {
-                          if (!providerReady) {
+                          if ((await plugin.aiManager.getToolbarRouteState()) === "unavailable") {
                             new Notice(await plugin.aiManager.getProviderRouteStatusText());
                             return;
                           }
