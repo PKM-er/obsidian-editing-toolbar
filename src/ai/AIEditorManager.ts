@@ -1732,6 +1732,12 @@ export class AIEditorManager {
 
   private renderInlineCustomPrompt(editor: Editor, view: EditorView, initialSelection?: string): void {
     const doc = view.dom.ownerDocument;
+    // 自愈：面板 DOM 可能被外部移除（全屏模式的 body 观察器会把新增节点搬入编辑器容器，
+    // 容器销毁时面板随之消失；第三方插件也可能清理 body 节点）。若引用已脱离 DOM
+    // 则丢弃并重建，避免“打开面板无反应”。
+    if (this.inlineCustomPromptEl && !this.inlineCustomPromptEl.isConnected) {
+      this.closeInlineCustomPrompt();
+    }
     if (!this.inlineCustomPromptEl) {
       const promptEl = doc.createElement("div");
       promptEl.className = "editing-toolbar-ai-inline-prompt";
