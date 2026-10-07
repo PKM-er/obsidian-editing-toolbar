@@ -852,13 +852,20 @@ body[data-editing-toolbar-ai-busy="true"]
   z-index: 1001;
   width: min(420px, calc(100vw - 24px));
   max-width: 90vw;
-  padding: 8px;
+  padding: 10px;
   border: 1px solid var(--background-modifier-border);
   border-radius: 12px;
   background: var(--background-primary);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-  backdrop-filter: blur(8px);
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.04),
+    0 8px 24px rgba(0, 0, 0, 0.12);
   overflow: hidden;
+  animation: et-prompt-in 0.14s ease-out;
+}
+
+@keyframes et-prompt-in {
+  from { opacity: 0; transform: translateY(6px) scale(0.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }
 .editing-toolbar-ai-inline-prompt.editing-toolbar-ai-inline-prompt button {
     padding: unset;
@@ -889,19 +896,18 @@ body[data-editing-toolbar-ai-busy="true"]
 }
 
 .editing-toolbar-ai-inline-prompt-drag-handle {
-  width: 4px;
-  height: 20px;
-  background: linear-gradient(
-    to right,
-    var(--background-modifier-border) 0%,
-    var(--background-modifier-border) 33%,
-    transparent 33%,
-    transparent 66%,
-    var(--background-modifier-border) 66%,
-    var(--background-modifier-border) 100%
-  );
+  width: 30px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--background-modifier-border-hover);
   cursor: grab;
   flex-shrink: 0;
+  transition: background 0.15s ease, width 0.15s ease;
+}
+
+.editing-toolbar-ai-inline-prompt-drag-handle:hover {
+  width: 40px;
+  background: var(--text-faint);
 }
 
 @media (max-width: 768px) {
@@ -941,6 +947,9 @@ body[data-editing-toolbar-ai-busy="true"]
   justify-content: space-between;
   gap: 8px;
   align-items: center;
+  padding: 2px 2px 8px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid var(--background-modifier-border);
   user-select: none;
 }
 .editing-toolbar-ai-inline-prompt-close {
@@ -1021,7 +1030,8 @@ body[data-editing-toolbar-ai-busy="true"]
 .editing-toolbar-ai-inline-prompt-input:focus {
   outline: none;
   border-color: var(--interactive-accent);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--interactive-accent) 15%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--interactive-accent) 18%, transparent);
+  background: var(--background-primary);
 }
 
 .editing-toolbar-ai-inline-prompt-input::placeholder {
