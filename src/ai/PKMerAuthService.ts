@@ -142,7 +142,11 @@ export class PKMerAuthService {
       return true;
     }
     if (this.memRefreshToken) {
-      const refreshed = await this.refreshTokens();
+      // 刷新走网络：加超时保护，避免 PKMer 服务慢/网络挂起时阻塞 AI 菜单与操作
+      const refreshed = await Promise.race([
+        this.refreshTokens(),
+        new Promise<boolean>((resolve) => window.setTimeout(() => resolve(true), 3000)),
+      ]);
       this.cachedVerified = refreshed;
       return refreshed;
     }
