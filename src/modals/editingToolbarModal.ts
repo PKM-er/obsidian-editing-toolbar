@@ -1348,7 +1348,7 @@ export function editingToolbarPopover(
         }
 
         ensureHideToolbarSync(targetDocument);
-        if (targetDom instanceof HTMLElement) {
+        if (targetDom.instanceOf(HTMLElement)) {
           markToolbarHostContainers(targetDom);
         }
 

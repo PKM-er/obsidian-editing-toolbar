@@ -571,8 +571,8 @@ export default class editingToolbarPlugin extends Plugin {
       'contextmenu',
       e => {
         if (this.settings.isLoadOnMobile && Platform.isMobile && this.isFollowingToolbarActive()) {
-          const { target } = e;
-          if (target instanceof HTMLElement) {
+          const target = e.target as Node | null;
+          if (target?.instanceOf(HTMLElement)) {
             const iseditor = target.closest('.cm-editor') !== null;
             if (iseditor) {
               e.preventDefault();
