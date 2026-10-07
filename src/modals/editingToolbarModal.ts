@@ -615,11 +615,8 @@ async function executeAIToolbarAction(
   actionId: string,
   editor?: Editor | null,
 ): Promise<boolean> {
-  if ((await plugin.aiManager.getToolbarRouteState()) === "unavailable") {
-    new Notice(await plugin.aiManager.getProviderRouteStatusText());
-    return false;
-  }
-
+  // 面板类操作（自定义改写 / Canvas 提示）不依赖 provider，直接打开；
+  // provider 检查只用于真正发起 AI 请求的操作。
   if (actionId === "editing-toolbar:ai-canvas-expand") {
     return plugin.aiManager.openCanvasNodeExpansionModal();
   }
@@ -628,15 +625,20 @@ async function executeAIToolbarAction(
     return plugin.aiManager.openCanvasGlobalPromptModal();
   }
 
-  if (actionId === "editing-toolbar:ai-inline-completion") {
-    return plugin.aiManager.triggerInlineCompletion(editor);
-  }
-
   if (actionId === "editing-toolbar:ai-tools:custom" || actionId === "editing-toolbar:ai-rewrite-custom") {
     if (plugin.app.workspace.getActiveViewOfType(ItemView)?.getViewType() === "canvas" && !editor) {
       return plugin.aiManager.openCanvasGlobalPromptModal();
     }
     return plugin.aiManager.openCustomRewrite(editor);
+  }
+
+  if ((await plugin.aiManager.getToolbarRouteState()) === "unavailable") {
+    new Notice(await plugin.aiManager.getProviderRouteStatusText());
+    return false;
+  }
+
+  if (actionId === "editing-toolbar:ai-inline-completion") {
+    return plugin.aiManager.triggerInlineCompletion(editor);
   }
 
   if (actionId.startsWith("editing-toolbar:ai-toolbox:")) {
@@ -1663,7 +1665,13 @@ export function editingToolbarPopover(
                 commandIdForLabel?: string;
               }) => {
                 const runAction = async () => {
-                  if ((await plugin.aiManager.getToolbarRouteState()) === "unavailable") {
+                  // 面板类操作（自定义改写 / Canvas 提示）不依赖 provider，直接打开
+                  const opensPanel =
+                    options.commandIdForLabel === "editing-toolbar:ai-tools:custom" ||
+                    options.commandIdForLabel === "editing-toolbar:ai-rewrite-custom" ||
+                    options.commandIdForLabel === "editing-toolbar:ai-canvas-global-prompt" ||
+                    options.commandIdForLabel === "editing-toolbar:ai-canvas-expand";
+                  if (!opensPanel && (await plugin.aiManager.getToolbarRouteState()) === "unavailable") {
                     new Notice(await plugin.aiManager.getProviderRouteStatusText());
                     return;
                   }
