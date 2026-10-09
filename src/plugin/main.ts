@@ -213,6 +213,23 @@ export default class editingToolbarPlugin extends Plugin {
     }
   }
 
+  private findToolbarCommandById(commands: Command[] | undefined, commandId: string): Command | null {
+    if (!Array.isArray(commands)) return null;
+
+    for (const command of commands) {
+      if (!command || typeof command !== "object") continue;
+
+      if (command.id === commandId) return command;
+
+      if (Array.isArray(command.SubmenuCommands)) {
+        const nested = this.findToolbarCommandById(command.SubmenuCommands, commandId);
+        if (nested) return nested;
+      }
+    }
+
+    return null;
+  }
+
   private syncAIToolbarCommandVisibility(): void {
     const commandGroups = [
       this.settings.menuCommands,
@@ -222,12 +239,24 @@ export default class editingToolbarPlugin extends Plugin {
       this.settings.mobileCommands,
     ];
 
+    const shouldShowAI = this.settings.ai.enabled && shouldShowAIFeatures();
+
     commandGroups.forEach((commands) => {
       if (!Array.isArray(commands)) return;
 
-      this.removeToolbarCommandById(commands, AI_TOOLBAR_COMMAND_ID);
+      const existing = this.findToolbarCommandById(commands, AI_TOOLBAR_COMMAND_ID);
 
-      if (this.settings.ai.enabled && shouldShowAIFeatures()) {
+      if (!shouldShowAI) {
+        if (existing) {
+          this.removeToolbarCommandById(commands, AI_TOOLBAR_COMMAND_ID);
+        }
+        return;
+      }
+
+      // Reuse the command instance the vault already has. Re-creating it and
+      // forcing it to the front on every save silently undid drag reordering
+      // and any renamed label or icon set in the settings.
+      if (!existing) {
         commands.unshift(createAIToolbarCommand());
       }
     });
