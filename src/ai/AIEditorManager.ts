@@ -2128,17 +2128,7 @@ export class AIEditorManager {
 
       closeBtn.addEventListener("click", closePrompt);
       settingsBtn.addEventListener("click", () => {
-        this.plugin.app.setting.open();
-        this.plugin.app.setting.openTabById("editing-toolbar");
-        window.setTimeout(() => {
-          const tabsContainer = this.plugin.app.setting.activeTab?.containerEl?.querySelector(".editing-toolbar-tabs");
-          if (tabsContainer) {
-            const aiTab = Array.from(tabsContainer.children).find((el: HTMLElement) =>
-              el.textContent?.includes("AI") || el.getAttribute("data-tab") === "ai"
-            ) as HTMLElement;
-            aiTab?.click();
-          }
-        }, 100);
+        this.plugin.settingTab.revealAISettings();
         closePrompt();
       });
       sendBtn.addEventListener("click", () => {

@@ -1950,24 +1950,7 @@ export function editingToolbarPopover(
                 .setIcon("palette")
                 .setTooltip(t("Custom Font Color"))
                 .onClick(() => {
-                  app.setting.open();
-                  app.setting.openTabById("editing-toolbar");
-                  window.setTimeout(() => {
-                    // 获取标签页容器
-                    const tabsContainer = app.setting.activeTab.containerEl.querySelector(".editing-toolbar-tabs");
-                    if (tabsContainer) {
-                      // 获取第二个标签页按钮(appearance)并触发点击
-                      const appearanceTab = tabsContainer.children[0] as HTMLElement;
-                      appearanceTab?.click();
-
-                      // 等待标签页切换完成后定位到颜色设置
-                      window.setTimeout(() => {
-                        const settingEI = app.setting.activeTab.containerEl.querySelector(".custom_font");
-                        if (settingEI) { settingEI.addClass?.("toolbar-cta"); }
-                      }, 100);
-                    }
-                  }, 200);
-
+                  plugin.settingTab.revealCustomColorPreset('custom_font');
                 });
             }
           } else if (item.id == "editing-toolbar:change-background-color") {
@@ -2037,24 +2020,7 @@ export function editingToolbarPopover(
                 .setIcon("palette")
                 .setTooltip(t("Custom Backgroud Color"))
                 .onClick(() => {
-                  app.setting.open();
-                  app.setting.openTabById("editing-toolbar");
-                  window.setTimeout(() => {
-                    // 获取标签页容器
-                    const tabsContainer = app.setting.activeTab.containerEl.querySelector(".editing-toolbar-tabs");
-                    if (tabsContainer) {
-                      // 获取第二个标签页按钮(appearance)并触发点击
-                      const appearanceTab = tabsContainer.children[0] as HTMLElement;
-                      appearanceTab?.click();
-
-                      // 等待标签页切换完成后定位到颜色设置
-                      window.setTimeout(() => {
-                        const settingEI = app.setting.activeTab.containerEl.querySelector(".custom_bg");
-                        if (settingEI) { settingEI.addClass?.("toolbar-cta"); }
-                      }, 100);
-                    }
-                  }, 200);
-
+                  plugin.settingTab.revealCustomColorPreset('custom_bg');
                 });
 
             }
