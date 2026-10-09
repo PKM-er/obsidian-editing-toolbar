@@ -179,7 +179,7 @@ export function backcolorpicker(plugin: { settings: { custom_bg1: string; custom
         <td style="background-color:rgba(240, 200, 0, 0.2)"><span></span></td>
         </tr>
         <tr class="bottom">
-        <td style="background-color:rgba(3, 135, 102, 0.2)"><span></span></td>
+        <td style="background-color:rgba(0, 176, 80, 0.2)"><span></span></td>
         <td style="background-color:rgba(3, 135, 102, 0.2)"><span></span></td>
         <td style="background-color:rgba(5, 117, 197, 0.2)"><span></span></td>
         <td style="background-color:rgba(74, 82, 199, 0.2)"><span></span></td>
