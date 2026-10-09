@@ -1,5 +1,100 @@
 # Changelog
 
+## 4.1.10 (2026-10-09)
+### Update manifest.json and versions.json for version 4.1.10
+### 修复背景色调色板"半透明色"一行有两个相同的绿色（issue #358）
+- rgba(3, 135, 102, 0.2) 连续出现两次（自初版就存在），第 6 格改为
+  rgba(0, 176, 80, 0.2)，与字体色板的绿色 / 青色序列对齐
+### 修复工具栏色板跳转设置项失效（含 AI 面板的设置按钮）
+- 旧实现点的是插件自带标签条 .editing-toolbar-tabs，1.13 改版后该标签条已不存在，
+  所以既不切页也不高亮
+- 改用 1.13 的页面跳转（getElementForDefinition + 点击页面项），旧版标签条保留为回退；
+  跳转后把目标行滚动到可视区并加 toolbar-cta 高亮
+- 同一问题也影响 AI 提示面板右上角的"设置"按钮（原来也去点旧标签条的 AI 页），一并修复
+- 已在 1.13.4 实测：背景色板 → 常规页「🎨 设置自定义背景」高亮；字体色板 →
+  「🖌️ 设置自定义字体颜色」高亮；AI 面板 → AI 页
+### 修复设置页颜色弹窗无法关闭 + 自定义色不同步（含 pickr 初始化）
+- 颜色选择弹窗点 Save / Cancel 关不掉：插件用的 pickr 分支自身在 Save 时不会关闭
+  （!this.applyColor() 永远为假，hide() 不可达），Cancel 只派发事件不关闭；而它
+  "点击外部关闭"的监听绑在主窗口 document 上，1.13 设置是独立窗口时该兜底也失效。
+  现在 Save / Cancel 都显式关闭弹窗，并把"点击弹窗外关闭"补绑到设置窗口
+- 自定义背景色 / 字体色改完工具栏调色板不同步：工具栏调色板是构建时把
+  custom_bg1..5 / custom_fc1..5 写进色块 HTML 的，改完没有重建工具栏，所以一直是
+  旧色。现在保存后直接重建工具栏（不重渲染设置页，实测同步耗时约 8ms）
+- 1.13 声明式渲染路径下 .custom_bg / .custom_font 类从没被加上：5 个色块竖着堆叠、
+  布局 CSS 失效（顶部工具栏"自定义字体颜色"的跳转高亮也依赖该类）；render 里显式补类名
+- pickr 初始化依赖 requestAnimationFrame，窗口被遮挡 / 不产生帧时该帧永不到来，
+  pickr 会一直处于"初始化中"并吞掉所有 save/change 事件——表现为选完颜色（色块看起来
+  变了）但设置没保存、其他位置也不更新；现在建实例时直接完成初始化（取消待处理帧 →
+  应用默认色 → 定位 → 置位 → 派发 init）
+### 修复 1.13 设置页命令无法拖动排序的问题
+- 根因：saveSettings() 里的 syncAIToolbarCommandVisibility() 每次都把 AI 命令
+  从列表里删掉再 unshift 回第 0 位，于是"拖 AI 按钮"或"把别的命令拖到 AI 前面"
+  都会被静默还原，用户看到的就是拖了没反应
+- 改为已存在就保留原对象与原位置，只在缺失时补到最前；顺带修好了 AI 按钮
+  改名 / 换图标会被覆盖的问题
+- 已在 Obsidian 1.13.4 设置窗口实测：把 AI 工具行拖到第 3 位，界面与 data.json
+  都保持新顺序，重载插件后依然保持
+### 跨窗口 DOM 检查改用 Obsidian 的 Node.instanceOf
+instanceof HTMLElement 在弹出窗口（popout）中因跨 realm 恒为 false：
+- editingToolbarModal 的工具栏宿主标记（thino/移动端样式依赖）会静默跳过
+- main.ts 移动端右键菜单抑制同样失效
+改用 Obsidian 提供的跨窗口安全检查 el.instanceOf(HTMLElement)；
+已实测宿主标记在活动视图正常生效
+### 补充 4.1.9 CHANGELOG 并加固发布工作流回推
+- 手动补上 4.1.9 的 CHANGELOG 段落（本次工作流回推因与 master 分叉失败）
+- release.yml：回推 CHANGELOG/manifest 前先 git pull --rebase，避免同类失败
+### Update manifest.json and versions.json for version 4.1.9
+### 修复 AI 自定义改写面板无法打开的问题
+- 面板类操作（自定义改写 / Canvas 提示）不再受 provider 登录态检查拦截，
+  直接打开；provider 检查仅保留给真正发起 AI 请求的操作（行内补全、
+  改写指令等），未登录时在发送环节提示
+- 面板渲染增加陈旧引用自愈：面板 DOM 被外部移除时（全屏模式的 body 节点
+  搬移观察器、工作区重建、其他插件清理 body 节点），管理器引用会脱离 DOM，
+  导致后续打开跳过创建、点击无任何反应；现在检测到引用脱离 DOM 即丢弃并重建
+- 覆盖 AI 菜单项与 AI 主按钮两条点击路径
+### AI 自定义改写面板外观改为 Obsidian 原生风格
+- 面板改用 Obsidian 设计变量：prompt 系列（--prompt-radius/-border-color/
+  -background/-shadow）、表单域（--background-modifier-form-field）、
+  交互态（--interactive-normal/-hover/-accent）、字体/间距/圆角/阴影令牌，
+  随主题与用户外观设置自适应
+- 输入框 hover/focus 采用原生表单域反馈（边框色过渡 + focus 环）
+- 图标按钮、历史与 @ 提及下拉、模板快选、上下文区、操作按钮统一原生观感，
+  移除硬编码颜色/圆角/阴影
+- 保留拖动手柄与入场动画
+### 修复 AI 菜单被 PKMer 网络检查阻塞 + 刷新超时保护
+- AI 下拉菜单此前在弹出前 await getToolbarRouteState()（PKMer token
+  过期时会走 refreshTokens 网络请求且无超时），PKMer 服务慢/不可达时
+  菜单永远弹不出来，表现为点击 AI 箭头无任何反应（时序相关 → 时好时坏）
+- 修复：菜单立即弹出（登录状态改为点击菜单项时动态检查），并在后台
+  预热路由状态；token 刷新加 3 秒超时上限（超时乐观放行，不阻塞交互）
+- 排障说明：CDP 合成鼠标事件无法驱动 Obsidian 原生菜单（对照组：状态栏
+  菜单同样无法用 CDP 打开），菜单交互需人工验证
+### AI 自定义改写面板：修复 1.14 下创建失败 + 外观优化
+- 面板构建改用原生 doc.createElement（24 处）：Obsidian 1.14 的
+  enhance.js 会 patch HTMLDocument.prototype 的 createDiv/createEl/
+  createSpan 帮助函数，其内部对 Document 执行 appendChild 触发
+  HierarchyRequestError，导致面板创建失败、输入框不出现
+- 外观改简约精致风：实色背景 + 细边框 + 双层柔和阴影，去除毛玻璃
+- 拖动手柄改横向圆角胶囊（hover 加宽提亮）；标题栏加分隔线
+- 保留 0.14s 入场动画，输入框聚焦光晕微调
+### 主题动画防御去掉 !important，改用 id 双写超高特异性
+- animation/transition 的 none 恢复为普通声明（styles.css 实际 !important 归零）
+- 防御选择器特异性增强至 (2,x,x) 级（body + 双写 id），实测可压制
+  普通高特异性及带 !important 的主题图标动画（1.14.4 注入验证）
+### 修复 4.1.8 回归：AI 按钮无法点击 + 工具栏闪烁
+根因：删除 :has 冗余路径时留下了孤儿主体选择器行（无条件匹配），
+导致 AI 按钮常驻发光/流光/呼吸动画（闪烁）且 pointer-events: none
+（无法点击）。
+- 删除 6 个 AI busy 规则块中的全部孤儿选择器行，只保留
+  body[data-editing-toolbar-ai-busy] 状态分支
+- 恢复主题动画防御的 transition !important（防用户主题给 svg 加
+  循环动画导致的工具栏闪烁），保留 body 前缀增强
+- 实测：AI 按钮可点击（点击弹出 provider 提示）、busy 态禁点/发光、
+  解除后恢复；主题动画注入下工具栏 svg 动画被压制、无闪烁
+### Update manifest.json and CHANGELOG.md for version 4.1.8
+
+
 ## 4.1.9 (2026-10-07)
 ### Update manifest.json and versions.json for version 4.1.9
 ### 修复 AI 自定义改写面板无法打开的问题
