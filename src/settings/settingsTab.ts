@@ -162,6 +162,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
   plugin: editingToolbarPlugin;
   appendMethod: string;
   pickrs: Pickr[] = [];
+  private pickrDismissListeners = new Map<Document, { mousedown: (event: MouseEvent) => void }>();
   private sortables: Sortable[] = [];
   activeTab: string = 'general';
   private cachedCustomOllamaModels: string[] = [];
@@ -175,6 +176,8 @@ export class editingToolbarSettingTab extends PluginSettingTab {
   private cachedCustomGeminiModelsError = '';
   private commandDragState: CommandDragState | null = null;
   private commandSettingsPageDefinition: DeclarativeSettingsNode | null = null;
+  private generalSettingsPageDefinition: DeclarativeSettingsNode | null = null;
+  private aiSettingsPageDefinition: DeclarativeSettingsNode | null = null;
   private selectedImportSourceStyle = 'Main menu';
   private commandDragControllers = new WeakMap<HTMLElement, AbortController>();
   private commandDropControllers = new WeakMap<HTMLElement, AbortController>();
@@ -230,14 +233,22 @@ export class editingToolbarSettingTab extends PluginSettingTab {
       name: t('Toolbar Commands'),
       items: this.createDeclarativeCommandPageDefinitions(),
     };
+    // Kept so the colour palettes of the live toolbar can jump straight to the
+    // page that holds the custom colour presets.
+    this.generalSettingsPageDefinition = {
+      type: 'page',
+      name: t('General'),
+      aliases: [t('Basic Settings'), t('Toolbar Enablement')],
+      items: this.createDeclarativeGeneralPageDefinitions(),
+    };
+    this.aiSettingsPageDefinition = this.createDeclarativeCustomContentPage(
+      t('AI'),
+      [t('Artificial Intelligence'), t('Models'), t('Completion')],
+      (container) => this.displayAISettings(container),
+    );
 
     const pages = [
-        {
-          type: 'page',
-          name: t('General'),
-          aliases: [t('Basic Settings'), t('Toolbar Enablement')],
-          items: this.createDeclarativeGeneralPageDefinitions(),
-        },
+        this.generalSettingsPageDefinition,
         {
           type: 'page',
           name: t('Appearance'),
@@ -250,11 +261,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
           (container) => this.displayCustomCommandSettings(container),
         ),
         this.commandSettingsPageDefinition,
-        this.createDeclarativeCustomContentPage(
-          t('AI'),
-          [t('Artificial Intelligence'), t('Models'), t('Completion')],
-          (container) => this.displayAISettings(container),
-        ),
+        this.aiSettingsPageDefinition,
         this.createDeclarativeCustomContentPage(
           t('Import/Export'),
           [t('Import Configuration'), t('Export Configuration'), t('Backup')],
@@ -401,23 +408,29 @@ export class editingToolbarSettingTab extends PluginSettingTab {
         name: t('🎨 Set Custom Background'),
         aliases: [t('Custom Background'), t('Background Color Presets')],
         desc: t('Click on the picker to adjust the color'),
-        render: (setting: Setting) => this.addCustomPalettePickers(
-          setting,
-          'custom_bg',
-          ['#FFB78B8C', '#CDF4698C', '#A0CCF68C', '#F0A7D88C', '#ADEFEF8C'],
-          'background-color',
-        ),
+        render: (setting: Setting) => {
+          setting.setClass('custom_bg');
+          return this.addCustomPalettePickers(
+            setting,
+            'custom_bg',
+            ['#FFB78B8C', '#CDF4698C', '#A0CCF68C', '#F0A7D88C', '#ADEFEF8C'],
+            'background-color',
+          );
+        },
       },
       {
         name: t('🖌️ Set Custom Font Color'),
         aliases: [t('Custom Font Color'), t('Font Color Presets')],
         desc: t('Click on the picker to adjust the color'),
-        render: (setting: Setting) => this.addCustomPalettePickers(
-          setting,
-          'custom_fc',
-          ['#D83931', '#DE7802', '#245BDB', '#6425D0', '#646A73'],
-          'color',
-        ),
+        render: (setting: Setting) => {
+          setting.setClass('custom_font');
+          return this.addCustomPalettePickers(
+            setting,
+            'custom_fc',
+            ['#D83931', '#DE7802', '#245BDB', '#6425D0', '#646A73'],
+            'color',
+          );
+        },
       },
     ];
   }
@@ -632,7 +645,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     const pickerContainer = setting.controlEl.createDiv({ cls: 'pickr-container' });
     const pickerEl = pickerContainer.createDiv({ cls: 'picker' });
     const bucket = this.getAppearanceBucket(style);
-    const pickr = Pickr.create(getPickrSettings({
+    const pickr = this.createSettingsPickr({
       isView: false,
       el: pickerEl,
       containerEl: pickerContainer,
@@ -641,8 +654,9 @@ export class editingToolbarSettingTab extends PluginSettingTab {
         : ['#4A5568', '#D4AF37', '#2D3033', '#6D5846', '#4C2A55'],
       opacity,
       defaultColor: bucket[settingKey] ?? this.plugin.settings[settingKey],
-    }));
+    });
     this.setupPickrEvents(pickr, settingKey, opacity ? 'background-color' : 'icon-color');
+    this.ensurePickrDismissListeners();
     this.pickrs.push(pickr);
     return () => {
       pickr.destroyAndRemove();
@@ -680,6 +694,39 @@ export class editingToolbarSettingTab extends PluginSettingTab {
       ));
   }
 
+  private createSettingsPickr(opts: Parameters<typeof getPickrSettings>[0]): Pickr {
+    const pickr = Pickr.create(getPickrSettings(opts));
+    const internals = pickr as unknown as {
+      _initializingActive?: boolean;
+      _setupAnimationFrame?: number;
+      _rePositioningPicker?: () => void;
+      _emit?: (event: string, ...args: unknown[]) => void;
+    };
+
+    if (internals._initializingActive) {
+      // Pickr finishes its initialisation inside a requestAnimationFrame and
+      // suppresses every save/change event until that frame arrives. Since
+      // Obsidian 1.13 the settings can render in their own window, and a window
+      // that is occluded or not being rendered never produces that frame - the
+      // swatch then stays colourless and choosing a colour saves nothing.
+      // Finish the initialisation here instead of waiting for a frame.
+      const ownerWindow =
+        (pickr.getRoot() as { button?: HTMLElement } | null)?.button?.ownerDocument?.defaultView ?? window;
+
+      if (typeof internals._setupAnimationFrame === 'number') {
+        ownerWindow.cancelAnimationFrame(internals._setupAnimationFrame);
+        internals._setupAnimationFrame = undefined;
+      }
+
+      pickr.setColor(opts.defaultColor);
+      internals._rePositioningPicker?.();
+      internals._initializingActive = false;
+      internals._emit?.('init');
+    }
+
+    return pickr;
+  }
+
   private addCustomPalettePickers(
     setting: Setting,
     settingPrefix: 'custom_bg' | 'custom_fc',
@@ -690,15 +737,16 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     const pickers: Pickr[] = [];
     for (let i = 0; i < 5; i++) {
       const pickerEl = pickerContainer.createDiv({ cls: 'picker' });
-      const pickr = Pickr.create(getPickrSettings({
+      const pickr = this.createSettingsPickr({
         isView: false,
         el: pickerEl,
         containerEl: pickerContainer,
         swatches,
         opacity: true,
         defaultColor: (this.plugin.settings as unknown as Record<string, string>)[`${settingPrefix}${i + 1}`] || '#000000',
-      }));
+      });
       this.setupPickrEvents(pickr, `${settingPrefix}${i + 1}`, cssProperty);
+      this.ensurePickrDismissListeners();
       this.pickrs.push(pickr);
       pickers.push(pickr);
     }
@@ -1317,20 +1365,93 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     }
   }
 
-  private openDeclarativeCommandSettingsPage(): void {
+  private openDeclarativePage(pageDefinition: DeclarativeSettingsNode | null): boolean {
+    if (!pageDefinition) return false;
+
     const declarativeTab = this as unknown as {
       getElementForDefinition?: (definition: DeclarativeSettingsNode) => HTMLElement | undefined;
     };
-    const pageEl = declarativeTab.getElementForDefinition?.(
-      this.commandSettingsPageDefinition
-    );
-    if (pageEl) {
-      pageEl.click();
-      return;
-    }
+    const pageEl = declarativeTab.getElementForDefinition?.(pageDefinition);
+    if (!pageEl) return false;
+
+    pageEl.click();
+    return true;
+  }
+
+  private openDeclarativeCommandSettingsPage(): void {
+    if (this.openSettingsPage('commands', false)) return;
 
     this.activeTab = 'commands';
     this.display();
+  }
+
+  private pageDefinitionFor(pageId: string): DeclarativeSettingsNode | null {
+    switch (pageId) {
+      case 'general':
+        return this.generalSettingsPageDefinition;
+      case 'ai':
+        return this.aiSettingsPageDefinition;
+      case 'commands':
+        return this.commandSettingsPageDefinition;
+      default:
+        return null;
+    }
+  }
+
+  /**
+   * Opens the plugin's settings on the given page. Obsidian 1.13+ renders the
+   * pages declaratively, older versions keep the plugin's own tab strip; both
+   * are handled here so callers do not have to know which one is in use.
+   */
+  private openSettingsPage(pageId: string, openTab = true): boolean {
+    if (openTab) {
+      this.app.setting.open();
+      this.app.setting.openTabById('editing-toolbar');
+    }
+
+    if (this.openDeclarativePage(this.pageDefinitionFor(pageId))) return true;
+
+    const tabsContainer = (this.containerEl?.ownerDocument ?? document)
+      .querySelector<HTMLElement>('.editing-toolbar-tabs');
+    const tabIndex = SETTING_TABS.findIndex((tab) => tab.id === pageId);
+    const tabButton = (tabIndex >= 0 ? tabsContainer?.children[tabIndex] : undefined) as
+      | HTMLElement
+      | undefined;
+    tabButton?.click();
+    return !!tabButton;
+  }
+
+  /**
+   * Opens the settings page that holds the custom colour presets and highlights
+   * the requested row. Used by the "Custom Font Color" / "Custom Backgroud
+   * Color" buttons in the toolbar colour palettes.
+   */
+  revealCustomColorPreset(settingClass: 'custom_bg' | 'custom_font'): void {
+    this.app.setting.open();
+    this.app.setting.openTabById('editing-toolbar');
+
+    window.setTimeout(() => {
+      this.openSettingsPage('general', false);
+
+      window.setTimeout(() => {
+        const row = (this.containerEl?.ownerDocument ?? document)
+          .querySelector<HTMLElement>(`.setting-item.${settingClass}`);
+        if (!row) return;
+
+        row.scrollIntoView?.({ block: 'center' });
+        row.addClass('toolbar-cta');
+      }, 150);
+    }, 200);
+  }
+
+  /** Opens the settings on the AI page. Used by the AI prompt panel. */
+  revealAISettings(): void {
+    this.app.setting.open();
+    this.app.setting.openTabById('editing-toolbar');
+
+    window.setTimeout(() => {
+      this.openSettingsPage('ai', false);
+    }, 200);
   }
   private displayCustomCommandSettings(containerEl: HTMLElement): void {
     containerEl.empty();
@@ -1639,19 +1760,18 @@ export class editingToolbarSettingTab extends PluginSettingTab {
       .then((setting) => {
         const pickerContainer = setting.controlEl.createDiv({ cls: "pickr-container" });
         const pickerEl = pickerContainer.createDiv({ cls: "picker" });
-        const pickr = Pickr.create(
-          getPickrSettings({
-            isView: false,
-            el: pickerEl,
-            containerEl: pickerContainer,
-            swatches: ['#F5F8FA', '#F4F1E8', '#2D3033', '#1A2F28', '#2A1D3B'],
-            opacity: true,
-            defaultColor:
-              appearanceBucket.toolbarBackgroundColor ??
-              this.plugin.settings.toolbarBackgroundColor,
-          })
-        );
+        const pickr = this.createSettingsPickr({
+          isView: false,
+          el: pickerEl,
+          containerEl: pickerContainer,
+          swatches: ['#F5F8FA', '#F4F1E8', '#2D3033', '#1A2F28', '#2A1D3B'],
+          opacity: true,
+          defaultColor:
+            appearanceBucket.toolbarBackgroundColor ??
+            this.plugin.settings.toolbarBackgroundColor,
+        });
         this.setupPickrEvents(pickr, 'toolbarBackgroundColor', 'background-color');
+        this.ensurePickrDismissListeners();
         this.pickrs.push(pickr);
       });
     new Setting(toolbarContainer)
@@ -1661,24 +1781,23 @@ export class editingToolbarSettingTab extends PluginSettingTab {
       .then((setting) => {
         const pickerContainer = setting.controlEl.createDiv({ cls: "pickr-container" });
         const pickerEl = pickerContainer.createDiv({ cls: "picker" });
-        const pickr = Pickr.create(
-          getPickrSettings({
-            isView: false,
-            el: pickerEl,
-            containerEl: pickerContainer,
-            swatches: [
-              '#4A5568',
-              '#D4AF37',
-              '#2D3033',
-              '#6D5846',
-              '#4C2A55',
-            ],
-            opacity: false,
-            defaultColor: this.plugin.settings.toolbarIconColor
-          })
-        );
+        const pickr = this.createSettingsPickr({
+          isView: false,
+          el: pickerEl,
+          containerEl: pickerContainer,
+          swatches: [
+            '#4A5568',
+            '#D4AF37',
+            '#2D3033',
+            '#6D5846',
+            '#4C2A55',
+          ],
+          opacity: false,
+          defaultColor: this.plugin.settings.toolbarIconColor,
+        });
         this.pickrs.push(pickr);
         this.setupPickrEvents(pickr, 'toolbarIconColor', 'icon-color');
+        this.ensurePickrDismissListeners();
       });
     new Setting(toolbarContainer)
       .setName(t("Toolbar Icon Size"))
@@ -2946,12 +3065,62 @@ export class editingToolbarSettingTab extends PluginSettingTab {
       }
     });
   }
+  /**
+   * Pickr binds its "click outside" and Escape handling to the document it was
+   * loaded in. Since Obsidian 1.13 the settings can live in their own window,
+   * where those listeners never fire, so the same dismissal is bound to the
+   * document that actually hosts the settings UI.
+   */
+  private ensurePickrDismissListeners(): void {
+    const doc = this.containerEl?.ownerDocument;
+    if (!doc || this.pickrDismissListeners.has(doc)) return;
+
+    const mousedown = (event: MouseEvent): void => {
+      if (event.button !== 0) return;
+      const target = (event.target ?? null) as Node | null;
+      this.pickrs.forEach((pickr) => {
+        if (!pickr.isOpen()) return;
+        const root = pickr.getRoot() as { app?: HTMLElement; button?: HTMLElement } | null;
+        const app = root?.app;
+        const button = root?.button;
+        if (!!app && !!target && app.contains(target)) return;
+        if (!!button && !!target && button.contains(target)) return;
+        pickr.hide();
+      });
+    };
+
+    doc.addEventListener('mousedown', mousedown, true);
+    this.pickrDismissListeners.set(doc, { mousedown });
+  }
+
+  private removePickrDismissListeners(): void {
+    this.pickrDismissListeners.forEach((handlers, doc) => {
+      doc.removeEventListener('mousedown', handlers.mousedown, true);
+    });
+    this.pickrDismissListeners.clear();
+  }
+
   private setupPickrEvents(
     pickr: Pickr,
     settingKey: string,
     cssProperty: string
   ) {
+    const closePickr = (): void => {
+      // Hide first: saving a toolbar colour re-renders the tab and destroys the
+      // pickr instance, and a destroyed instance cannot close its popup.
+      if (this.pickrs.includes(pickr) && pickr.isOpen()) {
+        pickr.hide();
+      }
+    };
+
+    // Pickr only emits "cancel" without closing itself, and its save button
+    // never closes when the colour is applied, so both are closed here.
+    pickr.on("cancel", () => closePickr());
+
     pickr.on("save", (color: Pickr.HSVaColor) => {
+      closePickr();
+      // The picker's "Clear" button emits save without a colour.
+      if (!color) return;
       const hexColor = color.toHEXA().toString();
   
       const activeStyle = this.plugin.positionStyle;
@@ -2985,6 +3154,12 @@ export class editingToolbarSettingTab extends PluginSettingTab {
       } else {
         // All other keys (custom_bgX/custom_fcX) stay as global settings
         (this.plugin.settings as unknown as Record<string, string>)[settingKey] = hexColor;
+        // The toolbar palette bakes these five colours into its cells when the
+        // toolbar is built, so the toolbar has to be rebuilt for the new colour
+        // to show up in the colour picker. Rebuilding only the toolbar keeps the
+        // settings page (and the pickers on it) untouched.
+        selfDestruct(this.plugin);
+        editingToolbarPopover(this.app, this.plugin);
       }
       void this.plugin.saveSettings();
     });
@@ -3007,6 +3182,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     this.clearCommandDragState();
     this.commandEventControllers.forEach((controller) => controller.abort());
     this.commandEventControllers.clear();
+    this.removePickrDismissListeners();
     this.destroyPickrs();
     this.destroySortables();
   }
