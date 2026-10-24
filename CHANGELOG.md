@@ -1,6 +1,19 @@
 # Changelog
 
 ## 4.1.11 (2026-10-24)
+### Update manifest.json, package.json and versions.json for version 4.1.11
+### 修复 #371/#372 设置页主题下拉与取色器循环崩溃、#367 清除格式残留彩色高亮 emoji、#365 更新日志按语言显示
+- Toolbar Theme 下拉按存储颜色反查预设名，不再跳回禁用的 Custom Theme；
+  Default/Tiny/Glass 清除颜色覆盖并还原 CSS 变量
+- pickr save 颜色未变时忽略，打断 save→display→重建 死循环；
+  取消初始化动画帧时同时覆盖主窗口与设置窗口；实例方法销毁后 no-op
+- 清除格式 / 复制纯文本一并去掉 == 后的 1.14 颜色 emoji
+- 更新弹窗与完整日志链接：中文读 CHANGELOG.md，其他语言读 CHANGELOG-en.md
+### 整理 4.1.10 CHANGELOG：只保留本次发布条目
+### Update manifest.json and CHANGELOG.md for version 4.1.10
+
+
+## 4.1.11 (2026-10-24)
 ### 修复外观设置"Toolbar Theme"下拉框跳回禁用的 Custom Theme（issue #371、#372）
 - 预设主题（┌ Light ~ └ Elegant）存储时写的是 aestheticStyle='custom'+具体颜色，
   下拉框直接回读就会落在被禁用的 "Custom Theme" 上；现在显示时按存储的颜色反查回预设名，
