@@ -1,5 +1,30 @@
 # Changelog
 
+## 4.1.11 (2026-10-24)
+### 修复外观设置"Toolbar Theme"下拉框跳回禁用的 Custom Theme（issue #371、#372）
+- 预设主题（┌ Light ~ └ Elegant）存储时写的是 aestheticStyle='custom'+具体颜色，
+  下拉框直接回读就会落在被禁用的 "Custom Theme" 上；现在显示时按存储的颜色反查回预设名，
+  只有颜色对不上任何预设（用户手动改过色）才显示 Custom Theme
+- 选择 Default / Tiny / Glass 时清除 bucket 里的自定义颜色覆盖，并把
+  --editing-toolbar-background-color / --editing-toolbar-icon-color 两个 CSS 变量还原为
+  styles.css 默认值，预览和取色器不再停留在上一次的自定义颜色
+### 修复设置页取色器报错刷屏与无限重渲染循环（issue #371、#372）
+- 取色器 save 事件此前无条件重渲染整个设置页；设置窗口不产帧（遮挡的独立窗口）时
+  pickr 会重放初始化并发未改色的 save，重建取色器又触发 save，陷入死循环
+  （每秒重建页面十余次，下拉框无法点击）。现在颜色未变化时直接忽略 save
+- 取消待处理动画帧时同时覆盖主窗口与设置窗口：pickr 打包产物是裸 requestAnimationFrame，
+  回调固定排在主窗口，只取消设置窗口会留下残留回调
+- pickr 实例销毁后（字段全部置 null）残留回调每帧抛
+  "Cannot read properties of null (reading 'interaction')"；现在实例方法统一加防护，
+  销毁后一律 no-op，destroy/destroyAndRemove 幂等
+### 清除格式支持 Obsidian 1.14 彩色高亮的颜色 emoji（issue #367）
+- 1.14 的高亮颜色以 == 后的颜色 emoji 承载（如 ==🟠文字==），清除格式此前留下
+  🟠文字；现在一并去掉颜色 emoji，结果为 文字
+- "复制为纯文本"同样处理
+### 更新日志按 Obsidian 语言显示（issue #365）
+- 更新弹窗与"查看完整更新日志"按钮：中文读 CHANGELOG.md，其他语言读新增的
+  CHANGELOG-en.md（英文版），英文版加载失败自动回退中文版
+
 ## 4.1.10 (2026-10-09)
 ### Update manifest.json and versions.json for version 4.1.10
 ### 修复背景色调色板"半透明色"一行有两个相同的绿色（issue #358）

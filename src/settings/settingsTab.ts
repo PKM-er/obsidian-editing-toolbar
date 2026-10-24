@@ -138,6 +138,16 @@ export function getComandindex(item: string, arr: Command[]): number {
   return idx;
 }
 
+// 色卡预设（┌ Light ~ └ Elegant）：应用后存储为 aestheticStyle='custom' + 具体颜色，
+// 下拉框显示时靠这里的颜色反查回预设名
+const TOOLBAR_COLOR_PRESETS: Record<string, [string, string, number]> = {
+  light: ['#F5F8FA', '#4A5568', 18],
+  dark: ['#2D3033', '#E2E8F0', 18],
+  vibrant: ['#7E57C2', '#FFFFFF', 20],
+  minimal: ['#F8F9FA', '#6B7280', 16],
+  elegant: ['#1A2F28', '#D4AF37', 19],
+};
+
 export function moveItemBetweenLists<T>(
   source: T[],
   target: T[],
@@ -556,28 +566,28 @@ export class editingToolbarSettingTab extends PluginSettingTab {
           dropdown.addOption('vibrant', t('├ Vibrant'));
           dropdown.addOption('minimal', t('├ Minimal'));
           dropdown.addOption('elegant', t('└ Elegant'));
-          dropdown.setValue(bucket.aestheticStyle || this.plugin.settings.aestheticStyle);
+          dropdown.setValue(this.resolveToolbarThemeOption(bucket));
           dropdown.onChange(async (value) => {
             const current = this.getAppearanceBucket(style);
-            const presets: Record<string, [string, string, number]> = {
-              light: ['#F5F8FA', '#4A5568', 18], dark: ['#2D3033', '#E2E8F0', 18],
-              vibrant: ['#7E57C2', '#FFFFFF', 20], minimal: ['#F8F9FA', '#6B7280', 16],
-              elegant: ['#1A2F28', '#D4AF37', 19],
-            };
-            const preset = presets[value];
-            current.aestheticStyle = preset ? 'custom' : value;
+            const preset = TOOLBAR_COLOR_PRESETS[value];
             if (preset) {
+              current.aestheticStyle = 'custom';
               [current.toolbarBackgroundColor, current.toolbarIconColor, current.toolbarIconSize] = preset;
+              document.documentElement.style.setProperty('--editing-toolbar-background-color', preset[0]);
+              document.documentElement.style.setProperty('--editing-toolbar-icon-color', preset[1]);
+              document.documentElement.style.setProperty('--toolbar-icon-size', `${preset[2]}px`);
             } else {
+              // default / tiny / glass：颜色由 CSS 类决定，清掉自定义色覆盖，
+              // 否则预览与取色器一直停留在上一次的自定义颜色
+              current.aestheticStyle = value;
+              delete current.toolbarBackgroundColor;
+              delete current.toolbarIconColor;
               current.toolbarIconSize = 18;
+              document.documentElement.style.removeProperty('--editing-toolbar-background-color');
+              document.documentElement.style.removeProperty('--editing-toolbar-icon-color');
+              document.documentElement.style.setProperty('--toolbar-icon-size', '18px');
             }
-            const background = current.toolbarBackgroundColor ?? this.plugin.settings.toolbarBackgroundColor;
-            const icon = current.toolbarIconColor ?? this.plugin.settings.toolbarIconColor;
-            const size = current.toolbarIconSize ?? 18;
-            document.documentElement.style.setProperty('--editing-toolbar-background-color', background);
-            document.documentElement.style.setProperty('--editing-toolbar-icon-color', icon);
-            document.documentElement.style.setProperty('--toolbar-icon-size', `${size}px`);
-            this.plugin.toolbarIconSize = size;
+            this.plugin.toolbarIconSize = current.toolbarIconSize ?? 18;
             await this.plugin.saveSettings();
             this.refreshSettings();
             this.triggerRefresh();
@@ -696,6 +706,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
 
   private createSettingsPickr(opts: Parameters<typeof getPickrSettings>[0]): Pickr {
     const pickr = Pickr.create(getPickrSettings(opts));
+    this.guardPickrInstance(pickr);
     const internals = pickr as unknown as {
       _initializingActive?: boolean;
       _setupAnimationFrame?: number;
@@ -714,7 +725,14 @@ export class editingToolbarSettingTab extends PluginSettingTab {
         (pickr.getRoot() as { button?: HTMLElement } | null)?.button?.ownerDocument?.defaultView ?? window;
 
       if (typeof internals._setupAnimationFrame === 'number') {
-        ownerWindow.cancelAnimationFrame(internals._setupAnimationFrame);
+        // pickr 的打包产物里是裸 requestAnimationFrame，回调固定排在插件所在的
+        // 主 window 上；设置页渲染在独立窗口时 ownerWindow 与其不一致，
+        // 只取消 ownerWindow 会留下残留回调，每帧重放初始化
+        // （重发未改色的 save → 无限重渲染；实例销毁后则每帧空引用报错）
+        window.cancelAnimationFrame(internals._setupAnimationFrame);
+        if (ownerWindow !== window) {
+          ownerWindow.cancelAnimationFrame(internals._setupAnimationFrame);
+        }
         internals._setupAnimationFrame = undefined;
       }
 
@@ -725,6 +743,38 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     }
 
     return pickr;
+  }
+
+  /**
+   * pickr 被销毁（destroyAndRemove 会把实例字段全部置 null）后，残留的动画帧
+   * 回调仍会调用 setColor/setHSVA/_updateOutput 并解引用 this._root，每个渲染帧
+   * 抛一次 "Cannot read properties of null (reading 'interaction')"。
+   * 这里把依赖 DOM 的实例方法包一层，_root 为空时一律 no-op，同时让
+   * destroy/destroyAndRemove 幂等。
+   */
+  private guardPickrInstance(pickr: Pickr): void {
+    const target = pickr as unknown as Record<string, unknown>;
+    const guardedMethods = [
+      '_updateOutput', 'setHSVA', 'setColor', 'applyColor', 'setColorRepresentation',
+      '_clearColor', '_rePositioningPicker', '_emit', 'addSwatch',
+      'hide', 'show', 'disable', 'enable', 'destroy', 'destroyAndRemove',
+    ];
+    for (const name of guardedMethods) {
+      const original = target[name];
+      if (typeof original !== 'function') continue;
+      target[name] = function guardWrapper(this: { _root?: unknown }, ...args: unknown[]) {
+        if (this._root == null) return undefined;
+        return (original as (...a: unknown[]) => unknown).apply(this, args);
+      };
+    }
+
+    const originalIsOpen = target.isOpen;
+    if (typeof originalIsOpen === 'function') {
+      target.isOpen = function isOpenGuard(this: { _root?: unknown }) {
+        if (this._root == null) return false;
+        return Boolean((originalIsOpen as () => unknown).call(this));
+      };
+    }
   }
 
   private addCustomPalettePickers(
@@ -1638,7 +1688,7 @@ export class editingToolbarSettingTab extends PluginSettingTab {
   }
   private getAppearanceBucket(style: ToolbarStyleKey): StyleAppearanceSettings {
     const settings = this.plugin.settings;
-  
+
     if (!settings.appearanceByStyle || typeof settings.appearanceByStyle !== "object") {
       settings.appearanceByStyle = {};
     }
@@ -1647,6 +1697,23 @@ export class editingToolbarSettingTab extends PluginSettingTab {
       store[style] = {};
     }
     return store[style];
+  }
+
+  /**
+   * 反查主题下拉框应该显示的值。色卡预设（Light/Dark/...）存储时写的是
+   * aestheticStyle='custom' + 预设颜色，直接回读会落在被禁用的 "Custom Theme"
+   * 上；这里按颜色把选过的预设还原出来，只有颜色对不上任何预设时才显示 custom。
+   */
+  private resolveToolbarThemeOption(bucket: StyleAppearanceSettings): string {
+    const style = bucket.aestheticStyle ?? this.plugin.settings.aestheticStyle ?? "default";
+    if (style !== "custom") return style;
+
+    const bg = (bucket.toolbarBackgroundColor ?? this.plugin.settings.toolbarBackgroundColor ?? "").toLowerCase();
+    const icon = (bucket.toolbarIconColor ?? this.plugin.settings.toolbarIconColor ?? "").toLowerCase();
+    for (const [name, [presetBg, presetIcon]] of Object.entries(TOOLBAR_COLOR_PRESETS)) {
+      if (bg === presetBg.toLowerCase() && icon === presetIcon.toLowerCase()) return name;
+    }
+    return "custom";
   }
   private createColorSettings(containerEl: HTMLElement): void {
     const editingStyle: ToolbarStyleKey =
@@ -1678,75 +1745,50 @@ export class editingToolbarSettingTab extends PluginSettingTab {
         dropdown.addOption("minimal", t("├ Minimal"));
         dropdown.addOption("elegant", t("└ Elegant"));
         // Use the bucket for the currently edited style
-        dropdown.setValue(
-          (appearanceBucket.aestheticStyle) ??
-            this.plugin.settings.aestheticStyle
-        );
+        dropdown.setValue(this.resolveToolbarThemeOption(appearanceBucket));
         dropdown.onChange(async (value) => {
           const style =
             (this.plugin.appearanceEditStyle) ||
             (this.plugin.settings.positionStyle as ToolbarStyleKey) ||
             "top";
           const bucket = this.getAppearanceBucket(style);
+          const preset = TOOLBAR_COLOR_PRESETS[value];
 
-          if (value in aesthetics) {
+          if (!preset) {
+            // default / tiny / glass：颜色交给 CSS 类，清掉自定义色覆盖
             bucket.aestheticStyle = value;
+            delete bucket.toolbarBackgroundColor;
+            delete bucket.toolbarIconColor;
             bucket.toolbarIconSize = 18;
+            document.documentElement.style.removeProperty(
+              "--editing-toolbar-background-color"
+            );
+            document.documentElement.style.removeProperty(
+              "--editing-toolbar-icon-color"
+            );
+            document.documentElement.style.setProperty(
+              "--toolbar-icon-size",
+              "18px"
+            );
           } else {
             // custom presets all map to "custom" aestheticStyle
             bucket.aestheticStyle = "custom";
+            [bucket.toolbarBackgroundColor, bucket.toolbarIconColor, bucket.toolbarIconSize] = preset;
+            document.documentElement.style.setProperty(
+              "--editing-toolbar-background-color",
+              preset[0]
+            );
+            document.documentElement.style.setProperty(
+              "--editing-toolbar-icon-color",
+              preset[1]
+            );
+            document.documentElement.style.setProperty(
+              "--toolbar-icon-size",
+              `${preset[2]}px`
+            );
           }
-          // Set colours/sizes in the per-style bucket
-          switch (value) {
-            case "light":
-              bucket.toolbarBackgroundColor = "#F5F8FA";
-              bucket.toolbarIconColor = "#4A5568";
-              bucket.toolbarIconSize = 18;
-              break;
-            case "dark":
-              bucket.toolbarBackgroundColor = "#2D3033";
-              bucket.toolbarIconColor = "#E2E8F0";
-              bucket.toolbarIconSize = 18;
-              break;
-            case "vibrant":
-              bucket.toolbarBackgroundColor = "#7E57C2";
-              bucket.toolbarIconColor = "#FFFFFF";
-              bucket.toolbarIconSize = 20;
-              break;
-            case "minimal":
-              bucket.toolbarBackgroundColor = "#F8F9FA";
-              bucket.toolbarIconColor = "#6B7280";
-              bucket.toolbarIconSize = 16;
-              break;
-            case "elegant":
-              bucket.toolbarBackgroundColor = "#1A2F28";
-              bucket.toolbarIconColor = "#D4AF37";
-              bucket.toolbarIconSize = 19;
-              break;
-          }
-          // Push the current style's values into the global CSS vars
-          const bg =
-            bucket.toolbarBackgroundColor ??
-            this.plugin.settings.toolbarBackgroundColor;
-          const icon =
-            bucket.toolbarIconColor ??
-            this.plugin.settings.toolbarIconColor;
-          const size = bucket.toolbarIconSize ?? 18;
 
-          document.documentElement.style.setProperty(
-            "--editing-toolbar-background-color",
-            bg
-          );
-          document.documentElement.style.setProperty(
-            "--editing-toolbar-icon-color",
-            icon
-          );
-          document.documentElement.style.setProperty(
-            "--toolbar-icon-size",
-            `${size}px`
-          );
-
-          this.plugin.toolbarIconSize = size;
+          this.plugin.toolbarIconSize = bucket.toolbarIconSize ?? 18;
           this.destroyPickrs();
           this.display();
           await this.plugin.saveSettings();
@@ -3135,6 +3177,16 @@ export class editingToolbarSettingTab extends PluginSettingTab {
         settingKey === "toolbarIconColor"
       ) {
         const bucket = this.getAppearanceBucket(editingStyle);
+        // pickr 在某些环境（如设置窗口不产帧）下会重放初始化流程并发出
+        // 未改色的 save；无条件重渲染会陷入
+        // save → display() → 重建 pickr → save 的死循环，把下拉框和整页
+        // 设置每秒重建多次。颜色没变时直接忽略。
+        const currentColor = (
+          bucket[settingKey] ?? this.plugin.settings[settingKey] ?? ""
+        ).toLowerCase();
+        if (currentColor === hexColor.toLowerCase()) {
+          return;
+        }
         bucket[settingKey] = hexColor;
         // Only push CSS variables if we're editing the active style
         if (activeStyle === editingStyle) {

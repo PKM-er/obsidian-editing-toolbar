@@ -15,6 +15,8 @@ export class TextEnhancement {
     const mdPattern =
       /(^#+\s|(^|\s+)#|^>|- \[( |x)\]|^\+ |<[^<>]+>|^1\. |^-+$|^\*+$|==|\*+|~~|```|!*\[\[|\]\])/gm;
     const plainText = selection
+      // Obsidian 1.14 彩色高亮的颜色 emoji（==🟠文字==）属于格式，一并去掉
+      .replace(/==(?:🔴|🟠|🟡|🟢|🔵|🟣)/g, "==")
       .replace(/\[([^[\]]*)\]\([^()]+\)/gim, "$1")
       .replace(mdPattern, "$2")
       .replace(/^[ ]+|[ ]+$/gm, "")

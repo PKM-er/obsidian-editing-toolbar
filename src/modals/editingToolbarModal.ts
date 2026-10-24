@@ -964,7 +964,9 @@ export function setFormateraser(plugin: editingToolbarPlugin, editor: Editor) {
   selectText = selectText.replace(/!?\[+([^[\]()]+)\]+\(([^()]+)\)/g, "$1");
   selectText = selectText.replace(/`([^`]+)`/g, "$1");
   selectText = selectText.replace(/_([^_]+)_/g, "$1");
-  selectText = selectText.replace(/==([^=]+)==/g, "$1");
+  // Obsidian 1.14 彩色高亮会把颜色 emoji 写在 == 之后（如 ==🟠文字==），
+  // 它属于高亮格式的一部分，清除高亮时一并去掉
+  selectText = selectText.replace(/==(?:🔴|🟠|🟡|🟢|🔵|🟣)?([^=]+)==/g, "$1");
   selectText = selectText.replace(/\*\*\*([^*]+)\*\*\*/g, "$1");
   selectText = selectText.replace(/\*\*?([^*]+)\*\*?/g, "$1");
   selectText = selectText.replace(/~~([^~]+)~~/g, "$1");
