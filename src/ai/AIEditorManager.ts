@@ -2134,6 +2134,17 @@ export class AIEditorManager {
       sendBtn.addEventListener("click", () => {
         void submitPrompt();
       });
+      // On Android the fixed panel can be repositioned between touchstart and
+      // the synthetic click (soft-keyboard panning fires scroll/resize), which
+      // cancels the tap before the click ever dispatches - the user only sees
+      // the hover state and nothing is sent (issue #344). Touch events keep
+      // their original target, so handling touchend directly stays reliable
+      // even when the panel moves mid-tap; preventDefault avoids a duplicate
+      // submit through the synthetic click.
+      sendBtn.addEventListener("touchend", (event: TouchEvent) => {
+        event.preventDefault();
+        void submitPrompt();
+      });
       let linkStartPos = -1;
       let selectedSuggestionIndex = 0;
       let suggestionFiles: TFile[] = [];
