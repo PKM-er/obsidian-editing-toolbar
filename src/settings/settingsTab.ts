@@ -286,7 +286,9 @@ export class editingToolbarSettingTab extends PluginSettingTab {
         setting.settingEl.empty();
         setting.settingEl.addClass('editing-toolbar-settings-root');
         setting.settingEl.setCssStyles({ display: 'block' });
-        setting.settingEl.setCssStyles({ padding: '0' });
+        // Keep the shell's own row padding: the 1.13+ settings render rows as
+        // padded cards, and with the padding removed the title sat flush against
+        // the top edge (issue #373).
         this.createHeader(setting.settingEl);
       },
     }, {
