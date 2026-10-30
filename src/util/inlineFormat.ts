@@ -316,6 +316,73 @@ function placeSelectionAfterReplace(editor: Editor, from: EditorPosition, text: 
   });
 }
 
+function hasAnyFormatting(format: InlineFormat): boolean {
+  return (
+    format.isBold ||
+    format.isItalic ||
+    format.fontColor !== null ||
+    format.markStyle !== null
+  );
+}
+
+/** 把一段文本解析成格式；没有格式或残留无法解析的片段时返回 null。 */
+function toInlineFormat(raw: string): InlineFormat | null {
+  const text = raw.trim();
+  if (!text) return null;
+  const format = parseInlineFormat(text);
+  if (hasUnparsedFormatting(format.content)) return null;
+  return hasAnyFormatting(format) ? format : null;
+}
+
+/**
+ * 读取选区首行携带的格式，供格式刷取样。
+ * 多行选区取第一行非空行——格式刷本来就按“一段文字的整体样式”工作。
+ */
+export function readInlineFormatFromSelection(editor: Editor): InlineFormat | null {
+  const selection = editor.getSelection();
+  if (!selection) return null;
+  const firstLine = selection.split("\n").find((line) => line.trim());
+  return firstLine ? toInlineFormat(firstLine) : null;
+}
+
+/** 读取光标所在的最内层格式片段，供格式刷在无选区时取样。 */
+export function readInlineFormatAtCursor(editor: Editor): InlineFormat | null {
+  const cursor = editor.getCursor();
+  const line = editor.getLine(cursor.line);
+  const range = findFormattingRangeAtCursor(line, cursor.ch);
+  return range ? toInlineFormat(line.slice(range.from, range.to)) : null;
+}
+
+/** 格式刷通知里显示的格式名称，与既有命令名称保持一致。 */
+export function describeInlineFormat(format: InlineFormat): string {
+  const parts: string[] = [];
+  if (format.isBold) parts.push("Bold");
+  if (format.isItalic) parts.push("Italic");
+  if (format.fontColor) parts.push("Font Color");
+  if (format.markStyle) parts.push("Background Color");
+  return parts.join(" + ");
+}
+
+/**
+ * 把取样到的格式刷到当前选区。
+ * 只叠加取样里存在的属性，不会清除目标原有的格式（清除请用格式擦除）。
+ */
+export function applyInlineFormat(editor: Editor, style: InlineFormat): void {
+  if (!editor.somethingSelected()) return;
+
+  const { from, to, text } = expandFormattingSelection(editor);
+  if (!text || text.trim() === "") return;
+
+  const newText = mapInlineFormat(text, (format) => {
+    if (style.fontColor) format.fontColor = style.fontColor;
+    if (style.markStyle) format.markStyle = style.markStyle;
+    if (style.isBold) format.isBold = true;
+    if (style.isItalic) format.isItalic = true;
+  });
+  editor.replaceRange(newText, from, to);
+  placeSelectionAfterReplace(editor, from, newText);
+}
+
 /**
  * Toggle bold / italic while preserving font color and background color.
  * `**` / `*` are only used when no HTML wrapper is involved.
