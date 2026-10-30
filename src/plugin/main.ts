@@ -1885,9 +1885,10 @@ updateCurrentCommands(commands: Command[], style?: string): void {
 
   private handleSelectedText(cmEditor: Editor) {
     if (this.EN_FontColor_Format_Brush) {
-      setFontcolor(this.settings.cMenuFontColor, cmEditor, this);
+      // 格式刷是“刷上”，重复刷同一颜色不应取消
+      setFontcolor(this.settings.cMenuFontColor, cmEditor, this, { toggle: false });
     } else if (this.EN_BG_Format_Brush) {
-      setBackgroundcolor(this.settings.cMenuBackgroundColor, cmEditor);
+      setBackgroundcolor(this.settings.cMenuBackgroundColor, cmEditor, { toggle: false });
     } else if (this.EN_Text_Format_Brush) {
       setFormateraser(this, cmEditor);
     } else if (this.formatBrushActive && this.lastCalloutType) {

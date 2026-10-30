@@ -367,10 +367,51 @@ export function toggleItalic(editor?: Editor): void {
   toggleInlineFlag(editor, "isItalic");
 }
 
+/** 颜色值比较前的归一化：忽略大小写、空格与 `background:` 前缀差异。 */
+function normalizeColor(value: string | null): string {
+  return (value ?? "").trim().toLowerCase().replace(/\s+/g, "");
+}
+
+/** `markStyle` 可能存成 `#fff88f` 也可能存成 `background:#fff88f`，比较前统一去掉前缀。 */
+function backgroundValue(markStyle: string | null): string {
+  return (markStyle ?? "").replace(/^background(-color)?:/i, "");
+}
+
+/**
+ * 判断整个选区是否**已经**是这个颜色。
+ * 用于「再点一次同色即取消」：只要有一行不是该颜色（或存在无法解析的片段），
+ * 就按“上色”处理，避免把混排的选区误清空。
+ */
+function selectionHasColor(
+  text: string,
+  read: (format: InlineFormat) => string | null,
+  target: string
+): boolean {
+  const expected = normalizeColor(target);
+  let matched = false;
+  for (const line of text.split("\n")) {
+    if (!line.trim()) continue;
+    const format = parseInlineFormat(line.trim());
+    if (hasUnparsedFormatting(format.content)) return false;
+    if (normalizeColor(read(format)) !== expected) return false;
+    matched = true;
+  }
+  return matched;
+}
+
+export interface ColorCommandOptions {
+  /**
+   * 同色再次应用时是否取消该颜色，默认开启（工具栏按钮 / 取色器）。
+   * 格式刷必须关掉，否则刷过已有同色文字会变成“擦除”。
+   */
+  toggle?: boolean;
+}
+
 export function setFontcolor(
   color: string,
   editor?: Editor,
-  plugin?: { setLastExecutedCommand(commandId: string): void }
+  plugin?: { setLastExecutedCommand(commandId: string): void },
+  options: ColorCommandOptions = {}
 ): void {
   if (!editor) return;
 
@@ -381,22 +422,32 @@ export function setFontcolor(
   }
 
   const { from, to, text } = expandFormattingSelection(editor);
+  const remove =
+    options.toggle !== false &&
+    selectionHasColor(text, (format) => format.fontColor, color);
   const newText = mapInlineFormat(text, (format) => {
-    format.fontColor = color;
+    format.fontColor = remove ? null : color;
   });
   editor.replaceRange(newText, from, to);
   placeSelectionAfterReplace(editor, from, newText);
 }
 
-export function setBackgroundcolor(color: string, editor?: Editor): void {
+export function setBackgroundcolor(
+  color: string,
+  editor?: Editor,
+  options: ColorCommandOptions = {}
+): void {
   if (!editor) return;
 
   const selection = editor.getSelection();
   if (!selection || selection.trim() === "") return;
 
   const { from, to, text } = expandFormattingSelection(editor);
+  const remove =
+    options.toggle !== false &&
+    selectionHasColor(text, (format) => backgroundValue(format.markStyle), color);
   const newText = mapInlineFormat(text, (format) => {
-    format.markStyle = `background:${color}`;
+    format.markStyle = remove ? null : `background:${color}`;
   });
   editor.replaceRange(newText, from, to);
   placeSelectionAfterReplace(editor, from, newText);
