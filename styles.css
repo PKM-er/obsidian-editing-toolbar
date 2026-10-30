@@ -1816,9 +1816,9 @@ transition: none;
   color: black;
 }
 
-:is(.cm-line, .markdown-rendered, .markdown-preview-view, p, li, h1, h2, h3, h4, h5, h6, td, th, blockquote) mark font[color] {
-  color: revert;
-}
+/* 注意：不要给 mark 内的 font[color] 加 `color: revert`。
+   revert 在作者样式层会回退到浏览器默认层，连 <font color> 的表现属性一起丢弃，
+   结果颜色变成继承 mark 的黑色，反而让背景色内的字体颜色失效。 */
 
 :is(.cm-line, .markdown-rendered, .markdown-preview-view) :is(font, mark) strong,
 :is(.cm-line, .markdown-rendered, .markdown-preview-view) :is(font, mark) b,

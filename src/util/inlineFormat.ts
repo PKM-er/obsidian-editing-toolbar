@@ -177,8 +177,10 @@ export function buildInlineFormat(format: InlineFormat): string {
     if (!isBold && !isItalic) return `<mark style="${background}">${content}</mark>`;
     return `<mark style="${background};${styleSuffix}">${content}</mark>`;
   }
+  // 背景色内一律用 span 承载颜色：<mark> 会把 color 强制设为黑/正文色，
+  // 而 <font color> 依赖 HTML 表现属性，优先级最低，会被主题样式覆盖掉。
   if (!isBold && !isItalic) {
-    return `<mark style="${background}"><font color="${fontColor}">${content}</font></mark>`;
+    return `<mark style="${background}"><span style="color:${fontColor};">${content}</span></mark>`;
   }
   return `<mark style="${background}"><span style="color:${fontColor};${styleSuffix}">${content}</span></mark>`;
 }
