@@ -1797,20 +1797,47 @@ transition: none;
   opacity: 0;
 }
 
-:is(.cm-line, p) mark[style^="background:rgba"] {
+/* Enhanced background & font color styling for consistent rendering across Live Preview and Reading View */
+:is(.cm-line, .markdown-rendered, .markdown-preview-view, p, li, h1, h2, h3, h4, h5, h6, td, th, blockquote) mark[style*="background:rgba"] {
   color: var(--text-normal);
 }
 
-:is(.cm-line, p) mark[style^="background:#"] {
+:is(.cm-line, .markdown-rendered, .markdown-preview-view, p, li, h1, h2, h3, h4, h5, h6, td, th, blockquote) mark[style*="background:#"],
+:is(.cm-line, .markdown-rendered, .markdown-preview-view, p, li, h1, h2, h3, h4, h5, h6, td, th, blockquote) mark[style*="background:rgb("] {
   color: black;
 }
 
-:is(.cm-line, p) span[style^="background:rgba"] {
+:is(.cm-line, .markdown-rendered, .markdown-preview-view, p, li, h1, h2, h3, h4, h5, h6, td, th, blockquote) span[style*="background:rgba"] {
   color: var(--text-normal);
 }
 
-:is(.cm-line, p) span[style^="background:#"] {
+:is(.cm-line, .markdown-rendered, .markdown-preview-view, p, li, h1, h2, h3, h4, h5, h6, td, th, blockquote) span[style*="background:#"],
+:is(.cm-line, .markdown-rendered, .markdown-preview-view, p, li, h1, h2, h3, h4, h5, h6, td, th, blockquote) span[style*="background:rgb("] {
   color: black;
+}
+
+:is(.cm-line, .markdown-rendered, .markdown-preview-view, p, li, h1, h2, h3, h4, h5, h6, td, th, blockquote) mark font[color] {
+  color: revert;
+}
+
+:is(.cm-line, .markdown-rendered, .markdown-preview-view) :is(font, mark) strong,
+:is(.cm-line, .markdown-rendered, .markdown-preview-view) :is(font, mark) b,
+:is(.cm-line, .markdown-rendered, .markdown-preview-view) :is(font, mark) .cm-strong {
+  font-weight: var(--bold-weight, 700);
+}
+
+:is(.cm-line, .markdown-rendered, .markdown-preview-view) :is(span, font, mark)[style*="font-weight"] {
+  font-weight: var(--bold-weight, 700) !important;
+}
+
+:is(.cm-line, .markdown-rendered, .markdown-preview-view) :is(font, mark) em,
+:is(.cm-line, .markdown-rendered, .markdown-preview-view) :is(font, mark) i,
+:is(.cm-line, .markdown-rendered, .markdown-preview-view) :is(font, mark) .cm-em {
+  font-style: italic;
+}
+
+:is(.cm-line, .markdown-rendered, .markdown-preview-view) :is(span, font, mark)[style*="font-style"] {
+  font-style: italic !important;
 }
 
 /* 快捷键样式 */                                                                
