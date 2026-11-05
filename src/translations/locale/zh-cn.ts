@@ -818,6 +818,7 @@ export default {
   'AI is generating': 'AI 正在生成',
   'AI suggestion': 'AI 建议',
   'Press Tab to accept': '按 Tab 接受补全',
+  'Tap to accept': '点按接受补全',
   'Replace': '替换',
   'Insert below': '插入到下方',
   'Try again': '重试',

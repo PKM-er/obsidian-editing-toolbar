@@ -1,9 +1,34 @@
 import { Prec, StateEffect, StateField, type Extension } from "@codemirror/state";
 import { Decoration, EditorView, ViewPlugin, type Command, type ViewUpdate, WidgetType, keymap } from "@codemirror/view";
+import { Platform } from "obsidian";
 import { t } from "src/translations/helper";
 import { buildLocalCompletionContext } from "../editorContext";
 import { showAIErrorNotice } from "../errorHandling";
 import type { CompletionConfig, IAIService } from "../types";
+
+/**
+ * Phones and tablets have no Tab key, so the hint is the only way to accept a
+ * suggestion there. It is therefore always visible on mobile and can be tapped.
+ */
+function isMobileCompletion(): boolean {
+  return Platform.isMobileApp;
+}
+
+function acceptHintLabel(): string {
+  return isMobileCompletion() ? t("Tap to accept") : t("Press Tab to accept");
+}
+
+function createAcceptHint(): HTMLElement {
+  const hint = createSpan();
+  hint.className = "cm-ai-ghost-hint";
+  if (isMobileCompletion()) {
+    hint.classList.add("cm-ai-ghost-hint-mobile");
+  }
+  hint.textContent = acceptHintLabel();
+  hint.setAttribute("role", "button");
+  hint.setAttribute("aria-label", acceptHintLabel());
+  return hint;
+}
 
 interface CompletionState {
   pos: number;
@@ -52,10 +77,7 @@ class GhostTextWidget extends WidgetType {
     wrapper.appendChild(firstLine);
 
     if (this.showHint) {
-      const hint = createSpan();
-      hint.className = "cm-ai-ghost-hint";
-      hint.textContent = t("Press Tab to accept");
-      wrapper.appendChild(hint);
+      wrapper.appendChild(createAcceptHint());
     }
 
     if (lines.length > 1) {
@@ -79,13 +101,13 @@ class GhostTextWidget extends WidgetType {
     }
 
     if (this.showHint) {
+      const label = acceptHintLabel();
       if (hint) {
-        hint.textContent = t("Press Tab to accept");
+        hint.textContent = label;
+        hint.classList.toggle("cm-ai-ghost-hint-mobile", isMobileCompletion());
         hint.setCssStyles({ display: "inline-flex" });
       } else {
-        const newHint = createSpan();
-        newHint.className = "cm-ai-ghost-hint";
-        newHint.textContent = t("Press Tab to accept");
+        const newHint = createAcceptHint();
         if (firstLine?.nextSibling) {
           dom.insertBefore(newHint, firstLine.nextSibling);
         } else {
@@ -180,7 +202,9 @@ function createCompletionDecorations(shouldShowHint?: () => boolean) {
 
     return Decoration.set([
       Decoration.widget({
-        widget: new GhostTextWidget(completion.text, shouldShowHint?.() ?? false),
+        // The hint is the only accept affordance on mobile, so keep it visible
+        // there instead of hiding it after the first accepted suggestion.
+        widget: new GhostTextWidget(completion.text, isMobileCompletion() || (shouldShowHint?.() ?? false)),
         side: 1,
       }).range(completion.pos),
     ]);
@@ -237,6 +261,36 @@ export function inlineCompletion(
         this.view = view;
         this.ownerDocument = view.dom.ownerDocument;
         this.ownerDocument.addEventListener("keydown", this.handleDocumentKeydown, true);
+        // Tapping the hint accepts the suggestion (no Tab key on mobile).
+        // Capture phase + preventDefault keeps CodeMirror from moving the
+        // cursor, which would dismiss the suggestion before we accept it.
+        view.dom.addEventListener("pointerdown", this.handleHintPointerDown, true);
+        view.dom.addEventListener("touchend", this.handleHintTouchEnd, { capture: true, passive: false });
+      }
+
+      private handleHintPointerDown = (event: PointerEvent): void => {
+        if (event.pointerType === "mouse" && event.button !== 0) return;
+        if (!this.acceptFromHint(event.target)) return;
+        event.preventDefault();
+        event.stopPropagation();
+      };
+
+      private handleHintTouchEnd = (event: TouchEvent): void => {
+        if (!this.acceptFromHint(event.target)) return;
+        event.preventDefault();
+        event.stopPropagation();
+      };
+
+      private acceptFromHint(target: EventTarget | null): boolean {
+        const hint = target instanceof Element ? target.closest(".cm-ai-ghost-hint") : null;
+        if (!hint || !this.view.dom.contains(hint)) return false;
+
+        const completion = this.view.state.field(completionField);
+        if (!completion?.text || completion.status !== "ready") return false;
+
+        acceptCompletionInternal(this.view, markHintLearned);
+        this.view.focus();
+        return true;
       }
 
       private handleDocumentKeydown = (event: KeyboardEvent): void => {
@@ -359,6 +413,8 @@ export function inlineCompletion(
 
       destroy(): void {
         this.ownerDocument.removeEventListener("keydown", this.handleDocumentKeydown, true);
+        this.view.dom.removeEventListener("pointerdown", this.handleHintPointerDown, true);
+        this.view.dom.removeEventListener("touchend", this.handleHintTouchEnd, { capture: true });
         this.abortController?.abort();
         if (this.autoTriggerTimer) {
           window.clearTimeout(this.autoTriggerTimer);

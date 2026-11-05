@@ -109,6 +109,20 @@ export const aiTheme = EditorView.baseTheme({
     fontSize: "0.75em",
     fontStyle: "normal",
     letterSpacing: "0.01em",
+    // ".cm-ai-ghost-text" disables pointer events so typing is never blocked by
+    // the ghost text; the hint opts back in because tapping it accepts the
+    // suggestion, which is the only way to accept on mobile.
+    pointerEvents: "auto",
+    cursor: "pointer",
+    touchAction: "manipulation",
+    userSelect: "none",
+  },
+  ".cm-ai-ghost-hint-mobile": {
+    marginLeft: "8px",
+    padding: "4px 10px",
+    fontSize: "0.8em",
+    minHeight: "28px",
+    boxSizing: "border-box",
   },
   ".cm-ai-ghost-rest": {
     display: "block",
