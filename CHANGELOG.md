@@ -1,5 +1,34 @@
 # Changelog
 
+## 4.1.12 (2026-11-05)
+### Update manifest.json, package.json and versions.json for version 4.1.12
+### 移动端可点按接受 AI 行内补全
+- 手机/平板没有 Tab 键，此前提示只有"按 Tab 接受补全"，移动端实际无法接受补全
+- 提示现在可点击/点按：pointerdown 与 touchend 两条路径均可接受补全（捕获阶段 +
+  preventDefault，避免 CodeMirror 移动光标导致补全被清空）
+- 移动端提示常驻显示（不再受"已学会"标记影响——它是移动端唯一入口），文案改为
+  "点按接受补全" / "Tap to accept"，并加大点击区域（min-height 28px、4px 10px 内边距）
+- .cm-ai-ghost-text 保持 pointer-events: none（避免幽灵文本挡住输入），仅提示自身恢复 auto
+- 桌面行为不变：Tab 仍可接受、提示在首次接受后隐藏；提示显示时同样可以点击
+- 实测（Obsidian 1.14.5）：桌面点击提示成功插入补全、Tab 路径正常；移动端分支
+  （沙盒强制 isMobileApp）文案/常驻/样式正确，点按可接受
+### 修复安卓上 AI 自定义改写面板发送按钮点按无效（issue #344）
+- 面板为 position:fixed 且监听 scroll/resize 重定位；安卓软键盘 pan 会触发
+  scroll，若重定位恰好落在 touchstart 与合成 click 之间，这次点按会被系统
+  取消——用户只看到 hover 高亮，不发送（issue 报告的现象）
+- touch 事件的 target 固定在 touchstart 的元素上，不受面板移动影响；现在
+  发送按钮增加 touchend 直发（preventDefault 防止合成 click 重复提交）
+- 桌面 click 路径保持不变
+- 实测（CDP 模拟点按序列）：面板在按下与抬起之间移位 120px 时，click 路径
+  点按丢失（无任何信号），touchend 路径正常到达提交；不移动时桌面 click 正常
+### 修复设置页标题头部贴顶错位（issue #373）
+- 1.13+ 声明式根节点把 settingEl 的内联 padding 设为 0（旧版设置界面需要），
+  但新版设置每行都是带内边距的卡片，导致插件标题贴着卡片上边缘、没有上内边距
+- 现在保留渲染器自带的行内边距，标题与新设置界面的其它行对齐
+- 已在 Obsidian 1.14.5 实测：标题垂直居中、卡片间距与原生设置行一致
+### Update manifest.json and CHANGELOG.md for version 4.1.11
+
+
 ## 4.1.11 (2026-10-24)
 ### Update manifest.json, package.json and versions.json for version 4.1.11
 ### 修复 #371/#372 设置页主题下拉与取色器循环崩溃、#367 清除格式残留彩色高亮 emoji、#365 更新日志按语言显示
