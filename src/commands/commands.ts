@@ -16,6 +16,8 @@ import {
   setHeader,
   setFontcolor,
   setBackgroundcolor,
+  toggleBold,
+  toggleItalic,
   renumberSelection,
 } from "src/util/util";
 import { fullscreenMode, workplacefullscreenMode } from "src/util/fullscreen";
@@ -1074,8 +1076,8 @@ export class CommandsManager {
         const editor = this.getActiveEditor();
         if (editor) {
           void this.executeCommandWithoutBlur(editor, () => {
-            // 执行编辑器操作
-            editor.toggleMarkdownFormatting("bold");
+            // 加粗不再直接走 toggleMarkdownFormatting，避免 `**` 被颜色标签包裹后失效
+            toggleBold(editor);
           });
         }
       },
@@ -1088,7 +1090,8 @@ export class CommandsManager {
         const editor = this.getActiveEditor();
         editor &&
           void this.executeCommandWithoutBlur(editor, () =>
-            editor?.toggleMarkdownFormatting("italic")
+            // 斜体与加粗同样需要与颜色/背景色共存
+            toggleItalic(editor)
           );
       },
       icon: "italic-glyph",

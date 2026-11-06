@@ -21,6 +21,13 @@ import addIcons, {
   // addBoxIcons
 } from "src/icons/customIcons";
 import { setFontcolor, setBackgroundcolor } from "src/util/util";
+import {
+  applyInlineFormat,
+  describeInlineFormat,
+  readInlineFormatAtCursor,
+  readInlineFormatFromSelection,
+  type InlineFormat,
+} from "src/util/inlineFormat";
 import { ViewUtils } from 'src/util/viewUtils';
 import { UpdateNoticeModal } from "src/modals/updateModal";
 import { StatusBar } from "src/components/StatusBar";
@@ -130,6 +137,8 @@ export default class editingToolbarPlugin extends Plugin {
   lastCalloutType: string | null = null;
   // 添加一个属性来存储上一个命令的可读名称
   lastExecutedCommandName: string | null = null;
+  // 取样到的行内格式（加粗/斜体/字体颜色/背景色），有值时优先于命令重放
+  formatBrushStyle: InlineFormat | null = null;
 
   // 添加设置标签页引用
   settingTab: editingToolbarSettingTab;
@@ -1136,9 +1145,20 @@ updateCurrentCommands(commands: Command[], style?: string): void {
     const editor = this.commandsManager.getActiveEditor();
     let detectedFormat = false;
     let calloutType = "";
+    this.formatBrushStyle = null;
     // 判断是否有选中文本
     if (editor) {
-      if (editor.somethingSelected()) {
+      // 加粗/斜体/字体颜色/背景色这类可叠加的行内格式优先走结构化取样：
+      // 重放单个命令无法表达“颜色 + 加粗”这类组合，而且会把 markdown 标记
+      // 塞进 <font>/<mark> 里导致失效。
+      const inlineStyle = editor.somethingSelected()
+        ? readInlineFormatFromSelection(editor)
+        : readInlineFormatAtCursor(editor);
+      if (inlineStyle) {
+        this.formatBrushStyle = inlineStyle;
+        this.lastExecutedCommandName = describeInlineFormat(inlineStyle);
+        detectedFormat = true;
+      } else if (editor.somethingSelected()) {
         const selectedText = editor.getSelection();
         // 检测选中文本的格式
         if (/^\*\*.*\*\*$/.test(selectedText)) {
@@ -1588,7 +1608,15 @@ updateCurrentCommands(commands: Command[], style?: string): void {
     editor.replaceSelection(newText);
   }
   applyFormatBrush(editor: Editor): void {
-    if (!this.lastExecutedCommand || !this.formatBrushActive) return;
+    if (!this.formatBrushActive) return;
+
+    // 行内组合格式：按取样结果整体重建，避免重放命令时丢失叠加的格式
+    if (this.formatBrushStyle) {
+      applyInlineFormat(editor, this.formatBrushStyle);
+      return;
+    }
+
+    if (!this.lastExecutedCommand) return;
     // 执行保存的命令
     const command = this.app.commands.commands[this.lastExecutedCommand];
     if (command && command.callback) {
@@ -1607,6 +1635,7 @@ updateCurrentCommands(commands: Command[], style?: string): void {
     this.EN_FontColor_Format_Brush = false;
     this.EN_BG_Format_Brush = false;
     this.EN_Text_Format_Brush = false;
+    this.formatBrushStyle = null;
     activeDocument.body.classList.remove("format-brush-cursor");
     if (this.formatBrushActive) {
       this.formatBrushActive = false;
@@ -1683,6 +1712,7 @@ updateCurrentCommands(commands: Command[], style?: string): void {
     this.EN_BG_Format_Brush = false;
     this.EN_Text_Format_Brush = false;
     this.formatBrushActive = false;
+    this.formatBrushStyle = null;
   }
 
   // 性能优化：缓存工具栏 DOM 引用
@@ -1885,9 +1915,10 @@ updateCurrentCommands(commands: Command[], style?: string): void {
 
   private handleSelectedText(cmEditor: Editor) {
     if (this.EN_FontColor_Format_Brush) {
-      setFontcolor(this.settings.cMenuFontColor, cmEditor, this);
+      // 格式刷是“刷上”，重复刷同一颜色不应取消
+      setFontcolor(this.settings.cMenuFontColor, cmEditor, this, { toggle: false });
     } else if (this.EN_BG_Format_Brush) {
-      setBackgroundcolor(this.settings.cMenuBackgroundColor, cmEditor);
+      setBackgroundcolor(this.settings.cMenuBackgroundColor, cmEditor, { toggle: false });
     } else if (this.EN_Text_Format_Brush) {
       setFormateraser(this, cmEditor);
     } else if (this.formatBrushActive && this.lastCalloutType) {
@@ -1896,7 +1927,7 @@ updateCurrentCommands(commands: Command[], style?: string): void {
         cmEditor.getSelection(),
         this.lastCalloutType
       );
-    } else if (this.formatBrushActive && this.lastExecutedCommand) {
+    } else if (this.formatBrushActive && (this.lastExecutedCommand || this.formatBrushStyle)) {
       this.applyFormatBrush(cmEditor);
     }
     else if (this.isFollowingToolbarActive()) {
