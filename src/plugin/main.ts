@@ -12,7 +12,7 @@ import {
   debounce,
 } from "obsidian";
 import { editingToolbarSettingTab } from '../settings/settingsTab';
-import { selfDestruct, editingToolbarPopover, quiteFormatbrushes, createFollowingbar, setFormateraser, isExistoolbar, resetToolbar, relayoutToolbarOverflow } from "src/modals/editingToolbarModal";
+import { selfDestruct, editingToolbarPopover, quiteFormatbrushes, createFollowingbar, setFormateraser, isExistoolbar, resetToolbar, relayoutToolbarOverflow, hideToolbarsForSnapshot, restoreToolbarsAfterSnapshot } from "src/modals/editingToolbarModal";
 import { editingToolbarSettings, DEFAULT_SETTINGS } from "src/settings/settingsData";
 import { t } from 'src/translations/helper';
 import addIcons, {
@@ -141,6 +141,12 @@ export default class editingToolbarPlugin extends Plugin {
 
   // resize 防抖：只保留最后一次调度的重排/重建
   private resizeRelayoutTimer: number | null = null;
+
+  // Obsidian 1.15.x 启动时先展示工作区，启动完成才移除 .app-container 上的
+  // mod-starting 类。在这个窗口里创建流内工具栏会被用户看到并扰动布局（issue #376），
+  // 因此观察该类，等启动真正结束后再创建。
+  private startupRevealObserver: MutationObserver | null = null;
+  private startupRevealFallbackTimer: number | null = null;
 
 
 
@@ -500,13 +506,12 @@ export default class editingToolbarPlugin extends Plugin {
     this.app.workspace.onLayoutReady(() => {
       this.statusBar = new StatusBar(this);
       this.statusBar.init();
-      
-      // Ensure toolbar respects initial visibility state after Settings Search completes
-      // Use a small delay to ensure Settings Search has finished scanning settings tabs
+
+      // 首次创建工具栏。handleeditingToolbar 内部会等 Obsidian 结束启动
+      // （移除 app-container 上的 mod-starting/mod-loading）后再真正插入 DOM，
+      // 避免启动阶段的布局抖动；同时覆盖 Settings Search 扫描完成后的可见性状态。
       window.setTimeout(() => {
-        if (!this.settings.cMenuVisibility) {
-          this.handleeditingToolbar();
-        }
+        this.handleeditingToolbar();
       }, 100);
 
       window.setTimeout(() => {
@@ -590,11 +595,11 @@ export default class editingToolbarPlugin extends Plugin {
     //  this.registerEvent(this.app.workspace.on("editor-change", this.handleeditingToolbar));
 
     // this.app.workspace.onLayoutReady(this.handleeditingToolbar_editor.bind(this));
-    if (this.settings.cMenuVisibility == true) {
-      window.setTimeout(() => {
-        dispatchEvent(new Event("editingToolbar-NewCommand"));
-      }, 100);
-    }
+    // 注意：不要在启动时派发 editingToolbar-NewCommand。
+    // 该事件会触发 selfDestruct + 重建工具栏 + 重建设置页 UI，而插件加载早于
+    // vault/workspace 加载，这些同步工作会落在 Obsidian 1.15.x 的启动揭示窗口里，
+    // 造成可见的布局抖动（issue #376）。工具栏由 active-leaf-change / onLayoutReady
+    // 创建即可。
     this.registerDomEvent(
       activeDocument,
       'contextmenu',
@@ -660,6 +665,19 @@ this.app.workspace.onLayoutReady(async () => {
       this.app.workspace.on("editor-menu", this.handleEditorContextMenu)
           // 判断光标是否在有序列表行（简单匹配数字开头）
     );
+    // Obsidian 1.15.x 会在窗口失焦 2 秒后与退出/重载的 beforeunload 时把当前 DOM
+    // 序列化为启动快照，下次启动以冻结 iframe 先行展示。序列化 DOM 在 iframe 里的
+    // 解析结构会破坏工具栏嵌套，按钮散落各容器且脱离 visibility 继承（issue #376）。
+    // 本插件的 beforeunload 监听注册早于 Obsidian 的快照保存监听（插件加载早于
+    // registerQuitHook），会先执行，可在快照序列化前用 display:none 移除工具栏的
+    // 布局盒（序列化器只保留有布局盒的元素，整棵子树随之消失）。
+    this.registerDomEvent(window, "beforeunload", () => hideToolbarsForSnapshot());
+    // 失焦 2 秒后的快照路径：失焦即隐藏，聚焦后恢复布局盒，可见性交给 handleeditingToolbar
+    this.registerDomEvent(window, "blur", () => hideToolbarsForSnapshot());
+    this.registerDomEvent(window, "focus", () => {
+      restoreToolbarsAfterSnapshot();
+      this.handleeditingToolbar();
+    });
     this.registerEvent(
       this.app.workspace.on("canvas:node-menu", this.handleCanvasNodeContextMenu)
     );
@@ -750,6 +768,16 @@ this.app.workspace.onLayoutReady(async () => {
       this.resizeRelayoutTimer = null;
     }
 
+    // 取消启动揭示阶段推迟的工具栏创建
+    if (this.startupRevealFallbackTimer !== null) {
+      window.clearTimeout(this.startupRevealFallbackTimer);
+      this.startupRevealFallbackTimer = null;
+    }
+    if (this.startupRevealObserver) {
+      this.startupRevealObserver.disconnect();
+      this.startupRevealObserver = null;
+    }
+
     // 注销工作区事件
     this.app.workspace.off("active-leaf-change", this.handleeditingToolbar);
     this.app.workspace.off("layout-change", this.handleeditingToolbar_layout);
@@ -774,7 +802,66 @@ this.app.workspace.onLayoutReady(async () => {
     return ViewUtils.isAllowedViewType(view);
   }
 
+  /** Obsidian 1.15.x 启动揭示阶段：工作区仍标记为启动中。 */
+  private isStartupRevealPending(): boolean {
+    const container = activeDocument.querySelector<HTMLElement>(".app-container");
+    if (!container) return false;
+    // 1.15.x 桌面端用 mod-starting 标记启动中（启动完成后移除）；
+    // 旧版/移动端占位工作区流程用 mod-loading。
+    return (
+      container.classList.contains("mod-starting") ||
+      container.classList.contains("mod-loading")
+    );
+  }
+
+  /**
+   * 启动揭示阶段内延后工具栏创建并返回 true。
+   * 观察 .app-container 的 class，等 mod-starting / mod-loading 移除后
+   * 在下一帧创建（赶在揭示后的首次绘制前，避免工具栏延迟出现造成二次跳动）。
+   * 另设 20 秒兜底，避免 Obsidian 后续调整启动流程时工具栏永远不出现。
+   */
+  private deferToolbarUntilRevealed(): boolean {
+    if (!this.isStartupRevealPending()) return false;
+
+    if (!this.startupRevealObserver) {
+      const container = activeDocument.querySelector<HTMLElement>(".app-container");
+      if (container) {
+        const observer = new MutationObserver(() => {
+          if (this.isStartupRevealPending()) return;
+          observer.disconnect();
+          this.startupRevealObserver = null;
+          window.requestAnimationFrame(() => this.handleeditingToolbar());
+        });
+        observer.observe(container, { attributes: true, attributeFilter: ["class"] });
+        this.startupRevealObserver = observer;
+      }
+    }
+
+    if (this.startupRevealFallbackTimer === null) {
+      this.startupRevealFallbackTimer = window.setTimeout(() => {
+        this.startupRevealFallbackTimer = null;
+        this.handleeditingToolbar();
+      }, 20000);
+    }
+    return true;
+  }
+
   handleeditingToolbar = () => {
+    // 工作区尚未就绪，或仍处于启动揭示阶段时，先不要改动视图 DOM，
+    // 否则流内工具栏会参与未稳定布局的计算（issue #376）。
+    if (!this.app.workspace.layoutReady) return;
+    if (this.deferToolbarUntilRevealed()) return;
+
+    // 已通过启动揭示守卫：清理兜底定时器/观察器
+    if (this.startupRevealFallbackTimer !== null) {
+      window.clearTimeout(this.startupRevealFallbackTimer);
+      this.startupRevealFallbackTimer = null;
+    }
+    if (this.startupRevealObserver) {
+      this.startupRevealObserver.disconnect();
+      this.startupRevealObserver = null;
+    }
+
     // Keep format-brush cursor state in sync with the toolbar state
     if (!this.formatBrushActive) {
       activeDocument.body.classList.remove("format-brush-cursor");
@@ -847,6 +934,7 @@ this.app.workspace.onLayoutReady(async () => {
     ];
 
     // ---- Per-style handling: create / show / hide independently ----
+    let createdAnyToolbar = false;
     for (const { key, enabled } of styles) {
       const existing = isExistoolbar(this.app, this, key);
 
@@ -860,6 +948,7 @@ this.app.workspace.onLayoutReady(async () => {
       // If we don't have this toolbar yet, create it for this style.
       if (!existing) {
         editingToolbarPopover(this.app, this, key);
+        createdAnyToolbar = true;
       }
 
       const toolbar = isExistoolbar(this.app, this, key);
@@ -880,6 +969,17 @@ this.app.workspace.onLayoutReady(async () => {
         toolbar.setCssStyles({ visibility: "visible" });
       }
     }
+
+    // 刚创建过工具栏时，下一帧用实际渲染宽度复核一次溢出分割：
+    // 创建瞬间与揭示后的首次稳定布局之间可能有微小漂移（侧边栏动画等），
+    // 提前收敛，避免个别按钮短暂挤在主栏尾部（issue #376）。
+    if (createdAnyToolbar) {
+      window.requestAnimationFrame(() => {
+        this.getEnabledToolbarStyles().forEach((styleKey) => {
+          relayoutToolbarOverflow(this.app, this, styleKey);
+        });
+      });
+    }
   };
 
   handleeditingToolbar_layout = () => {
@@ -889,6 +989,11 @@ this.app.workspace.onLayoutReady(async () => {
   };
   
   handleeditingToolbar_resize = () => {
+    // 启动揭示阶段不要重排/重建，等工作区真正显示后由 handleeditingToolbar 处理
+    if (!this.app.workspace.layoutReady || this.isStartupRevealPending()) {
+      return false;
+    }
+
     // Only care about resizing when the toolbar is visible and top-style is active
     if (!this.settings.cMenuVisibility || !this.isTopToolbarActive()) {
       return false;

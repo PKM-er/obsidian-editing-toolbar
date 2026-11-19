@@ -118,6 +118,31 @@ export function resetToolbar(plugin?: editingToolbarPlugin) {
   }
 }
 
+/**
+ * 退出/失焦时隐藏所有工具栏（不销毁）：Obsidian 1.15.x 会把当前 DOM 序列化为
+ * 启动快照，下次启动以冻结 iframe 先行展示。序列化器（gle）只保留有布局盒的
+ * 元素，且 iframe 的解析会把工具栏按钮重新挂载到各工作区容器、脱离 bar 的
+ * visibility 继承，造成按钮散落错位（issue #376）。
+ * 因此必须用 display:none（无布局盒，序列化器跳过整棵子树），而不是 visibility。
+ */
+export function hideToolbarsForSnapshot() {
+  collectToolbarDocuments().forEach((doc) => {
+    doc
+      .querySelectorAll<HTMLElement>(".editingToolbarModalBar, .editingToolbarPopoverBar")
+      .forEach((el) => el.setCssStyles({ display: "none" }));
+  });
+}
+
+/** 窗口重新聚焦后恢复工具栏的布局盒，可见性由 handleeditingToolbar 决定。 */
+export function restoreToolbarsAfterSnapshot() {
+  collectToolbarDocuments().forEach((doc) => {
+    doc
+      .querySelectorAll<HTMLElement>(".editingToolbarModalBar, .editingToolbarPopoverBar")
+      .forEach((el) => el.setCssStyles({ display: "" }));
+  });
+}
+
+
 export function selfDestruct(plugin?: editingToolbarPlugin) {
   requireApiVersion("0.15.0")
     ? (activeDocument = activeWindow.document)
@@ -415,13 +440,23 @@ function shouldMoveButtonToMoreMenu(
   leafwidth: number,
   buttonWidth: number,
   toolbarStyle?: ToolbarStyleKey,
+  widthsIncludeMargins?: boolean,
 ): boolean {
+  // 宽度未知（布局尚未测量完成）时按溢出处理：宁可把按钮先收进 more 菜单，
+  // 也不要把全部按钮塞进流内工具栏、撑大宿主的最小内容宽度（issue #376）。
+  if (!Number.isFinite(leafwidth) || leafwidth <= 0) {
+    return true;
+  }
+
   if (leafwidth <= 100) {
     return false;
   }
 
-  const estimatedButtonCount = Math.max(1, Math.round(currentWidth / Math.max(buttonWidth, 1)));
-  const estimatedGapWidth = estimatedButtonCount * 6;
+  // widthsIncludeMargins：宽度来自真实渲染（offsetWidth + 外边距），按钮间距已
+  // 包含在内，不再叠加 gap 估算；估算路径（generateMenu 首次分割）保持原口径。
+  const estimatedGapWidth = widthsIncludeMargins
+    ? 0
+    : Math.max(1, Math.round(currentWidth / Math.max(buttonWidth, 1))) * 6;
   const reservedMoreButtonWidth = buttonWidth + 12;
   const reservedFollowingBufferWidth = toolbarStyle === "following" ? buttonWidth + 10 : 0;
   const shouldReserveExtraTouchSpace = Platform.isMobileApp || toolbarStyle === "mobile";
@@ -476,26 +511,41 @@ function computeToolbarLeafWidth(
   return targetDocument.defaultView?.innerWidth || targetDocument.body?.clientWidth || 0;
 }
 
-// 根据按钮 DOM 类名推算与 generateMenu 累加口径一致的逻辑宽度
+// 计算溢出分割所用的按钮宽度：优先取真实渲染宽度（offsetWidth + 水平外边距，
+// 即按钮实际占位），尚未布局完成（offsetWidth 为 0）时退回与 generateMenu
+// 一致的类名估算。类名估算与真实渲染存在偏差（AI 标签、特殊按钮），会让个别
+// 本应进入溢出面板的按钮在启动首帧挤在主栏尾部（issue #376）。
 function getToolbarButtonLogicalWidth(
   buttonEl: Element,
   buttonWidth: number,
   plugin: editingToolbarPlugin,
   style: ToolbarStyleKey,
-): number {
+): { width: number; actual: boolean } {
+  const offsetWidth = (buttonEl as HTMLElement).offsetWidth || 0;
+  if (offsetWidth > 0) {
+    const view = buttonEl.ownerDocument?.defaultView;
+    const computed = view?.getComputedStyle(buttonEl);
+    const margin =
+      (parseFloat(computed?.marginLeft || "0") || 0) +
+      (parseFloat(computed?.marginRight || "0") || 0);
+    return { width: offsetWidth + margin, actual: true };
+  }
   const cls = buttonEl.className || "";
   if (cls.includes("editingToolbarCommandsubItem-ai")) {
-    return estimateAIToolbarButtonWidth(plugin, style, buttonWidth);
+    return { width: estimateAIToolbarButtonWidth(plugin, style, buttonWidth), actual: false };
   }
   if (cls.includes("editingToolbarCommandItem")) {
-    return buttonWidth;
+    return { width: buttonWidth, actual: false };
   }
   if (cls.includes("editingToolbarCommandsubItem")) {
-    return cls.includes("editingToolbarCommandsubItem-font-color")
-      ? buttonWidth
-      : buttonWidth + 2;
+    return {
+      width: cls.includes("editingToolbarCommandsubItem-font-color")
+        ? buttonWidth
+        : buttonWidth + 2,
+      actual: false,
+    };
   }
-  return buttonWidth;
+  return { width: buttonWidth, actual: false };
 }
 
 // 轻量重排：宽度变化后只调整按钮在主栏与溢出面板之间的分布，
@@ -561,9 +611,11 @@ export function relayoutToolbarOverflow(
   // 复算溢出分割点
   let btnwidth = 0;
   let newSplit = 0;
+  let measuredAnyActual = false;
   allButtons.forEach((buttonEl) => {
-    const width = getToolbarButtonLogicalWidth(buttonEl, buttonWidth, plugin, style);
-    if (!shouldMoveButtonToMoreMenu(btnwidth, width, leafwidth, buttonWidth, style)) {
+    const { width, actual } = getToolbarButtonLogicalWidth(buttonEl, buttonWidth, plugin, style);
+    if (actual) measuredAnyActual = true;
+    if (!shouldMoveButtonToMoreMenu(btnwidth, width, leafwidth, buttonWidth, style, measuredAnyActual)) {
       newSplit++;
     }
     btnwidth += width;
@@ -2085,6 +2137,12 @@ export function editingToolbarPopover(
       });
 
       createMoremenu(app, plugin, editingToolbar);
+      // 工具栏此刻已插入 DOM 但尚未绘制：立即用真实渲染宽度复核一次溢出分割，
+      // 同步重排不会产生可见闪烁。否则估算宽度与真实渲染的偏差会把个别按钮
+      // 挤在主栏尾部，直到下一次 resize 重排才归位（issue #376）。
+      if (effectiveStyle !== "top" || !hostDocument) {
+        relayoutToolbarOverflow(app, plugin, effectiveStyle, targetDocument);
+      }
       if (Math.abs(plugin.settings.cMenuWidth - Number(btnwidth)) > (btnwidth + 4)) {
         plugin.settings.cMenuWidth = Number(btnwidth);
         window.setTimeout(() => {

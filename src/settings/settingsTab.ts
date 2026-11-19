@@ -227,7 +227,12 @@ export class editingToolbarSettingTab extends PluginSettingTab {
     const handleNewCommand = () => {
       selfDestruct(this.plugin);
       editingToolbarPopover(app, this.plugin);
-      this.display();
+      // 只有设置页真正打开时才重建 UI。插件启动阶段也会注册这个监听器，
+      // 无条件 display() 会在 Obsidian 1.15.x 的启动揭示窗口里重建设置页，
+      // 造成可见的启动布局抖动（issue #376）。
+      if (this.containerEl?.isShown()) {
+        this.display();
+      }
     };
     window.addEventListener("editingToolbar-NewCommand", handleNewCommand);
     this.plugin.register(() => window.removeEventListener("editingToolbar-NewCommand", handleNewCommand));
