@@ -1,5 +1,22 @@
 # Changelog
 
+## 4.1.13 (2026-11-20)
+### 修复 Obsidian 1.15.1 启动画面中工具栏按钮散落错位（issue #376）
+- 1.15.1 移除启动画面后，改为在退出/失焦时把当前 DOM 序列化为启动快照，
+  下次启动以冻结 iframe 先行展示。快照序列化器只保留有布局盒的元素，且
+  iframe 解析序列化 DOM 时会破坏工具栏的嵌套结构：按钮被重新挂载到各工作区
+  容器、脱离 bar 的 visibility 继承，冻结画面上按钮散落错位，启动完成后恢复
+- 修复：beforeunload（插件监听注册早于 Obsidian 的快照保存监听）与窗口 blur
+  时将工具栏设为 display:none——序列化器跳过无布局盒的整棵子树，工具栏不再
+  进入快照；focus 时恢复布局盒与可见性
+- 工具栏创建延后到工作区真正揭示（app-container 移除 mod-starting）之后，
+  避免在启动揭示窗口内改动视图 DOM
+- 溢出分割（自动收缩第二排）改用按钮真实渲染宽度计算，创建后绘制前复核一次：
+  首帧即正确分割，个别按钮不再先挤在主栏尾部
+- 启动时不再无条件派发 editingToolbar-NewCommand；设置页仅在真正打开时重建 UI
+- 实测（Obsidian 1.15.1 + CDP 冷启动）：快照 iframe 中工具栏元素为 0，揭示后
+  工具栏首帧即正确分割；失焦/聚焦与最小化/恢复正常
+
 ## 4.1.12 (2026-11-05)
 ### Update manifest.json, package.json and versions.json for version 4.1.12
 ### 移动端可点按接受 AI 行内补全

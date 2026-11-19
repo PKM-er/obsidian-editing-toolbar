@@ -2,6 +2,30 @@
 
 > The Chinese changelog lives in [CHANGELOG.md](CHANGELOG.md). This file mirrors it in English; the plugin shows whichever matches your Obsidian language.
 
+## 4.1.13 (2026-11-20)
+### Fixed toolbar buttons scattering across the startup screen on Obsidian 1.15.1 (issue #376)
+- 1.15.1 removed the loading screen: Obsidian now serializes the current DOM into a
+  "startup snapshot" on quit / window blur and shows it as a frozen iframe on the next
+  launch. The snapshot serializer only keeps elements that have a layout box, and the
+  iframe's parsing of the serialized DOM breaks the toolbar's nesting: buttons get
+  re-parented into workspace containers and escape the bar's visibility inheritance,
+  so buttons appear scattered across the frozen screen and settle once startup finishes.
+- Fix: on `beforeunload` (the plugin's listener registers earlier than Obsidian's
+  snapshot saver) and on window `blur`, the toolbar is set to `display: none` — the
+  serializer skips subtrees without a layout box, so the toolbar no longer enters the
+  snapshot. Layout box and visibility are restored on `focus`.
+- Toolbar creation is deferred until the workspace is actually revealed
+  (`app-container` loses `mod-starting`), so no view DOM is touched inside the
+  startup reveal window.
+- The overflow split (auto-shrinking second row) is now computed from real rendered
+  button widths and re-checked before first paint: the split is correct from frame one,
+  and stray buttons no longer linger at the tail of the main bar.
+- The plugin no longer dispatches `editingToolbar-NewCommand` unconditionally at
+  startup, and the settings page is only rebuilt while it is actually open.
+- Verified on Obsidian 1.15.1 with CDP cold starts: zero toolbar elements inside the
+  snapshot iframe, correct overflow split from the first frame after reveal; blur/focus
+  and minimize/restore behave normally.
+
 ## 4.1.11 (2026-10-24)
 ### Fixed the Toolbar Theme dropdown snapping back to "Custom Theme" (issues #371, #372)
 - Preset themes are stored as `aestheticStyle: 'custom'` plus concrete colours, so the dropdown read back the disabled "Custom Theme" entry. The selected preset is now reverse-mapped from the stored colours and shown again.
