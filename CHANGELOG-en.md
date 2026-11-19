@@ -2,6 +2,20 @@
 
 > The Chinese changelog lives in [CHANGELOG.md](CHANGELOG.md). This file mirrors it in English; the plugin shows whichever matches your Obsidian language.
 
+## 4.1.14 (2026-11-20)
+### Fixed the startup-screen scatter reappearing on the first restart after disabling and re-enabling the plugin (issue #376 follow-up)
+- Disabling and re-enabling the plugin mid-session re-registered the beforeunload
+  hide-listener *after* Obsidian's snapshot-save listener: on quit the snapshot was
+  serialized first (toolbar still visible) and the hide ran afterwards, so the first
+  restart showed the scattered buttons again; later sessions registered at startup and
+  kept the correct order, which is why the issue vanished afterwards.
+- Fix: the beforeunload hook is registered once per window and survives disable/enable
+  cycles (it is not removed on unload), so it always runs before the snapshot
+  serialization; with the plugin disabled it is a harmless no-op.
+### Production build no longer inlines a sourcemap
+- The base64 map was about half of the artifact (1.67 MB → 834 KB), cutting the parse
+  cost the renderer pays on every plugin load (startup / re-enable).
+
 ## 4.1.13 (2026-11-20)
 ### Fixed toolbar buttons scattering across the startup screen on Obsidian 1.15.1 (issue #376)
 - 1.15.1 removed the loading screen: Obsidian now serializes the current DOM into a
