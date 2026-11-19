@@ -18,7 +18,9 @@ export default {
   input: "src/plugin/main.ts",
   output: {
     dir: "./Editing-Toolbar-Test-Vault/.obsidian/plugins/editing-toolbar",
-    sourcemap: "inline",
+    // 生产构建不内嵌 sourcemap：base64 内联映射约占产物体积一半，
+    // 直接拖慢每次插件加载（启动/重新启用）时渲染进程的模块求值（issue #376 反馈）
+    sourcemap: isProd ? false : "inline",
     sourcemapExcludeSources: isProd,
     format: "cjs",
     exports: "default",

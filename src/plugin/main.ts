@@ -668,10 +668,16 @@ this.app.workspace.onLayoutReady(async () => {
     // Obsidian 1.15.x 会在窗口失焦 2 秒后与退出/重载的 beforeunload 时把当前 DOM
     // 序列化为启动快照，下次启动以冻结 iframe 先行展示。序列化 DOM 在 iframe 里的
     // 解析结构会破坏工具栏嵌套，按钮散落各容器且脱离 visibility 继承（issue #376）。
-    // 本插件的 beforeunload 监听注册早于 Obsidian 的快照保存监听（插件加载早于
-    // registerQuitHook），会先执行，可在快照序列化前用 display:none 移除工具栏的
-    // 布局盒（序列化器只保留有布局盒的元素，整棵子树随之消失）。
-    this.registerDomEvent(window, "beforeunload", () => hideToolbarsForSnapshot());
+    // beforeunload 钩子必须先于 Obsidian 的快照保存监听执行：插件首次加载早于
+    // registerQuitHook，但会话中途"禁用→重新启用"会把重新注册的监听排到后面。
+    // 因此钩子按窗口只注册一次、跨禁用/启用周期保留（不随插件卸载移除），
+    // 保证无论何时退出，隐藏逻辑都先于快照序列化。
+    // 快照 iframe 是冻结画面、不可交互，展示工具栏没有任何意义。
+    const hookWindow = window as unknown as { __editingToolbarSnapshotHook?: () => void };
+    if (!hookWindow.__editingToolbarSnapshotHook) {
+      hookWindow.__editingToolbarSnapshotHook = () => hideToolbarsForSnapshot();
+      window.addEventListener("beforeunload", hookWindow.__editingToolbarSnapshotHook);
+    }
     // 失焦 2 秒后的快照路径：失焦即隐藏，聚焦后恢复布局盒，可见性交给 handleeditingToolbar
     this.registerDomEvent(window, "blur", () => hideToolbarsForSnapshot());
     this.registerDomEvent(window, "focus", () => {
