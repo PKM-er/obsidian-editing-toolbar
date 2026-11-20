@@ -1597,6 +1597,14 @@ animation: none;
 transition: none;
 -webkit-transition: none;
 }
+/* Closed dropdowns: take their items out of layout (after the usual close delay) so
+   Obsidian 1.15's startup snapshot never serializes <button>s nested in a <button>;
+   the HTML parser re-parents those and scatters them over the startup screen (#377).
+   Same specificity as the rule above, so it must stay after it. */
+body :is(#editingToolbarModalBar#editingToolbarModalBar, #editingToolbarPopoverBar#editingToolbarPopoverBar) button[class^=editingToolbarCommandsubItem]:not(:hover):not(.editingToolbar-Divider-Line) > .subitem > * {
+display: none;
+transition: display 0.15s allow-discrete;
+}
 #editingToolbarModalBar ~.canvas-controls{
   top: calc(var(--size-4-2) + 50px);
 }
