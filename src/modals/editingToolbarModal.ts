@@ -16,6 +16,8 @@ import { DEFAULT_REWRITE_ACTIONS, type RewriteInstruction } from "src/ai/types";
 
 let activeDocument: Document;
 
+const SNAPSHOT_PLACEHOLDER_CLASS = "editing-toolbar-snapshot-placeholder";
+
 // 定义视图类型到目标DOM选择器的映射
 const viewTypeToSelectorMap: { [key: string]: string } = {
   markdown: ".markdown-source-view",
@@ -93,6 +95,13 @@ function clearToolbarsInDocument(root: ParentNode) {
     }
     element.remove();
   });
+
+  // A rebuild while the window is unfocused must not leave the old bar's placeholder behind.
+  removeSnapshotPlaceholders(root);
+}
+
+function removeSnapshotPlaceholders(root: ParentNode) {
+  root.querySelectorAll(`.${SNAPSHOT_PLACEHOLDER_CLASS}`).forEach((element) => element.remove());
 }
 
 // 幂等守卫：同一容器内只允许存在一个同样式工具栏，插入前先移除旧实例。
@@ -129,13 +138,30 @@ export function hideToolbarsForSnapshot() {
   collectToolbarDocuments().forEach((doc) => {
     doc
       .querySelectorAll<HTMLElement>(".editingToolbarModalBar, .editingToolbarPopoverBar")
-      .forEach((el) => el.setCssStyles({ display: "none" }));
+      .forEach((el) => {
+        // An in-flow bar (the top toolbar) leaves a placeholder with the same height and vertical
+        // margins while hidden, so the editor below does not jump on blur and focus; otherwise the
+        // click that refocuses the window lands on content that has just moved.
+        const style = doc.defaultView?.getComputedStyle(el);
+        const { height } = el.getBoundingClientRect();
+        if (style && height > 0 && style.position !== "absolute" && style.position !== "fixed") {
+          const placeholder = window.createDiv({ cls: SNAPSHOT_PLACEHOLDER_CLASS });
+          placeholder.setCssStyles({
+            height: `${height}px`,
+            marginTop: style.marginTop,
+            marginBottom: style.marginBottom,
+          });
+          el.insertAdjacentElement("beforebegin", placeholder);
+        }
+        el.setCssStyles({ display: "none" });
+      });
   });
 }
 
 /** 窗口重新聚焦后恢复工具栏的布局盒，可见性由 handleeditingToolbar 决定。 */
 export function restoreToolbarsAfterSnapshot() {
   collectToolbarDocuments().forEach((doc) => {
+    removeSnapshotPlaceholders(doc);
     doc
       .querySelectorAll<HTMLElement>(".editingToolbarModalBar, .editingToolbarPopoverBar")
       .forEach((el) => el.setCssStyles({ display: "" }));

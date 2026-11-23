@@ -1566,6 +1566,12 @@ body[data-editing-toolbar-ai-busy="true"]
   -webkit-transition: all 1s linear;
 }
 
+/* Stands in for the hidden top toolbar while the window is unfocused; must keep
+   its measured height when the leaf's flex column overflows */
+.editing-toolbar-snapshot-placeholder {
+  flex-shrink: 0;
+}
+
 
 :is(#editingToolbarModalBar, #editingToolbarPopoverBar) :is(.editingToolbarCommandItem, button[class^=editingToolbarCommandsubItem]):not(.editingToolbar-Divider-Line) {
   font-size: 10px;
